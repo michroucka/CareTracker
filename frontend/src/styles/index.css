@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@plugin "./hero.ts";
+@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+}
+
+
+:root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

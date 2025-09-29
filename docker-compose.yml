@@ -1,0 +1,68 @@
+name: CareTracker
+
+services:
+  # Spring Boot Backend
+  backend:
+    container_name: caretracker-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - ~/.m2:/root/.m2
+    environment:
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      - db
+
+  # Vite React Frontend
+  frontend:
+    container_name: caretracker-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./frontend:/app
+      - node_modules_cache:/app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+
+  # PostgreSQL Database
+  db:
+    container_name: caretracker-db
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: caretracker
+      POSTGRES_PASSWORD: caretracker
+      POSTGRES_DB: caretracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # DB administration interface
+  pgadmin:
+    container_name: caretracker-pgadmin
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@caretracker.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+volumes:
+  node_modules_cache:
+  pgdata:
+  pgadmin_data:
