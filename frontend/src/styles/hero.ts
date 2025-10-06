@@ -13,16 +13,16 @@ export default heroui ({
             },
             colors: { // light theme colors
                 "default": {
-                    "50": "#fafafa",
-                    "100": "#f2f2f3",
-                    "200": "#ebebec",
-                    "300": "#e3e3e6",
-                    "400": "#dcdcdf",
-                    "500": "#d4d4d8",
-                    "600": "#afafb2",
-                    "700": "#8a8a8c",
-                    "800": "#656567",
-                    "900": "#404041",
+                    "50": "#D8E8F5",
+                    "100": "#D8E8F5",
+                    "200": "#B4D1EB",
+                    "300": "#80A1C5",
+                    "400": "#4F6A8D",
+                    "500": "#1B2A41",
+                    "600": "#132037",
+                    "700": "#0D182E",
+                    "800": "#081025",
+                    "900": "#050B1F",
                     "foreground": "#1B2A41",
                     "DEFAULT": "#d4d4d8"
                 },
@@ -37,7 +37,7 @@ export default heroui ({
                     "700": "#156a3d",
                     "800": "#104d2d",
                     "900": "#0a311c",
-                    "foreground": "#000",
+                    "foreground": "#fff",
                     "DEFAULT": "#21a35e"
                 },
                 "secondary": {
@@ -65,7 +65,7 @@ export default heroui ({
                     "700": "#145835",
                     "800": "#0e4027",
                     "900": "#092919",
-                    "foreground": "#000",
+                    "foreground": "#fff",
                     "DEFAULT": "#1e8752"
                 },
                 "warning": {
@@ -124,18 +124,17 @@ export default heroui ({
             },
             colors: { // dark theme colors
                 "default": {
-                    "50": "#0d0d0e",
-                    "100": "#19191c",
-                    "200": "#26262a",
-                    "300": "#323238",
-                    "400": "#3f3f46",
-                    "500": "#65656b",
-                    "600": "#8c8c90",
-                    "700": "#b2b2b5",
-                    "800": "#d9d9da",
-                    "900": "#ffffff",
+                    "100": "#050A1B",
+                    "200": "#091021",
+                    "300": "#0F1729",
+                    "400": "#151F31",
+                    "500": "#1E2939",
+                    "600": "#576D88",
+                    "700": "#8CA7C3",
+                    "800": "#BED6EB",
+                    "900": "#DDEBF5",
                     "foreground": "#fff",
-                    "DEFAULT": "#3f3f46"
+                    "DEFAULT": "#0F1729"
                 },
                 "primary": {
                     "50": "#0a311c",
@@ -148,20 +147,20 @@ export default heroui ({
                     "700": "#96d3b3",
                     "800": "#bce3cf",
                     "900": "#e3f4eb",
-                    "foreground": "#000",
+                    "foreground": "#fff",
                     "DEFAULT": "#21a35e"
                 },
                 "secondary": {
-                    "50": "#0a2337",
-                    "100": "#103857",
-                    "200": "#154d78",
-                    "300": "#1b6198",
-                    "400": "#2176b8",
-                    "500": "#488ec4",
-                    "600": "#6fa6d1",
-                    "700": "#96bedd",
-                    "800": "#bcd6ea",
-                    "900": "#e3eef6",
+                    "50": "#e3eef6",
+                    "100": "#bcd6ea",
+                    "200": "#96bedd",
+                    "300": "#6fa6d1",
+                    "400": "#488ec4",
+                    "500": "#2176b8",
+                    "600": "#1b6198",
+                    "700": "#154d78",
+                    "800": "#103857",
+                    "900": "#0a2337",
                     "foreground": "#fff",
                     "DEFAULT": "#2176b8"
                 },
@@ -207,7 +206,7 @@ export default heroui ({
                     "foreground": "#000",
                     "DEFAULT": "#d64545"
                 },
-                "background": "#18253a",
+                "background": "#1e2939",
                 "foreground": "#ffffff",
                 "content1": {
                     "DEFAULT": "#1b2a41",
