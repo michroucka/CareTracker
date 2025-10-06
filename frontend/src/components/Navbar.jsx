@@ -12,7 +12,7 @@ import {
     Divider
 } from "@heroui/react";
 import logo from "../assets/ct_icon.png"
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import {ThemeSwitcher} from "./ThemeSwitcher.jsx"
 
 export const CareTrackerLogo = () => {
@@ -21,7 +21,9 @@ export const CareTrackerLogo = () => {
 
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
     const location = useLocation();
+    const navigate = useNavigate();
 
     const menuItems = [
         { name: "Home", path: "/"},
@@ -30,10 +32,15 @@ export default function AppNavbar() {
     ];
 
     return (
-        <Navbar onMenuOpenChange={setIsMenuOpen} maxWidth="full" className="px-0 lg:px-20 xl:px-32 2xl:px-48 shadow-md">
+        <Navbar
+            shouldHideOnScroll
+            onMenuOpenChange={setIsMenuOpen}
+            maxWidth="full"
+            className="px-0 lg:px-20 xl:px-32 2xl:px-48 shadow-md"
+        >
             <NavbarContent>
                 <NavbarBrand className="cursor-pointer"
-                             onClick={() => (window.location.href = "/")}>
+                             onClick={() => (navigate("/"))}>
                     <CareTrackerLogo />
                     <p className="font-bold text-xl text-foreground">CareTracker</p>
                 </NavbarBrand>
