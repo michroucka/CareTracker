@@ -28,14 +28,9 @@ Webová aplikace pro pečovatelské služby, která nahrazuje papírovou adminis
 
 ### Databáze
 - [PostgreSQL](https://www.postgresql.org/) – relační databáze  
-- [Flyway](https://flywaydb.org/) – správa migrací databáze  
 
 ### Testování a build
-- [JUnit 5](https://junit.org/junit5/) – testování backendu
-- [Mockito](https://site.mockito.org/) – mockování závislostí  
-- [Maven](https://maven.apache.org/) – build a správa závislostí backendu  
-- [Vitest](https://vitest.dev/) / [Jest](https://jestjs.io/) – testování frontendu  
+- TBD
 
-### DevOps a nasazení
+### Nasazení
 - [Docker](https://www.docker.com/) – kontejnerizace backendu, frontendu a databáze  
-- [Docker Compose](https://docs.docker.com/compose/) – orchestrace více služeb  
