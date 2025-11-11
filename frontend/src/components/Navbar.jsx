@@ -74,8 +74,8 @@ export default function AppNavbar() {
                 {/*    <ThemeSwitcher />*/}
                 {/*</NavbarItem>*/}
                 <NavbarItem>
-                    <Button as={Link} color="primary" href="#" variant="ghost" className="font-semibold">
-                        Login
+                    <Button as={Link} color="primary" href="/login" variant="ghost" className="font-semibold">
+                        Přihlášení
                     </Button>
                 </NavbarItem>
             </NavbarContent>
@@ -101,7 +101,7 @@ export default function AppNavbar() {
                         color="primary"
                         size="lg"
                     >
-                        Login
+                        Přihlášení
                     </Link>
                 </NavbarMenuItem>
             </NavbarMenu>
