@@ -1,7 +1,7 @@
 id,task_name,unit_price,unit_type,double_meeting
 1,Hygiena,120,hour,true
-2,Oběd,113,hour,true
-3,Nákup,117,km,true
-4,Prádlo,108,hour,true
-5,Doprovod,100,hour,true
-6,Úklid,106,occurrence,true
+2,Oběd,113,occurrence,true
+3,Nákup,117,hour,true
+4,Prádlo,108,kg,true
+5,Doprovod,100,km,true
+6,Úklid,106,hour,true

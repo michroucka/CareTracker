@@ -1,6 +1,6 @@
 id,username,email,password,role,activation_token,token_expiry,active,employee_id,client_id
-1,bcollingwood0,gwilds0@bbb.org,$2a$04$a2ZVz4.7vgL2xsm9Jxc2xe0E6Dv4G2qCCL00ueZuuQr2P5OJ.zV0q,caregiver,,,true,,296
-2,ckield1,fmacuchadair1@typepad.com,$2a$04$xCl91wRgeSG0S7oKaWoSiuI7778SLhgHg.MCk8FsiNlfRSPj2Dzku,coordinator,,,true,,633
-3,ssharp2,diacovazzi2@indiatimes.com,$2a$04$Z30wsIZm2K.K5fi/3I8IGOzf4rc4nXSTo3/v1uxcdo6Hih1Ye4KKu,manager,,,true,22,
-4,sseaward3,pickovic3@nsw.gov.au,$2a$04$tUM9tql6MycLjsbc8n0TZupA.DIb14YYI5xGVHeVMxNGuw32BM4Cy,client,,,true,,
-5,cdamiral4,ndominelli4@smh.com.au,$2a$04$EXNm0Vq7fmGuA38OlW.7iO8cRrRty0IJMoUpyD91niXLoCtvFJ0bO,superadmin,,,true,15,
+1,caregiver,gwilds0@bbb.org,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,caregiver,,,true,1,
+2,coordinator,fmacuchadair1@typepad.com,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,coordinator,,,true,10,
+3,manager,diacovazzi2@indiatimes.com,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,manager,,,true,3,
+4,client,pickovic3@nsw.gov.au,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,client,,,true,,633
+5,superadmin,ndominelli4@smh.com.au,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,superadmin,,,true,,
