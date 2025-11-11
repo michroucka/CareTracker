@@ -5,6 +5,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
+@Table(name = "picture")
 public class Picture {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,5 +17,6 @@ public class Picture {
     private Client client;
 
     @Lob
-    private Byte[] data;
+    @Column(columnDefinition = "bytea")
+    private byte[] data;
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(name = "organization")
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,8 +16,8 @@ public class Organization {
     @Column(nullable = false)
     private Boolean active = Boolean.TRUE;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "manager_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "manager_id")
     private Employee manager;
 
     @OneToMany(mappedBy = "organization")

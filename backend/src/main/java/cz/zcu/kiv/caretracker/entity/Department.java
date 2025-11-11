@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(name = "department")
 public class Department {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,8 +22,8 @@ public class Department {
     @OneToMany(mappedBy = "department")
     private List<Employee> employees;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "coordinator_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "coordinator_id")
     private Employee coordinator;
 
     @ManyToOne(optional = false)

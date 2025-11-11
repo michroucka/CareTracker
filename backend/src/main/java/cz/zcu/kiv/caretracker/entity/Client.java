@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@Table(name = "client")
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +23,7 @@ public class Client {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;
 
@@ -49,6 +51,7 @@ public class Client {
     @Column(name = "legally_competent", nullable = false)
     private Boolean legallyCompetent;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BenefitLevel benefits;
 
