@@ -1,6 +1,0 @@
-id,username,email,password,role,activation_token,token_expiry,active,employee_id,client_id
-1,caregiver,gwilds0@bbb.org,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,caregiver,,,true,1,
-2,coordinator,fmacuchadair1@typepad.com,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,coordinator,,,true,10,
-3,manager,diacovazzi2@indiatimes.com,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,manager,,,true,3,
-4,client,pickovic3@nsw.gov.au,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,client,,,true,,633
-5,superadmin,ndominelli4@smh.com.au,$2a$12$U./SWvioiC1yPrt9dRiXL.4IhmHMwMYNYB9jPJo4.vDR7//ztB33G,superadmin,,,true,,
