@@ -2,7 +2,8 @@ package cz.zcu.kiv.caretracker.enums;
 
 public enum EmployeeRole {
     CAREGIVER("Pečovatel"),
-    COORDINATOR("Koordinátor");
+    COORDINATOR("Koordinátor"),
+    MANAGER("Vedoucí");
 
     private final String displayName;
 

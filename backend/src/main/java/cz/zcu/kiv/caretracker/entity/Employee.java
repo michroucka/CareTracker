@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 public class Employee {
@@ -16,10 +17,16 @@ public class Employee {
     private String lastName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private EmployeeRole role;
+
+    @Column(nullable = false)
+    private Boolean active = Boolean.TRUE;
 
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
+
+    @ManyToMany(mappedBy = "caregivers")
+    private List<PerformedTask> performed_tasks;
 }

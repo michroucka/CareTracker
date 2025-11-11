@@ -5,6 +5,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "performed_task")
@@ -27,5 +29,17 @@ public class PerformedTask {
     private LocalDate date;
 
     @Column(nullable = false)
-    private int minutes;
+    private Integer unit_count;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @ManyToMany
+    @JoinTable(
+            name = "caregiver_performed_task",
+            joinColumns = @JoinColumn(name = "performed_task_id"),
+            inverseJoinColumns = @JoinColumn(name = "caregiver_id")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<Employee> caregivers;
 }

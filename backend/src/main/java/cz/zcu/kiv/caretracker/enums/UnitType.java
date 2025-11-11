@@ -1,15 +1,14 @@
 package cz.zcu.kiv.caretracker.enums;
 
-public enum UserRole {
-    CAREGIVER("Pečovatel"),
-    COORDINATOR("Koordinátor"),
-    MANAGER("Vedoucí"),
-    CLIENT("Klient"),
-    SUPERADMIN("Superadmin");
+public enum UnitType {
+    HOUR("Hodina"),
+    OCCURRENCE("Úkon"),
+    KG("Kg"),
+    KM("Km");
 
     private final String displayName;
 
-    UserRole(String displayName) {
+    UnitType(String displayName) {
         this.displayName = displayName;
     }
 
