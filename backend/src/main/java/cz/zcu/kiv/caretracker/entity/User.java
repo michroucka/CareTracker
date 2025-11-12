@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "app_user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,4 +39,44 @@ public class User {
     @OneToOne
     @JoinColumn(name = "client_id")
     private Client client;
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public String getActivationToken() {
+        return activationToken;
+    }
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public Client getClient() {
+        return client;
+    }
 }

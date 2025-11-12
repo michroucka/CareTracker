@@ -16,7 +16,8 @@ public class WebConfig {
                 registry.addMapping("/**") // allow all endpoints
                         .allowedOrigins("http://localhost:5173", "http://localhost:3000") // frontend address
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }

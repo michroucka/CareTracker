@@ -7,6 +7,31 @@
     --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* schová interní bottom-right provider, workaround until fixed */
+div[role="alertdialog"][data-placement="bottom-right"] {
+    display: none !important;
+}
+
+/* toast exiting */
+[data-toast="true"][data-toast-exiting="true"][data-placement="top-center"] {
+    transform: translateY(-150%) !important; /* úplně zmizí nahoru */
+    opacity: 0 !important;
+    transition: all 0.4s ease-in-out !important;
+}
+
+/* toast entering */
+[data-toast="true"][data-toast-entering="true"][data-placement="top-center"] {
+    transform: translateY(-150%) scale(0.9);
+    opacity: 0;
+    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-toast="true"][data-placement="top-center"] {
+    transform: translateY(0%) scale(1);
+    opacity: 1;
+    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 
 :root {
     font-synthesis: none;
@@ -18,3 +43,5 @@
 h1 {
     @apply text-4xl font-bold text-foreground leading-tight;
 }
+
+
