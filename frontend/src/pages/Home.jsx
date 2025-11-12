@@ -6,7 +6,7 @@ function Home() {
     return (
         <div className="flex flex-col justify-center items-center text-center cursor-pointer">
             <img src={logo} alt="Logo" className="w-64 -mb-6" />
-            <h1 className="text-4xl text-foreground font-bold text-center mb-6">CareTracker</h1>
+            <h1 className="text-center mb-6">CareTracker</h1>
             <Divider className="w-1/2"/>
             <p className="text-xl text-primary font-medium text-center mt-6 mb-4">"Pomáháme pečovat s přehledem a jistotou"</p>
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-10 text-start">

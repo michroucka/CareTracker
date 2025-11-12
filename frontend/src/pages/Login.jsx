@@ -1,4 +1,4 @@
-import {Form, Input, Select, SelectItem, Checkbox, Button} from "@heroui/react";
+import {Form, Input, Checkbox, Button, Divider} from "@heroui/react";
 import React from "react";
 
 function Login() {
@@ -34,12 +34,14 @@ function Login() {
             onReset={() => setSubmitted(null)}
             onSubmit={onSubmit}
         >
-            <div className="flex flex-col gap-4 max-w-md p-8 rounded-2xl shadow-lg">
+            <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
+                <h1 className="cursor-pointer">Přihlášení</h1>
+                <Divider className="mb-3 w-5/6" />
                 <Input
-                    isRequired
+                    required
                     errorMessage={({validationDetails}) => {
                         if (validationDetails.valueMissing) {
-                            return "";
+                            return "Prosím zadejte uživatelské jméno / email";
                         }
 
                         return errors.name;
@@ -47,14 +49,28 @@ function Login() {
                     label="Uživatelské jméno"
                     labelPlacement="inside"
                     name="username"
-                    className=""
+                    classNames={{
+                        inputWrapper: [
+                            "bg-white",
+                            "data-[hover=true]:bg-default-50",
+                            "data-[focus=true]:bg-default-50",
+                            "shadow-md"
+                        ],
+                        label: [
+                            "text-medium"
+                        ],
+                        input: [
+                            "text-medium",
+                            "font-semibold"
+                        ]
+                    }}
                 />
 
                 <Input
-                    isRequired
+                    required
                     errorMessage={({validationDetails}) => {
                         if (validationDetails.valueMissing) {
-                            return "";
+                            return "Prosím zadejte heslo";
                         }
 
                         return errors.name;
@@ -68,16 +84,27 @@ function Login() {
                     classNames={{
                       inputWrapper: [
                           "bg-white",
-                          "data-[hover=true]:bg-white",
-                          "data-[focus=true]:bg-white",
+                          "data-[hover=true]:bg-default-50",
+                          "data-[focus=true]:bg-default-50",
+                          "shadow-md"
                       ],
+                      label: [
+                          "text-medium"
+                      ],
+                        input: [
+                            "text-medium",
+                            "font-semibold"
+                        ]
                     }}
                 />
 
                 <Checkbox
                     classNames={{
-                        label: "text-small",
+                        label: [
+                            "text-medium"
+                        ]
                     }}
+                    className="self-start"
                     name="remember"
                     value="true"
                     isSelected={remember}
@@ -86,11 +113,11 @@ function Login() {
                     Zapamatovat si mě
                 </Checkbox>
 
-                <div className="flex gap-4">
-                    <Button className="w-full" color="primary" type="submit">
+                <div className="flex gap-4 w-full">
+                    <Button className="w-full text-medium" color="primary" type="submit">
                         Submit
                     </Button>
-                    <Button type="reset" variant="bordered">
+                    <Button className="text-medium" type="reset" variant="bordered">
                         Reset
                     </Button>
                 </div>

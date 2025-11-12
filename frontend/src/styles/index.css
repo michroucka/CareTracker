@@ -14,3 +14,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+h1 {
+    @apply text-4xl font-bold text-foreground leading-tight;
+}

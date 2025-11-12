@@ -13,7 +13,7 @@ export default heroui ({
             },
             colors: { // light theme colors
                 "default": {
-                    "50": "#D8E8F5",
+                    "50": "#E2F0F9",
                     "100": "#D8E8F5",
                     "200": "#B4D1EB",
                     "300": "#80A1C5",

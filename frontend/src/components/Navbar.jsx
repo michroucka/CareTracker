@@ -31,8 +31,13 @@ export default function AppNavbar() {
         { name: "Test", path: "/test" },
     ];
 
+    React.useEffect(() => {
+        setIsMenuOpen(false);
+    }, [location.pathname]);
+
     return (
         <Navbar
+            isMenuOpen={isMenuOpen}
             shouldHideOnScroll
             onMenuOpenChange={setIsMenuOpen}
             maxWidth="full"
@@ -88,6 +93,7 @@ export default function AppNavbar() {
                             aria-current={location.pathname === item.path ? "page" : undefined}
                             color={location.pathname === item.path ? "secondary" : "foreground"}
                             size="lg"
+                            onPress={() => setIsMenuOpen(false)}
                         >
                             {item.name}
                         </Link>
@@ -100,6 +106,7 @@ export default function AppNavbar() {
                         href="/login"
                         color="primary"
                         size="lg"
+                        onPress={() => setIsMenuOpen(false)}
                     >
                         Přihlášení
                     </Link>
