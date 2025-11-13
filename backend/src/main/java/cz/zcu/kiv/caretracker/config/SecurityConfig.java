@@ -20,9 +20,22 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers("/login", "/auth-status").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable())
+                .formLogin(form -> form
+                        .loginProcessingUrl("/login")
+                        .permitAll()
+                )
+                .rememberMe(r -> r
+                        .key("2TENIk0zpacdhwqPTgxZltmdtta5mrNVTvTD2hBsAYM=")
+                        .rememberMeParameter("remember-me")
+                        .tokenValiditySeconds(60 * 60 * 24 * 7) // 7 days
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .deleteCookies("JSESSIONID", "remember-me")
+                )
                 .httpBasic(basic -> basic.disable());
         return http.build();
     }

@@ -15,7 +15,11 @@ function Login() {
         e.preventDefault();
 
         try {
-            const response = await post("/login", {username, password, remember});
+            const response = await post("/login", {
+                username: username,
+                password: password,
+                "remember-me": remember ? "on" : ""
+            });
             const result = await response.json();
 
             console.log(response.message);
@@ -151,7 +155,7 @@ function Login() {
                         ]
                     }}
                     className="self-start"
-                    name="remember"
+                    name="remember-me"
                     value="true"
                     isSelected={remember}
                     onValueChange={setRemember}
