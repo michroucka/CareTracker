@@ -1,15 +1,22 @@
-import {Form, Input, Checkbox, Button, Divider, addToast} from "@heroui/react";
+import { Form, Input, Checkbox, Button, Divider } from "@heroui/react";
 import React from "react";
 import { post } from "../api/api.js"
-import {ServerStackIcon, XMarkIcon} from "@heroicons/react/24/solid"
-import {useNavigate} from "react-router-dom";
+import { ServerStackIcon } from "@heroicons/react/24/solid"
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { showToast } from "../components/MyToast";
 
 function Login() {
     const [username, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [remember, setRemember] = React.useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
     const [errors, setErrors] = React.useState({});
     const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const togglePassword = () => setIsPasswordVisible(!isPasswordVisible);
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -20,52 +27,47 @@ function Login() {
                 password: password,
                 "remember-me": remember ? "on" : ""
             });
+
+            // Kontrola, zda response obsahuje JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error("Unexpected content type:", contentType);
+                throw new Error("Server vrátil neplatnou odpověď");
+            }
+
             const result = await response.json();
 
-            console.log(response.message);
+            if (response.ok && result.success) {
+                // Úspěšné přihlášení
+                login(result.username, result.role); // Aktualizace globálního stavu
 
-            if (!response.ok) {
-                addToast({
+                showToast({
                     title: result.message,
-                    color: "danger",
-                    closeButton: true,
-                    closeIcon: <XMarkIcon />,
-                    timeout: 3000,
-                    classNames: {
-                        closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-                    },
-                })
-
-                setErrors({
-                    username: "Neplatné přihlašovací údaje",
-                    password: "Neplatné přihlašovací údaje"
-                });
-            } else {
-                addToast({
-                    title: `Vítejte ${username}!`,
+                    description: `Vítejte ${result.username}!`,
                     color: "success",
-                    closeButton: true,
-                    closeIcon: <XMarkIcon/>,
-                    timeout: 3000,
-                    classNames: {
-                        closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-                    },
                 })
 
                 navigate("/");
+            } else {
+                // Neúspěšné přihlášení - zobrazíme konkrétní chybovou zprávu z backendu
+                showToast({
+                    title: result.message || "Neplatné přihlašovací údaje",
+                    color: "danger",
+                })
+
+                setErrors({
+                    username: true,
+                    password: result.message
+                });
             }
 
-        } catch {
-            addToast({
-                title: "Server není dostupný",
+        } catch (error) {
+            // Chyba při komunikaci se serverem
+            console.error("Login error:", error);
+            showToast({
+                title: error.message || "Server není dostupný",
                 color: "danger",
-                closeButton: true,
                 icon: <ServerStackIcon />,
-                closeIcon: <XMarkIcon />,
-                timeout: 5000,
-                classNames: {
-                    closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-                },
             })
         }
     };
@@ -87,27 +89,32 @@ function Login() {
                 <Divider className="mb-3 w-5/6" />
                 <Input
                     required
+                    isInvalid={!!errors.username}
                     errorMessage={({validationDetails}) => {
                         if (validationDetails.valueMissing) {
                             return "Prosím zadejte uživatelské jméno";
                         }
-
-                        return errors.name;
                     }}
                     label="Uživatelské jméno"
                     labelPlacement="inside"
                     name="username"
                     value={username}
-                    onValueChange={setUsername}
+                    onValueChange={(value) => {
+                        setUsername(value);
+                        if (errors.username || errors.password) {
+                            setErrors({});
+                        }
+                    }}
                     classNames={{
                         inputWrapper: [
-                            "bg-white",
-                            "data-[hover=true]:bg-default-50",
-                            "data-[focus=true]:bg-default-50",
+                            "bg-content2",
+                            "data-[hover=true]:bg-content3",
+                            "data-[focus=true]:bg-content3",
                             "shadow-md"
                         ],
                         label: [
-                            "text-medium"
+                            "text-medium",
+                            "group-data-[filled-within=true]:text-foreground/75",
                         ],
                         input: [
                             "text-medium",
@@ -123,38 +130,77 @@ function Login() {
                             return "Prosím zadejte heslo";
                         }
 
-                        return errors.name;
+                        return errors.password;
                     }}
+                    endContent={
+                        <button
+                            aria-label="toggle password visibility"
+                            className="focus:outline-solid outline-transparent"
+                            type="button"
+                            onClick={togglePassword}
+                            title="Zobrazit heslo"
+                        >
+                            {isPasswordVisible ? (
+                                <EyeSlashIcon className="size-6 sm:size-5 pointer-events-none" />
+                            ) : (
+                                <EyeIcon className="size-6 sm:size-5 pointer-events-none" />
+                            )}
+                            </button>
+                    }
                     label="Heslo"
                     labelPlacement="inside"
                     name="password"
-                    type="password"
+                    type={isPasswordVisible ? "text" : "password"}
                     value={password}
-                    onValueChange={setPassword}
+                    onValueChange={(value) => {
+                        setPassword(value);
+                        if (errors.username || errors.password) {
+                            setErrors({});
+                        }
+                    }}
                     classNames={{
                       inputWrapper: [
-                          "bg-white",
-                          "data-[hover=true]:bg-default-50",
-                          "data-[focus=true]:bg-default-50",
+                          "bg-content2",
+                          "data-[hover=true]:bg-content3",
+                          "data-[focus=true]:bg-content3",
                           "shadow-md"
                       ],
                       label: [
-                          "text-medium"
+                          "text-base",
+                          "group-data-[filled-within=true]:text-foreground/75",
                       ],
                         input: [
-                            "text-medium",
+                            "text-base",
                             "font-semibold"
                         ]
                     }}
                 />
 
+                {/* Mobile ver */}
                 <Checkbox
                     classNames={{
                         label: [
-                            "text-medium"
+                            "text-lg"
                         ]
                     }}
-                    className="self-start"
+                    size="lg"
+                    className="self-start sm:hidden py-3"
+                    name="remember-me"
+                    value="true"
+                    isSelected={remember}
+                    onValueChange={setRemember}
+                >
+                    Zapamatovat si mě
+                </Checkbox>
+
+                {/* Desktop ver */}
+                <Checkbox
+                    classNames={{
+                        label: [
+                            "text-base"
+                        ]
+                    }}
+                    className="self-start hidden sm:block"
                     name="remember-me"
                     value="true"
                     isSelected={remember}
@@ -164,10 +210,19 @@ function Login() {
                 </Checkbox>
 
                 <div className="flex gap-4 w-full">
-                    <Button className="w-full text-medium" color="primary" type="submit">
-                        Submit
+                    {/* Mobile ver */}
+                    <Button className="w-full text-lg sm:hidden" color="primary" type="submit" size="lg">
+                        Přihlásit
                     </Button>
-                    <Button className="text-medium" type="reset" variant="bordered">
+                    <Button className="text-lg sm:hidden" type="reset" variant="bordered" size="lg">
+                        Reset
+                    </Button>
+
+                    {/* Desktop ver */}
+                    <Button className="w-full text-base hidden sm:block" color="primary" type="submit">
+                        Přihlásit
+                    </Button>
+                    <Button className="text-base hidden sm:block" type="reset" variant="bordered">
                         Reset
                     </Button>
                 </div>

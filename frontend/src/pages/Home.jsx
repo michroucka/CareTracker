@@ -5,7 +5,13 @@ import {UserIcon, PencilSquareIcon, DocumentTextIcon} from '@heroicons/react/24/
 function Home() {
     return (
         <div className="flex flex-col justify-center items-center text-center cursor-pointer">
-            <img src={logo} alt="Logo" className="w-64 -mb-6" />
+            <img
+                src={logo}
+                alt="CareTracker Logo"
+                className="w-64 -mb-6 select-none"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+            />
             <h1 className="text-center mb-6">CareTracker</h1>
             <Divider className="w-1/2"/>
             <p className="text-xl text-primary font-medium text-center mt-6 mb-4">"Pomáháme pečovat s přehledem a jistotou"</p>

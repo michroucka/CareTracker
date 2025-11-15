@@ -1,5 +1,8 @@
 package cz.zcu.kiv.caretracker.config;
 
+import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationFailureHandler;
+import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationSuccessHandler;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,6 +12,16 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+
+    private final CustomAuthenticationSuccessHandler successHandler;
+    private final CustomAuthenticationFailureHandler failureHandler;
+
+    public SecurityConfig(CustomAuthenticationSuccessHandler successHandler,
+                         CustomAuthenticationFailureHandler failureHandler) {
+        this.successHandler = successHandler;
+        this.failureHandler = failureHandler;
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -20,11 +33,13 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/auth-status").permitAll()
+                        .requestMatchers("/api/login", "/api/auth-status").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginProcessingUrl("/login")
+                        .loginProcessingUrl("/api/login")
+                        .successHandler(successHandler)
+                        .failureHandler(failureHandler)
                         .permitAll()
                 )
                 .rememberMe(r -> r
@@ -33,7 +48,7 @@ public class SecurityConfig {
                         .tokenValiditySeconds(60 * 60 * 24 * 7) // 7 days
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
+                        .logoutUrl("/api/logout")
                         .deleteCookies("JSESSIONID", "remember-me")
                 )
                 .httpBasic(basic -> basic.disable());

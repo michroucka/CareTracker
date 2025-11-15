@@ -1,5 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+export async function get(endpoint) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "GET",
+        credentials: "include",
+    });
+    return response;
+}
+
 export async function post(endpoint, data) {
     const formData = new URLSearchParams();
     Object.keys(data).forEach((key) => {
