@@ -50,6 +50,12 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
                         .deleteCookies("JSESSIONID", "remember-me")
+                        .permitAll()
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(200);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"success\":true}");
+                        })
                 )
                 .httpBasic(basic -> basic.disable());
         return http.build();

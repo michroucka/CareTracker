@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { get, post } from "../api/api.js";
 import { addToast } from "@heroui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import {useNavigate} from "react-router-dom";
 
 interface User {
     username: string;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     const checkAuth = async () => {
         try {
@@ -63,6 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
                     },
                 });
+
+                // Redirect to home page after logout
+                navigate("/");
             } else {
                 throw new Error("Odhlášení selhalo");
             }

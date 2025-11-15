@@ -29,8 +29,6 @@ services:
     volumes:
       - ./frontend:/app
       - node_modules_cache:/app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8080/api
     depends_on:
       - backend
 
