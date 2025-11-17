@@ -42,9 +42,9 @@ export default function AppNavbar() {
     const navigate = useNavigate();
 
     const menuItems = [
-        { name: "Home", path: "/"},
-        { name: "About", path: "/about" },
-        { name: "Test", path: "/test" },
+        { name: "Domů", path: "/"},
+        { name: "Klienti", path: "/clients" },
+        { name: "Pečovatelé", path: "/test" },
     ];
 
     React.useEffect(() => {
