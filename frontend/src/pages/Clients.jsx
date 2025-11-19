@@ -12,253 +12,53 @@ import {
     Dropdown,
     DropdownMenu,
     DropdownItem,
-    Chip,
-    User,
+    Spinner,
 } from "@heroui/react";
 import { MagnifyingGlassIcon, EllipsisVerticalIcon, PlusIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
-
-export const columns = [
-    {name: "ID", uid: "id", sortable: true},
-    {name: "NAME", uid: "name", sortable: true},
-    {name: "AGE", uid: "age", sortable: true},
-    {name: "ROLE", uid: "role", sortable: true},
-    {name: "TEAM", uid: "team"},
-    {name: "EMAIL", uid: "email"},
-    {name: "STATUS", uid: "status", sortable: true},
-    {name: "ACTIONS", uid: "actions"},
-];
-
-export const statusOptions = [
-    {name: "Active", uid: "active"},
-    {name: "Paused", uid: "paused"},
-    {name: "Vacation", uid: "vacation"},
-];
-
-export const users = [
-    {
-        id: 1,
-        name: "Tony Reichert",
-        role: "CEO",
-        team: "Management",
-        status: "active",
-        age: "29",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-        email: "tony.reichert@example.com",
-    },
-    {
-        id: 2,
-        name: "Zoey Lang",
-        role: "Tech Lead",
-        team: "Development",
-        status: "paused",
-        age: "25",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-        email: "zoey.lang@example.com",
-    },
-    {
-        id: 3,
-        name: "Jane Fisher",
-        role: "Sr. Dev",
-        team: "Development",
-        status: "active",
-        age: "22",
-        avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d",
-        email: "jane.fisher@example.com",
-    },
-    {
-        id: 4,
-        name: "William Howard",
-        role: "C.M.",
-        team: "Marketing",
-        status: "vacation",
-        age: "28",
-        avatar: "https://i.pravatar.cc/150?u=a048581f4e29026701d",
-        email: "william.howard@example.com",
-    },
-    {
-        id: 5,
-        name: "Kristen Copper",
-        role: "S. Manager",
-        team: "Sales",
-        status: "active",
-        age: "24",
-        avatar: "https://i.pravatar.cc/150?u=a092581d4ef9026700d",
-        email: "kristen.cooper@example.com",
-    },
-    {
-        id: 6,
-        name: "Brian Kim",
-        role: "P. Manager",
-        team: "Management",
-        age: "29",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-        email: "brian.kim@example.com",
-        status: "Active",
-    },
-    {
-        id: 7,
-        name: "Michael Hunt",
-        role: "Designer",
-        team: "Design",
-        status: "paused",
-        age: "27",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29027007d",
-        email: "michael.hunt@example.com",
-    },
-    {
-        id: 8,
-        name: "Samantha Brooks",
-        role: "HR Manager",
-        team: "HR",
-        status: "active",
-        age: "31",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e27027008d",
-        email: "samantha.brooks@example.com",
-    },
-    {
-        id: 9,
-        name: "Frank Harrison",
-        role: "F. Manager",
-        team: "Finance",
-        status: "vacation",
-        age: "33",
-        avatar: "https://i.pravatar.cc/150?img=4",
-        email: "frank.harrison@example.com",
-    },
-    {
-        id: 10,
-        name: "Emma Adams",
-        role: "Ops Manager",
-        team: "Operations",
-        status: "active",
-        age: "35",
-        avatar: "https://i.pravatar.cc/150?img=5",
-        email: "emma.adams@example.com",
-    },
-    {
-        id: 11,
-        name: "Brandon Stevens",
-        role: "Jr. Dev",
-        team: "Development",
-        status: "active",
-        age: "22",
-        avatar: "https://i.pravatar.cc/150?img=8",
-        email: "brandon.stevens@example.com",
-    },
-    {
-        id: 12,
-        name: "Megan Richards",
-        role: "P. Manager",
-        team: "Product",
-        status: "paused",
-        age: "28",
-        avatar: "https://i.pravatar.cc/150?img=10",
-        email: "megan.richards@example.com",
-    },
-    {
-        id: 13,
-        name: "Oliver Scott",
-        role: "S. Manager",
-        team: "Security",
-        status: "active",
-        age: "37",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        email: "oliver.scott@example.com",
-    },
-    {
-        id: 14,
-        name: "Grace Allen",
-        role: "M. Specialist",
-        team: "Marketing",
-        status: "active",
-        age: "30",
-        avatar: "https://i.pravatar.cc/150?img=16",
-        email: "grace.allen@example.com",
-    },
-    {
-        id: 15,
-        name: "Noah Carter",
-        role: "IT Specialist",
-        team: "I. Technology",
-        status: "paused",
-        age: "31",
-        avatar: "https://i.pravatar.cc/150?img=15",
-        email: "noah.carter@example.com",
-    },
-    {
-        id: 16,
-        name: "Ava Perez",
-        role: "Manager",
-        team: "Sales",
-        status: "active",
-        age: "29",
-        avatar: "https://i.pravatar.cc/150?img=20",
-        email: "ava.perez@example.com",
-    },
-    {
-        id: 17,
-        name: "Liam Johnson",
-        role: "Data Analyst",
-        team: "Analysis",
-        status: "active",
-        age: "28",
-        avatar: "https://i.pravatar.cc/150?img=33",
-        email: "liam.johnson@example.com",
-    },
-    {
-        id: 18,
-        name: "Sophia Taylor",
-        role: "QA Analyst",
-        team: "Testing",
-        status: "active",
-        age: "27",
-        avatar: "https://i.pravatar.cc/150?img=29",
-        email: "sophia.taylor@example.com",
-    },
-    {
-        id: 19,
-        name: "Lucas Harris",
-        role: "Administrator",
-        team: "Information Technology",
-        status: "paused",
-        age: "32",
-        avatar: "https://i.pravatar.cc/150?img=50",
-        email: "lucas.harris@example.com",
-    },
-    {
-        id: 20,
-        name: "Mia Robinson",
-        role: "Coordinator",
-        team: "Operations",
-        status: "active",
-        age: "26",
-        avatar: "https://i.pravatar.cc/150?img=45",
-        email: "mia.robinson@example.com",
-    },
-];
-
-export function capitalize(s) {
-    return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
-}
-
-const statusColorMap = {
-    active: "success",
-    paused: "danger",
-    vacation: "warning",
-};
-
-const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
+import { getJSON } from "../api/api.js";
+import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
+import { capitalize } from "../utils/stringUtils.js";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
     const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
-    const [visibleColumns, setVisibleColumns] = React.useState(new Set(INITIAL_VISIBLE_COLUMNS));
-    const [statusFilter, setStatusFilter] = React.useState("all");
+    const [genderFilter, setGenderFilter] = React.useState(new Set(["all"]));
+    const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
+    const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
     const [sortDescriptor, setSortDescriptor] = React.useState({
-        column: "age",
-        direction: "ascending",
+        column: "name",
+        direction: "descending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
+    const [clients, setClients] = React.useState([])
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchClients = async () => {
+            try {
+                setLoading(true);
+                const clients = await getJSON("/clients");
+
+                // Mapuj data z backendu DTO
+                const mappedClients = clients.map(client => ({
+                    id: client.id,
+                    name: `${client.firstName} ${client.lastName}`,
+                    gender: client.gender,
+                    address: `${client.street}, ${client.city}`,
+                    department: client.department,
+                    caregiver: client.caregiver,
+                }));
+
+                setClients(mappedClients);
+            } catch (err) {
+                console.error("Error fetching clients:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchClients();
+    }, []);
 
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
@@ -275,28 +75,63 @@ function Clients() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    const headerColumns = React.useMemo(() => {
-        if (visibleColumns === "all") return columns;
+    // Dynamické options pro department a caregiver
+    const departmentOptions = React.useMemo(() => {
+        const uniqueDepartments = [...new Set(clients
+            .map(c => c.department?.name)
+            .filter(Boolean))];
+        return uniqueDepartments.map(name => ({
+            name: name,
+            uid: name
+        }));
+    }, [clients]);
 
-        return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
-    }, [visibleColumns]);
+    const caregiverOptions = React.useMemo(() => {
+        const uniqueCaregivers = [...new Set(clients
+            .map(c => c.caregiver ? `${c.caregiver.firstName} ${c.caregiver.lastName}` : null)
+            .filter(Boolean))];
+        return uniqueCaregivers.map(name => ({
+            name: name,
+            uid: name
+        }));
+    }, [clients]);
 
     const filteredItems = React.useMemo(() => {
-        let filteredUsers = [...users];
+        let filteredClients = [...clients];
 
+        // Filtr podle jména
         if (hasSearchFilter) {
-            filteredUsers = filteredUsers.filter((user) =>
-                user.name.toLowerCase().includes(filterValue.toLowerCase()),
-            );
-        }
-        if (statusFilter !== "all" && Array.from(statusFilter).length !== statusOptions.length) {
-            filteredUsers = filteredUsers.filter((user) =>
-                Array.from(statusFilter).includes(user.status),
+            filteredClients = filteredClients.filter((client) =>
+                client.name.toLowerCase().includes(filterValue.toLowerCase()),
             );
         }
 
-        return filteredUsers;
-    }, [users, filterValue, statusFilter]);
+        // Filtr podle pohlaví
+        if (!genderFilter.has("all")) {
+            filteredClients = filteredClients.filter((client) =>
+                genderFilter.has(client.gender),
+            );
+        }
+
+        // Filtr podle oddělení
+        if (!departmentFilter.has("all")) {
+            filteredClients = filteredClients.filter((client) =>
+                departmentFilter.has(client.department?.name),
+            );
+        }
+
+        // Filtr podle pečovatele
+        if (!caregiverFilter.has("all")) {
+            filteredClients = filteredClients.filter((client) => {
+                const caregiverName = client.caregiver
+                    ? `${client.caregiver.firstName} ${client.caregiver.lastName}`
+                    : null;
+                return caregiverFilter.has(caregiverName);
+            });
+        }
+
+        return filteredClients;
+    }, [clients, filterValue, hasSearchFilter, genderFilter, departmentFilter, caregiverFilter]);
 
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
@@ -304,36 +139,45 @@ function Clients() {
             const second = b[sortDescriptor.column];
             const cmp = first < second ? -1 : first > second ? 1 : 0;
 
-            return sortDescriptor.direction === "descending" ? -cmp : cmp;
+            return sortDescriptor.direction === "descending" ? cmp : -cmp;
         });
     }, [sortDescriptor, filteredItems]);
 
-    const renderCell = React.useCallback((user, columnKey) => {
-        const cellValue = user[columnKey];
+    const renderCell = React.useCallback((client, columnKey) => {
+        const cellValue = client[columnKey];
 
         switch (columnKey) {
             case "name":
                 return (
-                    <User
-                        avatarProps={{radius: "lg", src: user.avatar}}
-                        description={user.email}
-                        name={cellValue}
-                    >
-                        {user.email}
-                    </User>
-                );
-            case "role":
-                return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize">{cellValue}</p>
-                        <p className="text-bold text-tiny capitalize opacity-75">{user.team}</p>
+                        <p className="font-bold text-small">{cellValue}</p>
                     </div>
                 );
-            case "status":
+            case "gender":
                 return (
-                    <Chip className="capitalize" color={statusColorMap[user.status]} size="sm" variant="flat">
-                        {cellValue}
-                    </Chip>
+                    <div className="flex flex-col">
+                        <p className="text-small">{genderTranslations[cellValue] || "-"}</p>
+                    </div>
+                );
+            case "address":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">{cellValue || "-"}</p>
+                    </div>
+                );
+            case "department":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">{cellValue?.name || "-"}</p>
+                    </div>
+                );
+            case "caregiver":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">
+                            {cellValue ? `${cellValue.firstName} ${cellValue.lastName}` : "-"}
+                        </p>
+                    </div>
                 );
             case "actions":
                 return (
@@ -345,15 +189,15 @@ function Clients() {
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
-                                <DropdownItem key="view">View</DropdownItem>
-                                <DropdownItem key="edit">Edit</DropdownItem>
-                                <DropdownItem key="delete">Delete</DropdownItem>
+                                <DropdownItem key="view">Zobrazit</DropdownItem>
+                                <DropdownItem key="edit">Upravit</DropdownItem>
+                                <DropdownItem key="delete">Smazat</DropdownItem>
                             </DropdownMenu>
                         </Dropdown>
                     </div>
                 );
             default:
-                return cellValue;
+                return cellValue || "-";
         }
     }, []);
 
@@ -369,6 +213,66 @@ function Clients() {
         setFilterValue("");
     }, []);
 
+    // Handler pro změnu gender filtru
+    const handleGenderFilterChange = React.useCallback((keys) => {
+        const newKeys = new Set(keys);
+
+        // Pokud jsme vybrali "all", odeber všechny ostatní
+        if (newKeys.has("all") && !genderFilter.has("all")) {
+            setGenderFilter(new Set(["all"]));
+        }
+        // Pokud vybereme něco jiného než "all", odeber "all"
+        else if (newKeys.size > 1 && newKeys.has("all")) {
+            newKeys.delete("all");
+            setGenderFilter(newKeys);
+        }
+        // Pokud odznačíme všechny, vrať "all"
+        else if (newKeys.size === 0) {
+            setGenderFilter(new Set(["all"]));
+        }
+        else {
+            setGenderFilter(newKeys);
+        }
+    }, [genderFilter]);
+
+    // Handler pro změnu department filtru
+    const handleDepartmentFilterChange = React.useCallback((keys) => {
+        const newKeys = new Set(keys);
+
+        if (newKeys.has("all") && !departmentFilter.has("all")) {
+            setDepartmentFilter(new Set(["all"]));
+        }
+        else if (newKeys.size > 1 && newKeys.has("all")) {
+            newKeys.delete("all");
+            setDepartmentFilter(newKeys);
+        }
+        else if (newKeys.size === 0) {
+            setDepartmentFilter(new Set(["all"]));
+        }
+        else {
+            setDepartmentFilter(newKeys);
+        }
+    }, [departmentFilter]);
+
+    // Handler pro změnu caregiver filtru
+    const handleCaregiverFilterChange = React.useCallback((keys) => {
+        const newKeys = new Set(keys);
+
+        if (newKeys.has("all") && !caregiverFilter.has("all")) {
+            setCaregiverFilter(new Set(["all"]));
+        }
+        else if (newKeys.size > 1 && newKeys.has("all")) {
+            newKeys.delete("all");
+            setCaregiverFilter(newKeys);
+        }
+        else if (newKeys.size === 0) {
+            setCaregiverFilter(new Set(["all"]));
+        }
+        else {
+            setCaregiverFilter(newKeys);
+        }
+    }, [caregiverFilter]);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -376,7 +280,7 @@ function Clients() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[44%]"
-                        placeholder="Search by name..."
+                        placeholder="Hledat podle jména..."
                         startContent={<MagnifyingGlassIcon className="size-5" />}
                         value={filterValue}
                         onClear={() => onClear()}
@@ -398,20 +302,22 @@ function Clients() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
-                                    Status
+                                    Pohlaví
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
                                 disallowEmptySelection
-                                aria-label="Table Columns"
+                                aria-label="Gender Filter"
                                 closeOnSelect={false}
-                                selectedKeys={statusFilter}
+                                selectedKeys={genderFilter}
                                 selectionMode="multiple"
-                                onSelectionChange={setStatusFilter}
+                                onSelectionChange={handleGenderFilterChange}
+                                className="max-h-60 overflow-y-auto"
                             >
-                                {statusOptions.map((status) => (
-                                    <DropdownItem key={status.uid} className="capitalize">
-                                        {capitalize(status.name)}
+                                <DropdownItem key="all">Všechny</DropdownItem>
+                                {genderOptions.map((gender) => (
+                                    <DropdownItem key={gender.uid}>
+                                        {gender.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
@@ -419,64 +325,88 @@ function Clients() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
-                                    Columns
+                                    Oddělení
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
                                 disallowEmptySelection
-                                aria-label="Table Columns"
+                                aria-label="Department Filter"
                                 closeOnSelect={false}
-                                selectedKeys={visibleColumns}
+                                selectedKeys={departmentFilter}
                                 selectionMode="multiple"
-                                onSelectionChange={setVisibleColumns}
+                                onSelectionChange={handleDepartmentFilterChange}
+                                className="max-h-60 overflow-y-auto"
                             >
-                                {columns.map((column) => (
-                                    <DropdownItem key={column.uid} className="capitalize">
-                                        {capitalize(column.name)}
+                                <DropdownItem key="all">Všechny</DropdownItem>
+                                {departmentOptions.map((dept) => (
+                                    <DropdownItem key={dept.uid}>
+                                        {dept.name}
+                                    </DropdownItem>
+                                ))}
+                            </DropdownMenu>
+                        </Dropdown>
+                        <Dropdown>
+                            <DropdownTrigger className="hidden sm:flex">
+                                <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
+                                    Pečovatel
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                disallowEmptySelection
+                                aria-label="Caregiver Filter"
+                                closeOnSelect={false}
+                                selectedKeys={caregiverFilter}
+                                selectionMode="multiple"
+                                onSelectionChange={handleCaregiverFilterChange}
+                                className="max-h-60 overflow-y-auto"
+                            >
+                                <DropdownItem key="all">Všichni</DropdownItem>
+                                {caregiverOptions.map((caregiver) => (
+                                    <DropdownItem key={caregiver.uid}>
+                                        {caregiver.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
                         <Button color="primary" endContent={<PlusIcon className="size-4" />}>
-                            Add New
+                            Přidat
                         </Button>
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Total {users.length} users</span>
+                    <span className="text-small">Celkem {clients.length} klientů</span>
                 </div>
             </div>
         );
     }, [
         filterValue,
-        statusFilter,
-        visibleColumns,
+        genderFilter,
+        departmentFilter,
+        caregiverFilter,
         filteredItems.length,
-        users.length,
+        clients.length,
         onSearchChange,
-        hasSearchFilter,
+        onClear,
+        genderOptions,
+        departmentOptions,
+        caregiverOptions,
+        handleGenderFilterChange,
+        handleDepartmentFilterChange,
+        handleCaregiverFilterChange,
     ]);
 
-    const bottomContent = React.useMemo(() => {
+    if (loading) {
         return (
-            <div className="py-2 px-2 flex justify-center items-center">
-                <span className="text-small">
-                    {selectedKeys === "all"
-                        ? "All items selected"
-                        : selectedKeys.size > 0
-                            ? `${selectedKeys.size} of ${filteredItems.length} selected`
-                            : " "}
-                </span>
+            <div className="flex justify-center items-center h-screen">
+                <Spinner size="lg" label="Načítání klientů..." />
             </div>
         );
-    }, [selectedKeys, filteredItems.length]);
+    }
 
     return (
         <Table
             isVirtualized
             aria-label="Clients table"
-            bottomContent={bottomContent}
-            bottomContentPlacement="outside"
             classNames={{
                 th: "bg-content1",
             }}
@@ -489,7 +419,7 @@ function Clients() {
             onSelectionChange={setSelectedKeys}
             onSortChange={setSortDescriptor}
         >
-            <TableHeader columns={headerColumns}>
+            <TableHeader columns={columns}>
                 {(column) => (
                     <TableColumn
                         key={column.uid}
@@ -500,7 +430,7 @@ function Clients() {
                     </TableColumn>
                 )}
             </TableHeader>
-            <TableBody emptyContent={"No users found"} items={sortedItems}>
+            <TableBody emptyContent={"Žádní klienti nenalezeni"} items={sortedItems}>
                 {(item) => (
                     <TableRow key={item.id}>
                         {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
