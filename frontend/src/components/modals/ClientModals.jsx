@@ -7,10 +7,16 @@ import {
     Button,
     Input,
     Checkbox,
-    Link, Divider, Form
+    Select,
+    SelectItem,
+    Textarea,
+    DatePicker,
+    Form
 } from "@heroui/react";
-import {Eye, EyeOff, Plus} from "lucide-react";
+import { Plus, CalendarDays } from "lucide-react";
 import React from "react";
+import {CalendarDate, getLocalTimeZone, parseDate, today} from "@internationalized/date";
+import { I18nProvider } from "@react-aria/i18n";
 
 export function ClientCreateModal({ isOpen, onClose, onSubmit }) {
     const [firstName, setFirstName] = React.useState("");
@@ -34,6 +40,46 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit }) {
 
     const [errors, setErrors] = React.useState({});
     const [isLoading, setIsLoading] = React.useState(false);
+
+    // Formátování telefonního čísla: volitelně +XXX a pak XXX XXX XXX
+    function formatPhoneNumber(value) {
+        // Povolit pouze + na začátku a číslice
+        let cleaned = value.replace(/[^\d+]/g, '');
+
+        // + může být pouze na začátku
+        const hasPlus = cleaned.startsWith('+');
+        cleaned = cleaned.replace(/\+/g, '');
+
+        if (hasPlus) {
+            // S předčíslím: +XXX XXX XXX XXX (max 3 pro předčíslí + 9 pro číslo)
+            const limited = cleaned.slice(0, 12);
+
+            if (limited.length <= 3) {
+                // Jen předčíslí
+                return `+${limited}`;
+            } else if (limited.length <= 6) {
+                // Předčíslí + první část
+                return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
+            } else if (limited.length <= 9) {
+                // Předčíslí + první 2 části
+                return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+            } else {
+                // Plné číslo s předčíslím
+                return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
+            }
+        } else {
+            // Bez předčíslí: XXX XXX XXX (max 9 číslic)
+            const limited = cleaned.slice(0, 9);
+
+            if (limited.length <= 3) {
+                return limited;
+            } else if (limited.length <= 6) {
+                return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+            } else {
+                return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+            }
+        }
+    }
 
     function resetForm() {
         setFirstName("");
@@ -62,119 +108,209 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit }) {
         >
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">Přidat nového klienta</ModalHeader>
-                <ModalBody>
+                <ModalBody className="overflow-y-auto max-h-[70vh]">
                     <Form
-                        className="w-full justify-center items-center space-y-4"
+                        className="w-full space-y-4"
                         validationErrors={errors}
                         onReset={() => resetForm()}
                         onSubmit={onSubmit}
                     >
-                        <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
-                            <h1 className="cursor-default">Přihlášení</h1>
-                            <Divider className="mb-3 w-5/6" />
-                            <Input
-                                isDisabled={isLoading}
-                                label="Uživatelské jméno"
-                                labelPlacement="inside"
-                                name="username"
-                                value={firstName}
-                                onValueChange={(value) => {
-                                    setFirstName(value);
-                                }}
-                                classNames={{
-                                    inputWrapper: [
-                                        "bg-content2",
-                                        "data-[hover=true]:bg-content3",
-                                        "data-[focus=true]:bg-content3",
-                                        "shadow-md"
-                                    ],
-                                    label: [
-                                        "text-medium",
-                                        "group-data-[filled-within=true]:text-foreground/75",
-                                    ],
-                                    input: [
-                                        "text-medium",
-                                        "font-semibold"
-                                    ]
-                                }}
-                            />
-
-                            <Input
-                                isDisabled={isLoading}
-                                label="Heslo"
-                                labelPlacement="inside"
-                                name="password"
-                                value={lastName}
-                                onValueChange={(value) => {
-                                    setLastName(value);
-                                }}
-                                classNames={{
-                                    inputWrapper: [
-                                        "bg-content2",
-                                        "data-[hover=true]:bg-content3",
-                                        "data-[focus=true]:bg-content3",
-                                        "shadow-md"
-                                    ],
-                                    label: [
-                                        "text-base",
-                                        "group-data-[filled-within=true]:text-foreground/75",
-                                    ],
-                                    input: [
-                                        "text-base",
-                                        "font-semibold"
-                                    ]
-                                }}
-                            />
-
-                            <Checkbox
-                                className="self-start"
-                                name="remember-me"
-                                value="true"
-                                isSelected={legallyCompetent}
-                                onValueChange={() => setLegallyCompetent(!legallyCompetent)}
-                                isDisabled={isLoading}
-                            >
-                                Zapamatovat si mě
-                            </Checkbox>
-
-                            <div className="flex justify-between w-full">
-                                <Button
-                                    className="text-base"
-                                    type="reset"
-                                    variant="bordered"
+                        <div className="flex flex-col gap-4 w-full">
+                            {/* Základní informace */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
                                     isDisabled={isLoading}
-                                >
-                                    Reset
-                                </Button>
-                                <Button
-                                    className="w-full text-base"
-                                    color="primary"
-                                    type="submit"
-                                    isLoading={isLoading}
+                                    label="Jméno"
+                                    labelPlacement="inside"
+                                    name="firstName"
+                                    value={firstName}
+                                    onValueChange={setFirstName}
+                                    isRequired
+                                />
+
+                                <Input
                                     isDisabled={isLoading}
-                                >
-                                    {isLoading ? "Ukládání..." : "Uložit"}
-                                </Button>
+                                    label="Příjmení"
+                                    labelPlacement="inside"
+                                    name="lastName"
+                                    value={lastName}
+                                    onValueChange={setLastName}
+                                    isRequired
+                                />
                             </div>
 
-                            {/* Mobile ver */}
-                            <Link className="text-foreground/50 hover:text-primary self-start hidden sm:block" size="sm" href="/forgot-password">
-                                Zapomenuté heslo?
-                            </Link>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Select
+                                    isDisabled={isLoading}
+                                    label="Pohlaví"
+                                    labelPlacement="inside"
+                                    name="gender"
+                                    selectedKeys={gender ? [gender] : []}
+                                    onSelectionChange={(keys) => setGender(Array.from(keys)[0])}
+                                    isRequired
+                                >
+                                    <SelectItem key="MALE" value="MALE">Muž</SelectItem>
+                                    <SelectItem key="FEMALE" value="FEMALE">Žena</SelectItem>
+                                </Select>
 
-                            {/* Desktop ver */}
-                            <Link className="text-foreground/50 hover:text-primary self-start sm:hidden" size="md" href="/forgot-password">
-                                Zapomenuté heslo?
-                            </Link>
+                                <I18nProvider locale="cs-u-ca-gregory">
+                                    <DatePicker
+                                        isDisabled={isLoading}
+                                        label="Datum narození"
+                                        labelPlacement="inside"
+                                        name="dateOfBirth"
+                                        value={dateOfBirth ? parseDate(dateOfBirth) : null}
+                                        onChange={(date) => setDateOfBirth(date ? date.toString() : "")}
+                                        showMonthAndYearPickers
+                                        selectorIcon={<CalendarDays size={18}/>}
+                                        minValue={new CalendarDate(1900, 1, 1)}
+                                        maxValue={today(getLocalTimeZone())}
+                                        isRequired
+                                    />
+                                </I18nProvider>
+                            </div>
+
+                            <Input
+                                isDisabled={isLoading}
+                                label="Email"
+                                labelPlacement="inside"
+                                name="email"
+                                type="email"
+                                value={email}
+                                onValueChange={setEmail}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    isDisabled={isLoading}
+                                    label="Telefon"
+                                    labelPlacement="inside"
+                                    name="phone"
+                                    type="tel"
+                                    value={phone}
+                                    onValueChange={(value) => setPhone(formatPhoneNumber(value))}
+                                    maxLength={17}
+                                    description="např. +420 123 456 789"
+                                />
+
+                                <Input
+                                    isDisabled={isLoading}
+                                    label="Osobní číslo"
+                                    labelPlacement="inside"
+                                    name="personalNumber"
+                                    value={personalNumber}
+                                    onValueChange={setPersonalNumber}
+                                />
+                            </div>
+
+                            {/* Adresa */}
+                            <Input
+                                isDisabled={isLoading}
+                                label="Ulice a číslo popisné"
+                                labelPlacement="inside"
+                                name="street"
+                                value={street}
+                                onValueChange={setStreet}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    isDisabled={isLoading}
+                                    label="Město"
+                                    labelPlacement="inside"
+                                    name="city"
+                                    value={city}
+                                    onValueChange={setCity}
+                                />
+
+                                <Input
+                                    isDisabled={isLoading}
+                                    label="PSČ"
+                                    labelPlacement="inside"
+                                    name="postalCode"
+                                    value={postalCode}
+                                    onValueChange={setPostalCode}
+                                />
+                            </div>
+
+                            {/* Další informace */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Select
+                                    isDisabled={isLoading}
+                                    label="Dávky"
+                                    labelPlacement="inside"
+                                    name="benefits"
+                                    selectedKeys={[benefits]}
+                                    onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
+                                >
+                                    <SelectItem key="NONE" value="NONE">Žádné</SelectItem>
+                                    <SelectItem key="DISABILITY" value="DISABILITY">Invalidní důchod</SelectItem>
+                                    <SelectItem key="PENSION" value="PENSION">Starobní důchod</SelectItem>
+                                    <SelectItem key="OTHER" value="OTHER">Jiné</SelectItem>
+                                </Select>
+
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        name="legallyCompetent"
+                                        isSelected={legallyCompetent}
+                                        onValueChange={setLegallyCompetent}
+                                        isDisabled={isLoading}
+                                    >
+                                        Právně způsobilý
+                                    </Checkbox>
+                                </div>
+                            </div>
+
+                            <Input
+                                isDisabled={isLoading}
+                                label="Kontakt na příbuzné"
+                                labelPlacement="inside"
+                                name="relativesContact"
+                                value={relativesContact}
+                                onValueChange={setRelativesContact}
+                            />
+
+                            <Input
+                                isDisabled={isLoading}
+                                label="Praktický lékař"
+                                labelPlacement="inside"
+                                name="generalPractitioner"
+                                value={generalPractitioner}
+                                onValueChange={setGeneralPractitioner}
+                            />
+
+                            <Textarea
+                                isDisabled={isLoading}
+                                label="Poznámky"
+                                labelPlacement="inside"
+                                name="notes"
+                                value={notes}
+                                onValueChange={setNotes}
+                                minRows={3}
+                            />
                         </div>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary"
-                            onPress={() => onSubmit(formData)}
-                            endContent={ <Plus className="size-4" /> }
+                    <Button
+                        className="text-base"
+                        type="reset"
+                        variant="bordered"
+                        isDisabled={isLoading}
+                        onPress={() => resetForm()}
                     >
-                        Přidat
+                        Reset
+                    </Button>
+                    <Button
+                        className="text-base"
+                        color="primary"
+                        type="submit"
+                        isLoading={isLoading}
+                        isDisabled={isLoading}
+                        endContent={<Plus className="size-4" />}
+                        onPress={onSubmit}
+                    >
+                        {isLoading ? "Ukládání..." : "Přidat klienta"}
                     </Button>
                 </ModalFooter>
             </ModalContent>

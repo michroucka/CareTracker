@@ -126,22 +126,6 @@ function Login() {
                             setErrors({});
                         }
                     }}
-                    classNames={{
-                        inputWrapper: [
-                            "bg-content2",
-                            "data-[hover=true]:bg-content3",
-                            "data-[focus=true]:bg-content3",
-                            "shadow-md"
-                        ],
-                        label: [
-                            "text-medium",
-                            "group-data-[filled-within=true]:text-foreground/75",
-                        ],
-                        input: [
-                            "text-medium",
-                            "font-semibold"
-                        ]
-                    }}
                 />
 
                 <Input
@@ -174,22 +158,6 @@ function Login() {
                         if (errors.username || errors.password) {
                             setErrors({});
                         }
-                    }}
-                    classNames={{
-                      inputWrapper: [
-                          "bg-content2",
-                          "data-[hover=true]:bg-content3",
-                          "data-[focus=true]:bg-content3",
-                          "shadow-md"
-                      ],
-                      label: [
-                          "text-base",
-                          "group-data-[filled-within=true]:text-foreground/75",
-                      ],
-                        input: [
-                            "text-base",
-                            "font-semibold"
-                        ]
                     }}
                 />
 
