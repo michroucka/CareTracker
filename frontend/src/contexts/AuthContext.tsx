@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { get, post } from "../api/api.js";
 import { addToast } from "@heroui/react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { X } from "lucide-react";
 import {useNavigate} from "react-router-dom";
 
 interface User {
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     title: "Odhlášení úspěšné",
                     description: "Byli jste úspěšně odhlášeni",
                     color: "success",
-                    closeIcon: <XMarkIcon />,
+                    closeIcon: <X />,
                     timeout: 5000,
                     classNames: {
                         closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 title: "Chyba při odhlašování",
                 description: "Nepodařilo se odhlásit",
                 color: "danger",
-                closeIcon: <XMarkIcon />,
+                closeIcon: <X />,
                 timeout: 5000,
                 classNames: {
                     closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",

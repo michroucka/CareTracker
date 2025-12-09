@@ -1,8 +1,7 @@
 import {Form, Input, Checkbox, Button, Divider, Link} from "@heroui/react";
 import React from "react";
 import { post } from "../api/api.js"
-import { ServerStackIcon } from "@heroicons/react/24/solid"
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
+import { Server, Eye, EyeOff } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
@@ -63,6 +62,7 @@ function Login() {
                     title: result.message,
                     description: `Vítejte ${result.username}!`,
                     color: "success",
+                    icon: <CircleCheck />
                 })
 
                 // Přesměruj zpět na původní stránku nebo na home
@@ -75,6 +75,7 @@ function Login() {
                 showToast({
                     title: errorMessage,
                     color: "danger",
+                    icon: <CircleX />
                 })
 
                 setErrors({
@@ -89,7 +90,7 @@ function Login() {
             showToast({
                 title: error.message || "Server není dostupný",
                 color: "danger",
-                icon: <ServerStackIcon />,
+                icon: <Server />,
             })
         } finally {
             setIsLoading(false);
@@ -157,9 +158,9 @@ function Login() {
                             disabled={isLoading}
                         >
                             {isPasswordVisible ? (
-                                <EyeSlashIcon className="size-6 sm:size-5 pointer-events-none" />
+                                <EyeOff className="size-6 sm:size-5 pointer-events-none" />
                             ) : (
-                                <EyeIcon className="size-6 sm:size-5 pointer-events-none" />
+                                <Eye className="size-6 sm:size-5 pointer-events-none" />
                             )}
                             </button>
                     }

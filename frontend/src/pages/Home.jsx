@@ -1,6 +1,6 @@
 import logo from "../assets/ct_icon.png"
 import {Divider, Card, CardHeader, CardBody} from "@heroui/react"
-import {UserIcon, PencilSquareIcon, DocumentTextIcon} from '@heroicons/react/24/solid'
+import {User, Edit, FileText, ShieldAlert} from 'lucide-react'
 
 function Home() {
     return (
@@ -18,7 +18,7 @@ function Home() {
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-10 text-start">
                 <Card className="">
                     <CardHeader className="flex items-center gap-2">
-                        <UserIcon className="w-5 h-5" />
+                        <User className="w-5 h-5" />
                         <h3 className="font-semibold text-lg">Evidence klientů</h3>
                     </CardHeader>
                     <Divider />
@@ -31,7 +31,7 @@ function Home() {
                 </Card>
                 <Card className="">
                     <CardHeader className="flex items-center gap-2">
-                        <PencilSquareIcon className="w-5 h-5" />
+                        <Edit className="w-5 h-5" />
                         <h3 className="font-semibold text-lg">Záznam poskytnuté péče</h3>
                     </CardHeader>
                     <Divider />
@@ -44,7 +44,7 @@ function Home() {
                 </Card>
                 <Card className="">
                     <CardHeader className="flex items-center gap-2">
-                        <DocumentTextIcon className="w-5 h-5" />
+                        <FileText className="w-5 h-5" />
                         <h3 className="font-semibold text-lg">Přehledy a reporty</h3>
                     </CardHeader>
                     <Divider />

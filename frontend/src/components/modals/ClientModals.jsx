@@ -9,7 +9,7 @@ import {
     Checkbox,
     Link
 } from "@heroui/react";
-import {PlusIcon} from "@heroicons/react/24/solid";
+import {Plus} from "lucide-react";
 
 export function ClientCreateModal({ isOpen, onClose, onSubmit }) {
     return (
@@ -47,12 +47,12 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit }) {
                             </div>
                         </ModalBody>
                         <ModalFooter>
-                            <Button color="danger" variant="flat" onPress={onClose}>
+                            <Button color="default" variant="flat" onPress={onClose}>
                                 Zrušit
                             </Button>
                             <Button color="primary"
                                     onPress={() => onSubmit(formData)}
-                                    endContent={ <PlusIcon className="size-4" /> }
+                                    endContent={ <Plus className="size-4" /> }
                             >
                                 Přidat
                             </Button>

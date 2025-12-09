@@ -1,7 +1,6 @@
 import {useTheme} from "../contexts/ThemeContext";
 import {Button} from "@heroui/react";
-import {MoonIcon as MoonOutline, SunIcon as SunOutline} from '@heroicons/react/24/outline'
-import {MoonIcon as MoonSolid, SunIcon as SunSolid} from '@heroicons/react/24/solid'
+import {Moon, Sun} from 'lucide-react'
 
 export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
     const { resolvedTheme, setTheme } = useTheme()
@@ -20,13 +19,13 @@ export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
             <div className={`relative ${iconSize}`}>
                 {isDark ? (
                     <>
-                        <MoonOutline className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} />
-                        <MoonSolid className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} />
+                        <Moon className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />
+                        <Moon className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} fill="currentColor" />
                     </>
                 ) : (
                     <>
-                        <SunOutline className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} />
-                        <SunSolid className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} />
+                        <Sun className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />
+                        <Sun className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} fill="currentColor" />
                     </>
                 )}
             </div>

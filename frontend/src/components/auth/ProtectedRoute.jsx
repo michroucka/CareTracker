@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole } from "../../constants/roles";
 import { showToast } from "../MyToast";
-import { ShieldExclamationIcon } from "@heroicons/react/24/solid";
+import { ShieldAlert } from "lucide-react";
 import {Spinner} from "@heroui/react";
 
 /**
@@ -29,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
                     title: "Přístup odepřen",
                     description: "Pro zobrazení této stránky se musíte přihlásit",
                     color: "warning",
-                    icon: <ShieldExclamationIcon />,
+                    icon: <ShieldAlert />,
                 });
                 toastShownRef.current = true;
             } else if (hasInsufficientPermissions) {
@@ -38,7 +38,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
                     title: "Nedostatečná oprávnění",
                     description: "Nemáte oprávnění pro zobrazení této stránky",
                     color: "danger",
-                    icon: <ShieldExclamationIcon />,
+                    icon: <ShieldAlert />,
                 });
                 toastShownRef.current = true;
             }

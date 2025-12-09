@@ -20,7 +20,7 @@ import {
 import logo from "../assets/ct_icon.png"
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { ChevronDownIcon, ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { ChevronDown, LogOut } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
 import { getRoleLabel, ROLES, hasRole } from "../constants/roles.js";
 
@@ -124,7 +124,7 @@ export default function AppNavbar() {
                                     as="button"
                                     avatarProps={{
                                         className: "w-9 h-9",
-                                        fallback: <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${ isDropdownOpen ? 'rotate-180' : '' }`} />,
+                                        fallback: <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${ isDropdownOpen ? 'rotate-180' : '' }`} />,
                                         showFallback: true,
                                         classNames: {
                                             base: "bg-transparent m-0",
@@ -150,7 +150,7 @@ export default function AppNavbar() {
                                         key="logout"
                                         color="danger"
                                         onPress={logout}
-                                        startContent={<ArrowRightStartOnRectangleIcon className="h-4 w-4" />}
+                                        startContent={<LogOut className="h-4 w-4" />}
                                         className="text-danger"
                                     >
                                         Odhlásit se
@@ -219,7 +219,7 @@ export default function AppNavbar() {
                                     logout();
                                 }}
                             >
-                                <ArrowRightStartOnRectangleIcon className="size-8.5" />
+                                <LogOut className="size-8.5" />
                             </Button>
                         </div>
                     </NavbarMenuItem>

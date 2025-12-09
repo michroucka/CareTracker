@@ -14,12 +14,13 @@ import {
     DropdownItem,
     Spinner,
 } from "@heroui/react";
-import { MagnifyingGlassIcon, EllipsisVerticalIcon, PlusIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
-import { useClients } from "../hooks/useClients.js";
+import {Search, MoreVertical, Plus, ChevronDown, ShieldAlert, Shield, CircleCheckIcon} from "lucide-react";
+import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ClientCreateModal } from "../components/modals/ClientModals.jsx";
+import { showToast } from "../components/MyToast.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -185,7 +186,7 @@ function Clients() {
                         <Dropdown>
                             <DropdownTrigger>
                                 <Button isIconOnly size="sm" variant="light">
-                                    <EllipsisVerticalIcon className="size-6" />
+                                    <MoreVertical className="size-6" />
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
@@ -294,7 +295,7 @@ function Clients() {
                         isClearable
                         className="w-full sm:max-w-[44%]"
                         placeholder="Hledat podle jména..."
-                        startContent={<MagnifyingGlassIcon className="size-5" />}
+                        startContent={<Search className="size-5" />}
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
@@ -314,7 +315,7 @@ function Clients() {
                     <div className="flex gap-3">
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
+                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
                                     Pohlaví
                                 </Button>
                             </DropdownTrigger>
@@ -337,7 +338,7 @@ function Clients() {
                         </Dropdown>
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
+                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
                                     Oddělení
                                 </Button>
                             </DropdownTrigger>
@@ -360,7 +361,7 @@ function Clients() {
                         </Dropdown>
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDownIcon className="size-4" />} variant="flat" className="text-foreground">
+                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
                                     Pečovatel
                                 </Button>
                             </DropdownTrigger>
@@ -383,7 +384,7 @@ function Clients() {
                         </Dropdown>
                         {canAddClient && (
                             <Button color="primary"
-                                    endContent={<PlusIcon className="size-4" />}
+                                    endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
                             >
                                 Přidat
