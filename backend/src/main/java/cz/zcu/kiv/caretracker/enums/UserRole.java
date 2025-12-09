@@ -3,7 +3,7 @@ package cz.zcu.kiv.caretracker.enums;
 public enum UserRole {
     CAREGIVER,
     COORDINATOR,
-    MANAGER,
+    ADMIN,
     CLIENT,
     SUPERADMIN;
 }

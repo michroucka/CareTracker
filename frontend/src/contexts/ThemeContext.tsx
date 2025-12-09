@@ -1,4 +1,5 @@
 import React, {createContext, useContext, useState, useEffect} from "react";
+import { usePrefersDarkMode } from "../hooks/useMediaQuery";
 
 type Theme = "light" | "dark" | "system";
 
@@ -26,11 +27,10 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
-    useEffect(() => {
-        const getSystemTheme = (): "light" | "dark" => {
-            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        };
+    // Hook pro detekci system dark mode
+    const prefersDarkMode = usePrefersDarkMode();
 
+    useEffect(() => {
         const updateThemeColor = (currentTheme: "light" | "dark") => {
             const metaThemeColor = document.querySelector("meta[name='theme-color']");
             if (metaThemeColor) {
@@ -38,28 +38,17 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
             }
         };
 
-        const newResolvedTheme = theme === "system" ? getSystemTheme() : theme;
+        // Resolv theme: použij system preference pokud theme === "system"
+        const systemTheme = prefersDarkMode ? "dark" : "light";
+        const newResolvedTheme = theme === "system" ? systemTheme : theme;
+
         setResolvedTheme(newResolvedTheme);
 
         document.documentElement.classList.remove("light", "dark");
         document.documentElement.classList.add(newResolvedTheme);
         updateThemeColor(newResolvedTheme);
         localStorage.setItem("theme", theme);
-
-        if (theme === "system") {
-            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            const handleChange = () => {
-                const systemTheme = getSystemTheme();
-                setResolvedTheme(systemTheme);
-                document.documentElement.classList.remove("light", "dark");
-                document.documentElement.classList.add(systemTheme);
-                updateThemeColor(systemTheme);
-            };
-
-            mediaQuery.addEventListener("change", handleChange);
-            return () => mediaQuery.removeEventListener("change", handleChange);
-        }
-    }, [theme]);
+    }, [theme, prefersDarkMode]);
 
     return (
         <ThemeContext.Provider value={{theme, setTheme, resolvedTheme}}>

@@ -15,7 +15,8 @@ import {
     Spinner,
 } from "@heroui/react";
 import { MagnifyingGlassIcon, EllipsisVerticalIcon, PlusIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
-import { getJSON } from "../api/api.js";
+import { useClients } from "../hooks/useClients.js";
+import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 
 function Clients() {
@@ -29,48 +30,35 @@ function Clients() {
         direction: "descending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
-    const [clients, setClients] = React.useState([])
-    const [loading, setLoading] = React.useState(true);
+    const {
+        clients,
+        loading,
+        fetchClients,
+        fetchClient,
+        createClient,
+        updateClient,
+        deleteClient,
+    } = useClients();
+
+    // Detekce mobilního zobrazení
+    const isMobile = useIsMobile();
+
+    // Filtrované sloupce pro mobile - jen jméno a akce
+    const visibleColumns = React.useMemo(() => {
+        if (isMobile) {
+            return columns.filter(col => col.uid === "name" || col.uid === "actions");
+        }
+        return columns;
+    }, [isMobile]);
 
     React.useEffect(() => {
-        const fetchClients = async () => {
-            try {
-                setLoading(true);
-                const clients = await getJSON("/clients");
-
-                // Mapuj data z backendu DTO
-                const mappedClients = clients.map(client => ({
-                    id: client.id,
-                    name: `${client.firstName} ${client.lastName}`,
-                    gender: client.gender,
-                    address: `${client.street}, ${client.city}`,
-                    department: client.department,
-                    caregiver: client.caregiver,
-                }));
-
-                setClients(mappedClients);
-            } catch (err) {
-                console.error("Error fetching clients:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchClients();
     }, []);
 
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
-        const updateTableHeight = () => {
-            const isMobile = window.innerWidth < 640; // Tailwind sm breakpoint
-            setMaxTableHeight(isMobile ? "calc(100dvh - 13      rem)" : "calc(100dvh - 16rem)");
-        };
-
-        updateTableHeight();
-        window.addEventListener('resize', updateTableHeight);
-
-        return () => window.removeEventListener('resize', updateTableHeight);
-    }, []);
+        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
+    }, [isMobile]);
 
     const hasSearchFilter = Boolean(filterValue);
 
@@ -418,7 +406,7 @@ function Clients() {
             onSelectionChange={setSelectedKeys}
             onSortChange={setSortDescriptor}
         >
-            <TableHeader columns={columns}>
+            <TableHeader columns={visibleColumns}>
                 {(column) => (
                     <TableColumn
                         key={column.uid}

@@ -16,7 +16,7 @@ function Login() {
     const [isLoading, setIsLoading] = React.useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, checkAuth } = useAuth();
 
     const togglePassword = () => setIsPasswordVisible(!isPasswordVisible);
 
@@ -56,8 +56,8 @@ function Login() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                // Úspěšné přihlášení
-                login(result.username, result.role); // Aktualizace globálního stavu
+                // Úspěšné přihlášení - načti kompletní user context včetně department/organization
+                await checkAuth(); // Tím získáme employeeId, departmentId, organizationId
 
                 showToast({
                     title: result.message,
@@ -150,7 +150,7 @@ function Login() {
                     endContent={
                         <button
                             aria-label="toggle password visibility"
-                            className="focus:outline-solid outline-transparent"
+                            className="focus:outline-solid outline-transparent cursor-pointer"
                             type="button"
                             onClick={togglePassword}
                             title="Zobrazit heslo"

@@ -1,7 +1,7 @@
 // Definice rolí v systému (hodnoty odpovídají UserRole enum z backendu)
 export const ROLES = {
     SUPERADMIN: "SUPERADMIN",
-    MANAGER: "MANAGER",
+    ADMIN: "ADMIN",
     COORDINATOR: "COORDINATOR",
     CAREGIVER: "CAREGIVER",
     CLIENT: "CLIENT"
@@ -10,7 +10,7 @@ export const ROLES = {
 // České názvy rolí pro zobrazení v UI
 export const ROLE_LABELS = {
     SUPERADMIN: "Superadmin",
-    MANAGER: "Vedoucí",
+    ADMIN: "Administrátor",
     COORDINATOR: "Koordinátor",
     CAREGIVER: "Pečovatel",
     CLIENT: "Klient"

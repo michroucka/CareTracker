@@ -19,7 +19,7 @@ export default function App() {
                     <Route
                         path="/clients"
                         element={
-                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.MANAGER, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                 <Clients />
                             </ProtectedRoute>
                         }

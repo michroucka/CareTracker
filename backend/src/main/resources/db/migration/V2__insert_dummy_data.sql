@@ -1825,7 +1825,7 @@ insert into performed_task (id, client_id, task_id, date, unit_count, notes) val
 insert into performed_task (id, client_id, task_id, date, unit_count, notes) values (1000, 339, 3, '2016-05-26', 193, 'Integer ac leo. Pellentesque ultrices mattis odio. Donec vitae nisi.');
 
 insert into app_user (id, username, email, password, role, active, employee_id, client_id) values (1, 'superadmin', 'superadmin@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'SUPERADMIN', true, NULL, NULL),
-                                                                                                  (2, 'manager', 'manager@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'MANAGER', true, 1, NULL),
+                                                                                                  (2, 'admin', 'admin@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'ADMIN', true, 1, NULL),
                                                                                                   (3, 'coordinator', 'coordinator@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'COORDINATOR', true, 2, NULL),
                                                                                                   (4, 'caregiver', 'caregiver@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'CAREGIVER', true, 3, NULL),
                                                                                                   (5, 'client', 'client@caretracker.dev', '$2a$12$1n6xKZ43aRIcm4aSgSYeaORaIWwmQWFWOIK1KRDIPjHRW6larFZGm', 'CLIENT', true, NULL,4);

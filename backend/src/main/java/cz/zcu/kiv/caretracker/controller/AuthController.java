@@ -1,6 +1,5 @@
 package cz.zcu.kiv.caretracker.controller;
 
-
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 
@@ -9,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,20 +28,50 @@ public class AuthController {
     private UserRepository userRepository;
 
     @GetMapping("/auth-status")
+    @Transactional(readOnly = true)
     public Map<String, Object> authStatus(Authentication auth) {
-        if (auth != null && auth.isAuthenticated()) {
-            User user = userRepository.findByUsername(auth.getName())
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        try {
+            if (auth != null && auth.isAuthenticated()) {
+                User user = userRepository.findByUsername(auth.getName())
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            log.debug("Authentication status check - authenticated user '{}'", auth.getName());
-            return Map.of(
-                    "isLoggedIn", true,
-                    "username", auth.getName(),
-                    "role", user.getRole()
-            );
+                log.debug("Authentication status check - authenticated user '{}'", auth.getName());
+
+                // Základní odpověď
+                Map<String, Object> response = new java.util.HashMap<>();
+                response.put("isLoggedIn", true);
+                response.put("username", auth.getName());
+                response.put("role", user.getRole().toString());
+
+                // Přidání organizačního kontextu pro zaměstnance
+                try {
+                    if (user.getEmployee() != null) {
+                        response.put("employeeId", user.getEmployee().getId());
+                        response.put("employeeRole", user.getEmployee().getRole().toString());
+
+                        // Přidání department ID pro CAREGIVER, COORDINATOR a ADMIN
+                        if (user.getEmployee().getDepartment() != null) {
+                            response.put("departmentId", user.getEmployee().getDepartment().getId());
+
+                            // Přidání organization ID
+                            if (user.getEmployee().getDepartment().getOrganization() != null) {
+                                response.put("organizationId", user.getEmployee().getDepartment().getOrganization().getId());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Error loading employee context for user '{}': {}", auth.getName(), e.getMessage());
+                    // Continue with basic auth info without employee context
+                }
+
+                return response;
+            }
+            log.debug("Authentication status check - no authenticated user");
+            return Map.of("isLoggedIn", false);
+        } catch (Exception e) {
+            log.error("Error in auth status check", e);
+            return Map.of("isLoggedIn", false, "error", e.getMessage());
         }
-        log.debug("Authentication status check - no authenticated user");
-        return Map.of("isLoggedIn", false);
     }
 
     @PostMapping("/logout")

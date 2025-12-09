@@ -7,12 +7,16 @@ import {useNavigate} from "react-router-dom";
 interface User {
     username: string;
     role: string;
+    employeeId?: number;
+    employeeRole?: string;
+    departmentId?: number;
+    organizationId?: number;
 }
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (username: string, role: string) => void;
+    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => void;
     logout: () => void;
     checkAuth: () => Promise<void>;
 }
@@ -32,7 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (data.isLoggedIn) {
                 setUser({
                     username: data.username,
-                    role: data.role
+                    role: data.role,
+                    employeeId: data.employeeId,
+                    employeeRole: data.employeeRole,
+                    departmentId: data.departmentId,
+                    organizationId: data.organizationId
                 });
             } else {
                 setUser(null);
@@ -45,8 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const login = (username: string, role: string) => {
-        setUser({ username, role });
+    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => {
+        setUser({
+            username,
+            role,
+            employeeId,
+            employeeRole,
+            departmentId,
+            organizationId
+        });
     };
 
     const logout = async () => {

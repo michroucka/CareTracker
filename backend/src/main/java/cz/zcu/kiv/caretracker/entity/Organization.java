@@ -1,8 +1,12 @@
 package cz.zcu.kiv.caretracker.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
 @Entity
 @Table(name = "organization")
 public class Organization {
