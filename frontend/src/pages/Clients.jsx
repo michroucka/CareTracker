@@ -18,6 +18,8 @@ import { MagnifyingGlassIcon, EllipsisVerticalIcon, PlusIcon, ChevronDownIcon } 
 import { useClients } from "../hooks/useClients.js";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { ClientCreateModal } from "../components/modals/ClientModals.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -30,6 +32,7 @@ function Clients() {
         direction: "descending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
+    const { user } = useAuth();
     const {
         clients,
         loading,
@@ -39,9 +42,19 @@ function Clients() {
         updateClient,
         deleteClient,
     } = useClients();
+    const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
+
+    // Kontrola oprávnění - můžeš upravit podle svých rolí
+    const canAddClient = React.useMemo(() => {
+        if (!user) return false;
+        // Přidej sem role, které mohou přidávat klienty
+        const allowedRoles = ["SUPERADMIN", "ADMIN", "COORDINATOR"];
+
+        return allowedRoles.includes(user.role);
+    }, [user]);
 
     // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
@@ -260,6 +273,19 @@ function Clients() {
         }
     }, [caregiverFilter]);
 
+    const handleOpenCreateModal = () => {
+        setIsCreateModalOpen(true);
+    };
+
+    const handleCloseCreateModal = () => {
+        setIsCreateModalOpen(false);
+    }
+
+    const handleCreateClient = async (clientData) => {
+        await createClient(clientData);
+        setIsCreateModalOpen(false);
+    }
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -355,9 +381,14 @@ function Clients() {
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
-                        <Button color="primary" endContent={<PlusIcon className="size-4" />}>
-                            Přidat
-                        </Button>
+                        {canAddClient && (
+                            <Button color="primary"
+                                    endContent={<PlusIcon className="size-4" />}
+                                    onPress={handleOpenCreateModal}
+                            >
+                                Přidat
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
@@ -380,6 +411,7 @@ function Clients() {
         handleGenderFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
+        canAddClient,
     ]);
 
     if (loading) {
@@ -391,40 +423,47 @@ function Clients() {
     }
 
     return (
-        <Table
-            isVirtualized
-            aria-label="Clients table"
-            classNames={{
-                th: "bg-content1",
-            }}
-            maxTableHeight={maxTableHeight}
-            selectedKeys={selectedKeys}
-            selectionMode="single"
-            sortDescriptor={sortDescriptor}
-            topContent={topContent}
-            topContentPlacement="outside"
-            onSelectionChange={setSelectedKeys}
-            onSortChange={setSortDescriptor}
-        >
-            <TableHeader columns={visibleColumns}>
-                {(column) => (
-                    <TableColumn
-                        key={column.uid}
-                        align={column.uid === "actions" ? "end" : "start"}
-                        allowsSorting={column.sortable}
-                    >
-                        {column.name}
-                    </TableColumn>
-                )}
-            </TableHeader>
-            <TableBody emptyContent={"Žádní klienti nenalezeni"} items={sortedItems}>
-                {(item) => (
-                    <TableRow key={item.id}>
-                        {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                    </TableRow>
-                )}
-            </TableBody>
-        </Table>
+        <>
+            <Table
+                isVirtualized
+                aria-label="Clients table"
+                classNames={{
+                    th: "bg-content1",
+                }}
+                maxTableHeight={maxTableHeight}
+                selectedKeys={selectedKeys}
+                selectionMode="single"
+                sortDescriptor={sortDescriptor}
+                topContent={topContent}
+                topContentPlacement="outside"
+                onSelectionChange={setSelectedKeys}
+                onSortChange={setSortDescriptor}
+            >
+                <TableHeader columns={visibleColumns}>
+                    {(column) => (
+                        <TableColumn
+                            key={column.uid}
+                            align={column.uid === "actions" ? "end" : "start"}
+                            allowsSorting={column.sortable}
+                        >
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody emptyContent={"Žádní klienti nenalezeni"} items={sortedItems}>
+                    {(item) => (
+                        <TableRow key={item.id}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+
+            <ClientCreateModal
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                onSubmit={handleCreateClient}/>
+        </>
     );
 }
 

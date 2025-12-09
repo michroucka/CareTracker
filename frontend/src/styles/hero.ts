@@ -124,16 +124,16 @@ export default heroui ({
             },
             colors: { // dark theme colors
                 "default": {
-                    "50": "#e4e4e7",
-                    "100": "#d4d4d8",
-                    "200": "#a1a1aa",
-                    "300": "#71717a",
+                    "50": "#18181b",
+                    "100": "#1e1e20",
+                    "200": "#27272a",
+                    "300": "#3a3a3c",
                     "400": "#52525b",
-                    "500": "#3a3a3c",
-                    "600": "#27272a",
-                    "700": "#1e1e20",
-                    "800": "#18181b",
-                    "900": "#0f0f11",
+                    "500": "#71717a",
+                    "600": "#a1a1aa",
+                    "700": "#d4d4d8",
+                    "800": "#e4e4e7",
+                    "900": "#ececee",
                     "foreground": "#fff",
                     "DEFAULT": "#3a3a3c"
                 },
@@ -226,7 +226,7 @@ export default heroui ({
                     "foreground": "#fff"
                 },
                 "focus": "#006FEE",
-                "overlay": "#ffffff"
+                "overlay": "#3a3a3c"
             },
         },
         // ... custom themes
