@@ -1,9 +1,9 @@
-import { Form, Input, Checkbox, Button, Divider } from "@heroui/react";
+import {Form, Input, Checkbox, Button, Divider, Link} from "@heroui/react";
 import React from "react";
 import { post } from "../api/api.js"
 import { ServerStackIcon } from "@heroicons/react/24/solid"
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
 
@@ -13,13 +13,31 @@ function Login() {
     const [remember, setRemember] = React.useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
     const [errors, setErrors] = React.useState({});
+    const [isLoading, setIsLoading] = React.useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
 
     const togglePassword = () => setIsPasswordVisible(!isPasswordVisible);
 
     const onSubmit = async (e) => {
         e.preventDefault();
+
+        // Validace před odesláním
+        const newErrors = {};
+        if (!username.trim()) {
+            newErrors.username = "Prosím zadejte uživatelské jméno";
+        }
+        if (!password.trim()) {
+            newErrors.password = "Prosím zadejte heslo";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setIsLoading(true);
 
         try {
             const response = await post("/login", {
@@ -47,17 +65,21 @@ function Login() {
                     color: "success",
                 })
 
-                navigate("/");
+                // Přesměruj zpět na původní stránku nebo na home
+                const from = location.state?.from?.pathname || "/";
+                navigate(from, { replace: true });
             } else {
                 // Neúspěšné přihlášení - zobrazíme konkrétní chybovou zprávu z backendu
+                const errorMessage = result.message || "Neplatné přihlašovací údaje";
+
                 showToast({
-                    title: result.message || "Neplatné přihlašovací údaje",
+                    title: errorMessage,
                     color: "danger",
                 })
 
                 setErrors({
-                    username: true,
-                    password: result.message
+                    username: errorMessage,
+                    password: errorMessage
                 });
             }
 
@@ -69,6 +91,8 @@ function Login() {
                 color: "danger",
                 icon: <ServerStackIcon />,
             })
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -85,16 +109,12 @@ function Login() {
             onSubmit={onSubmit}
         >
             <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
-                <h1 className="cursor-pointer">Přihlášení</h1>
+                <h1 className="cursor-default">Přihlášení</h1>
                 <Divider className="mb-3 w-5/6" />
                 <Input
-                    required
+                    isDisabled={isLoading}
                     isInvalid={!!errors.username}
-                    errorMessage={({validationDetails}) => {
-                        if (validationDetails.valueMissing) {
-                            return "Prosím zadejte uživatelské jméno";
-                        }
-                    }}
+                    errorMessage={errors.username}
                     label="Uživatelské jméno"
                     labelPlacement="inside"
                     name="username"
@@ -124,14 +144,9 @@ function Login() {
                 />
 
                 <Input
-                    required
-                    errorMessage={({validationDetails}) => {
-                        if (validationDetails.valueMissing) {
-                            return "Prosím zadejte heslo";
-                        }
-
-                        return errors.password;
-                    }}
+                    isDisabled={isLoading}
+                    isInvalid={!!errors.password}
+                    errorMessage={errors.password}
                     endContent={
                         <button
                             aria-label="toggle password visibility"
@@ -139,6 +154,7 @@ function Login() {
                             type="button"
                             onClick={togglePassword}
                             title="Zobrazit heslo"
+                            disabled={isLoading}
                         >
                             {isPasswordVisible ? (
                                 <EyeSlashIcon className="size-6 sm:size-5 pointer-events-none" />
@@ -176,56 +192,46 @@ function Login() {
                     }}
                 />
 
-                {/* Mobile ver */}
                 <Checkbox
-                    classNames={{
-                        label: [
-                            "text-lg"
-                        ]
-                    }}
-                    size="lg"
-                    className="self-start sm:hidden py-3"
+                    className="self-start"
                     name="remember-me"
                     value="true"
                     isSelected={remember}
                     onValueChange={setRemember}
-                >
-                    Zapamatovat si mě
-                </Checkbox>
-
-                {/* Desktop ver */}
-                <Checkbox
-                    classNames={{
-                        label: [
-                            "text-base"
-                        ]
-                    }}
-                    className="self-start hidden sm:block"
-                    name="remember-me"
-                    value="true"
-                    isSelected={remember}
-                    onValueChange={setRemember}
+                    isDisabled={isLoading}
                 >
                     Zapamatovat si mě
                 </Checkbox>
 
                 <div className="flex gap-4 w-full">
-                    {/* Mobile ver */}
-                    <Button className="w-full text-lg sm:hidden" color="primary" type="submit" size="lg">
-                        Přihlásit
+                    <Button
+                        className="w-full text-base"
+                        color="primary"
+                        type="submit"
+                        isLoading={isLoading}
+                        isDisabled={isLoading}
+                    >
+                        {isLoading ? "Přihlašování..." : "Přihlásit"}
                     </Button>
-                    <Button className="text-lg sm:hidden" type="reset" variant="bordered" size="lg">
-                        Reset
-                    </Button>
-
-                    {/* Desktop ver */}
-                    <Button className="w-full text-base hidden sm:block" color="primary" type="submit">
-                        Přihlásit
-                    </Button>
-                    <Button className="text-base hidden sm:block" type="reset" variant="bordered">
+                    <Button
+                        className="text-base"
+                        type="reset"
+                        variant="bordered"
+                        isDisabled={isLoading}
+                    >
                         Reset
                     </Button>
                 </div>
+
+                {/* Mobile ver */}
+                <Link className="text-foreground/50 hover:text-primary self-start hidden sm:block" size="sm" href="/forgot-password">
+                    Zapomenuté heslo?
+                </Link>
+
+                {/* Desktop ver */}
+                <Link className="text-foreground/50 hover:text-primary self-start sm:hidden" size="md" href="/forgot-password">
+                    Zapomenuté heslo?
+                </Link>
             </div>
         </Form>
     );

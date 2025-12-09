@@ -17,7 +17,6 @@ import {
 import { MagnifyingGlassIcon, EllipsisVerticalIcon, PlusIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { getJSON } from "../api/api.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
-import { capitalize } from "../utils/stringUtils.js";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -397,7 +396,7 @@ function Clients() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
+            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
                 <Spinner size="lg" label="Načítání klientů..." />
             </div>
         );

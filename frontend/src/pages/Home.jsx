@@ -4,7 +4,7 @@ import {UserIcon, PencilSquareIcon, DocumentTextIcon} from '@heroicons/react/24/
 
 function Home() {
     return (
-        <div className="flex flex-col justify-center items-center text-center cursor-pointer">
+        <div className="flex flex-col justify-center items-center text-center cursor-default">
             <img
                 src={logo}
                 alt="CareTracker Logo"

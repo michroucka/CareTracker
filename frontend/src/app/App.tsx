@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import Home from "../pages/Home.jsx";
 import Login from "../pages/Login.jsx";
 import Clients from "../pages/Clients";
+import { ProtectedRoute } from "../components/auth/ProtectedRoute";
+import { ROLES } from "../constants/roles";
 
 export default function App() {
     return (
@@ -12,7 +14,16 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/clients" element={<Clients />} />
+
+                    {/* Chráněné routes */}
+                    <Route
+                        path="/clients"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.MANAGER, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
+                                <Clients />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Routes>
             </main>
         </>

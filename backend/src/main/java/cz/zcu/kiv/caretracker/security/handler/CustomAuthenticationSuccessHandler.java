@@ -44,7 +44,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         data.put("success", true);
         data.put("message", "Přihlášení proběhlo úspěšně");
         data.put("username", authentication.getName());
-        data.put("role", user.getRole().getDisplayName());
+        data.put("role", user.getRole());
 
         response.getWriter().write(objectMapper.writeValueAsString(data));
         response.getWriter().flush();

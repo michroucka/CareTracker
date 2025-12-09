@@ -37,7 +37,7 @@ public class AuthController {
             return Map.of(
                     "isLoggedIn", true,
                     "username", auth.getName(),
-                    "role", user.getRole().getDisplayName()
+                    "role", user.getRole()
             );
         }
         log.debug("Authentication status check - no authenticated user");

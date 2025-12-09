@@ -18,10 +18,11 @@ import {
     User,
 } from "@heroui/react";
 import logo from "../assets/ct_icon.png"
-import {useLocation, useNavigate} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { UserIcon, ChevronDownIcon, ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
-import {ThemeSwitcher} from "./ThemeSwitcher.jsx";
+import { ChevronDownIcon, ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
+import { getRoleLabel, ROLES, hasRole } from "../constants/roles.js";
 
 export const CareTrackerLogo = () => {
     return <img
@@ -42,10 +43,26 @@ export default function AppNavbar() {
     const navigate = useNavigate();
 
     const menuItems = [
-        { name: "Domů", path: "/"},
-        { name: "Klienti", path: "/clients" },
-        { name: "Pečovatelé", path: "/test" },
+        { name: "Domů", path: "/" },
+        { name: "Klienti", path: "/clients", allowedRoles: [ROLES.SUPERADMIN, ROLES.MANAGER, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Pečovatelé", path: "/caregivers", allowedRoles: [ROLES.SUPERADMIN, ROLES.MANAGER, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     ];
+
+    // Filtrování menu položek podle role uživatele
+    const filteredMenuItems = React.useMemo(() => {
+        return menuItems.filter((item) => {
+            // Pokud položka nemá definované allowedRoles, je veřejná
+            if (!item.allowedRoles) {
+                return true;
+            }
+            // Pokud není přihlášený uživatel, skryj chráněné položky
+            if (!user) {
+                return false;
+            }
+            // Zkontroluj, zda má uživatel potřebnou roli
+            return hasRole(user.role, item.allowedRoles);
+        });
+    }, [user]);
 
     React.useEffect(() => {
         setIsMenuOpen(false);
@@ -75,7 +92,7 @@ export default function AppNavbar() {
 
             {/* Desktop menu */}
             <NavbarContent className="hidden sm:flex gap-6" justify="center">
-                {menuItems.map((item) => (
+                {filteredMenuItems.map((item) => (
                     <NavbarItem
                         key={item.path}
                         isActive={location.pathname === item.path}
@@ -114,8 +131,8 @@ export default function AppNavbar() {
                                         },
                                     }}
                                     name={user.username}
-                                    description={user.role}
-                                    className="transition-transform-opacity duration-300 ease-in-out aria-[expanded=true]:opacity-100 hover:scale-105"
+                                    description={getRoleLabel(user.role)}
+                                    className="cursor-pointer transition-transform-opacity duration-300 ease-in-out aria-[expanded=true]:opacity-100 hover:scale-105"
                                     classNames={{
                                         name: "font-bold",
                                         description: "ms-auto opacity-75 font-medium",
@@ -155,7 +172,7 @@ export default function AppNavbar() {
 
             {/* Mobile menu */}
             <NavbarMenu className="pt-6 gap-3 flex flex-col max-h-[calc(100dvh-4rem)] overflow-y-auto pb-[env(safe-area-inset-bottom,1rem)]">
-                {menuItems.map((item) => (
+                {filteredMenuItems.map((item) => (
                     <NavbarMenuItem key={item.path}>
                         <Link
                             className={`w-full text-xl font-bold justify-end py-2 ${location.pathname === item.path ? '' : 'opacity-60'}`}
@@ -183,7 +200,7 @@ export default function AppNavbar() {
                                     setIsMenuOpen(false);
                                 }}
                                 name={user.username}
-                                description={user.role}
+                                description={getRoleLabel(user.role)}
                                 avatarProps={{
                                     className: "hidden"
                                 }}

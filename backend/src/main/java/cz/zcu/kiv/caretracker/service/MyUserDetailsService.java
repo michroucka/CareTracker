@@ -30,7 +30,7 @@ public class MyUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole().name())
+                .roles(user.getRole().toString())
                 .build();
     }
 }
