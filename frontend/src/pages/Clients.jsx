@@ -14,13 +14,12 @@ import {
     DropdownItem,
     Spinner,
 } from "@heroui/react";
-import {Search, MoreVertical, Plus, ChevronDown, ShieldAlert, Shield, CircleCheckIcon} from "lucide-react";
+import {Search, MoreVertical, Plus, ChevronDown} from "lucide-react";
 import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ClientCreateModal } from "../components/modals/ClientModals.jsx";
-import { showToast } from "../components/MyToast.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -284,7 +283,6 @@ function Clients() {
 
     const handleCreateClient = async (clientData) => {
         await createClient(clientData);
-        setIsCreateModalOpen(false);
     }
 
     const topContent = React.useMemo(() => {

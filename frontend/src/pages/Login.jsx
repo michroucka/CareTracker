@@ -1,7 +1,7 @@
 import {Form, Input, Checkbox, Button, Divider, Link} from "@heroui/react";
 import React from "react";
 import { post } from "../api/api.js"
-import { Server, Eye, EyeOff } from "lucide-react"
+import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
@@ -62,7 +62,7 @@ function Login() {
                     title: result.message,
                     description: `Vítejte ${result.username}!`,
                     color: "success",
-                    icon: <CircleCheck />
+                    icon: <UserRoundCheck />
                 })
 
                 // Přesměruj zpět na původní stránku nebo na home
@@ -75,7 +75,7 @@ function Login() {
                 showToast({
                     title: errorMessage,
                     color: "danger",
-                    icon: <CircleX />
+                    icon: <UserRoundX />
                 })
 
                 setErrors({
@@ -90,7 +90,7 @@ function Login() {
             showToast({
                 title: error.message || "Server není dostupný",
                 color: "danger",
-                icon: <Server />,
+                icon: <ServerOff />,
             })
         } finally {
             setIsLoading(false);

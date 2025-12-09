@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getJSON, postJSON, putJSON, deleteJSON } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
-import { ShieldX, CircleCheck, CircleX } from "lucide-react";
+import { CloudAlert, UserRoundCheck, UserRoundX, UserRoundMinus } from "lucide-react";
 
 export function useClients() {
     const [clients, setClients] = useState([]);
@@ -29,7 +29,7 @@ export function useClients() {
                 title: "Chyba při načítání klientů",
                 description: err.message,
                 color: "danger",
-                icon: <ShieldX />
+                icon: <CloudAlert />
             });
         } finally {
             setLoading(false);
@@ -48,7 +48,7 @@ export function useClients() {
                 title: "Klient nenalezen",
                 description: err.message,
                 color: "danger",
-                icon: <ShieldX />
+                icon: <UserRoundX />
             });
             throw err;
         } finally {
@@ -76,7 +76,7 @@ export function useClients() {
             showToast({
                 title: "Klient úspěšně vytvořen",
                 color: "success",
-                icon: <CircleCheck />
+                icon: <UserRoundCheck />
             });
 
             return newClient;
@@ -86,7 +86,7 @@ export function useClients() {
                 title: "Chyba při vytváření klienta",
                 description: err.message,
                 color: "danger",
-                icon: <CircleX />
+                icon: <UserRoundX />
             });
             throw err;
         }
@@ -114,7 +114,7 @@ export function useClients() {
             showToast({
                 title: "Klient úspěšně aktualizován",
                 color: "success",
-                icon: <CircleCheck />
+                icon: <UserRoundCheck />
             });
 
             return updated;
@@ -124,7 +124,7 @@ export function useClients() {
                 title: "Chyba při aktualizaci klienta",
                 description: err.message,
                 color: "danger",
-                icon: <CircleX />
+                icon: <UserRoundX />
             });
             throw err;
         }
@@ -141,7 +141,7 @@ export function useClients() {
             showToast({
                 title: "Klient úspěšně smazán",
                 color: "success",
-                icon: <CircleCheck />
+                icon: <UserRoundMinus />
             });
         } catch (err) {
             console.error("Error deleting client:", err);
@@ -149,7 +149,7 @@ export function useClients() {
                 title: "Chyba při mazání klienta",
                 description: err.message,
                 color: "danger",
-                icon: <CircleX />
+                icon: <CloudAlert />
             });
             throw err;
         }

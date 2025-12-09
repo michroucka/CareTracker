@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole } from "../../constants/roles";
 import { showToast } from "../MyToast";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, UserRoundX } from "lucide-react";
 import {Spinner} from "@heroui/react";
 
 /**
@@ -38,7 +38,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
                     title: "Nedostatečná oprávnění",
                     description: "Nemáte oprávnění pro zobrazení této stránky",
                     color: "danger",
-                    icon: <ShieldAlert />,
+                    icon: <UserRoundX />,
                 });
                 toastShownRef.current = true;
             }
