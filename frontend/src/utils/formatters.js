@@ -1,0 +1,55 @@
+// Formátování telefonního čísla: volitelně +XXX a pak XXX XXX XXX
+export function formatPhoneNumber(value) {
+    // Povolit pouze + na začátku a číslice
+    let cleaned = value.replace(/[^\d+]/g, '');
+
+    // + může být pouze na začátku
+    const hasPlus = cleaned.startsWith('+');
+    cleaned = cleaned.replace(/\+/g, '');
+
+    if (hasPlus) {
+        // S předčíslím: +XXX XXX XXX XXX (max 3 pro předčíslí + 9 pro číslo)
+        const limited = cleaned.slice(0, 12);
+
+        if (limited.length <= 3) {
+            // Jen předčíslí
+            return `+${limited}`;
+        } else if (limited.length <= 6) {
+            // Předčíslí + první část
+            return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
+        } else if (limited.length <= 9) {
+            // Předčíslí + první 2 části
+            return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+        } else {
+            // Plné číslo s předčíslím
+            return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
+        }
+    } else {
+        // Bez předčíslí: XXX XXX XXX (max 9 číslic)
+        const limited = cleaned.slice(0, 9);
+
+        if (limited.length <= 3) {
+            return limited;
+        } else if (limited.length <= 6) {
+            return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+        } else {
+            return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+        }
+    }
+}
+
+// Formátování PSČ: XXX XX
+export function formatPostalCode(value) {
+    // Povolit pouze číslice
+    const cleaned = value.replace(/\D/g, '');
+
+    // Omezit na 5 číslic
+    const limited = cleaned.slice(0, 5);
+
+    // Formátovat jako XXX XX
+    if (limited.length <= 3) {
+        return limited;
+    } else {
+        return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+    }
+}
