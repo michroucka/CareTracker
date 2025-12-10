@@ -31,7 +31,9 @@ export async function getJSON(endpoint) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
     }
 
     return response.json();
@@ -46,7 +48,9 @@ export async function postJSON(endpoint, data) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
     }
 
     return response.json();
@@ -61,7 +65,9 @@ export async function putJSON(endpoint, data) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
     }
 
     return response.json();
@@ -74,7 +80,9 @@ export async function deleteJSON(endpoint) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
     }
 
     return response;

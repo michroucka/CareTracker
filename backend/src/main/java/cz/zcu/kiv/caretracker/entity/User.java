@@ -2,8 +2,10 @@ package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +26,8 @@ public class User {
 
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(nullable = false)
     private UserRole role;
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getJSON, postJSON, putJSON, deleteJSON } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
+import { showErrorToast } from "../utils/errorHandler.jsx";
 import { CloudAlert, UserRoundCheck, UserRoundX, UserRoundMinus } from "lucide-react";
 
 export function useClients() {
@@ -25,12 +26,7 @@ export function useClients() {
             setClients(mappedClients);
         } catch (err) {
             console.error("Error fetching clients:", err);
-            showToast({
-                title: "Chyba při načítání klientů",
-                description: err.message,
-                color: "danger",
-                icon: <CloudAlert />
-            });
+            showErrorToast(err, "Chyba při načítání klientů", { icon: <CloudAlert /> });
         } finally {
             setLoading(false);
         }
@@ -44,12 +40,7 @@ export function useClients() {
             return client;
         } catch (err) {
             console.error("Error fetching client:", err);
-            showToast({
-                title: "Klient nenalezen",
-                description: err.message,
-                color: "danger",
-                icon: <UserRoundX />
-            });
+            showErrorToast(err, "Klient nenalezen", { icon: <UserRoundX /> });
             throw err;
         } finally {
             setLoading(false);
@@ -82,12 +73,7 @@ export function useClients() {
             return newClient;
         } catch (err) {
             console.error("Error creating client:", err);
-            showToast({
-                title: "Chyba při vytváření klienta",
-                description: err.message,
-                color: "danger",
-                icon: <UserRoundX />
-            });
+            showErrorToast(err, "Chyba při vytváření klienta", { icon: <UserRoundX /> });
             throw err;
         }
     };
@@ -120,12 +106,7 @@ export function useClients() {
             return updated;
         } catch (err) {
             console.error("Error updating client:", err);
-            showToast({
-                title: "Chyba při aktualizaci klienta",
-                description: err.message,
-                color: "danger",
-                icon: <UserRoundX />
-            });
+            showErrorToast(err, "Chyba při aktualizaci klienta", { icon: <UserRoundX /> });
             throw err;
         }
     };
@@ -145,12 +126,7 @@ export function useClients() {
             });
         } catch (err) {
             console.error("Error deleting client:", err);
-            showToast({
-                title: "Chyba při mazání klienta",
-                description: err.message,
-                color: "danger",
-                icon: <CloudAlert />
-            });
+            showErrorToast(err, "Chyba při mazání klienta", { icon: <CloudAlert /> });
             throw err;
         }
     };

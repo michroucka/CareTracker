@@ -2,8 +2,11 @@ package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+
 import java.util.List;
 
 @Getter
@@ -21,7 +24,8 @@ public class Employee {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(nullable = false)
     private EmployeeRole role;
 
