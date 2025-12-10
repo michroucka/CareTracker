@@ -193,6 +193,7 @@ public class ClientService {
         Department department = departmentRepository.findById(dto.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
         client.setDepartment(department);
+        client.setOrganization(department.getOrganization());
 
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
                 .orElseThrow(() -> new RuntimeException("Caregiver not found"));
@@ -205,7 +206,15 @@ public class ClientService {
         } else {
             // Save first to generate ID, then set personalNumber to ID
             Client savedClient = clientRepository.save(client);
-            savedClient.setPersonalNumber(savedClient.getId());
+            Long organizationId = savedClient.getOrganization().getId();
+            Long personalNumber = savedClient.getId();
+
+            // Kontrola jestli personalNumber už neexistuje v rámci organizace
+            while (clientRepository.existsByPersonalNumberAndOrganizationId(personalNumber, organizationId)) {
+                personalNumber++;
+            }
+
+            savedClient.setPersonalNumber(personalNumber);
             return clientRepository.save(savedClient);
         }
     }

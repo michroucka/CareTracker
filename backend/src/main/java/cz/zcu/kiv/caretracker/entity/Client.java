@@ -3,8 +3,10 @@ package cz.zcu.kiv.caretracker.entity;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,11 +28,12 @@ public class Client {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(nullable = false)
     private Gender gender;
 
-    @Column(name = "personal_number", unique = true)
+    @Column(name = "personal_number")
     private Long personalNumber;
 
     @Column(name = "date_of_birth", nullable = false)
@@ -55,7 +58,8 @@ public class Client {
     @Column(name = "legally_competent", nullable = false)
     private Boolean legallyCompetent;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(nullable = false)
     private BenefitLevel benefits;
 
@@ -77,8 +81,13 @@ public class Client {
     private Department department;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "organization_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Organization organization;
+
+    @ManyToOne(optional = false)
     @JoinColumn(name = "caregiver_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private Employee caregiver;
 
     @ManyToMany

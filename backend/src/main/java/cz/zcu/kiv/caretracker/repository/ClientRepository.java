@@ -16,6 +16,11 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     List<Client> findByActiveTrueAndDepartmentId(Long departmentId);
 
     // Filtrování podle organizace (pro ADMIN)
-    @Query("SELECT c FROM Client c WHERE c.active = true AND c.department.organization.id = :organizationId")
-    List<Client> findByActiveTrueAndOrganizationId(@Param("organizationId") Long organizationId);
+    List<Client> findByActiveTrueAndOrganizationId(Long organizationId);
+
+    // Kontrola existence personalNumber v rámci organizace
+    boolean existsByPersonalNumberAndOrganizationId(Long personalNumber, Long organizationId);
+
+    // Globální kontrola existence personalNumber (pro fallback)
+    boolean existsByPersonalNumber(Long personalNumber);
 }
