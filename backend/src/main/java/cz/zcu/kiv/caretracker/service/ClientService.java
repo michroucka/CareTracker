@@ -1,11 +1,18 @@
 package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.ClientDTO;
+import cz.zcu.kiv.caretracker.dto.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.entity.Department;
+import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
+import cz.zcu.kiv.caretracker.enums.BenefitLevel;
+import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
+import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
+import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -28,6 +35,12 @@ public class ClientService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     /**
      * Vrací aktivní klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
@@ -159,8 +172,42 @@ public class ClientService {
         throw new SecurityException("User does not have permission to view this client");
     }
 
-    public Client createClient(Client client) {
-        return clientRepository.save(client);
+    public Client createClient(ClientRequestDTO dto) {
+        Client client = new Client();
+
+        client.setFirstName(dto.getFirstName());
+        client.setLastName(dto.getLastName());
+        client.setGender(Gender.valueOf(dto.getGender()));
+        client.setDateOfBirth(dto.getDateOfBirth());
+        client.setEmail(dto.getEmail());
+        client.setPhone(dto.getPhone());
+        client.setStreet(dto.getStreet());
+        client.setCity(dto.getCity());
+        client.setPostalCode(dto.getPostalCode());
+        client.setLegallyCompetent(dto.getLegallyCompetent());
+        client.setBenefits(BenefitLevel.valueOf(dto.getBenefits()));
+        client.setRelativesContact(dto.getRelativesContact());
+        client.setGeneralPractitioner(dto.getGeneralPractitioner());
+        client.setNotes(dto.getNotes());
+
+        Department department = departmentRepository.findById(dto.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+        client.setDepartment(department);
+
+        Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
+                .orElseThrow(() -> new RuntimeException("Caregiver not found"));
+        client.setCaregiver(caregiver);
+
+        // Set personalNumber if provided, otherwise use ID after save
+        if (dto.getPersonalNumber() != null) {
+            client.setPersonalNumber(dto.getPersonalNumber());
+            return clientRepository.save(client);
+        } else {
+            // Save first to generate ID, then set personalNumber to ID
+            Client savedClient = clientRepository.save(client);
+            savedClient.setPersonalNumber(savedClient.getId());
+            return clientRepository.save(savedClient);
+        }
     }
 
     public Client updateClient(Long id, Client clientDetails) {

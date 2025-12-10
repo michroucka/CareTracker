@@ -37,14 +37,14 @@ CREATE TABLE "client" (
   "first_name" varchar NOT NULL,
   "last_name" varchar NOT NULL,
   "gender" gender NOT NULL,
-  "personal_number" int UNIQUE NOT NULL,
+  "personal_number" int UNIQUE,
   "date_of_birth" date NOT NULL,
   "date_of_death" date,
   "email" varchar,
-  "phone" varchar(13),
+  "phone" varchar(16),
   "street" varchar NOT NULL,
   "city" varchar NOT NULL,
-  "postal_code" varchar(5) NOT NULL,
+  "postal_code" char(6) NOT NULL,
   "legally_competent" boolean NOT NULL DEFAULT true,
   "benefits" benefit_level NOT NULL,
   "relatives_contact" text,
@@ -53,7 +53,7 @@ CREATE TABLE "client" (
   "created" date NOT NULL,
   "active" boolean NOT NULL DEFAULT true,
   "department_id" int NOT NULL,
-  "caregiver_id" int
+  "caregiver_id" int NOT NULL
 );
 
 CREATE TABLE "picture" (
@@ -161,7 +161,7 @@ ALTER TABLE "app_user" ADD FOREIGN KEY ("employee_id") REFERENCES "employee" ("i
 
 ALTER TABLE "app_user" ADD FOREIGN KEY ("client_id") REFERENCES "client" ("id");
 
-ALTER TABLE "client" ADD FOREIGN KEY ("caregiver_id") REFERENCES "employee" ("id") ON DELETE SET NULL;
+ALTER TABLE "client" ADD FOREIGN KEY ("caregiver_id") REFERENCES "employee" ("id") ON DELETE RESTRICT;
 
 ALTER TABLE "performed_task" ADD FOREIGN KEY ("client_id") REFERENCES "client" ("id") ON DELETE RESTRICT;
 

@@ -19,7 +19,7 @@ import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { ClientCreateModal } from "../components/modals/ClientModals.jsx";
+import { ClientCreateModal } from "../components/modals/client/ClientCreateModal.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -75,7 +75,7 @@ function Clients() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Dynamické options pro department a caregiver
+    // Dynamické options pro department a caregiver (pro filtry)
     const departmentOptions = React.useMemo(() => {
         const uniqueDepartments = [...new Set(clients
             .map(c => c.department?.name)
@@ -94,6 +94,27 @@ function Clients() {
             name: name,
             uid: name
         }));
+    }, [clients]);
+
+    // Seznamy pro modal (s ID)
+    const departmentsWithId = React.useMemo(() => {
+        const deptMap = new Map();
+        clients.forEach(c => {
+            if (c.department && c.department.id) {
+                deptMap.set(c.department.id, c.department);
+            }
+        });
+        return Array.from(deptMap.values());
+    }, [clients]);
+
+    const caregiversWithId = React.useMemo(() => {
+        const cgMap = new Map();
+        clients.forEach(c => {
+            if (c.caregiver && c.caregiver.id) {
+                cgMap.set(c.caregiver.id, c.caregiver);
+            }
+        });
+        return Array.from(cgMap.values());
     }, [clients]);
 
     const filteredItems = React.useMemo(() => {
@@ -461,7 +482,10 @@ function Clients() {
             <ClientCreateModal
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
-                onSubmit={handleCreateClient}/>
+                onSubmit={handleCreateClient}
+                departments={departmentsWithId}
+                caregivers={caregiversWithId}
+            />
         </>
     );
 }

@@ -30,8 +30,8 @@ public class Client {
     @Column(nullable = false)
     private Gender gender;
 
-    @Column(name = "personal_number", nullable = false)
-    private Integer personalNumber;
+    @Column(name = "personal_number", unique = true)
+    private Long personalNumber;
 
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
@@ -40,6 +40,7 @@ public class Client {
     private LocalDate dateOfDeath;
 
     private String email;
+    @Column(length = 16)
     private String phone;
 
     @Column(nullable = false)
@@ -48,7 +49,7 @@ public class Client {
     @Column(nullable = false)
     private String city;
 
-    @Column(name = "postal_code", nullable = false, length = 10)
+    @Column(name = "postal_code", nullable = false, length = 6)
     private String postalCode;
 
     @Column(name = "legally_competent", nullable = false)
@@ -75,8 +76,8 @@ public class Client {
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Department department;
 
-    @ManyToOne
-    @JoinColumn(name = "caregiver_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "caregiver_id", nullable = false)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private Employee caregiver;
 

@@ -1,7 +1,9 @@
 package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.ClientDTO;
+import cz.zcu.kiv.caretracker.dto.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.service.ClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,9 @@ import java.util.List;
 @RequestMapping("/api/clients")
 public class ClientController {
     private static final Logger log = LoggerFactory.getLogger(ClientController.class);
+
+    @Autowired
+    private ClientMapper clientMapper;
 
     @Autowired
     private ClientService clientService;
@@ -40,11 +45,10 @@ public class ClientController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<Client> createClient(@RequestBody Client client) {
-        log.info("Creating new client: [{}] {} {}",
-                client.getId(), client.getFirstName(), client.getLastName());
-        Client savedClient = clientService.createClient(client);
-        return ResponseEntity.ok(savedClient);
+    public ResponseEntity<ClientDTO> createClient(@RequestBody ClientRequestDTO dto) {
+        log.info("Creating new client: {} {}", dto.getFirstName(), dto.getLastName());
+        Client savedClient = clientService.createClient(dto);
+        return ResponseEntity.ok(clientMapper.toDTO(savedClient));
     }
 
     @PutMapping("/{id}")
