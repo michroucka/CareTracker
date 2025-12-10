@@ -104,7 +104,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
         return newErrors;
     }
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         if (e && e.preventDefault) {
             e.preventDefault();
         }
@@ -119,7 +119,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
 
         // Vše je validní, připrav data a zavolej původní onSubmit
         setErrors({});
-        setIsLoading(true)
+        setIsLoading(true);
 
         const clientData = {
             firstName,
@@ -141,11 +141,18 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
             caregiverId,
         };
 
-        if (onSubmit) {
-            onSubmit(clientData);
+        try {
+            if (onSubmit) {
+                await onSubmit(clientData);
+            }
+            // Pokud úspěch, reset formuláře
+            resetForm();
+        } catch (error) {
+            // Pokud error, formulář zůstane vyplněný
+            console.error("Error submitting form:", error);
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
     }
 
     function resetForm() {
