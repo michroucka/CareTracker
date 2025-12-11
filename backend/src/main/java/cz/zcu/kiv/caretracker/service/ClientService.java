@@ -209,8 +209,8 @@ public class ClientService {
             Long organizationId = savedClient.getOrganization().getId();
             Long personalNumber = savedClient.getId();
 
-            // Kontrola jestli personalNumber už neexistuje v rámci organizace
-            while (clientRepository.existsByPersonalNumberAndOrganizationId(personalNumber, organizationId)) {
+            // Kontrola jestli personalNumber už neexistuje v rámci organizace (pouze u aktivních klientů)
+            while (clientRepository.existsByPersonalNumberAndOrganizationIdAndActiveTrue(personalNumber, organizationId)) {
                 personalNumber++;
             }
 

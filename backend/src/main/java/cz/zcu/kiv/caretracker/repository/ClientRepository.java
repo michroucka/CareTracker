@@ -18,8 +18,8 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     // Filtrování podle organizace (pro ADMIN)
     List<Client> findByActiveTrueAndOrganizationId(Long organizationId);
 
-    // Kontrola existence personalNumber v rámci organizace
-    boolean existsByPersonalNumberAndOrganizationId(Long personalNumber, Long organizationId);
+    // Kontrola existence personalNumber v rámci organizace (pouze aktivní klienti)
+    boolean existsByPersonalNumberAndOrganizationIdAndActiveTrue(Long personalNumber, Long organizationId);
 
     // Globální kontrola existence personalNumber (pro fallback)
     boolean existsByPersonalNumber(Long personalNumber);
