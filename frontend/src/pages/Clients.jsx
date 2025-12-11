@@ -14,7 +14,7 @@ import {
     DropdownItem,
     Spinner,
 } from "@heroui/react";
-import {Search, MoreVertical, Plus, ChevronDown} from "lucide-react";
+import {Search, Plus, ChevronDown, FileText, Pencil, Trash2} from "lucide-react";
 import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
@@ -155,14 +155,23 @@ function Clients() {
 
         return filteredClients;
     }, [clients, filterValue, hasSearchFilter, genderFilter, departmentFilter, caregiverFilter]);
-
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column];
             const second = b[sortDescriptor.column];
-            const cmp = first < second ? -1 : first > second ? 1 : 0;
 
-            return sortDescriptor.direction === "descending" ? cmp : -cmp;
+            let cmp = 0;
+
+            // Pro stringy použij české řazení
+            if (typeof first === 'string' && typeof second === 'string') {
+                cmp = first.localeCompare(second, 'cs-CZ', { sensitivity: 'base' });
+            }
+            // Pro ostatní typy (čísla, objekty) použij standardní porovnání
+            else {
+                cmp = first < second ? -1 : first > second ? 1 : 0;
+            }
+
+            return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [sortDescriptor, filteredItems]);
 
@@ -205,18 +214,27 @@ function Clients() {
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical className="size-6" />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownItem key="view">Zobrazit</DropdownItem>
-                                <DropdownItem key="edit">Upravit</DropdownItem>
-                                <DropdownItem key="delete">Smazat</DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
+                        <Button variant="light"
+                                size="sm"
+                                color="primary"
+                                isIconOnly
+                        >
+                            <FileText size={20}/>
+                        </Button>
+                        <Button variant="light"
+                                size="sm"
+                                color="secondary"
+                                isIconOnly
+                        >
+                            <Pencil size={20}/>
+                        </Button>
+                        <Button variant="light"
+                                size="sm"
+                                color="danger"
+                                isIconOnly
+                        >
+                            <Trash2 size={20}/>
+                        </Button>
                     </div>
                 );
             default:
