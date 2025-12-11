@@ -14,17 +14,17 @@ import {
     DropdownItem,
     Spinner,
 } from "@heroui/react";
-import {Search, Plus, ChevronDown, FileText, Pencil, Trash2} from "lucide-react";
+import {Search, Plus, ChevronDown, FileText, Pencil, Trash2, MoreVertical, User} from "lucide-react";
 import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ClientCreateModal } from "../components/modals/client/ClientCreateModal.jsx";
 import { removeDiacritics } from "../utils/formatters.js";
+import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
-    const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
     const [genderFilter, setGenderFilter] = React.useState(new Set(["all"]));
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
@@ -44,14 +44,18 @@ function Clients() {
         deleteClient,
     } = useClients();
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
+    const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
+    const [ isDeleteModalOpen, setIsDeleteModalOpen ] = React.useState(false);
+    const [ selectedClientId, setSelectedClientId ] = React.useState(null);
+    const [ selectedClient, setSelectedClient ] = React.useState(null);
+    const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Kontrola oprávnění - můžeš upravit podle svých rolí
-    const canAddClient = React.useMemo(() => {
+    // Kontrola oprávnění
+    const canAlterClient = React.useMemo(() => {
         if (!user) return false;
-        // Přidej sem role, které mohou přidávat klienty
         const allowedRoles = ["SUPERADMIN", "ADMIN", "COORDINATOR"];
 
         return allowedRoles.includes(user.role);
@@ -171,76 +175,9 @@ function Clients() {
                 cmp = first < second ? -1 : first > second ? 1 : 0;
             }
 
-            return sortDescriptor.direction === "descending" ? -cmp : cmp;
+            return sortDescriptor.direction === "descending" ? cmp : -cmp;
         });
     }, [sortDescriptor, filteredItems]);
-
-    const renderCell = React.useCallback((client, columnKey) => {
-        const cellValue = client[columnKey];
-
-        switch (columnKey) {
-            case "name":
-                return (
-                    <div className="flex flex-col">
-                        <p className="font-bold text-small">{cellValue}</p>
-                    </div>
-                );
-            case "gender":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{genderTranslations[cellValue] || "-"}</p>
-                    </div>
-                );
-            case "address":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{cellValue || "-"}</p>
-                    </div>
-                );
-            case "department":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{cellValue?.name || "-"}</p>
-                    </div>
-                );
-            case "caregiver":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">
-                            {cellValue ? `${cellValue.firstName} ${cellValue.lastName}` : "-"}
-                        </p>
-                    </div>
-                );
-            case "actions":
-                return (
-                    <div className="relative flex justify-end items-center gap-2">
-                        <Button variant="light"
-                                size="sm"
-                                color="primary"
-                                isIconOnly
-                        >
-                            <FileText size={20}/>
-                        </Button>
-                        <Button variant="light"
-                                size="sm"
-                                color="secondary"
-                                isIconOnly
-                        >
-                            <Pencil size={20}/>
-                        </Button>
-                        <Button variant="light"
-                                size="sm"
-                                color="danger"
-                                isIconOnly
-                        >
-                            <Trash2 size={20}/>
-                        </Button>
-                    </div>
-                );
-            default:
-                return cellValue || "-";
-        }
-    }, []);
 
     const onSearchChange = React.useCallback((value) => {
         if (value) {
@@ -335,6 +272,40 @@ function Clients() {
             throw error;
         }
     }
+
+    const handleEditClient = async (clientId, clientData) => {
+        try {
+            await updateClient(clientId, clientData);
+            // Modal se zavře automaticky v ClientDetailModal
+        } catch (error) {
+            console.error("Failed to update client:", error);
+            throw error;
+        }
+    }
+
+    const handleOpenDetailModal = async (clientId) => {
+        setSelectedClientId(clientId);
+        setIsLoadingDetail(true);
+        setIsDetailModalOpen(true);
+
+        try {
+            const clientData = await fetchClient(clientId);
+            setSelectedClient(clientData);
+        } catch (error) {
+            console.error("Failed to load client:", error);
+            setIsDetailModalOpen(false);
+        } finally {
+            setIsLoadingDetail(false);
+        }
+    }
+
+    const handleCloseDetailModal = () => {
+        setSelectedClientId(null);
+        setSelectedClient(null);
+        setIsDetailModalOpen(false);
+    }
+
+
 
     const topContent = React.useMemo(() => {
         return (
@@ -431,7 +402,7 @@ function Clients() {
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
-                        {canAddClient && (
+                        {canAlterClient && (
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
@@ -461,8 +432,86 @@ function Clients() {
         handleGenderFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
-        canAddClient,
+        canAlterClient,
     ]);
+
+    const renderCell = React.useCallback((client, columnKey) => {
+        const cellValue = client[columnKey];
+
+        switch (columnKey) {
+            case "name":
+                return (
+                    <div className="flex flex-col">
+                        <p className="font-bold text-small">{cellValue}</p>
+                    </div>
+                );
+            case "gender":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">{genderTranslations[cellValue] || "-"}</p>
+                    </div>
+                );
+            case "address":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">{cellValue || "-"}</p>
+                    </div>
+                );
+            case "department":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">{cellValue?.name || "-"}</p>
+                    </div>
+                );
+            case "caregiver":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">
+                            {cellValue ? `${cellValue.firstName} ${cellValue.lastName}` : "-"}
+                        </p>
+                    </div>
+                );
+            case "actions":
+                return (
+                    <div className="relative flex justify-end items-center gap-2">
+                        <Dropdown>
+                            <DropdownTrigger>
+                                <Button isIconOnly size="sm" variant="light">
+                                    <MoreVertical size={20} />
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu>
+                                <DropdownItem key="view"
+                                              startContent={<User />}
+                                              variant="light"
+                                              isLoading={isLoadingDetail}
+                                              onPress={() => handleOpenDetailModal(client.id)}
+                                >
+                                    {isLoadingDetail ? "Načítání..." : "Detail"}
+                                </DropdownItem>
+                                <DropdownItem key="view-ip"
+                                              startContent={<FileText />}
+                                              variant="light"
+                                >
+                                    Individuální plán
+                                </DropdownItem>
+                                {canAlterClient ? (
+                                    <DropdownItem key="delete"
+                                                  startContent={<Trash2 />}
+                                                  variant="light"
+                                                  color="danger"
+                                    >
+                                        Smazat
+                                    </DropdownItem>
+                                ) : null}
+                            </DropdownMenu>
+                        </Dropdown>
+                    </div>
+                );
+            default:
+                return cellValue || "-";
+        }
+    }, [canAlterClient]);
 
     if (loading) {
         return (
@@ -481,12 +530,9 @@ function Clients() {
                     th: "bg-content1",
                 }}
                 maxTableHeight={maxTableHeight}
-                selectedKeys={selectedKeys}
-                selectionMode="single"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
-                onSelectionChange={setSelectedKeys}
                 onSortChange={setSortDescriptor}
             >
                 <TableHeader columns={visibleColumns}>
@@ -513,6 +559,16 @@ function Clients() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreateClient}
+                departments={departmentsWithId}
+                caregivers={caregiversWithId}
+            />
+
+            <ClientDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={handleCloseDetailModal}
+                onSubmit={handleEditClient}
+                client={selectedClient}
+                isLoading={isLoadingDetail}
                 departments={departmentsWithId}
                 caregivers={caregiversWithId}
             />

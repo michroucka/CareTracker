@@ -35,15 +35,12 @@ export function useClients() {
     // Načtení jednoho klienta
     const fetchClient = async (id) => {
         try {
-            setLoading(true);
             const client = await getJSON(`/clients/${id}`);
             return client;
         } catch (err) {
             console.error("Error fetching client:", err);
             showErrorToast(err, "Klient nenalezen", { icon: <UserRoundX /> });
             throw err;
-        } finally {
-            setLoading(false);
         }
     };
 
