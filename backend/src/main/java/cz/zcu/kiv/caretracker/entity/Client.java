@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.OnDelete;
@@ -39,8 +40,13 @@ public class Client {
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
-    @Column(name = "date_of_death")
-    private LocalDate dateOfDeath;
+    @Column(name = "termination_date")
+    private LocalDate terminationDate;
+
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "termination_reason")
+    private TerminationReason terminationReason;
 
     private String email;
     @Column(length = 16)

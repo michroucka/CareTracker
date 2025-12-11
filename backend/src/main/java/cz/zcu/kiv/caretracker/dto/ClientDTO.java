@@ -16,7 +16,8 @@ public class ClientDTO {
     private String gender;
     private Long personalNumber;
     private LocalDate dateOfBirth;
-    private LocalDate dateOfDeath;
+    private LocalDate terminationDate;
+    private String terminationReason;
     private String email;
     private String phone;
     private String street;

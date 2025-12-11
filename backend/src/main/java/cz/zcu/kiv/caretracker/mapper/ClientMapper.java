@@ -29,7 +29,8 @@ public class ClientMapper {
         dto.setGender(client.getGender() != null ? client.getGender().name() : null);
         dto.setPersonalNumber(client.getPersonalNumber());
         dto.setDateOfBirth(client.getDateOfBirth());
-        dto.setDateOfDeath(client.getDateOfDeath());
+        dto.setTerminationDate(client.getTerminationDate());
+        dto.setTerminationReason(client.getTerminationReason() != null ? client.getTerminationReason().name() : null);
         dto.setEmail(client.getEmail());
         dto.setPhone(client.getPhone());
         dto.setStreet(client.getStreet());

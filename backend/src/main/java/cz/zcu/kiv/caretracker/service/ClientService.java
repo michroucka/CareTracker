@@ -8,6 +8,7 @@ import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
@@ -228,7 +229,8 @@ public class ClientService {
         client.setGender(clientDetails.getGender());
         client.setPersonalNumber(clientDetails.getPersonalNumber());
         client.setDateOfBirth(clientDetails.getDateOfBirth());
-        client.setDateOfDeath(clientDetails.getDateOfDeath());
+        client.setTerminationDate(clientDetails.getTerminationDate());
+        client.setTerminationReason(clientDetails.getTerminationReason());
         client.setEmail(clientDetails.getEmail());
         client.setPhone(clientDetails.getPhone());
         client.setStreet(clientDetails.getStreet());
