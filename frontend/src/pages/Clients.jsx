@@ -20,6 +20,7 @@ import { useIsMobile } from "../hooks/useMediaQuery.js";
 import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ClientCreateModal } from "../components/modals/client/ClientCreateModal.jsx";
+import { removeDiacritics } from "../utils/formatters.js";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -120,10 +121,11 @@ function Clients() {
     const filteredItems = React.useMemo(() => {
         let filteredClients = [...clients];
 
-        // Filtr podle jména
+        // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
+            const normalizedSearchValue = removeDiacritics(filterValue);
             filteredClients = filteredClients.filter((client) =>
-                client.name.toLowerCase().includes(filterValue.toLowerCase()),
+                removeDiacritics(client.name).includes(normalizedSearchValue),
             );
         }
 

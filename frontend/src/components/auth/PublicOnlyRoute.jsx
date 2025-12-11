@@ -1,29 +1,39 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import React, { useEffect, useRef } from "react";
 import {Spinner} from "@heroui/react";
 import { showToast } from "../MyToast";
 import { ShieldAlert } from "lucide-react";
 
-interface PublicOnlyRouteProps {
-  children: React.ReactNode;
-  redirectTo?: string;
-}
-
 /**
  * Route wrapper that only allows unauthenticated users.
  * Redirects authenticated users to a specified path (default: home page).
  *
  * Use this for login/register pages to prevent authenticated users from accessing them.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Component to render
+ * @param {string} [props.redirectTo='/'] - Path to redirect authenticated users (default: '/')
  */
-const PublicOnlyRoute = ({ children, redirectTo = '/' }: PublicOnlyRouteProps) => {
+const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
     const { user, loading } = useAuth();
+    const location = useLocation();
     const toastShownRef = useRef(false);
+    const initialAuthStatusRef = useRef(null);
 
     const isAuthenticated = !loading && user;
 
+    // Zaznamenej initial auth status po dokončení loadingu
     useEffect(() => {
-        if (isAuthenticated && !toastShownRef.current) {
+        if (!loading && initialAuthStatusRef.current === null) {
+            initialAuthStatusRef.current = !!user;
+        }
+    }, [loading, user]);
+
+    useEffect(() => {
+        // Toast zobraz jen když už byl uživatel přihlášený na začátku
+        // (ne když se právě přihlásil na této stránce)
+        if (isAuthenticated && !toastShownRef.current && initialAuthStatusRef.current === true) {
             showToast({
                 title: "Již jste přihlášeni",
                 description: "Nemůžete přistupovat na tuto stránku, když jste už přihlášeni",
@@ -45,7 +55,9 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }: PublicOnlyRouteProps) =
 
         // If user is authenticated, redirect them away from this page
         if (user) {
-          return <Navigate to={redirectTo} replace />;
+          // Pokud přišel přes ProtectedRoute (má uloženou původní stránku), vrať ho tam
+          const from = location.state?.from?.pathname || redirectTo;
+          return <Navigate to={from} replace />;
         }
 
         // If user is not authenticated, allow access

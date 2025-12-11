@@ -53,3 +53,13 @@ export function formatPostalCode(value) {
         return `${limited.slice(0, 3)} ${limited.slice(3)}`;
     }
 }
+
+// Odstranění diakritiky z textu pro vyhledávání
+export function removeDiacritics(text) {
+    if (!text) return '';
+
+    return text
+        .normalize('NFD') // Rozloží znaky s diakritikou na základní znak + combining diacritical mark
+        .replace(/[\u0300-\u036f]/g, '') // Odstraní combining diacritical marks
+        .toLowerCase();
+}
