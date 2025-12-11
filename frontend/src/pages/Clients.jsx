@@ -14,10 +14,10 @@ import {
     DropdownItem,
     Spinner,
 } from "@heroui/react";
-import {Search, Plus, ChevronDown, FileText, Pencil, Trash2, MoreVertical, User} from "lucide-react";
+import {Search, Plus, ChevronDown, FileText, Trash2, MoreVertical, UserRound} from "lucide-react";
 import { useClients } from "../hooks/useClients.jsx";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
-import { columns, genderOptions, genderTranslations } from "../constants/clientConstants.js";
+import { columns, genderOptions, genderTranslations, activeOptions } from "../constants/clientConstants.js";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ClientCreateModal } from "../components/modals/client/ClientCreateModal.jsx";
 import { removeDiacritics } from "../utils/formatters.js";
@@ -25,7 +25,7 @@ import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.j
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
-    const [genderFilter, setGenderFilter] = React.useState(new Set(["all"]));
+    const [activeFilter, setActiveFilter] = React.useState(new Set(["true"]));
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
     const [sortDescriptor, setSortDescriptor] = React.useState({
@@ -46,7 +46,6 @@ function Clients() {
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isDeleteModalOpen, setIsDeleteModalOpen ] = React.useState(false);
-    const [ selectedClientId, setSelectedClientId ] = React.useState(null);
     const [ selectedClient, setSelectedClient ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
 
@@ -133,10 +132,10 @@ function Clients() {
             );
         }
 
-        // Filtr podle pohlaví
-        if (!genderFilter.has("all")) {
+        // Filtr podle aktivity (filtruj jen když nejsou vybrané obě možnosti)
+        if (activeFilter.size < 2) {
             filteredClients = filteredClients.filter((client) =>
-                genderFilter.has(client.gender),
+                activeFilter.has(client.active),
             );
         }
 
@@ -158,7 +157,7 @@ function Clients() {
         }
 
         return filteredClients;
-    }, [clients, filterValue, hasSearchFilter, genderFilter, departmentFilter, caregiverFilter]);
+    }, [clients, filterValue, hasSearchFilter, activeFilter, departmentFilter, caregiverFilter]);
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column];
@@ -190,28 +189,6 @@ function Clients() {
     const onClear = React.useCallback(() => {
         setFilterValue("");
     }, []);
-
-    // Handler pro změnu gender filtru
-    const handleGenderFilterChange = React.useCallback((keys) => {
-        const newKeys = new Set(keys);
-
-        // Pokud jsme vybrali "all", odeber všechny ostatní
-        if (newKeys.has("all") && !genderFilter.has("all")) {
-            setGenderFilter(new Set(["all"]));
-        }
-        // Pokud vybereme něco jiného než "all", odeber "all"
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setGenderFilter(newKeys);
-        }
-        // Pokud odznačíme všechny, vrať "all"
-        else if (newKeys.size === 0) {
-            setGenderFilter(new Set(["all"]));
-        }
-        else {
-            setGenderFilter(newKeys);
-        }
-    }, [genderFilter]);
 
     // Handler pro změnu department filtru
     const handleDepartmentFilterChange = React.useCallback((keys) => {
@@ -284,7 +261,6 @@ function Clients() {
     }
 
     const handleOpenDetailModal = async (clientId) => {
-        setSelectedClientId(clientId);
         setIsLoadingDetail(true);
         setIsDetailModalOpen(true);
 
@@ -300,7 +276,6 @@ function Clients() {
     }
 
     const handleCloseDetailModal = () => {
-        setSelectedClientId(null);
         setSelectedClient(null);
         setIsDetailModalOpen(false);
     }
@@ -336,22 +311,21 @@ function Clients() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                    Pohlaví
+                                    Status
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
                                 disallowEmptySelection
-                                aria-label="Gender Filter"
+                                aria-label="Active Filter"
                                 closeOnSelect={false}
-                                selectedKeys={genderFilter}
+                                selectedKeys={activeFilter}
                                 selectionMode="multiple"
-                                onSelectionChange={handleGenderFilterChange}
+                                onSelectionChange={setActiveFilter}
                                 className="max-h-60 overflow-y-auto"
                             >
-                                <DropdownItem key="all">Všechny</DropdownItem>
-                                {genderOptions.map((gender) => (
-                                    <DropdownItem key={gender.uid}>
-                                        {gender.name}
+                                {activeOptions.map((active) => (
+                                    <DropdownItem key={active.uid}>
+                                        {active.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
@@ -419,7 +393,7 @@ function Clients() {
         );
     }, [
         filterValue,
-        genderFilter,
+        activeFilter,
         departmentFilter,
         caregiverFilter,
         filteredItems.length,
@@ -427,9 +401,9 @@ function Clients() {
         onSearchChange,
         onClear,
         genderOptions,
+        activeOptions,
         departmentOptions,
         caregiverOptions,
-        handleGenderFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
         canAlterClient,
@@ -482,7 +456,7 @@ function Clients() {
                             </DropdownTrigger>
                             <DropdownMenu>
                                 <DropdownItem key="view"
-                                              startContent={<User />}
+                                              startContent={<UserRound />}
                                               variant="light"
                                               isLoading={isLoadingDetail}
                                               onPress={() => handleOpenDetailModal(client.id)}

@@ -1,11 +1,17 @@
 package cz.zcu.kiv.caretracker.mapper;
 
-import cz.zcu.kiv.caretracker.dto.ClientDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
+import cz.zcu.kiv.caretracker.enums.BenefitLevel;
+import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
+import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -13,7 +19,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class ClientMapper {
-
     /**
      * Převede Client entitu na ClientDTO
      */
@@ -49,6 +54,33 @@ public class ClientMapper {
         dto.setCaregiver(toEmployeeDTO(client.getCaregiver()));
 
         return dto;
+    }
+
+    /**
+     * Převede ClientRequest DTO na Client entitu
+     */
+    public void requestToClient(Client client,
+                                ClientRequestDTO dto,
+                                Department department,
+                                Employee caregiver
+    ) {
+        client.setFirstName(dto.getFirstName());
+        client.setLastName(dto.getLastName());
+        client.setGender(Gender.valueOf(dto.getGender()));
+        client.setDateOfBirth(dto.getDateOfBirth());
+        client.setEmail(dto.getEmail());
+        client.setPhone(dto.getPhone());
+        client.setStreet(dto.getStreet());
+        client.setCity(dto.getCity());
+        client.setPostalCode(dto.getPostalCode());
+        client.setLegallyCompetent(dto.getLegallyCompetent());
+        client.setBenefits(BenefitLevel.valueOf(dto.getBenefits()));
+        client.setRelativesContact(dto.getRelativesContact());
+        client.setGeneralPractitioner(dto.getGeneralPractitioner());
+        client.setNotes(dto.getNotes());
+        client.setDepartment(department);
+        client.setOrganization(department.getOrganization());
+        client.setCaregiver(caregiver);
     }
 
     /**

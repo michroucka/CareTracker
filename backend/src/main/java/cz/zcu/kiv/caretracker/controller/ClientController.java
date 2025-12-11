@@ -1,7 +1,7 @@
 package cz.zcu.kiv.caretracker.controller;
 
-import cz.zcu.kiv.caretracker.dto.ClientDTO;
-import cz.zcu.kiv.caretracker.dto.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.service.ClientService;
@@ -28,8 +28,8 @@ public class ClientController {
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<List<ClientDTO>> getAllClients() {
-        log.info("Fetching all active clients");
-        List<ClientDTO> clients = clientService.getAllActiveClients();
+        log.info("Fetching all clients");
+        List<ClientDTO> clients = clientService.getAllClients();
 
         return ResponseEntity.ok(clients);
     }
@@ -53,10 +53,10 @@ public class ClientController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<Client> updateClient(@PathVariable Long id, @RequestBody Client client) {
+    public ResponseEntity<ClientDTO> updateClient(@PathVariable Long id, @RequestBody ClientRequestDTO dto) {
         log.info("Updating client with id: {}", id);
-        Client updatedClient = clientService.updateClient(id, client);
-        return ResponseEntity.ok(updatedClient);
+        Client updatedClient = clientService.updateClient(id, dto);
+        return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
     }
 
     @DeleteMapping("/{id}")

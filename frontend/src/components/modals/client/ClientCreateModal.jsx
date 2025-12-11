@@ -192,7 +192,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                     >
                         <div className="flex flex-col gap-4 w-full">
                             {/* Základní informace */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Input
                                     isDisabled={isLoading}
                                     isInvalid={!!errors.firstName}
@@ -228,7 +228,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Select
                                     isDisabled={isLoading}
                                     isInvalid={!!errors.gender}
@@ -275,7 +275,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Select
                                     isRequired
                                     isDisabled={isLoading}
@@ -343,7 +343,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                 }}
                             />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <Input
                                     isRequired
                                     isDisabled={isLoading}
@@ -359,6 +359,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                             setErrors({ ...errors, city: undefined });
                                         }
                                     }}
+                                    className="col-span-2"
                                 />
                                 <Input
                                     isRequired
@@ -396,7 +397,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                 }}
                             />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Input
                                     isDisabled={isLoading}
                                     isInvalid={!!errors.phone}
@@ -428,7 +429,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                             </div>
 
                             {/* Další informace */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Select
                                     isDisabled={isLoading}
                                     label="Příspěvek na péči"

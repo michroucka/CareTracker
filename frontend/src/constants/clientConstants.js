@@ -16,3 +16,8 @@ export const genderTranslations = {
     "MALE": "Muž",
     "FEMALE": "Žena",
 };
+
+export const activeOptions = [
+    {name: "Aktivní", uid: "true"},
+    {name: "Neaktivní", uid: "false"},
+]

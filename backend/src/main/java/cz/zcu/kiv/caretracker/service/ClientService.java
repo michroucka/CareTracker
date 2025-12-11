@@ -1,14 +1,13 @@
 package cz.zcu.kiv.caretracker.service;
 
-import cz.zcu.kiv.caretracker.dto.ClientDTO;
-import cz.zcu.kiv.caretracker.dto.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
-import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
@@ -44,7 +43,7 @@ public class ClientService {
     private EmployeeRepository employeeRepository;
 
     /**
-     * Vrací aktivní klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
      * - SUPERADMIN: Vidí všechny klienty
      * - ADMIN: Vidí pouze klienty z jeho organizace
      * - COORDINATOR: Vidí pouze klienty z jeho oddělení
@@ -52,7 +51,7 @@ public class ClientService {
      * - CLIENT: Nemá přístup (ošetřeno na úrovni controlleru)
      */
     @Transactional(readOnly = true)
-    public List<ClientDTO> getAllActiveClients() {
+    protected List<ClientDTO> getClientsByRole(boolean activeOnly) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
@@ -67,7 +66,7 @@ public class ClientService {
 
         // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
-            clients = clientRepository.findByActiveTrue();
+            clients = activeOnly ? clientRepository.findByActiveTrue() : clientRepository.findAll();
         }
         // Zaměstnanci - filtrování podle organizace/oddělení
         else if (user.getEmployee() != null) {
@@ -78,7 +77,9 @@ public class ClientService {
                     throw new SecurityException("Admin must have an associated organization");
                 }
                 Long organizationId = user.getEmployee().getDepartment().getOrganization().getId();
-                clients = clientRepository.findByActiveTrueAndOrganizationId(organizationId);
+                clients = activeOnly
+                    ? clientRepository.findByActiveTrueAndOrganizationId(organizationId)
+                    : clientRepository.findByOrganizationId(organizationId);
             }
             // COORDINATOR a CAREGIVER vidí pouze klienty ze svého oddělení
             else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
@@ -86,7 +87,9 @@ public class ClientService {
                     throw new SecurityException("Employee must have an associated department");
                 }
                 Long departmentId = user.getEmployee().getDepartment().getId();
-                clients = clientRepository.findByActiveTrueAndDepartmentId(departmentId);
+                clients = activeOnly
+                    ? clientRepository.findByActiveTrueAndDepartmentId(departmentId)
+                    : clientRepository.findByDepartmentId(departmentId);
             }
             else {
                 throw new SecurityException("Unauthorized employee role");
@@ -100,9 +103,20 @@ public class ClientService {
         return clientMapper.toDTOList(clients);
     }
 
+    /**
+     * Vrací aktivní klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     */
+    @Transactional(readOnly = true)
+    public List<ClientDTO> getAllActiveClients() {
+        return getClientsByRole(true);
+    }
+
+    /**
+     * Vrací všechny klienty (včetně neaktivních) filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     */
+    @Transactional(readOnly = true)
     public List<ClientDTO> getAllClients() {
-        List<Client> clients = clientRepository.findAll();
-        return clientMapper.toDTOList(clients);
+        return getClientsByRole(false);
     }
 
     /**
@@ -173,38 +187,18 @@ public class ClientService {
         throw new SecurityException("User does not have permission to view this client");
     }
 
-    public Client createClient(ClientRequestDTO dto) {
-        Client client = new Client();
-
-        client.setFirstName(dto.getFirstName());
-        client.setLastName(dto.getLastName());
-        client.setGender(Gender.valueOf(dto.getGender()));
-        client.setDateOfBirth(dto.getDateOfBirth());
-        client.setEmail(dto.getEmail());
-        client.setPhone(dto.getPhone());
-        client.setStreet(dto.getStreet());
-        client.setCity(dto.getCity());
-        client.setPostalCode(dto.getPostalCode());
-        client.setLegallyCompetent(dto.getLegallyCompetent());
-        client.setBenefits(BenefitLevel.valueOf(dto.getBenefits()));
-        client.setRelativesContact(dto.getRelativesContact());
-        client.setGeneralPractitioner(dto.getGeneralPractitioner());
-        client.setNotes(dto.getNotes());
-
+    private Client saveClient(Client client, ClientRequestDTO dto) {
         Department department = departmentRepository.findById(dto.getDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Department not found"));
-        client.setDepartment(department);
-        client.setOrganization(department.getOrganization());
-
+                        .orElseThrow(() -> new RuntimeException("Department not found"));
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
-                .orElseThrow(() -> new RuntimeException("Caregiver not found"));
-        client.setCaregiver(caregiver);
+                        .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        clientMapper.requestToClient(client, dto, department, caregiver);
 
         // Set personalNumber if provided, otherwise use ID after save
         if (dto.getPersonalNumber() != null) {
             client.setPersonalNumber(dto.getPersonalNumber());
-            return clientRepository.save(client);
-        } else {
+        } else if (client.getPersonalNumber() == null){
             // Save first to generate ID, then set personalNumber to ID
             Client savedClient = clientRepository.save(client);
             Long organizationId = savedClient.getOrganization().getId();
@@ -218,34 +212,19 @@ public class ClientService {
             savedClient.setPersonalNumber(personalNumber);
             return clientRepository.save(savedClient);
         }
-    }
-
-    public Client updateClient(Long id, Client clientDetails) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
-
-        client.setFirstName(clientDetails.getFirstName());
-        client.setLastName(clientDetails.getLastName());
-        client.setGender(clientDetails.getGender());
-        client.setPersonalNumber(clientDetails.getPersonalNumber());
-        client.setDateOfBirth(clientDetails.getDateOfBirth());
-        client.setTerminationDate(clientDetails.getTerminationDate());
-        client.setTerminationReason(clientDetails.getTerminationReason());
-        client.setEmail(clientDetails.getEmail());
-        client.setPhone(clientDetails.getPhone());
-        client.setStreet(clientDetails.getStreet());
-        client.setCity(clientDetails.getCity());
-        client.setPostalCode(clientDetails.getPostalCode());
-        client.setLegallyCompetent(clientDetails.getLegallyCompetent());
-        client.setBenefits(clientDetails.getBenefits());
-        client.setRelativesContact(clientDetails.getRelativesContact());
-        client.setGeneralPractitioner(clientDetails.getGeneralPractitioner());
-        client.setNotes(clientDetails.getNotes());
-        client.setActive(clientDetails.getActive());
-        client.setDepartment(clientDetails.getDepartment());
-        client.setCaregiver(clientDetails.getCaregiver());
 
         return clientRepository.save(client);
+    }
+
+    public Client createClient(ClientRequestDTO dto) {
+        Client client = new Client();
+        return saveClient(client, dto);
+    }
+
+    public Client updateClient(Long id, ClientRequestDTO dto) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+        return saveClient(client, dto);
     }
 
     public void deleteClient(Long id) {

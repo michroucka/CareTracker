@@ -186,18 +186,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center">
-                    <span>Detail klienta</span>
-                    {(!isEditMode && client) ? (
-                        <Button
-                            size="sm"
-                            color="secondary"
-                            variant="flat"
-                            startContent={<Pencil size={16} />}
-                            onPress={handleEnterEditMode}
-                        >
-                            Upravit
-                        </Button>
-                    ) : null }
+                    Detail klienta
                 </ModalHeader>
                 <ModalBody className="overflow-y-auto max-h-[70vh]">
                     {isLoading ? (
@@ -212,7 +201,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                         >
                             <div className="flex flex-col gap-4 w-full">
                                 {/* Základní informace */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <Input
                                         isDisabled={isDisabled}
                                         isInvalid={!!errors.firstName}
@@ -248,7 +237,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <Select
                                         isDisabled={isDisabled}
                                         isInvalid={!!errors.gender}
@@ -295,7 +284,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <Select
                                         isRequired
                                         isDisabled={isDisabled}
@@ -363,7 +352,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     }}
                                 />
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <Input
                                         isRequired
                                         isDisabled={isDisabled}
@@ -379,6 +368,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                                 setErrors({ ...errors, city: undefined });
                                             }
                                         }}
+                                        className="col-span-2"
                                     />
                                     <Input
                                         isRequired
@@ -416,7 +406,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     }}
                                 />
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <Input
                                         isDisabled={isDisabled}
                                         isInvalid={!!errors.phone}
@@ -448,7 +438,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                 </div>
 
                                 {/* Další informace */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <Select
                                         isDisabled={isDisabled}
                                         label="Příspěvek na péči"
@@ -535,9 +525,18 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                             </Button>
                         </>
                     ) : (
-                        <Button variant="bordered" onPress={onClose}>
-                            Zavřít
-                        </Button>
+                        <>
+                            <Button variant="bordered" onPress={onClose}>
+                                Zavřít
+                            </Button>
+                            <Button
+                                color="primary"
+                                startContent={<Pencil size={16} />}
+                                onPress={handleEnterEditMode}
+                            >
+                                Upravit
+                            </Button>
+                        </>
                     )}
                 </ModalFooter>
             </ModalContent>

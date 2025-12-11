@@ -21,6 +21,7 @@ export function useClients() {
                 address: `${client.street}, ${client.city}`,
                 department: client.department,
                 caregiver: client.caregiver,
+                active: client.active ? "true" : "false",
             }));
 
             setClients(mappedClients);
@@ -57,6 +58,7 @@ export function useClients() {
                 address: `${newClient.street}, ${newClient.city}`,
                 department: newClient.department,
                 caregiver: newClient.caregiver,
+                active: newClient.active ? "true" : "false",
             };
 
             setClients(prev => [...prev, mappedClient]);
@@ -88,6 +90,7 @@ export function useClients() {
                 address: `${updated.street}, ${updated.city}`,
                 department: updated.department,
                 caregiver: updated.caregiver,
+                active: updated.active ? "true" : "false",
             };
 
             setClients(prev => prev.map(client =>
