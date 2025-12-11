@@ -447,7 +447,7 @@ function Clients() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner size="lg" label="Načítání klientů..." />
+                <Spinner size="lg" variant="gradient" label="Načítání klientů..." />
             </div>
         );
     }
