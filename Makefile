@@ -1,4 +1,4 @@
-.PHONY: up down restart build rebuild clean logs
+.PHONY: up down start stop restart build rebuild clean logs
 
 # Start všech služeb
 up:
@@ -7,6 +7,12 @@ up:
 # Stop všech služeb
 down:
 	docker-compose down
+
+start:
+	docker-compose start
+
+stop:
+	docker-compose stop
 
 # Restart služby
 restart:
