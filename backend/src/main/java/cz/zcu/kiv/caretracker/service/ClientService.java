@@ -72,11 +72,10 @@ public class ClientService {
         else if (user.getEmployee() != null) {
             // ADMIN vidí klienty celé organizace
             if (role == UserRole.ADMIN) {
-                if (user.getEmployee().getDepartment() == null ||
-                        user.getEmployee().getDepartment().getOrganization() == null) {
+                if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Admin must have an associated organization");
                 }
-                Long organizationId = user.getEmployee().getDepartment().getOrganization().getId();
+                Long organizationId = user.getEmployee().getOrganization().getId();
                 clients = activeOnly
                     ? clientRepository.findByActiveTrueAndOrganizationId(organizationId)
                     : clientRepository.findByOrganizationId(organizationId);
@@ -152,13 +151,12 @@ public class ClientService {
         if (user.getEmployee() != null) {
             // ADMIN může vidět klienty z celé organizace
             if (role == UserRole.ADMIN) {
-                if (user.getEmployee().getDepartment() == null ||
-                        user.getEmployee().getDepartment().getOrganization() == null) {
+                if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Admin must have an associated organization");
                 }
 
-                Long userOrgId = user.getEmployee().getDepartment().getOrganization().getId();
-                Long clientOrgId = client.getDepartment().getOrganization().getId();
+                Long userOrgId = user.getEmployee().getOrganization().getId();
+                Long clientOrgId = client.getOrganization().getId();
 
                 if (userOrgId.equals(clientOrgId)) {
                     return Optional.of(clientMapper.toDTO(client));

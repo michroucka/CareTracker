@@ -52,11 +52,11 @@ public class AuthController {
                         // Přidání department ID pro CAREGIVER, COORDINATOR a ADMIN
                         if (user.getEmployee().getDepartment() != null) {
                             response.put("departmentId", user.getEmployee().getDepartment().getId());
+                        }
 
-                            // Přidání organization ID
-                            if (user.getEmployee().getDepartment().getOrganization() != null) {
-                                response.put("organizationId", user.getEmployee().getDepartment().getOrganization().getId());
-                            }
+                        // Přidání organization ID
+                        if (user.getEmployee().getOrganization() != null) {
+                            response.put("organizationId", user.getEmployee().getOrganization().getId());
                         }
                     }
                 } catch (Exception e) {

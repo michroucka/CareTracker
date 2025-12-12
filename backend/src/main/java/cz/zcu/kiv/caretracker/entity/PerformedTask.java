@@ -24,6 +24,11 @@ public class PerformedTask {
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Task task;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "organization_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Organization organization;
+
     @Column(nullable = false)
     private LocalDate date;
 

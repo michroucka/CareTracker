@@ -25,4 +25,8 @@ public class Task {
 
     @Column(name = "double_meeting", nullable = false)
     private Boolean doubleMeeting = Boolean.FALSE;
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 }

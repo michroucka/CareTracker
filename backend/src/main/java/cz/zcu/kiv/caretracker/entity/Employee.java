@@ -36,6 +36,10 @@ public class Employee {
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
+
     @ManyToMany(mappedBy = "caregivers")
     private List<PerformedTask> performed_tasks;
 }

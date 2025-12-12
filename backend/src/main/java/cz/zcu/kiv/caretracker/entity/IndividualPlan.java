@@ -16,6 +16,11 @@ public class IndividualPlan {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Client client;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "organization_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Organization organization;
+
     @Lob
     @Column(columnDefinition = "TEXT")
     private String content;
