@@ -1,12 +1,30 @@
 import { useState } from "react";
-import { getJSON, postJSON, putJSON, deleteJSON } from "../api/api.js";
+import { getJSON, postJSON, putJSON } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { CloudAlert, UserRoundCheck, UserRoundX, UserRoundMinus } from "lucide-react";
+import { sortByKey } from "../utils/sorting.js";
+import {data} from "framer-motion/m";
 
 export function useClients() {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    function mapClient(client) {
+        return {
+            id: client.id,
+            name: `${client.firstName} ${client.lastName}`,
+            gender: client.gender,
+            address: `${client.street}, ${client.city}`,
+            department: client.department,
+            caregiver: client.caregiver,
+            active: client.active,
+        };
+    }
+
+    function mapClients(clients) {
+        return clients.map((client) => mapClient(client));
+    }
 
     const fetchClients = async () => {
         try {
@@ -14,17 +32,10 @@ export function useClients() {
             const clients = await getJSON("/clients");
 
             // Mapuj data z backendu DTO
-            const mappedClients = clients.map(client => ({
-                id: client.id,
-                name: `${client.firstName} ${client.lastName}`,
-                gender: client.gender,
-                address: `${client.street}, ${client.city}`,
-                department: client.department,
-                caregiver: client.caregiver,
-                active: client.active ? "true" : "false",
-            }));
+            const mappedClients = mapClients(clients);
 
-            setClients(mappedClients);
+            const sorted = sortByKey(mappedClients, 'name', 'descending');
+            setClients(sorted);
         } catch (err) {
             console.error("Error fetching clients:", err);
             showErrorToast(err, "Chyba při načítání klientů", { icon: <CloudAlert /> });
@@ -51,17 +62,9 @@ export function useClients() {
             const newClient = await postJSON("/clients", clientData);
 
             // Přidej do seznamu s mapováním
-            const mappedClient = {
-                id: newClient.id,
-                name: `${newClient.firstName} ${newClient.lastName}`,
-                gender: newClient.gender,
-                address: `${newClient.street}, ${newClient.city}`,
-                department: newClient.department,
-                caregiver: newClient.caregiver,
-                active: newClient.active ? "true" : "false",
-            };
+            const mappedClient = mapClient(newClient);
 
-            setClients(prev => [...prev, mappedClient]);
+            setClients(prev => sortByKey([...prev, mappedClient], 'name', 'ascending'));
 
             showToast({
                 title: "Klient úspěšně vytvořen",
@@ -83,18 +86,12 @@ export function useClients() {
             const updated = await putJSON(`/clients/${id}`, updatedData);
 
             // Aktualizuj v seznamu s mapováním
-            const mappedClient = {
-                id: updated.id,
-                name: `${updated.firstName} ${updated.lastName}`,
-                gender: updated.gender,
-                address: `${updated.street}, ${updated.city}`,
-                department: updated.department,
-                caregiver: updated.caregiver,
-                active: updated.active ? "true" : "false",
-            };
+            const mappedClient = mapClient(updated);
 
-            setClients(prev => prev.map(client =>
-                client.id === id ? mappedClient : client
+            setClients(prev => sortByKey(
+                prev.map(client => client.id === id ? mappedClient : client),
+                'name',
+                'ascending'
             ));
 
             showToast({
@@ -111,25 +108,60 @@ export function useClients() {
         }
     };
 
-    // Smazání klienta
-    const deleteClient = async (id) => {
+    // Deaktivace klienta
+    const terminateClient = async (id, data) => {
         try {
-            await deleteJSON(`/clients/${id}`);
+            const updated = await putJSON(`/clients/${id}/terminate`, data);
 
-            // Odeber ze seznamu
-            setClients(prev => prev.filter(client => client.id !== id));
+            // Aktualizuj v seznamu s mapováním
+            const mappedClient = mapClient(updated);
+
+            setClients(prev => sortByKey(
+                prev.map(client => client.id === id ? mappedClient : client),
+                'name',
+                'ascending'
+            ));
 
             showToast({
-                title: "Klient úspěšně smazán",
+                title: "Klient úspěšně deaktivován",
                 color: "success",
-                icon: <UserRoundMinus />
+                icon: <UserRoundCheck />
             });
+
+            return updated;
         } catch (err) {
-            console.error("Error deleting client:", err);
-            showErrorToast(err, "Chyba při mazání klienta", { icon: <CloudAlert /> });
+            console.error("Error terminating client:", err);
+            showErrorToast(err, "Chyba při deaktivaci klienta", { icon: <UserRoundX /> });
             throw err;
         }
     };
+
+    const activateClient = async (id) => {
+        try {
+            const updated = await putJSON(`/clients/${id}/activate`);
+
+            // Aktualizuj v seznamu s mapováním
+            const mappedClient = mapClient(updated);
+
+            setClients(prev => sortByKey(
+                prev.map(client => client.id === id ? mappedClient : client),
+                'name',
+                'ascending'
+            ));
+
+            showToast({
+                title: "Klient úspěšně aktivován",
+                color: "success",
+                icon: <UserRoundCheck />
+            });
+
+            return updated;
+        } catch (err) {
+            console.error("Error activating client:", err);
+            showErrorToast(err, "Chyba při aktivaci klienta", { icon: <UserRoundX /> });
+            throw err;
+        }
+    }
 
     return {
         clients,
@@ -138,7 +170,8 @@ export function useClients() {
         fetchClient,
         createClient,
         updateClient,
-        deleteClient
+        terminateClient,
+        activateClient
     };
 }
 

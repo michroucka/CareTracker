@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,13 +25,16 @@ public class Department {
     private String postalCode;
 
     @OneToMany(mappedBy = "department")
+    @JsonIgnore
     private List<Employee> employees;
 
     @OneToOne
     @JoinColumn(name = "coordinator_id")
+    @JsonIgnore
     private Employee coordinator;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnore
     private Organization organization;
 }

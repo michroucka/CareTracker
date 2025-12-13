@@ -1,27 +1,32 @@
 import React from "react";
 import {
-    Table,
-    TableHeader,
-    TableColumn,
-    TableBody,
-    TableRow,
-    TableCell,
-    Input,
     Button,
-    DropdownTrigger,
     Dropdown,
-    DropdownMenu,
     DropdownItem,
+    DropdownMenu,
+    DropdownTrigger,
+    Input,
     Spinner,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
 } from "@heroui/react";
-import {Search, Plus, ChevronDown, FileText, Trash2, MoreVertical, UserRound} from "lucide-react";
-import { useClients } from "../hooks/useClients.jsx";
-import { useIsMobile } from "../hooks/useMediaQuery.js";
-import { columns, genderOptions, genderTranslations, activeOptions } from "../constants/clientConstants.js";
-import { useAuth } from "../contexts/AuthContext.tsx";
-import { ClientCreateModal } from "../components/modals/client/ClientCreateModal.jsx";
-import { removeDiacritics } from "../utils/formatters.js";
+import {ChevronDown, FileText, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {useClients} from "../hooks/useClients.jsx";
+import {useDepartments} from "../hooks/useDepartments.jsx";
+import {useEmployees} from "../hooks/useEmployees.jsx";
+import {useTasks} from "../hooks/useTasks.jsx";
+import {useIsMobile} from "../hooks/useMediaQuery.js";
+import {activeOptions, columns, genderOptions, genderTranslations} from "../constants/clientConstants.js";
+import {useAuth} from "../contexts/AuthContext.tsx";
+import {ClientCreateModal} from "../components/modals/client/ClientCreateModal.jsx";
+import {removeDiacritics} from "../utils/formatters.js";
+import {sortByKey} from "../utils/sorting.js";
 import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.jsx";
+import {ClientTerminateModal} from "../components/modals/client/ClientTerminateModal.jsx";
 
 function Clients() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -41,11 +46,15 @@ function Clients() {
         fetchClient,
         createClient,
         updateClient,
-        deleteClient,
+        terminateClient,
+        activateClient
     } = useClients();
+    const { departments, fetchDepartments } = useDepartments();
+    const { employees, fetchEmployees } = useEmployees();
+    const { tasks, fetchTasks } = useTasks();
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
-    const [ isDeleteModalOpen, setIsDeleteModalOpen ] = React.useState(false);
+    const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedClient, setSelectedClient ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
 
@@ -63,13 +72,16 @@ function Clients() {
     // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
-            return columns.filter(col => col.uid === "name" || col.uid === "actions");
+            return columns.filter(col => col.key === "name" || col.key === "actions");
         }
         return columns;
     }, [isMobile]);
 
     React.useEffect(() => {
         fetchClients();
+        fetchDepartments();
+        fetchEmployees();
+        fetchTasks();
     }, []);
 
     // Dynamická výška tabulky podle velikosti obrazovky
@@ -79,47 +91,20 @@ function Clients() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Dynamické options pro department a caregiver (pro filtry)
+    // Options pro filtry z API endpointů (již seřazené v hooks)
     const departmentOptions = React.useMemo(() => {
-        const uniqueDepartments = [...new Set(clients
-            .map(c => c.department?.name)
-            .filter(Boolean))];
-        return uniqueDepartments.map(name => ({
-            name: name,
-            uid: name
+        return departments.map(dept => ({
+            name: dept.city,
+            key: dept.city
         }));
-    }, [clients]);
+    }, [departments]);
 
     const caregiverOptions = React.useMemo(() => {
-        const uniqueCaregivers = [...new Set(clients
-            .map(c => c.caregiver ? `${c.caregiver.firstName} ${c.caregiver.lastName}` : null)
-            .filter(Boolean))];
-        return uniqueCaregivers.map(name => ({
-            name: name,
-            uid: name
+        return employees.map(emp => ({
+            name: emp.fullName,
+            key: emp.fullName
         }));
-    }, [clients]);
-
-    // Seznamy pro modal (s ID)
-    const departmentsWithId = React.useMemo(() => {
-        const deptMap = new Map();
-        clients.forEach(c => {
-            if (c.department && c.department.id) {
-                deptMap.set(c.department.id, c.department);
-            }
-        });
-        return Array.from(deptMap.values());
-    }, [clients]);
-
-    const caregiversWithId = React.useMemo(() => {
-        const cgMap = new Map();
-        clients.forEach(c => {
-            if (c.caregiver && c.caregiver.id) {
-                cgMap.set(c.caregiver.id, c.caregiver);
-            }
-        });
-        return Array.from(cgMap.values());
-    }, [clients]);
+    }, [employees]);
 
     const filteredItems = React.useMemo(() => {
         let filteredClients = [...clients];
@@ -135,7 +120,7 @@ function Clients() {
         // Filtr podle aktivity (filtruj jen když nejsou vybrané obě možnosti)
         if (activeFilter.size < 2) {
             filteredClients = filteredClients.filter((client) =>
-                activeFilter.has(client.active),
+                activeFilter.has(client?.active?.toString()),
             );
         }
 
@@ -158,24 +143,9 @@ function Clients() {
 
         return filteredClients;
     }, [clients, filterValue, hasSearchFilter, activeFilter, departmentFilter, caregiverFilter]);
+
     const sortedItems = React.useMemo(() => {
-        return [...filteredItems].sort((a, b) => {
-            const first = a[sortDescriptor.column];
-            const second = b[sortDescriptor.column];
-
-            let cmp = 0;
-
-            // Pro stringy použij české řazení
-            if (typeof first === 'string' && typeof second === 'string') {
-                cmp = first.localeCompare(second, 'cs-CZ', { sensitivity: 'base' });
-            }
-            // Pro ostatní typy (čísla, objekty) použij standardní porovnání
-            else {
-                cmp = first < second ? -1 : first > second ? 1 : 0;
-            }
-
-            return sortDescriptor.direction === "descending" ? cmp : -cmp;
-        });
+        return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
     }, [sortDescriptor, filteredItems]);
 
     const onSearchChange = React.useCallback((value) => {
@@ -228,6 +198,16 @@ function Clients() {
         }
     }, [caregiverFilter]);
 
+    async function handleSelectClient(clientId) {
+        try {
+            const clientData = await fetchClient(clientId);
+            setSelectedClient(clientData);
+        } catch (error) {
+            console.error("Failed to load client:", error);
+            throw error;
+        }
+    }
+
     const handleOpenCreateModal = () => {
         setIsCreateModalOpen(true);
     };
@@ -250,10 +230,9 @@ function Clients() {
         }
     }
 
-    const handleEditClient = async (clientId, clientData) => {
+    const handleUpdateClient = async (clientId, clientData) => {
         try {
-            await updateClient(clientId, clientData);
-            // Modal se zavře automaticky v ClientDetailModal
+            return await updateClient(clientId, clientData);
         } catch (error) {
             console.error("Failed to update client:", error);
             throw error;
@@ -265,19 +244,50 @@ function Clients() {
         setIsDetailModalOpen(true);
 
         try {
-            const clientData = await fetchClient(clientId);
-            setSelectedClient(clientData);
-        } catch (error) {
-            console.error("Failed to load client:", error);
+            await handleSelectClient(clientId);
+        } catch {
             setIsDetailModalOpen(false);
-        } finally {
-            setIsLoadingDetail(false);
         }
+
+        setIsLoadingDetail(false);
     }
 
     const handleCloseDetailModal = () => {
         setSelectedClient(null);
         setIsDetailModalOpen(false);
+    }
+
+    const handleOpenTerminateModal = async (clientId) => {
+        setIsTerminateModalOpen(true);
+
+        try {
+            await handleSelectClient(clientId);
+        } catch {
+            setIsTerminateModalOpen(false);
+        }
+    }
+
+    const handleCloseTerminateModal = () => {
+        setSelectedClient(null);
+        setIsTerminateModalOpen(false);
+    }
+
+    const handleTerminateClient = async (clientId, data) => {
+        try {
+            await terminateClient(clientId, data);
+        } catch (error) {
+            console.error("Failed to terminate client:", error);
+            throw error;
+        }
+    }
+
+    const handleActivateClient = async (clientId) => {
+        try {
+            await activateClient(clientId);
+        } catch (error) {
+            console.error("Failed to activate client:", error);
+            throw error;
+        }
     }
 
 
@@ -308,51 +318,57 @@ function Clients() {
                         }}
                     />
                     <div className="flex gap-3">
-                        <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                    Status
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Active Filter"
-                                closeOnSelect={false}
-                                selectedKeys={activeFilter}
-                                selectionMode="multiple"
-                                onSelectionChange={setActiveFilter}
-                                className="max-h-60 overflow-y-auto"
-                            >
-                                {activeOptions.map((active) => (
-                                    <DropdownItem key={active.uid}>
-                                        {active.name}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
-                        </Dropdown>
-                        <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                    Oddělení
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Department Filter"
-                                closeOnSelect={false}
-                                selectedKeys={departmentFilter}
-                                selectionMode="multiple"
-                                onSelectionChange={handleDepartmentFilterChange}
-                                className="max-h-60 overflow-y-auto"
-                            >
-                                <DropdownItem key="all">Všechny</DropdownItem>
-                                {departmentOptions.map((dept) => (
-                                    <DropdownItem key={dept.uid}>
-                                        {dept.name}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
-                        </Dropdown>
+                        {canAlterClient && (
+                            <Dropdown>
+                                <DropdownTrigger className="hidden sm:flex">
+                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                        Status
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu
+                                    disallowEmptySelection
+                                    aria-label="Active Filter"
+                                    closeOnSelect={false}
+                                    selectedKeys={activeFilter}
+                                    selectionMode="multiple"
+                                    onSelectionChange={setActiveFilter}
+                                    className="max-h-60 overflow-y-auto"
+                                >
+                                    {activeOptions.map((active) => (
+                                        <DropdownItem key={active.key}>
+                                            {active.name}
+                                        </DropdownItem>
+                                    ))}
+                                </DropdownMenu>
+                            </Dropdown>
+                        )}
+
+                        {user.role !== "CAREGIVER" && (
+                            <Dropdown>
+                                <DropdownTrigger className="hidden sm:flex">
+                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                        Oddělení
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu
+                                    disallowEmptySelection
+                                    aria-label="Department Filter"
+                                    closeOnSelect={false}
+                                    selectedKeys={departmentFilter}
+                                    selectionMode="multiple"
+                                    onSelectionChange={handleDepartmentFilterChange}
+                                    className="max-h-60 overflow-y-auto"
+                                >
+                                    <DropdownItem key="all">Všechny</DropdownItem>
+                                    {departmentOptions.map((dept) => (
+                                        <DropdownItem key={dept.key}>
+                                            {dept.name}
+                                        </DropdownItem>
+                                    ))}
+                                </DropdownMenu>
+                            </Dropdown>
+                        )}
+
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
@@ -370,12 +386,13 @@ function Clients() {
                             >
                                 <DropdownItem key="all">Všichni</DropdownItem>
                                 {caregiverOptions.map((caregiver) => (
-                                    <DropdownItem key={caregiver.uid}>
+                                    <DropdownItem key={caregiver.key}>
                                         {caregiver.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
+
                         {canAlterClient && (
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
@@ -470,13 +487,25 @@ function Clients() {
                                     Individuální plán
                                 </DropdownItem>
                                 {canAlterClient ? (
-                                    <DropdownItem key="delete"
-                                                  startContent={<Trash2 />}
-                                                  variant="light"
-                                                  color="danger"
-                                    >
-                                        Smazat
-                                    </DropdownItem>
+                                    client.active ? (
+                                        <DropdownItem key="terminate"
+                                                      startContent={<UserRoundX />}
+                                                      variant="light"
+                                                      color="danger"
+                                                      onPress={() => handleOpenTerminateModal(client.id)}
+                                        >
+                                            Deaktivovat
+                                        </DropdownItem>
+                                        ) : (
+                                        <DropdownItem key="activate"
+                                                      startContent={<UserRoundCheck />}
+                                                      variant="light"
+                                                      color="success"
+                                                      onPress={() => handleActivateClient(client.id)}
+                                        >
+                                            Aktivovat
+                                        </DropdownItem>
+                                    )
                                 ) : null}
                             </DropdownMenu>
                         </Dropdown>
@@ -512,8 +541,8 @@ function Clients() {
                 <TableHeader columns={visibleColumns}>
                     {(column) => (
                         <TableColumn
-                            key={column.uid}
-                            align={column.uid === "actions" ? "end" : "start"}
+                            key={column.key}
+                            align={column.key === "actions" ? "end" : "start"}
                             allowsSorting={column.sortable}
                         >
                             {column.name}
@@ -522,7 +551,7 @@ function Clients() {
                 </TableHeader>
                 <TableBody emptyContent={"Žádní klienti nenalezeni"} items={sortedItems}>
                     {(item) => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                         </TableRow>
                     )}
@@ -533,18 +562,28 @@ function Clients() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreateClient}
-                departments={departmentsWithId}
-                caregivers={caregiversWithId}
+                departments={departments}
+                caregivers={employees}
+                tasks={tasks}
             />
 
             <ClientDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
-                onSubmit={handleEditClient}
+                onSubmit={handleUpdateClient}
                 client={selectedClient}
                 isLoading={isLoadingDetail}
-                departments={departmentsWithId}
-                caregivers={caregiversWithId}
+                departments={departments}
+                caregivers={employees}
+                tasks={tasks}
+            />
+
+            <ClientTerminateModal
+                isOpen={isTerminateModalOpen}
+                onClose={handleCloseTerminateModal}
+                onSubmit={handleTerminateClient}
+                clientId={selectedClient?.id}
+                clientName={`${selectedClient?.firstName} ${selectedClient?.lastName}`}
             />
         </>
     );

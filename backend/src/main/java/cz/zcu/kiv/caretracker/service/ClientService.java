@@ -2,18 +2,14 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
-import cz.zcu.kiv.caretracker.entity.Client;
-import cz.zcu.kiv.caretracker.entity.Department;
-import cz.zcu.kiv.caretracker.entity.Employee;
-import cz.zcu.kiv.caretracker.entity.User;
+import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
-import cz.zcu.kiv.caretracker.repository.ClientRepository;
-import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
-import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
-import cz.zcu.kiv.caretracker.repository.UserRepository;
+import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +38,9 @@ public class ClientService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     /**
      * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
@@ -191,7 +191,15 @@ public class ClientService {
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
                         .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        clientMapper.requestToClient(client, dto, department, caregiver);
+        List<Task> tasks = new ArrayList<>();
+        for (Long taskId : dto.getTaskIds()) {
+            Task task = taskRepository.findById(taskId)
+                    .orElseThrow(() -> new RuntimeException("Task not found"));
+
+            tasks.add(task);
+        }
+
+        clientMapper.requestToClient(client, dto, department, caregiver, tasks);
 
         // Set personalNumber if provided, otherwise use ID after save
         if (dto.getPersonalNumber() != null) {
@@ -225,10 +233,25 @@ public class ClientService {
         return saveClient(client, dto);
     }
 
-    public void deleteClient(Long id) {
+    public Client terminateClient(Long id, ClientTerminateDTO dto) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
+
         client.setActive(false);
-        clientRepository.save(client);
+        client.setTerminationDate(dto.getTerminationDate());
+        client.setTerminationReason(TerminationReason.valueOf(dto.getTerminationReason()));
+
+        return clientRepository.save(client);
+    }
+
+    public Client activateClient(Long id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        client.setActive(true);
+        client.setTerminationDate(null);
+        client.setTerminationReason(null);
+
+        return clientRepository.save(client);
     }
 }

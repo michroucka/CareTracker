@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.mapper;
 
+import cz.zcu.kiv.caretracker.dto.TaskDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
@@ -7,13 +8,16 @@ import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
+import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,7 @@ public class ClientMapper {
         // Mapování vnořených objektů
         dto.setDepartment(toDepartmentDTO(client.getDepartment()));
         dto.setCaregiver(toEmployeeDTO(client.getCaregiver()));
+        dto.setTasks(toTasksDTO(client.getTasks()));
 
         return dto;
     }
@@ -62,7 +67,8 @@ public class ClientMapper {
     public void requestToClient(Client client,
                                 ClientRequestDTO dto,
                                 Department department,
-                                Employee caregiver
+                                Employee caregiver,
+                                List<Task> tasks
     ) {
         client.setFirstName(dto.getFirstName());
         client.setLastName(dto.getLastName());
@@ -81,6 +87,12 @@ public class ClientMapper {
         client.setDepartment(department);
         client.setOrganization(department.getOrganization());
         client.setCaregiver(caregiver);
+        client.setTasks(tasks);
+        client.setTerminationDate(dto.getTerminationDate());
+        client.setTerminationReason(dto.getTerminationReason() != null
+                ? TerminationReason.valueOf(dto.getTerminationReason())
+                : null
+        );
     }
 
     /**
@@ -122,6 +134,27 @@ public class ClientMapper {
         dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
 
         return dto;
+    }
+
+    private List<TaskDTO> toTasksDTO(List<Task> tasks) {
+        if (tasks == null) {
+            return null;
+        }
+
+        List<TaskDTO> dtos = new ArrayList<>();
+
+        for (Task task : tasks) {
+            TaskDTO dto = new TaskDTO();
+            dto.setId(task.getId());
+            dto.setTaskName(task.getTaskName());
+            dto.setUnitPrice(task.getUnitPrice());
+            dto.setUnitType(task.getUnitType().name());
+            dto.setDoubleMeeting(task.getDoubleMeeting());
+
+            dtos.add(dto);
+        }
+
+        return dtos;
     }
 
     /**

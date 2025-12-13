@@ -1,12 +1,12 @@
 package cz.zcu.kiv.caretracker.repository;
 
-import cz.zcu.kiv.caretracker.entity.Department;
+import cz.zcu.kiv.caretracker.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface DepartmentRepository extends JpaRepository<Department, Long> {
-    List<Department> findByOrganizationId(Long organizationId);
+public interface TaskRepository extends JpaRepository<Task, Long> {
+    List<Task> findByOrganizationId(Long organizationId);
 }

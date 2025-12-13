@@ -1,10 +1,15 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "task")
 public class Task {
@@ -28,5 +33,6 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnore
     private Organization organization;
 }

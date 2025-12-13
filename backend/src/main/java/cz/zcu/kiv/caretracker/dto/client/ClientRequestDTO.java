@@ -29,5 +29,7 @@ public class ClientRequestDTO {
     private Long departmentId;
     private Long caregiverId;
     private List<Long> taskIds;
+    private LocalDate terminationDate;
+    private String terminationReason;
 }
 

@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.service.ClientService;
@@ -59,12 +60,20 @@ public class ClientController {
         return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/{id}/terminate")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
-        log.info("Deleting client with id: {}", id);
-        clientService.deleteClient(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ClientDTO> terminateClient(@PathVariable Long id, @RequestBody ClientTerminateDTO dto) {
+        log.info("Terminating client with id: {}", id);
+        Client updatedClient = clientService.terminateClient(id, dto);
+        return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
+    }
+
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<ClientDTO> activateClient(@PathVariable Long id) {
+        log.info("Activating client with id: {}", id);
+        Client updatedClient = clientService.activateClient(id);
+        return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
     }
 
 

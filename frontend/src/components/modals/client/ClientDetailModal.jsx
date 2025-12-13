@@ -19,10 +19,14 @@ import { Save, CalendarDays, Pencil, X } from "lucide-react";
 import React from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../../utils/formatters.js";
+import {benefitsOptions, terminationReasonOptions} from "../../../constants/clientConstants.js";
 
-export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading, departments = [], caregivers = [] }) {
+export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading, departments = [], caregivers = [], tasks = [] }) {
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+    // Sledování aktuálních dat klienta (aktualizuje se po uložení)
+    const [currentClientData, setCurrentClientData] = React.useState(null);
 
     // Edit mode state - inicializuje se z client objektu
     const [firstName, setFirstName] = React.useState("");
@@ -42,15 +46,25 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
     const [notes, setNotes] = React.useState("");
     const [departmentId, setDepartmentId] = React.useState(null);
     const [caregiverId, setCaregiverId] = React.useState(null);
+    const [taskIds, setTaskIds] = React.useState([]);
+    const [terminationDate, setTerminationDate] = React.useState(null);
+    const [terminationReason, setTerminationReason] = React.useState("");
 
     const [errors, setErrors] = React.useState({});
 
     // Inicializuj state když se client načte
     React.useEffect(() => {
         if (client) {
+            setCurrentClientData(client);
             initializeEditState(client);
         }
     }, [client]);
+
+    React.useEffect(() => {
+        if (!isOpen) {
+            setIsEditMode(false);
+        }
+    }, [isOpen]);
 
     // Funkce pro inicializaci edit state z client objektu
     const initializeEditState = (clientData) => {
@@ -71,12 +85,15 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
         setNotes(clientData.notes || "");
         setDepartmentId(clientData.department?.id || null);
         setCaregiverId(clientData.caregiver?.id || null);
+        setTaskIds(clientData.tasks?.map(t => t.id) || []);
+        setTerminationDate(clientData.terminationDate || null);
+        setTerminationReason(clientData.terminationReason || "");
     };
 
     // Zapni edit mode
     const handleEnterEditMode = () => {
-        if (client) {
-            initializeEditState(client); // Refresh data před editací
+        if (currentClientData) {
+            initializeEditState(currentClientData); // Refresh data před editací
             setIsEditMode(true);
         }
     };
@@ -85,8 +102,8 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
     const handleCancelEdit = () => {
         setIsEditMode(false);
         setErrors({});
-        if (client) {
-            initializeEditState(client); // Vrať původní data
+        if (currentClientData) {
+            initializeEditState(currentClientData); // Vrať uložená data
         }
     };
 
@@ -103,6 +120,10 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
         if (!street) newErrors.street = "Prosím zadejte ulici a číslo popisné";
         if (!city) newErrors.city = "Prosím zadejte město";
         if (!postalCode) newErrors.postalCode = "Prosím zadejte PSČ";
+        if (!client.active) {
+            if (!terminationDate) newErrors.terminationDate = "Prosím zadejte datum ukončení smlouvy";
+            if (!terminationReason) newErrors.terminationReason = "Prosím zadejte důvod ukončení smlouvy";
+        }
 
         // Email validace
         if (email && email.trim()) {
@@ -165,14 +186,18 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
             notes: notes || null,
             departmentId,
             caregiverId,
+            taskIds: taskIds || [],
+            terminationDate: terminationDate || null,
+            terminationReason: terminationReason || null,
         };
 
         try {
             if (onSubmit && client) {
-                await onSubmit(client.id, clientData); // Předej ID pro update
+                const updatedClient = await onSubmit(client.id, clientData);
+                setCurrentClientData(updatedClient);
+                initializeEditState(updatedClient);
             }
             setIsEditMode(false);
-            onClose(); // Zavři modal - parent refreshne data
         } catch (error) {
             console.error("Error submitting form:", error);
         } finally {
@@ -188,7 +213,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                 <ModalHeader className="flex justify-between items-center">
                     Detail klienta
                 </ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[70vh]">
+                <ModalBody className="overflow-y-auto max-h-[50vh]">
                     {isLoading ? (
                         <div className="flex justify-center items-center py-8">
                             <Spinner size="lg" label="Načítání klienta..." />
@@ -303,8 +328,12 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                         }}
                                     >
                                         {departments.map((dept) => (
-                                            <SelectItem key={dept.id.toString()} value={dept.id.toString()}>
-                                                {dept.name}
+                                            <SelectItem
+                                                key={dept.id.toString()}
+                                                value={dept.id.toString()}
+                                                textValue={dept.city}
+                                            >
+                                                {dept.city}
                                             </SelectItem>
                                         ))}
                                     </Select>
@@ -326,11 +355,18 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                             }
                                         }}
                                     >
-                                        {caregivers.map((caregiver) => (
-                                            <SelectItem key={caregiver.id.toString()} value={caregiver.id.toString()}>
-                                                {`${caregiver.firstName} ${caregiver.lastName}`}
-                                            </SelectItem>
-                                        ))}
+                                        {caregivers.map((caregiver) => {
+                                            const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                            return (
+                                                <SelectItem
+                                                    key={caregiver.id.toString()}
+                                                    value={caregiver.id.toString()}
+                                                    textValue={caregiverName}
+                                                >
+                                                    {caregiverName}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </Select>
                                 </div>
 
@@ -389,22 +425,35 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     />
                                 </div>
 
-                                <Input
-                                    isDisabled={isDisabled}
-                                    isInvalid={!!errors.email}
-                                    errorMessage={errors.email}
-                                    label="Email"
-                                    labelPlacement="inside"
-                                    name="email"
-                                    type="email"
-                                    value={email}
-                                    onValueChange={(value) => {
-                                        setEmail(value);
-                                        if (errors.email) {
-                                            setErrors({ ...errors, email: undefined });
-                                        }
-                                    }}
-                                />
+                                <div className="flex gap-4 items-start">
+                                    <Input
+                                        isDisabled={isDisabled}
+                                        isInvalid={!!errors.email}
+                                        errorMessage={errors.email}
+                                        label="Email"
+                                        labelPlacement="inside"
+                                        name="email"
+                                        type="email"
+                                        value={email}
+                                        onValueChange={(value) => {
+                                            setEmail(value);
+                                            if (errors.email) {
+                                                setErrors({ ...errors, email: undefined });
+                                            }
+                                        }}
+                                    />
+
+                                    <div className="flex items-center h-14">
+                                        <Checkbox
+                                            name="legallyCompetent"
+                                            isSelected={legallyCompetent}
+                                            onValueChange={setLegallyCompetent}
+                                            isDisabled={isDisabled}
+                                        >
+                                            Svéprávný
+                                        </Checkbox>
+                                    </div>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <Input
@@ -440,6 +489,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                 {/* Další informace */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <Select
+                                        disallowEmptySelection
                                         isDisabled={isDisabled}
                                         label="Příspěvek na péči"
                                         labelPlacement="inside"
@@ -447,23 +497,41 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                         selectedKeys={[benefits]}
                                         onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
                                     >
-                                        <SelectItem key="NONE" value="NONE">Žádný</SelectItem>
-                                        <SelectItem key="ONE" value="ONE">I. stupeň</SelectItem>
-                                        <SelectItem key="TWO" value="TWO">II. stupeň</SelectItem>
-                                        <SelectItem key="THREE" value="THREE">III. stupeň</SelectItem>
-                                        <SelectItem key="FOUR" value="FOUR">IV. stupeň</SelectItem>
+                                        {benefitsOptions.map((b) => (
+                                            <SelectItem key={b.key} value={b.key}>
+                                                {b.name}
+                                            </SelectItem>
+                                        ))}
                                     </Select>
 
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            name="legallyCompetent"
-                                            isSelected={legallyCompetent}
-                                            onValueChange={setLegallyCompetent}
-                                            isDisabled={isDisabled}
-                                        >
-                                            Svéprávný
-                                        </Checkbox>
-                                    </div>
+                                    <Select
+                                        isDisabled={isDisabled}
+                                        label="Úkony"
+                                        labelPlacement="inside"
+                                        name="taskIds"
+                                        selectionMode="multiple"
+                                        selectedKeys={taskIds.map(id => id.toString())}
+                                        onSelectionChange={(keys) => {
+                                            const selectedIds = Array.from(keys).map(key => parseInt(key));
+                                            setTaskIds(selectedIds);
+                                        }}
+                                        classNames={{
+                                            trigger: "min-h-12",
+                                        }}
+                                        renderValue={(items) => {
+                                            return `Celkem: ${items.length}`;
+                                        }}
+                                    >
+                                        {tasks.map((task) => (
+                                            <SelectItem
+                                                key={task.id.toString()}
+                                                value={task.id.toString()}
+                                                textValue={task.taskName}
+                                            >
+                                                {task.taskName}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
                                 </div>
 
                                 <Textarea
@@ -495,6 +563,57 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                     onValueChange={setNotes}
                                     minRows={2}
                                 />
+
+                                {!client.active && (
+                                    <>
+                                        <DatePicker
+                                            isDisabled={isDisabled}
+                                            isInvalid={!!errors.terminationDate}
+                                            errorMessage={errors.terminationDate}
+                                            label="Datum ukončení smlouvy"
+                                            labelPlacement="inside"
+                                            name="terminationDate"
+                                            value={terminationDate ? parseDate(terminationDate) : null}
+                                            onChange={(date) => {
+                                                setTerminationDate(date ? date.toString() : "");
+                                                if (errors.terminationDate) {
+                                                    setErrors({ ...errors, terminationDate: undefined});
+                                                }
+                                            }}
+                                            showMonthAndYearPickers
+                                            selectorIcon={<CalendarDays size={18} />}
+                                            minValue={new CalendarDate(1900, 1, 1)}
+                                            maxValue={today(getLocalTimeZone())}
+                                            isRequired
+                                            classNames={{
+                                                segment: "text-default-500"
+                                            }}
+                                        />
+
+                                        <Select
+                                            isDisabled={isDisabled}
+                                            isInvalid={!!errors.terminationReason}
+                                            errorMessage={errors.terminationReason}
+                                            label="Důvod ukončení smlouvy"
+                                            labelPlacement="inside"
+                                            name="terminationReason"
+                                            selectedKeys={terminationReason ? [terminationReason] : []}
+                                            onSelectionChange={(keys) => {
+                                                setTerminationReason(Array.from(keys)[0]);
+                                                if (errors.terminationReason) {
+                                                    setErrors({ ...errors, terminationReason: undefined });
+                                                }
+                                            }}
+                                            isRequired
+                                        >
+                                            {terminationReasonOptions.map((reason) => (
+                                                <SelectItem key={reason.key} value={reason.key}>
+                                                    {reason.name}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    </>
+                                )}
                             </div>
                         </Form>
                     ) : (

@@ -2,11 +2,13 @@ package cz.zcu.kiv.caretracker.dto.client;
 
 import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.TaskDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -36,4 +38,5 @@ public class ClientDTO {
     // Vnořené objekty
     private DepartmentDTO department;
     private EmployeeDTO caregiver;
+    private List<TaskDTO> tasks;
 }

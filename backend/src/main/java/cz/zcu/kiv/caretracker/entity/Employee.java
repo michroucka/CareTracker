@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcType;
@@ -34,12 +35,15 @@ public class Employee {
 
     @ManyToOne
     @JoinColumn(name = "department_id")
+    @JsonIgnore
     private Department department;
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnore
     private Organization organization;
 
     @ManyToMany(mappedBy = "caregivers")
+    @JsonIgnore
     private List<PerformedTask> performed_tasks;
 }

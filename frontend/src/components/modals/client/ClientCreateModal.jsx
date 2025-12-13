@@ -11,14 +11,16 @@ import {
     SelectItem,
     Textarea,
     DatePicker,
-    Form, NumberInput,
+    Form,
+    NumberInput,
 } from "@heroui/react";
 import { Plus, CalendarDays } from "lucide-react";
 import React from "react";
 import { CalendarDate, getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../../utils/formatters.js";
+import {benefitsOptions} from "../../../constants/clientConstants.js";
 
-export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [], caregivers = [] }) {
+export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [], caregivers = [] , tasks = []}) {
     const [firstName, setFirstName] = React.useState("");
     const [lastName, setLastName] = React.useState("");
     const [gender, setGender] = React.useState("");
@@ -36,6 +38,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
     const [notes, setNotes] = React.useState("");
     const [departmentId, setDepartmentId] = React.useState(null);
     const [caregiverId, setCaregiverId] = React.useState(null);
+    const [taskIds, setTaskIds] = React.useState([]);
 
     const [errors, setErrors] = React.useState({});
     const [isLoading, setIsLoading] = React.useState(false);
@@ -139,6 +142,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
             notes: notes || null,
             departmentId,
             caregiverId,
+            taskIds: taskIds || [],
         };
 
         try {
@@ -173,6 +177,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
         setNotes("");
         setDepartmentId(null);
         setCaregiverId(null);
+        setTaskIds([]);
         setErrors({});
     }
 
@@ -183,7 +188,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
         >
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">Přidat nového klienta</ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[70vh]">
+                <ModalBody className="overflow-y-auto max-h-[50vh]">
                     <Form
                         className="w-full space-y-4"
                         validationErrors={errors}
@@ -294,8 +299,12 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                     }}
                                 >
                                     {departments.map((dept) => (
-                                        <SelectItem key={dept.id.toString()} value={dept.id.toString()}>
-                                            {dept.name}
+                                        <SelectItem
+                                            key={dept.id.toString()}
+                                            value={dept.id.toString()}
+                                            textValue={dept.city}
+                                        >
+                                            {dept.city}
                                         </SelectItem>
                                     ))}
                                 </Select>
@@ -317,11 +326,18 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                         }
                                     }}
                                 >
-                                    {caregivers.map((caregiver) => (
-                                        <SelectItem key={caregiver.id.toString()} value={caregiver.id.toString()}>
-                                            {`${caregiver.firstName} ${caregiver.lastName}`}
-                                        </SelectItem>
-                                    ))}
+                                    {caregivers.map((caregiver) => {
+                                        const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                        return (
+                                            <SelectItem
+                                                key={caregiver.id.toString()}
+                                                value={caregiver.id.toString()}
+                                                textValue={caregiverName}
+                                            >
+                                                {caregiverName}
+                                            </SelectItem>
+                                        );
+                                    })}
                                 </Select>
                             </div>
 
@@ -380,22 +396,36 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                 />
                             </div>
 
-                            <Input
-                                isDisabled={isLoading}
-                                isInvalid={!!errors.email}
-                                errorMessage={errors.email}
-                                label="Email"
-                                labelPlacement="inside"
-                                name="email"
-                                type="email"
-                                value={email}
-                                onValueChange={(value) => {
-                                    setEmail(value);
-                                    if (errors.email) {
-                                        setErrors({ ...errors, email: undefined });
-                                    }
-                                }}
-                            />
+                            <div className="flex gap-4 items-start">
+                                <Input
+                                    isDisabled={isLoading}
+                                    isInvalid={!!errors.email}
+                                    errorMessage={errors.email}
+                                    label="Email"
+                                    labelPlacement="inside"
+                                    name="email"
+                                    type="email"
+                                    value={email}
+                                    onValueChange={(value) => {
+                                        setEmail(value);
+                                        if (errors.email) {
+                                            setErrors({ ...errors, email: undefined });
+                                        }
+                                    }}
+                                    className="flex-1"
+                                />
+
+                                <div className="flex items-center h-14">
+                                    <Checkbox
+                                        name="legallyCompetent"
+                                        isSelected={legallyCompetent}
+                                        onValueChange={setLegallyCompetent}
+                                        isDisabled={isLoading}
+                                    >
+                                        Svéprávný
+                                    </Checkbox>
+                                </div>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <Input
@@ -431,6 +461,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                             {/* Další informace */}
                             <div className="grid grid-cols-2 gap-4">
                                 <Select
+                                    disallowEmptySelection
                                     isDisabled={isLoading}
                                     label="Příspěvek na péči"
                                     labelPlacement="inside"
@@ -438,23 +469,42 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                     selectedKeys={[benefits]}
                                     onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
                                 >
-                                    <SelectItem key="NONE" value="NONE">Žádný</SelectItem>
-                                    <SelectItem key="ONE" value="ONE">I. stupeň</SelectItem>
-                                    <SelectItem key="TWO" value="TWO">II. stupeň</SelectItem>
-                                    <SelectItem key="THREE" value="THREE">III. stupeň</SelectItem>
-                                    <SelectItem key="FOUR" value="FOUR">IV. stupeň</SelectItem>
+                                    {benefitsOptions.map((b) => (
+                                        <SelectItem key={b.key} value={b.key}>
+                                            {b.name}
+                                        </SelectItem>
+                                    ))}
                                 </Select>
 
-                                <div className="flex items-center">
-                                    <Checkbox
-                                        name="legallyCompetent"
-                                        isSelected={legallyCompetent}
-                                        onValueChange={setLegallyCompetent}
-                                        isDisabled={isLoading}
-                                    >
-                                        Svéprávný
-                                    </Checkbox>
-                                </div>
+                                <Select
+                                    isDisabled={isLoading}
+                                    label="Úkony"
+                                    labelPlacement="inside"
+                                    name="taskIds"
+                                    selectionMode="multiple"
+                                    selectedKeys={taskIds.map(id => id.toString())}
+                                    onSelectionChange={(keys) => {
+                                        const selectedIds = Array.from(keys).map(key => parseInt(key));
+                                        setTaskIds(selectedIds);
+                                    }}
+                                    classNames={{
+                                        trigger: "min-h-12",
+                                    }}
+                                    renderValue={(items) => {
+                                        const count = items.length;
+                                        return `Celkem: ${count}`;
+                                    }}
+                                >
+                                    {tasks.map((task) => (
+                                        <SelectItem
+                                            key={task.id.toString()}
+                                            value={task.id.toString()}
+                                            textValue={task.taskName}
+                                        >
+                                            {task.taskName}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
                             </div>
 
                             <Textarea
