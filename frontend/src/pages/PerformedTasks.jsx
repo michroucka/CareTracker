@@ -28,6 +28,7 @@ import {
     Eye
 } from "lucide-react";
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
+import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 
 function PerformedTasks() {
     const [filterValue, setFilterValue] = React.useState("");
@@ -38,13 +39,19 @@ function PerformedTasks() {
         direction: "descending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
+    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
+
     const { user } = useAuth();
     const {
         performedTasks,
         loading,
-        fetchPerformedTasks
+        fetchPerformedTasks,
+        createPerformedTask,
     } = usePerformedTasks();
-    const { clients, fetchClients, fetchClient } = useClients();
+    const { clients, fetchClients } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
@@ -55,7 +62,7 @@ function PerformedTasks() {
     // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
-            return columns.filter(col => col.key === "name" || col.key === "actions");
+            return columns.filter(col => ["client", "task", "date", "actions"].includes(col.key));
         }
         return columns;
     }, [isMobile]);
@@ -180,6 +187,24 @@ function PerformedTasks() {
         }
     }, [caregiverFilter]);
 
+    const handleOpenCreateModal = () => {
+        setIsCreateModalOpen(true);
+    }
+
+    const handleCloseCreateModal = () => {
+        setIsCreateModalOpen(false);
+    }
+
+    const handleCreatePerformedTask = async (performedTaskData) => {
+        try {
+            await createPerformedTask(performedTaskData);
+            handleCloseCreateModal();
+        } catch (error) {
+            console.error("Failed to create performed task: ", error);
+            throw error;
+        }
+    }
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -246,6 +271,7 @@ function PerformedTasks() {
 
                         <Button color="primary"
                                 endContent={<Plus className="size-4" />}
+                                onPress={handleOpenCreateModal}
                         >
                             Přidat
                         </Button>
@@ -297,7 +323,9 @@ function PerformedTasks() {
             case "unitCount":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue}x {unitTypeTranslations[performedTask.task?.unitType] || "-"}</p>
+                        <p className="text-small">
+                            {cellValue}x {unitTypeTranslations[performedTask.task?.unitType].toLowerCase() || "-"}
+                        </p>
                     </div>
                 );
             case "actions":
@@ -374,6 +402,15 @@ function PerformedTasks() {
                     )}
                 </TableBody>
             </Table>
+
+            <PerformedTaskCreateModal
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                onSubmit={handleCreatePerformedTask}
+                clients={clients}
+                caregivers={employees}
+                tasks={tasks}
+            />
         </>
     );
 }

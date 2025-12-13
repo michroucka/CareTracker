@@ -1,7 +1,9 @@
 package cz.zcu.kiv.caretracker.controller;
 
 
-import cz.zcu.kiv.caretracker.dto.PerformedTaskDTO;
+import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
+import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
+import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.service.PerformedTaskService;
 import org.slf4j.Logger;
@@ -9,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -33,5 +33,13 @@ public class PerformedTaskController {
         List<PerformedTaskDTO> performedTasks = performedTaskService.getAllPerformedTasks();
 
         return ResponseEntity.ok(performedTasks);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<PerformedTaskDTO> createPerformedTask(@RequestBody PerformedTaskRequestDTO dto) {
+        log.info("Creating new performed task");
+        PerformedTask savedPerformedTask = performedTaskService.createPerformedTask(dto);
+        return ResponseEntity.ok(performedTaskMapper.toDTO(savedPerformedTask));
     }
 }

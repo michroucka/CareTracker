@@ -188,7 +188,6 @@ public class ClientService {
                         .orElseThrow(() -> new RuntimeException("Department not found"));
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
                         .orElseThrow(() -> new RuntimeException("Employee not found"));
-
         List<Task> tasks = new ArrayList<>();
         for (Long taskId : dto.getTaskIds()) {
             Task task = taskRepository.findById(taskId)

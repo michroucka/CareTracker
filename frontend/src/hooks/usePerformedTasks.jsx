@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { getJSON } from "../api/api.js";
+import {getJSON, postJSON} from "../api/api.js";
 import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import { CloudAlert } from "lucide-react";
+import {ClipboardCheck, ClipboardX, CloudAlert} from "lucide-react";
+import {showToast} from "../components/MyToast.jsx";
 
 export function usePerformedTasks() {
     const [performedTasks, setPerformedTasks] = useState([]);
@@ -23,9 +24,32 @@ export function usePerformedTasks() {
         }
     };
 
+    const createPerformedTask = async (performedTaskData) => {
+        try {
+            const newPerformedTask = await postJSON("/performed-tasks", performedTaskData);
+
+            setPerformedTasks(prev =>
+                sortByKey([...prev, newPerformedTask], "date", "descending")
+            );
+
+            showToast({
+                title: "Úkon úspěšně uložen",
+                color: "success",
+                icon: <ClipboardCheck />
+            });
+
+            return newPerformedTask;
+        } catch (err) {
+            console.error("Error creating performed tasks: ", err);
+            showErrorToast(err, "Chyba při ukládání úkonu", { icon: <ClipboardX /> });
+            throw err;
+        }
+    }
+
     return {
         performedTasks,
         loading,
         fetchPerformedTasks,
+        createPerformedTask,
     };
 }

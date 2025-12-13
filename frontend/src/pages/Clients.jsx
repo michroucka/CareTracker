@@ -224,7 +224,7 @@ function Clients() {
         } catch (error) {
             // Pokud je error, modal zůstane otevřený
             // Error toast se zobrazí automaticky v useClients hook
-            console.error("Failed to create client:", error);
+            console.error("Failed to create client: ", error);
             // Znovu vyhoď chybu aby modal věděl, že došlo k chybě
             throw error;
         }

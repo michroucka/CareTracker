@@ -63,7 +63,9 @@ export function useClients() {
             // Přidej do seznamu s mapováním
             const mappedClient = mapClient(newClient);
 
-            setClients(prev => sortByKey([...prev, mappedClient], 'name', 'ascending'));
+            setClients(prev =>
+                sortByKey([...prev, mappedClient], 'name', 'ascending')
+            );
 
             showToast({
                 title: "Klient úspěšně vytvořen",
