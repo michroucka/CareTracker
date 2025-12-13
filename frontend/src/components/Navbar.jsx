@@ -45,7 +45,7 @@ export default function AppNavbar() {
     const menuItems = [
         { name: "Domů", path: "/" },
         { name: "Klienti", path: "/clients", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
-        { name: "Pečovatelé", path: "/caregivers", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Provedené úkony", path: "/performed-tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     ];
 
     // Filtrování menu položek podle role uživatele

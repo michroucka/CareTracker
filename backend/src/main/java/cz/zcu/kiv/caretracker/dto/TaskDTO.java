@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TaskDTO {
     private Long id;
-    private String taskName;
+    private String name;
     private Integer unitPrice;
     private String unitType;
     private Boolean doubleMeeting;

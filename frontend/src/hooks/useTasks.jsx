@@ -12,7 +12,7 @@ export function useTasks() {
         try {
             setLoading(true);
             const tasks = await getJSON("/tasks");
-            const sorted = sortByKey(tasks, 'taskName', 'descending');
+            const sorted = sortByKey(tasks, 'name', 'ascending');
             setTasks(sorted);
         } catch (err) {
             console.error("Error fetching tasks:", err);

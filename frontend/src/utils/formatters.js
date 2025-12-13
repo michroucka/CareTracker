@@ -63,3 +63,55 @@ export function removeDiacritics(text) {
         .replace(/[\u0300-\u036f]/g, '') // Odstraní combining diacritical marks
         .toLowerCase();
 }
+
+/**
+ * Formátuje datum do českého formátu
+ * @param {string|Date} date - Datum jako ISO string nebo Date objekt
+ * @returns {string} Formátované datum (např. "13. 12. 2024")
+ */
+export function formatDate(date) {
+    if (!date) return '';
+
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    return new Intl.DateTimeFormat('cs-CZ', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+    }).format(dateObj);
+}
+
+/**
+ * Formátuje datum a čas do českého formátu
+ * @param {string|Date} date - Datum jako ISO string nebo Date objekt
+ * @returns {string} Formátované datum a čas (např. "13. 12. 2024 14:30")
+ */
+export function formatDateTime(date) {
+    if (!date) return '';
+
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    return new Intl.DateTimeFormat('cs-CZ', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(dateObj);
+}
+
+/**
+ * Formátuje čas
+ * @param {string|Date} date - Datum jako ISO string nebo Date objekt
+ * @returns {string} Formátovaný čas (např. "14:30")
+ */
+export function formatTime(date) {
+    if (!date) return '';
+
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    return new Intl.DateTimeFormat('cs-CZ', {
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(dateObj);
+}

@@ -526,9 +526,9 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                             <SelectItem
                                                 key={task.id.toString()}
                                                 value={task.id.toString()}
-                                                textValue={task.taskName}
+                                                textValue={task.name}
                                             >
-                                                {task.taskName}
+                                                {task.name}
                                             </SelectItem>
                                         ))}
                                     </Select>

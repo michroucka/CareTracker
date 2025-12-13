@@ -23,6 +23,13 @@ import java.util.stream.Collectors;
 
 @Component
 public class ClientMapper {
+    @Autowired
+    DepartmentMapper departmentMapper;
+    @Autowired
+    EmployeeMapper employeeMapper;
+    @Autowired
+    TaskMapper taskMapper;
+
     /**
      * Převede Client entitu na ClientDTO
      */
@@ -54,9 +61,9 @@ public class ClientMapper {
         dto.setActive(client.getActive());
 
         // Mapování vnořených objektů
-        dto.setDepartment(toDepartmentDTO(client.getDepartment()));
-        dto.setCaregiver(toEmployeeDTO(client.getCaregiver()));
-        dto.setTasks(toTasksDTO(client.getTasks()));
+        dto.setDepartment(departmentMapper.toDTO(client.getDepartment()));
+        dto.setCaregiver(employeeMapper.toDTO(client.getCaregiver()));
+        dto.setTasks(taskMapper.toDTOList(client.getTasks()));
 
         return dto;
     }
@@ -93,68 +100,6 @@ public class ClientMapper {
                 ? TerminationReason.valueOf(dto.getTerminationReason())
                 : null
         );
-    }
-
-    /**
-     * Převede Department entitu na DepartmentDTO
-     */
-    private DepartmentDTO toDepartmentDTO(Department department) {
-        if (department == null) {
-            return null;
-        }
-
-        DepartmentDTO dto = new DepartmentDTO();
-        dto.setId(department.getId());
-        
-        // Kombinuj adresu
-        String address = String.format("%s, %s %s", 
-            department.getStreet(), 
-            department.getPostalCode(), 
-            department.getCity());
-        dto.setAddress(address);
-        
-        // Použij město jako jméno oddělení (můžeš změnit podle potřeby)
-        dto.setName(department.getCity());
-
-        return dto;
-    }
-
-    /**
-     * Převede Employee entitu na EmployeeDTO
-     */
-    private EmployeeDTO toEmployeeDTO(Employee employee) {
-        if (employee == null) {
-            return null;
-        }
-
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setId(employee.getId());
-        dto.setFirstName(employee.getFirstName());
-        dto.setLastName(employee.getLastName());
-        dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
-
-        return dto;
-    }
-
-    private List<TaskDTO> toTasksDTO(List<Task> tasks) {
-        if (tasks == null) {
-            return null;
-        }
-
-        List<TaskDTO> dtos = new ArrayList<>();
-
-        for (Task task : tasks) {
-            TaskDTO dto = new TaskDTO();
-            dto.setId(task.getId());
-            dto.setTaskName(task.getTaskName());
-            dto.setUnitPrice(task.getUnitPrice());
-            dto.setUnitType(task.getUnitType().name());
-            dto.setDoubleMeeting(task.getDoubleMeeting());
-
-            dtos.add(dto);
-        }
-
-        return dtos;
     }
 
     /**

@@ -1,12 +1,17 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "performed_task")
 public class PerformedTask {
@@ -25,15 +30,22 @@ public class PerformedTask {
     private Task task;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "department_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    @JsonIgnore
+    private Department department;
+
+    @ManyToOne(optional = false)
     @JoinColumn(name = "organization_id", nullable = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
+    @JsonIgnore
     private Organization organization;
 
     @Column(nullable = false)
-    private LocalDate date;
+    private LocalDateTime date;
 
-    @Column(nullable = false)
-    private Integer unit_count;
+    @Column(name="unit_count", nullable = false)
+    private Integer unitCount;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

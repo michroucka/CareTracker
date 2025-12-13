@@ -2,9 +2,8 @@ import { useState } from "react";
 import { getJSON, postJSON, putJSON } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import { CloudAlert, UserRoundCheck, UserRoundX, UserRoundMinus } from "lucide-react";
+import { CloudAlert, UserRoundCheck, UserRoundX } from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {data} from "framer-motion/m";
 
 export function useClients() {
     const [clients, setClients] = useState([]);
@@ -34,10 +33,10 @@ export function useClients() {
             // Mapuj data z backendu DTO
             const mappedClients = mapClients(clients);
 
-            const sorted = sortByKey(mappedClients, 'name', 'descending');
+            const sorted = sortByKey(mappedClients, 'name', 'ascending');
             setClients(sorted);
         } catch (err) {
-            console.error("Error fetching clients:", err);
+            console.error("Error fetching clients: ", err);
             showErrorToast(err, "Chyba při načítání klientů", { icon: <CloudAlert /> });
         } finally {
             setLoading(false);

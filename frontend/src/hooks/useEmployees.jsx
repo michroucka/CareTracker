@@ -17,7 +17,7 @@ export function useEmployees() {
                 ...emp,
                 fullName: `${emp.firstName} ${emp.lastName}`
             }));
-            const sorted = sortByKey(employeesWithFullName, 'fullName', 'descending');
+            const sorted = sortByKey(employeesWithFullName, 'fullName', 'ascending');
             setEmployees(sorted);
         } catch (err) {
             console.error("Error fetching employees:", err);

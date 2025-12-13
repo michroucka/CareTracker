@@ -499,9 +499,9 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                         <SelectItem
                                             key={task.id.toString()}
                                             value={task.id.toString()}
-                                            textValue={task.taskName}
+                                            textValue={task.name}
                                         >
-                                            {task.taskName}
+                                            {task.name}
                                         </SelectItem>
                                     ))}
                                 </Select>

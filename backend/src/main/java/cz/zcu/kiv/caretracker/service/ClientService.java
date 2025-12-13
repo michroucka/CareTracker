@@ -4,8 +4,6 @@ import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.entity.*;
-import cz.zcu.kiv.caretracker.enums.BenefitLevel;
-import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;

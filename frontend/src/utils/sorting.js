@@ -31,7 +31,7 @@ export function sortByKey(array, key, direction = 'ascending') {
 
         const cmp = compareValues(first, second);
 
-        return direction === 'ascending' ? -cmp : cmp;
+        return direction === 'ascending' ? cmp : -cmp;
     });
 }
 
@@ -44,6 +44,6 @@ export function sortByKey(array, key, direction = 'ascending') {
 export function sortStrings(array, direction = 'ascending') {
     return [...array].sort((a, b) => {
         const cmp = compareValues(a, b);
-        return direction === 'ascending' ? -cmp : cmp;
+        return direction === 'ascending' ? cmp : -cmp;
     });
 }

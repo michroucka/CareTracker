@@ -35,7 +35,7 @@ function Clients() {
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
     const [sortDescriptor, setSortDescriptor] = React.useState({
         column: "name",
-        direction: "descending",
+        direction: "ascending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const { user } = useAuth();
@@ -304,18 +304,6 @@ function Clients() {
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
-                        classNames={{
-                            inputWrapper: [
-                                "bg-content2",
-                                "data-[hover=true]:bg-content3",
-                                "data-[focus=true]:bg-content3",
-                            ],
-                            label: [
-                                "group-data-[filled-within=true]:text-foreground/75",
-                            ],
-                            input: [
-                            ]
-                        }}
                     />
                     <div className="flex gap-3">
                         {canAlterClient && (
