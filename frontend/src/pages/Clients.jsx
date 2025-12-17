@@ -84,6 +84,15 @@ function Clients() {
         fetchTasks();
     }, []);
 
+    React.useEffect(() => {
+        if (user?.departmentId && departments.length > 0) {
+            const userDepartment = departments.find(dept => dept.id === user.departmentId);
+            if (userDepartment) {
+                setDepartmentFilter(new Set([userDepartment.name]));
+            }
+        }
+    }, [user, departments]);
+
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
@@ -94,8 +103,8 @@ function Clients() {
     // Options pro filtry z API endpointů (již seřazené v hooks)
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
-            name: dept.city,
-            key: dept.city
+            name: dept.name,
+            key: dept.name
         }));
     }, [departments]);
 
@@ -331,7 +340,7 @@ function Clients() {
                             </Dropdown>
                         )}
 
-                        {user.role !== "CAREGIVER" && (
+                        {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
                                     <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
@@ -392,7 +401,7 @@ function Clients() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {clients.length} klientů</span>
+                    <span className="text-small">Celkem {filteredItems.length} klientů</span>
                 </div>
             </div>
         );
@@ -550,6 +559,7 @@ function Clients() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreateClient}
+                userDept={user?.departmentId}
                 departments={departments}
                 caregivers={employees}
                 tasks={tasks}
@@ -559,6 +569,7 @@ function Clients() {
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
                 onSubmit={handleUpdateClient}
+                canEdit={canAlterClient}
                 client={selectedClient}
                 isLoading={isLoadingDetail}
                 departments={departments}

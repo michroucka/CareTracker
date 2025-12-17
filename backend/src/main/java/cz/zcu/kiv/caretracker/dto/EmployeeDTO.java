@@ -12,4 +12,7 @@ public class EmployeeDTO {
     private String firstName;
     private String lastName;
     private String role;
+    private Boolean active;
+
+    private DepartmentDTO department;
 }

@@ -3,29 +3,22 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
-import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
-import org.springframework.security.core.parameters.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class PerformedTaskService {
+public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask, PerformedTaskDTO> {
 
     @Autowired
     private PerformedTaskRepository performedTaskRepository;
     @Autowired
     private PerformedTaskMapper performedTaskMapper;
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private ClientRepository clientRepository;
     @Autowired
@@ -35,50 +28,12 @@ public class PerformedTaskService {
 
     @Transactional(readOnly = true)
     public List<PerformedTaskDTO> getAllPerformedTasks() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new SecurityException("User is not authenticated");
-        }
-
-        User user = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        List<PerformedTask> performedTasks;
-        UserRole role = user.getRole();
-
-        // SUPERADMIN má přístup ke všemu
-        if (role == UserRole.SUPERADMIN) {
-            performedTasks = performedTaskRepository.findAll();
-        }
-        // Zaměstnanci - filtrování podle organizace/oddělení
-        else if (user.getEmployee() != null) {
-            // ADMIN vidí klienty celé organizace
-            if (role == UserRole.ADMIN) {
-                if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Admin must have an associated organization");
-                }
-                Long organizationId = user.getEmployee().getOrganization().getId();
-                performedTasks = performedTaskRepository.findByOrganizationId(organizationId);
-            }
-            // COORDINATOR a CAREGIVER vidí pouze klienty ze svého oddělení
-            else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
-                if (user.getEmployee().getDepartment() == null) {
-                    throw new SecurityException("Employee must have an associated department");
-                }
-                Long departmentId = user.getEmployee().getDepartment().getId();
-                performedTasks = performedTaskRepository.findByDepartmentId(departmentId);
-            }
-            else {
-                throw new SecurityException("Unauthorized employee role");
-            }
-        }
-
-        else {
-            throw new SecurityException("User does not have permission to view clients");
-        }
-
-        return performedTaskMapper.toDTOList(performedTasks);
+        return filterEntitiesByRole(
+                performedTaskRepository::findAll,
+                performedTaskRepository::findByOrganizationId,
+                performedTaskRepository::findByDepartmentId,
+                performedTaskMapper::toDTOList
+        );
     }
 
     private PerformedTask savePerformedTask(PerformedTask performedTask, PerformedTaskRequestDTO dto) {

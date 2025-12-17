@@ -18,6 +18,7 @@ export function useClients() {
             department: client.department,
             caregiver: client.caregiver,
             active: client.active,
+            tasks: client.tasks || [],
         };
     }
 

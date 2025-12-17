@@ -31,6 +31,18 @@ import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 
 function PerformedTasks() {
+    const { user } = useAuth();
+    const {
+        performedTasks,
+        loading,
+        fetchPerformedTasks,
+        createPerformedTask,
+    } = usePerformedTasks();
+    const { clients, fetchClients } = useClients();
+    const { departments, fetchDepartments } = useDepartments();
+    const { employees, fetchEmployees } = useEmployees();
+    const { tasks, fetchTasks } = useTasks();
+
     const [filterValue, setFilterValue] = React.useState("");
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
@@ -44,22 +56,10 @@ function PerformedTasks() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
 
-    const { user } = useAuth();
-    const {
-        performedTasks,
-        loading,
-        fetchPerformedTasks,
-        createPerformedTask,
-    } = usePerformedTasks();
-    const { clients, fetchClients } = useClients();
-    const { departments, fetchDepartments } = useDepartments();
-    const { employees, fetchEmployees } = useEmployees();
-    const { tasks, fetchTasks } = useTasks();
-
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
+    // Filtrované sloupce pro mobile
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => ["client", "task", "date", "actions"].includes(col.key));
@@ -75,6 +75,16 @@ function PerformedTasks() {
         fetchTasks();
     }, []);
 
+    // Nastavení defaultního filtru podle department uživatele
+    React.useEffect(() => {
+        if (user?.departmentId && departments.length > 0) {
+            const userDepartment = departments.find(dept => dept.id === user.departmentId);
+            if (userDepartment) {
+                setDepartmentFilter(new Set([userDepartment.name]));
+            }
+        }
+    }, [user, departments]);
+
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
@@ -84,8 +94,8 @@ function PerformedTasks() {
 
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
-            name: dept.city,
-            key: dept.city
+            name: dept.name,
+            key: dept.name
         }));
     }, [departments]);
 
@@ -98,6 +108,24 @@ function PerformedTasks() {
             };
         });
     }, [employees]);
+
+    const filteredClients = React.useMemo(() => {
+        if (departmentFilter.has("all")) {
+            return clients;
+        }
+        return clients.filter(client =>
+            departmentFilter.has(client.department?.name)
+        );
+    }, [clients, departmentFilter]);
+
+    const filteredEmployees = React.useMemo(() => {
+        if (departmentFilter.has("all")) {
+            return employees;
+        }
+        return employees.filter(employee =>
+            departmentFilter.has(employee.department?.name)
+        );
+    }, [employees, departmentFilter]);
 
     const filteredItems = React.useMemo(() => {
         let filteredPerformedTasks = [...performedTasks];
@@ -278,7 +306,7 @@ function PerformedTasks() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {performedTasks.length} úkonů</span>
+                    <span className="text-small">Celkem {filteredItems.length} úkonů</span>
                 </div>
             </div>
         );
@@ -407,8 +435,8 @@ function PerformedTasks() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreatePerformedTask}
-                clients={clients}
-                caregivers={employees}
+                clients={filteredClients}
+                caregivers={filteredEmployees}
                 tasks={tasks}
             />
         </>

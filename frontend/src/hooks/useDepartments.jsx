@@ -12,7 +12,7 @@ export function useDepartments() {
         try {
             setLoading(true);
             const departments = await getJSON("/departments");
-            const sorted = sortByKey(departments, 'city', 'ascending');
+            const sorted = sortByKey(departments, 'name', 'ascending');
             setDepartments(sorted);
         } catch (err) {
             console.error("Error fetching departments:", err);

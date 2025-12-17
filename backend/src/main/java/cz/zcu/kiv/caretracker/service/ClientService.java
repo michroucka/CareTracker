@@ -6,14 +6,10 @@ import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
-import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,16 +18,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ClientService {
+public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     @Autowired
     private ClientRepository clientRepository;
 
     @Autowired
     private ClientMapper clientMapper;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private DepartmentRepository departmentRepository;
@@ -52,54 +45,14 @@ public class ClientService {
      */
     @Transactional(readOnly = true)
     protected List<ClientDTO> getClientsByRole(boolean activeOnly) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new SecurityException("User is not authenticated");
-        }
-
-        User user = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        List<Client> clients;
-        UserRole role = user.getRole();
-
-        // SUPERADMIN má přístup ke všemu
-        if (role == UserRole.SUPERADMIN) {
-            clients = activeOnly ? clientRepository.findByActiveTrue() : clientRepository.findAll();
-        }
-        // Zaměstnanci - filtrování podle organizace/oddělení
-        else if (user.getEmployee() != null) {
-            // ADMIN vidí klienty celé organizace
-            if (role == UserRole.ADMIN) {
-                if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Admin must have an associated organization");
-                }
-                Long organizationId = user.getEmployee().getOrganization().getId();
-                clients = activeOnly
-                    ? clientRepository.findByActiveTrueAndOrganizationId(organizationId)
-                    : clientRepository.findByOrganizationId(organizationId);
-            }
-            // COORDINATOR a CAREGIVER vidí pouze klienty ze svého oddělení
-            else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
-                if (user.getEmployee().getDepartment() == null) {
-                    throw new SecurityException("Employee must have an associated department");
-                }
-                Long departmentId = user.getEmployee().getDepartment().getId();
-                clients = activeOnly
-                    ? clientRepository.findByActiveTrueAndDepartmentId(departmentId)
-                    : clientRepository.findByDepartmentId(departmentId);
-            }
-            else {
-                throw new SecurityException("Unauthorized employee role");
-            }
-        }
-        // CLIENT role nemá přístup k seznamu klientů
-        else {
-            throw new SecurityException("User does not have permission to view clients");
-        }
-
-        return clientMapper.toDTOList(clients);
+        return filterEntitiesByRole(
+                () -> activeOnly ? clientRepository.findByActiveTrue() : clientRepository.findAll(),
+                orgId -> activeOnly ? clientRepository.findByActiveTrueAndOrganizationId(orgId)
+                                    : clientRepository.findByOrganizationId(orgId),
+                deptId -> activeOnly ? clientRepository.findByActiveTrueAndDepartmentId(deptId)
+                                     : clientRepository.findByDepartmentId(deptId),
+                clientMapper::toDTOList
+        );
     }
 
     /**
@@ -124,65 +77,13 @@ public class ClientService {
      */
     @Transactional(readOnly = true)
     public Optional<ClientDTO> getClientById(Long id) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new SecurityException("User is not authenticated");
-        }
-
-        User user = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        Optional<Client> clientOpt = clientRepository.findById(id);
-
-        if (clientOpt.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Client client = clientOpt.get();
-        UserRole role = user.getRole();
-
-        // SUPERADMIN má přístup ke všemu
-        if (role == UserRole.SUPERADMIN) {
-            return Optional.of(clientMapper.toDTO(client));
-        }
-
-        // Zaměstnanci - kontrola přístupu podle organizace/oddělení
-        if (user.getEmployee() != null) {
-            // ADMIN může vidět klienty z celé organizace
-            if (role == UserRole.ADMIN) {
-                if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Admin must have an associated organization");
-                }
-
-                Long userOrgId = user.getEmployee().getOrganization().getId();
-                Long clientOrgId = client.getOrganization().getId();
-
-                if (userOrgId.equals(clientOrgId)) {
-                    return Optional.of(clientMapper.toDTO(client));
-                } else {
-                    throw new SecurityException("Access denied: Client is from a different organization");
-                }
-            }
-
-            // COORDINATOR a CAREGIVER mohou vidět pouze klienty ze svého oddělení
-            if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
-                if (user.getEmployee().getDepartment() == null) {
-                    throw new SecurityException("Employee must have an associated department");
-                }
-
-                Long userDeptId = user.getEmployee().getDepartment().getId();
-                Long clientDeptId = client.getDepartment().getId();
-
-                if (userDeptId.equals(clientDeptId)) {
-                    return Optional.of(clientMapper.toDTO(client));
-                } else {
-                    throw new SecurityException("Access denied: Client is from a different department");
-                }
-            }
-        }
-
-        throw new SecurityException("User does not have permission to view this client");
+        return getEntityByIdWithPermissionCheck(
+                id,
+                () -> clientRepository.findById(id),
+                client -> client.getOrganization().getId(),
+                client -> client.getDepartment().getId(),
+                clientMapper::toDTO
+        );
     }
 
     private Client saveClient(Client client, ClientRequestDTO dto) {

@@ -21,7 +21,7 @@ import { CalendarDate, parseDate, today, getLocalTimeZone } from "@international
 import { formatPostalCode, formatPhoneNumber } from "../../../utils/formatters.js";
 import {benefitsOptions, terminationReasonOptions} from "../../../constants/clientConstants.js";
 
-export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading, departments = [], caregivers = [], tasks = [] }) {
+export function ClientDetailModal({ isOpen, onClose, onSubmit, canEdit, client, isLoading, departments = [], caregivers = [], tasks = [] }) {
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -51,6 +51,23 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
     const [terminationReason, setTerminationReason] = React.useState("");
 
     const [errors, setErrors] = React.useState({});
+
+    // Filtrovaní caregiveři podle vybraného department
+    const filteredCaregivers = React.useMemo(() => {
+        if (!departmentId) {
+            return caregivers;
+        }
+        return caregivers.filter(caregiver =>
+            caregiver.department?.id === departmentId
+        );
+    }, [caregivers, departmentId]);
+
+    // Resetuj caregiverId pokud vybraný caregiver není v filtrovaném seznamu
+    React.useEffect(() => {
+        if (isEditMode && caregiverId && !filteredCaregivers.find(cg => cg.id === caregiverId)) {
+            setCaregiverId(null);
+        }
+    }, [caregiverId, filteredCaregivers, isEditMode]);
 
     // Inicializuj state když se client načte
     React.useEffect(() => {
@@ -92,7 +109,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
 
     // Zapni edit mode
     const handleEnterEditMode = () => {
-        if (currentClientData) {
+        if (currentClientData && canEdit) {
             initializeEditState(currentClientData); // Refresh data před editací
             setIsEditMode(true);
         }
@@ -331,16 +348,16 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                             <SelectItem
                                                 key={dept.id.toString()}
                                                 value={dept.id.toString()}
-                                                textValue={dept.city}
+                                                textValue={dept.name}
                                             >
-                                                {dept.city}
+                                                {dept.name}
                                             </SelectItem>
                                         ))}
                                     </Select>
 
                                     <Select
                                         isRequired
-                                        isDisabled={isDisabled}
+                                        isDisabled={isDisabled || !departmentId}
                                         isInvalid={!!errors.caregiverId}
                                         errorMessage={errors.caregiverId}
                                         label="Klíčový pracovník"
@@ -355,7 +372,7 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                                             }
                                         }}
                                     >
-                                        {caregivers.map((caregiver) => {
+                                        {filteredCaregivers.map((caregiver) => {
                                             const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
                                             return (
                                                 <SelectItem
@@ -648,13 +665,15 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, client, isLoading
                             <Button variant="bordered" onPress={onClose}>
                                 Zavřít
                             </Button>
-                            <Button
-                                color="primary"
-                                startContent={<Pencil size={16} />}
-                                onPress={handleEnterEditMode}
-                            >
-                                Upravit
-                            </Button>
+                            {canEdit && (
+                                <Button
+                                    color="primary"
+                                    startContent={<Pencil size={16} />}
+                                    onPress={handleEnterEditMode}
+                                >
+                                    Upravit
+                                </Button>
+                            )}
                         </>
                     )}
                 </ModalFooter>

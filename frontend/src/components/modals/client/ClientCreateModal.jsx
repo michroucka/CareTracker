@@ -20,7 +20,7 @@ import { CalendarDate, getLocalTimeZone, parseDate, today } from "@international
 import { formatPostalCode, formatPhoneNumber } from "../../../utils/formatters.js";
 import {benefitsOptions} from "../../../constants/clientConstants.js";
 
-export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [], caregivers = [] , tasks = []}) {
+export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departments = [], caregivers = [] , tasks = []}) {
     const [firstName, setFirstName] = React.useState("");
     const [lastName, setLastName] = React.useState("");
     const [gender, setGender] = React.useState("");
@@ -42,6 +42,30 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
 
     const [errors, setErrors] = React.useState({});
     const [isLoading, setIsLoading] = React.useState(false);
+
+    // Nastavení defaultního department podle uživatele
+    React.useEffect(() => {
+        if (userDept && departments.length > 0 && !departmentId) {
+            setDepartmentId(userDept);
+        }
+    }, [userDept, departments, departmentId]);
+
+    // Filtrovaní caregiveři podle vybraného department
+    const filteredCaregivers = React.useMemo(() => {
+        if (!departmentId) {
+            return caregivers;
+        }
+        return caregivers.filter(caregiver =>
+            caregiver.department?.id === departmentId
+        );
+    }, [caregivers, departmentId]);
+
+    // Resetuj caregiverId pokud vybraný caregiver není v filtrovaném seznamu
+    React.useEffect(() => {
+        if (caregiverId && !filteredCaregivers.find(cg => cg.id === caregiverId)) {
+            setCaregiverId(null);
+        }
+    }, [caregiverId, filteredCaregivers]);
 
     function validateForm() {
         const newErrors = {};
@@ -302,16 +326,16 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                         <SelectItem
                                             key={dept.id.toString()}
                                             value={dept.id.toString()}
-                                            textValue={dept.city}
+                                            textValue={dept.name}
                                         >
-                                            {dept.city}
+                                            {dept.name}
                                         </SelectItem>
                                     ))}
                                 </Select>
 
                                 <Select
                                     isRequired
-                                    isDisabled={isLoading}
+                                    isDisabled={isLoading || !departmentId}
                                     isInvalid={!!errors.caregiverId}
                                     errorMessage={errors.caregiverId}
                                     label="Klíčový pracovník"
@@ -326,7 +350,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, departments = [],
                                         }
                                     }}
                                 >
-                                    {caregivers.map((caregiver) => {
+                                    {filteredCaregivers.map((caregiver) => {
                                         const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
                                         return (
                                             <SelectItem

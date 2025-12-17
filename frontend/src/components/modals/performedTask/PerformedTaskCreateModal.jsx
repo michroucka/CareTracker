@@ -11,13 +11,15 @@ import {
     Textarea,
     DatePicker,
     Form,
-    NumberInput, Checkbox,
+    NumberInput, Tooltip,
 } from "@heroui/react";
-import { Save, CalendarDays } from "lucide-react";
+import { Save, CalendarDays, ListFilter } from "lucide-react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
 import { unitTypeTranslations } from "../../../constants/performedTaskConstants.js";
+import { useAuth } from "../../../contexts/AuthContext.tsx";
 
 export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = [], caregivers = [] , tasks = []}) {
+    const { user } = useAuth();
     const [clientId, setClientId] = React.useState(null);
     const [taskId, setTaskId] = React.useState(null);
     const [date, setDate] = React.useState(() => {
@@ -38,6 +40,27 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
     const [errors, setErrors] = React.useState({});
     const [isLoading, setIsLoading] = React.useState(false);
     const [showAllTasks, setShowAllTasks] = React.useState(false);
+    const [isDisabled, setIsDisabled] = React.useState(true);
+
+    // Najdi vybraného klienta
+    const selectedClient = React.useMemo(() => {
+        return clients.find(client => client.id === clientId);
+    }, [clientId, clients]);
+
+    // Filtruj úkony na základě vybraného klienta a showAllTasks checkboxu
+    const filteredTasks = React.useMemo(() => {
+        if (showAllTasks) {
+            return tasks;
+        }
+
+        if (!selectedClient?.tasks) {
+            return [];
+        }
+
+        // Filtruj pouze úkony, které má klient přiřazené
+        const clientTaskIds = selectedClient.tasks.map(task => task.id);
+        return tasks.filter(task => clientTaskIds.includes(task.id));
+    }, [showAllTasks, selectedClient, tasks]);
 
     // Najdi vybraný task
     const selectedTask = React.useMemo(() => {
@@ -54,6 +77,32 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
     const allowDecimals = React.useMemo(() => {
         return selectedTask?.unitType === "KG" || selectedTask?.unitType === "KM";
     }, [selectedTask]);
+
+    // Resetuj vybraný task, pokud není v seznamu dostupných tasků
+    React.useEffect(() => {
+        if (taskId && !filteredTasks.find(task => task.id === taskId)) {
+            setTaskId(null);
+        }
+    }, [taskId, filteredTasks]);
+
+    React.useEffect(() => {
+        if (selectedClient) {
+            setIsDisabled(false);
+        } else {
+            setIsDisabled(true);
+        }
+    }, [selectedClient]);
+
+    // Nastavení defaultního caregivera na aktuálního uživatele
+    React.useEffect(() => {
+        if (user?.employeeId && caregivers.length > 0 && caregiverIds.length === 0) {
+            // Zkontroluj, jestli uživatel je v seznamu caregivers
+            const userIsCaregiver = caregivers.find(cg => cg.id === user.employeeId);
+            if (userIsCaregiver) {
+                setCaregiverIds([user.employeeId]);
+            }
+        }
+    }, [user, caregivers, caregiverIds.length]);
 
     function validateForm() {
         const newErrors = {};
@@ -184,48 +233,56 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                 ))}
                             </Select>
 
-                            <Select
-                                isRequired
-                                isDisabled={isLoading}
-                                isInvalid={!!errors.taskId}
-                                errorMessage={errors.taskId}
-                                label="Úkon"
-                                labelPlacement="inside"
-                                name="taskId"
-                                selectedKeys={taskId ? [taskId.toString()] : []}
-                                onSelectionChange={(keys) => {
-                                    const selectedId = Array.from(keys)[0];
-                                    setTaskId(selectedId ? parseInt(selectedId) : null);
-                                    if (errors.taskId) {
-                                        setErrors({ ...errors, taskId: undefined });
-                                    }
-                                }}
-                            >
-                                {showAllTasks ? tasks.map((task) => (
-                                    <SelectItem
-                                        key={task.id.toString()}
-                                        value={task.id.toString()}
-                                        textValue={task.name}
-                                    >
-                                        {task.name}
-                                    </SelectItem>
-                                )) : null}
-                            {/*  TODO show only client tasks  */}
-                            </Select>
+                            <div className="flex items-center">
+                                <Select
+                                    isRequired
+                                    isDisabled={isDisabled}
+                                    isInvalid={!!errors.taskId}
+                                    errorMessage={errors.taskId}
+                                    label="Úkon"
+                                    labelPlacement="inside"
+                                    name="taskId"
+                                    selectedKeys={taskId ? [taskId.toString()] : []}
+                                    onSelectionChange={(keys) => {
+                                        const selectedId = Array.from(keys)[0];
+                                        setTaskId(selectedId ? parseInt(selectedId) : null);
+                                        if (errors.taskId) {
+                                            setErrors({ ...errors, taskId: undefined });
+                                        }
+                                    }}
+                                >
+                                    {filteredTasks.map((task) => (
+                                        <SelectItem
+                                            key={task.id.toString()}
+                                            value={task.id.toString()}
+                                            textValue={task.name}
+                                        >
+                                            {task.name}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
 
-                            <Checkbox
-                                size="sm"
-                                isSelected={showAllTasks}
-                                onSelectionChange={setShowAllTasks}
-                                isDisabled={isLoading}
-                            >
-                                Zobrazit všechny úkony
-                            </Checkbox>
+                                <Tooltip
+                                    content="Zobrazit všechny úkony"
+                                    placement="bottom"
+                                >
+                                    <Button
+                                        isIconOnly
+                                        isDisabled={isDisabled}
+                                        onPress={()=> setShowAllTasks(!showAllTasks)}
+                                        variant="light"
+                                        color={showAllTasks ? 'primary' : 'default'}
+                                        children={<ListFilter size={20} />}
+                                        className="m-2"
+
+                                    />
+                                </Tooltip>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <NumberInput
                                     isRequired
-                                    isDisabled={isLoading}
+                                    isDisabled={isDisabled}
                                     isInvalid={!!errors.taskId}
                                     errorMessage={errors.taskId}
                                     label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
@@ -248,7 +305,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
 
                                 <Select
                                     isRequired
-                                    isDisabled={isLoading}
+                                    isDisabled={isDisabled}
                                     isInvalid={!!errors.caregiverIds}
                                     errorMessage={errors.caregiverIds}
                                     label="Pečovatelé"
@@ -265,7 +322,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     }}
                                     renderValue={(items) => {
                                         const count = items.length;
-                                        return `Celkem: ${count}`;
+                                        return count > 1 ? `Celkem: ${count}` : items[0].textValue;
                                     }}
                                 >
                                     {caregivers.map((caregiver) => {
@@ -285,7 +342,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
 
                             <DatePicker
                                 hideTimeZone
-                                isDisabled={isLoading}
+                                isDisabled={isDisabled}
                                 isInvalid={!!errors.date}
                                 errorMessage={errors.date}
                                 label="Datum"
@@ -319,7 +376,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                             />
 
                             <Textarea
-                                isDisabled={isLoading}
+                                isDisabled={isDisabled}
                                 label="Poznámky"
                                 labelPlacement="inside"
                                 name="notes"
@@ -335,7 +392,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                         className="text-base"
                         type="reset"
                         variant="bordered"
-                        isDisabled={isLoading}
+                        isDisabled={isDisabled}
                         onPress={() => resetForm()}
                     >
                         Reset
@@ -344,7 +401,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                         className="text-base"
                         color="primary"
                         isLoading={isLoading}
-                        isDisabled={isLoading}
+                        isDisabled={isDisabled}
                         endContent={<Save className="size-4" />}
                         onPress={handleSubmit}
                     >
