@@ -11,7 +11,7 @@ import {
     Textarea,
     DatePicker,
     Form,
-    NumberInput,
+    NumberInput, Checkbox,
 } from "@heroui/react";
 import { Save, CalendarDays } from "lucide-react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
@@ -37,6 +37,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
 
     const [errors, setErrors] = React.useState({});
     const [isLoading, setIsLoading] = React.useState(false);
+    const [showAllTasks, setShowAllTasks] = React.useState(false);
 
     // Najdi vybraný task
     const selectedTask = React.useMemo(() => {
@@ -200,7 +201,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     }
                                 }}
                             >
-                                {tasks.map((task) => (
+                                {showAllTasks ? tasks.map((task) => (
                                     <SelectItem
                                         key={task.id.toString()}
                                         value={task.id.toString()}
@@ -208,9 +209,18 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     >
                                         {task.name}
                                     </SelectItem>
-                                ))}
+                                )) : null}
+                            {/*  TODO show only client tasks  */}
                             </Select>
 
+                            <Checkbox
+                                size="sm"
+                                isSelected={showAllTasks}
+                                onSelectionChange={setShowAllTasks}
+                                isDisabled={isLoading}
+                            >
+                                Zobrazit všechny úkony
+                            </Checkbox>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <NumberInput
@@ -224,11 +234,11 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     type="number"
                                     value={unitCount}
                                     onValueChange={setUnitCount}
-                                    minValue={allowDecimals ? 0.1 : 1}
-                                    step={allowDecimals ? 0.1 : 1}
+                                    minValue={allowDecimals ? 0.01 : 1}
+                                    step={allowDecimals ? 0.01 : 1}
                                     formatOptions={allowDecimals ? {
                                         minimumFractionDigits: 1,
-                                        maximumFractionDigits: 1
+                                        maximumFractionDigits: 2
                                     } : {
                                         minimumFractionDigits: 0,
                                         maximumFractionDigits: 0
