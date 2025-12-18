@@ -1,8 +1,8 @@
 import { useState } from "react";
-import {getJSON, postJSON, putJSON} from "../api/api.js";
+import {getJSON, postJSON, putJSON, deleteJSON} from "../api/api.js";
 import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
+import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX, Trash2} from "lucide-react";
 import {showToast} from "../components/MyToast.jsx";
 
 export function usePerformedTasks() {
@@ -79,12 +79,33 @@ export function usePerformedTasks() {
         }
     };
 
+    const deletePerformedTask = async (id) => {
+        try {
+            await deleteJSON(`/performed-tasks/${id}`);
+
+            setPerformedTasks(prev => prev.filter(task => task.id !== id));
+
+            showToast({
+                title: "Úkon úspěšně odstraněn",
+                color: "success",
+                icon: <Trash2 />
+            });
+
+            return true;
+        } catch (err) {
+            console.error("Error deleting performed task:", err);
+            showErrorToast(err, "Chyba při odstraňování úkonu", { icon: <ClipboardX /> });
+            throw err;
+        }
+    }
+
     return {
         performedTasks,
         loading,
         fetchPerformedTasks,
         fetchPerformedTask,
         createPerformedTask,
-        updatePerformedTask
+        updatePerformedTask,
+        deletePerformedTask
     };
 }

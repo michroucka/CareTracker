@@ -12,12 +12,17 @@ import {
     Button,
     Dropdown,
     DropdownItem,
-    DropdownMenu, DropdownSection,
+    DropdownMenu,
+    DropdownSection,
     DropdownTrigger,
     Input,
     Spinner,
-    Table, TableBody, TableCell, TableColumn,
-    TableHeader, TableRow
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow
 } from "@heroui/react";
 import {
     ChevronDown,
@@ -30,6 +35,7 @@ import {
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
+import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
 
 function PerformedTasks() {
     const { user } = useAuth();
@@ -40,6 +46,7 @@ function PerformedTasks() {
         fetchPerformedTask,
         createPerformedTask,
         updatePerformedTask,
+        deletePerformedTask
     } = usePerformedTasks();
     const { clients, fetchClients } = useClients();
     const { departments, fetchDepartments } = useDepartments();
@@ -274,6 +281,29 @@ function PerformedTasks() {
         setIsDetailModalOpen(false);
     }
 
+    const handleOpenDeleteModal = async (performedTaskId) => {
+        setIsDeleteModalOpen(true);
+
+        try {
+            await handleSelectPerformedTask(performedTaskId);
+        } catch {
+            setIsDeleteModalOpen(false);
+        }
+    }
+
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+    }
+
+    const handleDeletePerformedTask = async (performedTaskId) => {
+        try {
+            return await deletePerformedTask(performedTaskId);
+        } catch (error) {
+            console.error("Failed to delete performed task:", error);
+            throw error;
+        }
+    }
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -422,6 +452,7 @@ function PerformedTasks() {
                                                   startContent={<Trash2 />}
                                                   variant="light"
                                                   color="danger"
+                                                  onPress={() => handleOpenDeleteModal(performedTask.id)}
                                     >
                                         Smazat
                                     </DropdownItem>
@@ -495,6 +526,13 @@ function PerformedTasks() {
                 clients={filteredClients}
                 caregivers={filteredEmployees}
                 tasks={tasks}
+            />
+
+            <PerformedTaskDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={handleCloseDeleteModal}
+                onSubmit={handleDeletePerformedTask}
+                performedTaskId={selectedPerformedTask?.id}
             />
         </>
     );

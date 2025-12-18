@@ -76,4 +76,10 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
                 .orElseThrow(() -> new RuntimeException("Performed task not found"));
         return savePerformedTask(task, dto);
     }
+
+    public void deletePerformedTask(Long id) {
+        PerformedTask task = performedTaskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Performed task not found"));
+        performedTaskRepository.delete(task);
+    }
 }

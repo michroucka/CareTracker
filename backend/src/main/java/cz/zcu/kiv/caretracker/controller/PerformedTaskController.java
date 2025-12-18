@@ -61,4 +61,11 @@ public class PerformedTaskController {
         PerformedTask updated = performedTaskService.updatePerformedTask(id, dto);
         return ResponseEntity.ok(performedTaskMapper.toDTO(updated));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public void deletePerformedTask(@PathVariable Long id) {
+        log.info("Deleting performed task with id: {}", id);
+        performedTaskService.deletePerformedTask(id);
+    }
 }
