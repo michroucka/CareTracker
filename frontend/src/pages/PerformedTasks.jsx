@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
+import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
 
 function PerformedTasks() {
     const { user } = useAuth();
@@ -36,7 +37,9 @@ function PerformedTasks() {
         performedTasks,
         loading,
         fetchPerformedTasks,
+        fetchPerformedTask,
         createPerformedTask,
+        updatePerformedTask,
     } = usePerformedTasks();
     const { clients, fetchClients } = useClients();
     const { departments, fetchDepartments } = useDepartments();
@@ -55,6 +58,7 @@ function PerformedTasks() {
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
+    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
@@ -233,6 +237,43 @@ function PerformedTasks() {
         }
     }
 
+    const handleUpdatePerformedTask = async (performedTaskId, performedTaskData) => {
+        try {
+            return await updatePerformedTask(performedTaskId, performedTaskData);
+        } catch (error) {
+            console.error("Failed to update performed task:", error);
+            throw error;
+        }
+    }
+
+    async function handleSelectPerformedTask(performedTaskId) {
+        try {
+            const performedTaskData = await fetchPerformedTask(performedTaskId);
+            setSelectedPerformedTask(performedTaskData);
+        } catch (error) {
+            console.error("Failed to load performed task:", error);
+            throw error;
+        }
+    }
+
+    const handleOpenDetailModal = async (performedTaskId) => {
+        setIsLoadingDetail(true);
+        setIsDetailModalOpen(true);
+
+        try {
+            await handleSelectPerformedTask(performedTaskId);
+        } catch {
+            setIsDetailModalOpen(false);
+        }
+
+        setIsLoadingDetail(false);
+    }
+
+    const handleCloseDetailModal = () => {
+        setSelectedPerformedTask(null);
+        setIsDetailModalOpen(false);
+    }
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -370,8 +411,10 @@ function PerformedTasks() {
                                     <DropdownItem key="view"
                                                   startContent={<Eye />}
                                                   variant="light"
+                                                  onPress={() => handleOpenDetailModal(performedTask.id)}
+                                                  isLoading={isLoadingDetail}
                                     >
-                                        Detail
+                                        {isLoadingDetail ? "Načítání..." : "Detail"}
                                     </DropdownItem>
                                 </DropdownSection>
                                 <DropdownSection>
@@ -438,6 +481,17 @@ function PerformedTasks() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreatePerformedTask}
+                clients={filteredClients}
+                caregivers={filteredEmployees}
+                tasks={tasks}
+            />
+
+            <PerformedTaskDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={handleCloseDetailModal}
+                onSubmit={handleUpdatePerformedTask}
+                isLoading={isLoadingDetail}
+                performedTask={selectedPerformedTask}
                 clients={filteredClients}
                 caregivers={filteredEmployees}
                 tasks={tasks}

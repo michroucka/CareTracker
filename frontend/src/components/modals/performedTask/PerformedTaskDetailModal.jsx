@@ -8,12 +8,14 @@ import {
     Button,
     Select,
     SelectItem,
+    Autocomplete,
+    AutocompleteItem,
     Textarea,
     DatePicker,
     Form,
-    NumberInput, Spinner,
+    NumberInput, Spinner, Tooltip,
 } from "@heroui/react";
-import {Save, CalendarDays, X, Pencil} from "lucide-react";
+import {Save, CalendarDays, X, Pencil, ListFilter} from "lucide-react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
 import { unitTypeTranslations } from "../../../constants/performedTaskConstants.js";
 
@@ -30,6 +32,32 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
     const [errors, setErrors] = React.useState({});
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [showAllTasks, setShowAllTasks] = React.useState(false);
+
+    // Najdi vybraného klienta
+    const selectedClient = React.useMemo(() => {
+        return clients.find(client => client.id === clientId);
+    }, [clientId, clients]);
+
+    // Filtruj úkony na základě vybraného klienta a showAllTasks checkboxu
+    const filteredTasks = React.useMemo(() => {
+        if (showAllTasks) {
+            return tasks;
+        }
+
+        if (!selectedClient?.tasks) {
+            return [];
+        }
+
+        // Filtruj pouze úkony, které má klient přiřazené
+        const clientTaskIds = selectedClient.tasks.map(task => task.id);
+        return tasks.filter(task => clientTaskIds.includes(task.id));
+    }, [showAllTasks, selectedClient, tasks]);
+
+    // Najdi vybraný task
+    const selectedTask = React.useMemo(() => {
+        return tasks.find(task => task.id === taskId);
+    }, [taskId, tasks]);
 
     React.useEffect(() => {
         if (performedTask) {
@@ -44,9 +72,26 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
         }
     }, [isOpen]);
 
+    // Automaticky zapni showAllTasks pokud vybraný task není mezi klientovými tasky
+    React.useEffect(() => {
+        if (taskId && clientId && !showAllTasks) {
+            const isTaskInClientTasks = filteredTasks.find(task => task.id === taskId);
+            if (!isTaskInClientTasks) {
+                setShowAllTasks(true);
+            }
+        }
+    }, [taskId, clientId, filteredTasks, showAllTasks]);
+
+    // Resetuj vybraný task, pokud není v seznamu dostupných tasků
+    React.useEffect(() => {
+        if (taskId && !filteredTasks.find(task => task.id === taskId)) {
+            setTaskId(null);
+        }
+    }, [taskId, filteredTasks]);
+
     const initializeEditState = (performedTaskData) => {
-        setClientId(performedTaskData.id || null);
-        setTaskId(performedTaskData.id || null);
+        setClientId(performedTaskData.client?.id || null);
+        setTaskId(performedTaskData.task?.id || null);
         setDate(performedTaskData.date || "");
         setUnitCount(performedTaskData.unitCount || null);
         setNotes(performedTaskData.notes || "");
@@ -67,11 +112,6 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
             initializeEditState(currentPerformedTaskData);
         }
     }
-
-    // Najdi vybraný task
-    const selectedTask = React.useMemo(() => {
-        return tasks.find(task => task.id === taskId);
-    }, [taskId, tasks]);
 
     // Získej jednotku vybraného tasku
     const unitLabel = React.useMemo(() => {
@@ -173,7 +213,7 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
                         >
                             <div className="flex flex-col gap-4 w-full">
 
-                                <Select
+                                <Autocomplete
                                     isRequired
                                     isDisabled={isDisabled}
                                     isInvalid={!!errors.clientId}
@@ -181,53 +221,79 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
                                     label="Klient"
                                     labelPlacement="inside"
                                     name="clientId"
-                                    selectedKeys={clientId ? [clientId.toString()] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedId = Array.from(keys)[0];
-                                        setClientId(selectedId ? parseInt(selectedId) : null);
+                                    selectedKey={clientId ? clientId.toString() : null}
+                                    onSelectionChange={(key) => {
+                                        setClientId(key ? parseInt(key) : null);
                                         if (errors.clientId) {
                                             setErrors({ ...errors, clientId: undefined });
                                         }
                                     }}
                                 >
                                     {clients.map((client) => (
-                                        <SelectItem
+                                        <AutocompleteItem
                                             key={client.id.toString()}
                                             value={client.id.toString()}
                                             textValue={client.name}
                                         >
                                             {client.name}
-                                        </SelectItem>
+                                        </AutocompleteItem>
                                     ))}
-                                </Select>
+                                </Autocomplete>
 
-                                <Select
-                                    isRequired
-                                    isDisabled={isDisabled}
-                                    isInvalid={!!errors.taskId}
-                                    errorMessage={errors.taskId}
-                                    label="Úkon"
-                                    labelPlacement="inside"
-                                    name="taskId"
-                                    selectedKeys={taskId ? [taskId.toString()] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedId = Array.from(keys)[0];
-                                        setTaskId(selectedId ? parseInt(selectedId) : null);
-                                        if (errors.taskId) {
-                                            setErrors({ ...errors, taskId: undefined });
-                                        }
-                                    }}
-                                >
-                                    {tasks.map((task) => (
-                                        <SelectItem
-                                            key={task.id.toString()}
-                                            value={task.id.toString()}
-                                            textValue={task.name}
-                                        >
-                                            {task.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
+                                <div className="flex items-center">
+                                    <Autocomplete
+                                        isRequired
+                                        isDisabled={isDisabled}
+                                        isInvalid={!!errors.taskId}
+                                        errorMessage={errors.taskId}
+                                        label="Úkon"
+                                        labelPlacement="inside"
+                                        name="taskId"
+                                        selectedKey={taskId ? taskId.toString() : null}
+                                        onSelectionChange={(key) => {
+                                            setTaskId(key ? parseInt(key) : null);
+                                            if (errors.taskId) {
+                                                setErrors({ ...errors, taskId: undefined });
+                                            }
+                                        }}
+                                    >
+                                        {filteredTasks.map((task) => (
+                                            <AutocompleteItem
+                                                key={task.id.toString()}
+                                                value={task.id.toString()}
+                                                textValue={task.name}
+                                            >
+                                                {task.name}
+                                            </AutocompleteItem>
+                                        ))}
+                                    </Autocomplete>
+
+                                    <Tooltip
+                                        content="Zobrazit všechny úkony"
+                                        placement="bottom"
+                                    >
+                                        <Button
+                                            isIconOnly
+                                            isDisabled={isDisabled}
+                                            onPress={() => {
+                                                const newShowAllTasks = !showAllTasks;
+                                                setShowAllTasks(newShowAllTasks);
+                                                // Pokud se přepíná na pouze klientovy tasky a task není mezi nimi, resetuj task
+                                                if (!newShowAllTasks && taskId && selectedClient?.tasks) {
+                                                    const clientTaskIds = selectedClient.tasks.map(t => t.id);
+                                                    if (!clientTaskIds.includes(taskId)) {
+                                                        setTaskId(null);
+                                                    }
+                                                }
+                                            }}
+                                            variant="light"
+                                            color={showAllTasks ? 'primary' : 'default'}
+                                            children={<ListFilter size={20} />}
+                                            className="m-2"
+
+                                        />
+                                    </Tooltip>
+                                </div>
 
 
                                 <div className="grid grid-cols-2 gap-4">

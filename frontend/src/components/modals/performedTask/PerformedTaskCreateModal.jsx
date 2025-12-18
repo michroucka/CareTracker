@@ -301,7 +301,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     isWheelDisabled
                                 />
 
-                                <Autocomplete
+                                <Select
                                     isRequired
                                     isDisabled={isDisabled}
                                     isInvalid={!!errors.caregiverIds}
@@ -318,20 +318,24 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     classNames={{
                                         trigger: "min-h-12",
                                     }}
+                                    renderValue={(items) => {
+                                        const count = items.length;
+                                        return count > 1 ? `Celkem: ${count}` : items[0]?.textValue;
+                                    }}
                                 >
                                     {caregivers.map((caregiver) => {
                                         const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
                                         return (
-                                            <AutocompleteItem
+                                            <SelectItem
                                                 key={caregiver.id.toString()}
                                                 value={caregiver.id.toString()}
                                                 textValue={caregiverName}
                                             >
                                                 {caregiverName}
-                                            </AutocompleteItem>
+                                            </SelectItem>
                                         );
                                     })}
-                                </Autocomplete>
+                                </Select>
                             </div>
 
                             <DatePicker

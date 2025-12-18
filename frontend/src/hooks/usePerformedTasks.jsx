@@ -1,8 +1,8 @@
 import { useState } from "react";
-import {getJSON, postJSON} from "../api/api.js";
+import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {ClipboardCheck, ClipboardX, CloudAlert} from "lucide-react";
+import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
 import {showToast} from "../components/MyToast.jsx";
 
 export function usePerformedTasks() {
@@ -21,6 +21,17 @@ export function usePerformedTasks() {
             showErrorToast(error, "Chyba při načítání provedených úkonů", { icon: <CloudAlert /> });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchPerformedTask = async (id) => {
+        try {
+            const performedTask = await getJSON(`/performed-tasks/${id}`);
+            return performedTask;
+        } catch (error) {
+            console.error("Error fetching performed task: ", error);
+            showErrorToast(error, "Úkon nenalezen", { icon: <CloudAlert/>})
+            throw error;
         }
     };
 
@@ -46,10 +57,34 @@ export function usePerformedTasks() {
         }
     }
 
+    const updatePerformedTask = async (id, updatedData) => {
+        try {
+            const updated = await putJSON(`/performed-tasks/${id}`, updatedData);
+
+            setPerformedTasks(prev => sortByKey(
+                [...prev, updated], "date", "descending"
+            ));
+
+            showToast({
+                title: "Úkon úspěšně aktualizován",
+                color: "success",
+                icon: <CircleCheck />
+            });
+
+            return updated;
+        } catch (err) {
+            console.error("Error updating performed task:", err);
+            showErrorToast(err, "Chyba při aktualizaci úkonu", { icon: <CloudAlert /> });
+            throw err;
+        }
+    };
+
     return {
         performedTasks,
         loading,
         fetchPerformedTasks,
+        fetchPerformedTask,
         createPerformedTask,
+        updatePerformedTask
     };
 }

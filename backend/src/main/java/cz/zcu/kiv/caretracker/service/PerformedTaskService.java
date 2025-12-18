@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask, PerformedTaskDTO> {
@@ -36,6 +37,17 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         );
     }
 
+    @Transactional(readOnly = true)
+    public Optional<PerformedTaskDTO> getPerformedTaskById(Long id) {
+        return getEntityByIdWithPermissionCheck(
+                id,
+                () -> performedTaskRepository.findById(id),
+                performedTask -> performedTask.getOrganization().getId(),
+                performedTask -> performedTask.getDepartment().getId(),
+                performedTaskMapper::toDTO
+        );
+    }
+
     private PerformedTask savePerformedTask(PerformedTask performedTask, PerformedTaskRequestDTO dto) {
         Client client = clientRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
@@ -57,5 +69,11 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     public PerformedTask createPerformedTask(PerformedTaskRequestDTO dto) {
         PerformedTask performedTask = new PerformedTask();
         return savePerformedTask(performedTask, dto);
+    }
+
+    public PerformedTask updatePerformedTask(Long id, PerformedTaskRequestDTO dto) {
+        PerformedTask task = performedTaskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Performed task not found"));
+        return savePerformedTask(task, dto);
     }
 }

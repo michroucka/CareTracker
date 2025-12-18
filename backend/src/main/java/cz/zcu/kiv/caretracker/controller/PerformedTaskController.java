@@ -35,11 +35,30 @@ public class PerformedTaskController {
         return ResponseEntity.ok(performedTasks);
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<PerformedTaskDTO> getPerformedTaskById(@PathVariable Long id) {
+        log.info("Fetching performed task with id: {}", id);
+        return performedTaskService.getPerformedTaskById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<PerformedTaskDTO> createPerformedTask(@RequestBody PerformedTaskRequestDTO dto) {
         log.info("Creating new performed task");
         PerformedTask savedPerformedTask = performedTaskService.createPerformedTask(dto);
         return ResponseEntity.ok(performedTaskMapper.toDTO(savedPerformedTask));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<PerformedTaskDTO> updatePerformedTask(
+            @PathVariable Long id, @RequestBody PerformedTaskRequestDTO dto
+    ) {
+        log.info("Updating performed task with id: {}", id);
+        PerformedTask updated = performedTaskService.updatePerformedTask(id, dto);
+        return ResponseEntity.ok(performedTaskMapper.toDTO(updated));
     }
 }
