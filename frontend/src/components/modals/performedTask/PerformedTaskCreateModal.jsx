@@ -11,7 +11,7 @@ import {
     Textarea,
     DatePicker,
     Form,
-    NumberInput, Tooltip,
+    NumberInput, Tooltip, Autocomplete, AutocompleteItem,
 } from "@heroui/react";
 import { Save, CalendarDays, ListFilter } from "lucide-react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
@@ -205,7 +205,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                     >
                         <div className="flex flex-col gap-4 w-full">
 
-                            <Select
+                            <Autocomplete
                                 isRequired
                                 isDisabled={isLoading}
                                 isInvalid={!!errors.clientId}
@@ -213,28 +213,27 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                 label="Klient"
                                 labelPlacement="inside"
                                 name="clientId"
-                                selectedKeys={clientId ? [clientId.toString()] : []}
-                                onSelectionChange={(keys) => {
-                                    const selectedId = Array.from(keys)[0];
-                                    setClientId(selectedId ? parseInt(selectedId) : null);
+                                selectedKey={clientId ? clientId.toString() : null}
+                                onSelectionChange={(key) => {
+                                    setClientId(key ? parseInt(key) : null);
                                     if (errors.clientId) {
                                         setErrors({ ...errors, clientId: undefined });
                                     }
                                 }}
                             >
                                 {clients.map((client) => (
-                                    <SelectItem
+                                    <AutocompleteItem
                                         key={client.id.toString()}
                                         value={client.id.toString()}
                                         textValue={client.name}
                                     >
                                         {client.name}
-                                    </SelectItem>
+                                    </AutocompleteItem>
                                 ))}
-                            </Select>
+                            </Autocomplete>
 
                             <div className="flex items-center">
-                                <Select
+                                <Autocomplete
                                     isRequired
                                     isDisabled={isDisabled}
                                     isInvalid={!!errors.taskId}
@@ -242,25 +241,24 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     label="Úkon"
                                     labelPlacement="inside"
                                     name="taskId"
-                                    selectedKeys={taskId ? [taskId.toString()] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedId = Array.from(keys)[0];
-                                        setTaskId(selectedId ? parseInt(selectedId) : null);
+                                    selectedKey={taskId ? taskId.toString() : null}
+                                    onSelectionChange={(key) => {
+                                        setTaskId(key ? parseInt(key) : null);
                                         if (errors.taskId) {
                                             setErrors({ ...errors, taskId: undefined });
                                         }
                                     }}
                                 >
                                     {filteredTasks.map((task) => (
-                                        <SelectItem
+                                        <AutocompleteItem
                                             key={task.id.toString()}
                                             value={task.id.toString()}
                                             textValue={task.name}
                                         >
                                             {task.name}
-                                        </SelectItem>
+                                        </AutocompleteItem>
                                     ))}
-                                </Select>
+                                </Autocomplete>
 
                                 <Tooltip
                                     content="Zobrazit všechny úkony"
@@ -303,7 +301,7 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     isWheelDisabled
                                 />
 
-                                <Select
+                                <Autocomplete
                                     isRequired
                                     isDisabled={isDisabled}
                                     isInvalid={!!errors.caregiverIds}
@@ -320,24 +318,20 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
                                     classNames={{
                                         trigger: "min-h-12",
                                     }}
-                                    renderValue={(items) => {
-                                        const count = items.length;
-                                        return count > 1 ? `Celkem: ${count}` : items[0].textValue;
-                                    }}
                                 >
                                     {caregivers.map((caregiver) => {
                                         const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
                                         return (
-                                            <SelectItem
+                                            <AutocompleteItem
                                                 key={caregiver.id.toString()}
                                                 value={caregiver.id.toString()}
                                                 textValue={caregiverName}
                                             >
                                                 {caregiverName}
-                                            </SelectItem>
+                                            </AutocompleteItem>
                                         );
                                     })}
-                                </Select>
+                                </Autocomplete>
                             </div>
 
                             <DatePicker

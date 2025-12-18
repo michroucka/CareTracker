@@ -12,7 +12,7 @@ import {
     Textarea,
     DatePicker,
     Form,
-    NumberInput,
+    NumberInput, Autocomplete, AutocompleteItem,
 } from "@heroui/react";
 import { Plus, CalendarDays } from "lucide-react";
 import React from "react";
@@ -333,7 +333,7 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departm
                                     ))}
                                 </Select>
 
-                                <Select
+                                <Autocomplete
                                     isRequired
                                     isDisabled={isLoading || !departmentId}
                                     isInvalid={!!errors.caregiverId}
@@ -341,10 +341,9 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departm
                                     label="Klíčový pracovník"
                                     labelPlacement="inside"
                                     name="caregiverId"
-                                    selectedKeys={caregiverId ? [caregiverId.toString()] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedId = Array.from(keys)[0];
-                                        setCaregiverId(selectedId ? parseInt(selectedId) : null);
+                                    selectedKey={caregiverId ? caregiverId.toString() : null}
+                                    onSelectionChange={(key) => {
+                                        setCaregiverId(key ? parseInt(key) : null);
                                         if (errors.caregiverId) {
                                             setErrors({ ...errors, caregiverId: undefined });
                                         }
@@ -353,16 +352,16 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departm
                                     {filteredCaregivers.map((caregiver) => {
                                         const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
                                         return (
-                                            <SelectItem
+                                            <AutocompleteItem
                                                 key={caregiver.id.toString()}
                                                 value={caregiver.id.toString()}
                                                 textValue={caregiverName}
                                             >
                                                 {caregiverName}
-                                            </SelectItem>
+                                            </AutocompleteItem>
                                         );
                                     })}
-                                </Select>
+                                </Autocomplete>
                             </div>
 
                             {/* Adresa */}

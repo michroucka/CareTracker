@@ -3,7 +3,7 @@ import {
     Button,
     Dropdown,
     DropdownItem,
-    DropdownMenu,
+    DropdownMenu, DropdownSection,
     DropdownTrigger,
     Input,
     Spinner,
@@ -108,12 +108,21 @@ function Clients() {
         }));
     }, [departments]);
 
+    const filteredEmployees = React.useMemo(() => {
+        if (departmentFilter.has("all")) {
+            return employees;
+        }
+        return employees.filter(employee =>
+            departmentFilter.has(employee.department?.name)
+        );
+    }, [employees, departmentFilter]);
+
     const caregiverOptions = React.useMemo(() => {
-        return employees.map(emp => ({
+        return filteredEmployees.map(emp => ({
             name: emp.fullName,
             key: emp.fullName
         }));
-    }, [employees]);
+    }, [filteredEmployees]);
 
     const filteredItems = React.useMemo(() => {
         let filteredClients = [...clients];
@@ -469,40 +478,45 @@ function Clients() {
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
-                                <DropdownItem key="view"
-                                              startContent={<UserRound />}
-                                              variant="light"
-                                              isLoading={isLoadingDetail}
-                                              onPress={() => handleOpenDetailModal(client.id)}
-                                >
-                                    {isLoadingDetail ? "Načítání..." : "Detail"}
-                                </DropdownItem>
-                                <DropdownItem key="view-ip"
-                                              startContent={<FileText />}
-                                              variant="light"
-                                >
-                                    Individuální plán
-                                </DropdownItem>
+                                <DropdownSection showDivider={canAlterClient}>
+                                    <DropdownItem key="view"
+                                                  startContent={<UserRound />}
+                                                  variant="light"
+                                                  isLoading={isLoadingDetail}
+                                                  onPress={() => handleOpenDetailModal(client.id)}
+                                    >
+                                        {isLoadingDetail ? "Načítání..." : "Detail"}
+                                    </DropdownItem>
+                                    <DropdownItem key="view-ip"
+                                                  startContent={<FileText />}
+                                                  variant="light"
+                                    >
+                                        Individuální plán
+                                    </DropdownItem>
+                                </DropdownSection>
+
                                 {canAlterClient ? (
-                                    client.active ? (
-                                        <DropdownItem key="terminate"
-                                                      startContent={<UserRoundX />}
-                                                      variant="light"
-                                                      color="danger"
-                                                      onPress={() => handleOpenTerminateModal(client.id)}
-                                        >
-                                            Deaktivovat
-                                        </DropdownItem>
+                                    <DropdownSection>
+                                        {client.active ? (
+                                            <DropdownItem key="terminate"
+                                                          startContent={<UserRoundX />}
+                                                          variant="light"
+                                                          color="danger"
+                                                          onPress={() => handleOpenTerminateModal(client.id)}
+                                            >
+                                                Deaktivovat
+                                            </DropdownItem>
                                         ) : (
-                                        <DropdownItem key="activate"
-                                                      startContent={<UserRoundCheck />}
-                                                      variant="light"
-                                                      color="success"
-                                                      onPress={() => handleActivateClient(client.id)}
-                                        >
-                                            Aktivovat
-                                        </DropdownItem>
-                                    )
+                                            <DropdownItem key="activate"
+                                                          startContent={<UserRoundCheck />}
+                                                          variant="light"
+                                                          color="success"
+                                                          onPress={() => handleActivateClient(client.id)}
+                                            >
+                                                Aktivovat
+                                            </DropdownItem>
+                                        )}
+                                    </DropdownSection>
                                 ) : null}
                             </DropdownMenu>
                         </Dropdown>

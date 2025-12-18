@@ -12,7 +12,7 @@ import {
     Button,
     Dropdown,
     DropdownItem,
-    DropdownMenu,
+    DropdownMenu, DropdownSection,
     DropdownTrigger,
     Input,
     Spinner,
@@ -90,6 +90,15 @@ function PerformedTasks() {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
 
+    const filteredEmployees = React.useMemo(() => {
+        if (departmentFilter.has("all")) {
+            return employees;
+        }
+        return employees.filter(employee =>
+            departmentFilter.has(employee.department?.name)
+        );
+    }, [employees, departmentFilter]);
+
     const hasSearchFilter = Boolean(filterValue);
 
     const departmentOptions = React.useMemo(() => {
@@ -100,14 +109,14 @@ function PerformedTasks() {
     }, [departments]);
 
     const caregiverOptions = React.useMemo(() => {
-        return employees.map(emp => {
+        return filteredEmployees.map(emp => {
             const fullName = `${emp.firstName} ${emp.lastName}`;
             return {
                 name: fullName,
                 key: fullName
             };
         });
-    }, [employees]);
+    }, [filteredEmployees]);
 
     const filteredClients = React.useMemo(() => {
         if (departmentFilter.has("all")) {
@@ -117,15 +126,6 @@ function PerformedTasks() {
             departmentFilter.has(client.department?.name)
         );
     }, [clients, departmentFilter]);
-
-    const filteredEmployees = React.useMemo(() => {
-        if (departmentFilter.has("all")) {
-            return employees;
-        }
-        return employees.filter(employee =>
-            departmentFilter.has(employee.department?.name)
-        );
-    }, [employees, departmentFilter]);
 
     const filteredItems = React.useMemo(() => {
         let filteredPerformedTasks = [...performedTasks];
@@ -366,20 +366,23 @@ function PerformedTasks() {
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
-                                <DropdownItem key="view"
-                                              startContent={<Eye />}
-                                              variant="light"
-                                >
-                                    Detail
-                                </DropdownItem>
-
-                                <DropdownItem key="delete"
-                                              startContent={<Trash2 />}
-                                              variant="light"
-                                              color="danger"
-                                >
-                                    Smazat
-                                </DropdownItem>
+                                <DropdownSection showDivider>
+                                    <DropdownItem key="view"
+                                                  startContent={<Eye />}
+                                                  variant="light"
+                                    >
+                                        Detail
+                                    </DropdownItem>
+                                </DropdownSection>
+                                <DropdownSection>
+                                    <DropdownItem key="delete"
+                                                  startContent={<Trash2 />}
+                                                  variant="light"
+                                                  color="danger"
+                                    >
+                                        Smazat
+                                    </DropdownItem>
+                                </DropdownSection>
                             </DropdownMenu>
                         </Dropdown>
                     </div>
