@@ -31,6 +31,9 @@ public class Task {
     @Column(name = "double_meeting", nullable = false)
     private Boolean doubleMeeting = Boolean.FALSE;
 
+    @Column(name = "active", nullable = false)
+    private Boolean active = Boolean.TRUE;
+
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
     @JsonIgnore

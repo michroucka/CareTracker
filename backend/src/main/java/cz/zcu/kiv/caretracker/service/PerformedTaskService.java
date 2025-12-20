@@ -61,6 +61,17 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
             caregivers.add(caregiver);
         }
 
+        // Validace, že všechny entity patří do správné organizace/departmentu
+        validateDepartmentAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+        validateOrganizationAccess(task, t -> t.getOrganization().getId());
+        for (Employee caregiver : caregivers) {
+            validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
+        }
+
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
 
         return performedTaskRepository.save(performedTask);
@@ -74,12 +85,28 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     public PerformedTask updatePerformedTask(Long id, PerformedTaskRequestDTO dto) {
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Performed task not found"));
+
+        // Validace oprávnění
+        validateUpdateAccess(
+                task,
+                pt -> pt.getOrganization().getId(),
+                pt -> pt.getDepartment() != null ? pt.getDepartment().getId() : null
+        );
+
         return savePerformedTask(task, dto);
     }
 
     public void deletePerformedTask(Long id) {
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Performed task not found"));
+
+        // Validace oprávnění
+        validateUpdateAccess(
+                task,
+                pt -> pt.getOrganization().getId(),
+                pt -> pt.getDepartment() != null ? pt.getDepartment().getId() : null
+        );
+
         performedTaskRepository.delete(task);
     }
 }

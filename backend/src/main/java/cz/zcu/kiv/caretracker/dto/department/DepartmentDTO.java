@@ -1,4 +1,4 @@
-package cz.zcu.kiv.caretracker.dto;
+package cz.zcu.kiv.caretracker.dto.department;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,6 +1,6 @@
-package cz.zcu.kiv.caretracker.dto;
+package cz.zcu.kiv.caretracker.dto.organization;
 
-import cz.zcu.kiv.caretracker.enums.UnitType;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,11 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskDTO {
+public class OrganizationDTO {
     private Long id;
     private String name;
-    private Integer unitPrice;
-    private String unitType;
-    private Boolean doubleMeeting;
     private Boolean active;
+    private EmployeeDTO manager;
 }

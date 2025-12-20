@@ -44,6 +44,212 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
+     * Validuje, že uživatel má přístup k entitě na základě organizace.
+     * - SUPERADMIN: Má přístup ke všemu
+     * - ADMIN/COORDINATOR/CAREGIVER: Musí být ze stejné organizace
+     *
+     * @param entity Entity k validaci
+     * @param organizationIdGetter Funkce pro získání organizationId z entity
+     * @throws SecurityException Pokud uživatel nemá přístup k entitě
+     */
+    protected <E> void validateOrganizationAccess(E entity, Function<E, Long> organizationIdGetter) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
+
+        Long entityOrgId = organizationIdGetter.apply(entity);
+        if (entityOrgId == null) {
+            throw new IllegalArgumentException("Entity must have an organization");
+        }
+
+        validateOrganizationId(entityOrgId);
+    }
+
+    /**
+     * Validuje, že uživatel má přístup k organizaci podle ID.
+     * - SUPERADMIN: Má přístup ke všemu
+     * - ADMIN/COORDINATOR/CAREGIVER: Musí být ze stejné organizace
+     *
+     * @param organizationId ID organizace k validaci
+     * @throws SecurityException Pokud uživatel nemá přístup k této organizaci
+     */
+    protected void validateOrganizationId(Long organizationId) {
+        if (organizationId == null) {
+            throw new IllegalArgumentException("Organization ID cannot be null");
+        }
+
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+
+        // SUPERADMIN má přístup ke všemu
+        if (role == UserRole.SUPERADMIN) {
+            return;
+        }
+
+        // Zaměstnanci musí mít přiřazenou organizaci
+        if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
+            throw new SecurityException("Employee must have an associated organization");
+        }
+
+        Long userOrgId = user.getEmployee().getOrganization().getId();
+
+        if (!userOrgId.equals(organizationId)) {
+            throw new SecurityException("Access denied: Entity is from a different organization");
+        }
+    }
+
+    /**
+     * Validuje, že uživatel má přístup k entitě na základě organizace a departmentu.
+     * - SUPERADMIN: Má přístup ke všemu
+     * - ADMIN: Musí být ze stejné organizace
+     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     *
+     * @param entity Entity k validaci
+     * @param organizationIdGetter Funkce pro získání organizationId z entity
+     * @param departmentIdGetter Funkce pro získání departmentId z entity
+     * @throws SecurityException Pokud uživatel nemá přístup k entitě
+     */
+    protected <E> void validateDepartmentAccess(
+            E entity,
+            Function<E, Long> organizationIdGetter,
+            Function<E, Long> departmentIdGetter
+    ) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
+
+        Long entityOrgId = organizationIdGetter.apply(entity);
+        Long entityDeptId = departmentIdGetter.apply(entity);
+
+        if (entityOrgId == null) {
+            throw new IllegalArgumentException("Entity must have an organization");
+        }
+
+        validateDepartmentId(entityDeptId, entityOrgId);
+    }
+
+    /**
+     * Validuje, že uživatel má přístup k departmentu podle ID.
+     * - SUPERADMIN: Má přístup ke všemu
+     * - ADMIN: Musí být ze stejné organizace
+     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     *
+     * @param departmentId ID departmentu k validaci (může být null)
+     * @param organizationId ID organizace departmentu
+     * @throws SecurityException Pokud uživatel nemá přístup k tomuto departmentu
+     */
+    protected void validateDepartmentId(Long departmentId, Long organizationId) {
+        if (organizationId == null) {
+            throw new IllegalArgumentException("Organization ID cannot be null");
+        }
+
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+
+        // SUPERADMIN má přístup ke všemu
+        if (role == UserRole.SUPERADMIN) {
+            return;
+        }
+
+        // Zaměstnanci musí mít přiřazenou organizaci
+        if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
+            throw new SecurityException("Employee must have an associated organization");
+        }
+
+        Long userOrgId = user.getEmployee().getOrganization().getId();
+
+        // Kontrola organizace
+        if (!userOrgId.equals(organizationId)) {
+            throw new SecurityException("Access denied: Entity is from a different organization");
+        }
+
+        // ADMIN má přístup ke všemu v rámci organizace
+        if (role == UserRole.ADMIN) {
+            return;
+        }
+
+        // COORDINATOR a CAREGIVER musí být ze stejného departmentu
+        if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+            if (user.getEmployee().getDepartment() == null) {
+                throw new SecurityException("Employee must have an associated department");
+            }
+
+            Long userDeptId = user.getEmployee().getDepartment().getId();
+
+            if (departmentId == null || !userDeptId.equals(departmentId)) {
+                throw new SecurityException("Access denied: Entity is from a different department");
+            }
+        }
+    }
+
+    /**
+     * Validuje, že uživatel má oprávnění upravovat danou entitu.
+     * Používá stejnou logiku jako getEntityByIdWithPermissionCheck.
+     * - SUPERADMIN: Má přístup ke všemu
+     * - ADMIN: Musí být ze stejné organizace
+     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     *
+     * @param entity Entity k validaci
+     * @param organizationIdGetter Funkce pro získání organizationId z entity
+     * @param departmentIdGetter Funkce pro získání departmentId z entity
+     * @throws SecurityException Pokud uživatel nemá oprávnění upravovat tuto entitu
+     */
+    protected <E> void validateUpdateAccess(
+            E entity,
+            Function<E, Long> organizationIdGetter,
+            Function<E, Long> departmentIdGetter
+    ) {
+        validateDepartmentAccess(entity, organizationIdGetter, departmentIdGetter);
+    }
+
+    /**
+     * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
+     * Všichni zaměstnanci (ADMIN, COORDINATOR, CAREGIVER) mají přístup k datům celé organizace.
+     * - SUPERADMIN: Vidí vše (superAdminQuery)
+     * - ADMIN/COORDINATOR/CAREGIVER: Vidí data z celé organizace (organizationQuery)
+     *
+     * @param superAdminQuery Query pro SUPERADMIN (např. repository::findAll)
+     * @param organizationQuery Query pro zaměstnance s organizationId (např. repository::findByOrganizationId)
+     * @param mapper Funkce pro převod List<T> na List<D> (např. mapper::toDTOList)
+     * @return Seznam DTO filtrovaných podle role
+     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace
+     */
+    protected List<D> filterEntitiesByRole(
+            Supplier<List<T>> superAdminQuery,
+            Function<Long, List<T>> organizationQuery,
+            Function<List<T>, List<D>> mapper
+    ) {
+        User user = getCurrentUser();
+        List<T> entities;
+        UserRole role = user.getRole();
+
+        // SUPERADMIN má přístup ke všemu
+        if (role == UserRole.SUPERADMIN) {
+            entities = superAdminQuery.get();
+        }
+        // Zaměstnanci - filtrování podle organizace
+        else if (user.getEmployee() != null) {
+            // ADMIN, COORDINATOR i CAREGIVER vidí data z celé organizace
+            if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+                if (user.getEmployee().getOrganization() == null) {
+                    throw new SecurityException("Employee must have an associated organization");
+                }
+                Long organizationId = user.getEmployee().getOrganization().getId();
+                entities = organizationQuery.apply(organizationId);
+            }
+            else {
+                throw new SecurityException("Unauthorized employee role");
+            }
+        }
+        // CLIENT role nemá přístup
+        else {
+            throw new SecurityException("User does not have permission to view this data");
+        }
+
+        return mapper.apply(entities);
+    }
+
+    /**
      * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
      * - SUPERADMIN: Vidí vše (superAdminQuery)
      * - ADMIN: Vidí data z celé organizace (organizationQuery)
@@ -98,6 +304,60 @@ public abstract class BaseRoleFilteringService<T, D> {
         }
 
         return mapper.apply(entities);
+    }
+
+    /**
+     * Vrací jednotlivou entitu podle ID s kontrolou oprávnění.
+     * Všichni zaměstnanci (ADMIN, COORDINATOR, CAREGIVER) mají přístup k datům celé organizace.
+     *
+     * @param id ID entity
+     * @param entityFinder Funkce pro nalezení entity (např. () -> repository.findById(id))
+     * @param organizationIdGetter Funkce pro získání organizationId z entity (např. entity -> entity.getOrganization().getId())
+     * @param mapper Funkce pro převod entity na DTO (např. mapper::toDTO)
+     * @return Optional s DTO entity, pokud má uživatel oprávnění a entita existuje
+     * @throws SecurityException Pokud uživatel nemá oprávnění k této entitě
+     */
+    protected Optional<D> getEntityByIdWithPermissionCheck(
+            Long id,
+            Supplier<Optional<T>> entityFinder,
+            Function<T, Long> organizationIdGetter,
+            Function<T, D> mapper
+    ) {
+        User user = getCurrentUser();
+        Optional<T> entityOpt = entityFinder.get();
+
+        if (entityOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        T entity = entityOpt.get();
+        UserRole role = user.getRole();
+
+        // SUPERADMIN má přístup ke všemu
+        if (role == UserRole.SUPERADMIN) {
+            return Optional.of(mapper.apply(entity));
+        }
+
+        // Zaměstnanci - kontrola přístupu podle organizace
+        if (user.getEmployee() != null) {
+            // ADMIN, COORDINATOR i CAREGIVER mohou vidět entity z celé organizace
+            if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+                if (user.getEmployee().getOrganization() == null) {
+                    throw new SecurityException("Employee must have an associated organization");
+                }
+
+                Long userOrgId = user.getEmployee().getOrganization().getId();
+                Long entityOrgId = organizationIdGetter.apply(entity);
+
+                if (userOrgId.equals(entityOrgId)) {
+                    return Optional.of(mapper.apply(entity));
+                } else {
+                    throw new SecurityException("Access denied: Entity is from a different organization");
+                }
+            }
+        }
+
+        throw new SecurityException("User does not have permission to view this entity");
     }
 
     /**

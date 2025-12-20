@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
+    List<Task> findByActiveTrue();
     List<Task> findByOrganizationId(Long organizationId);
+    List<Task> findByActiveTrueAndOrganizationId(Long organizationId);
 }

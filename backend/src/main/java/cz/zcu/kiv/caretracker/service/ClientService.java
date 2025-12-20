@@ -1,13 +1,11 @@
 package cz.zcu.kiv.caretracker.service;
 
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
-import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,19 +17,14 @@ import java.util.Optional;
 
 @Service
 public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
-
     @Autowired
     private ClientRepository clientRepository;
-
     @Autowired
     private ClientMapper clientMapper;
-
     @Autowired
     private DepartmentRepository departmentRepository;
-
     @Autowired
     private EmployeeRepository employeeRepository;
-
     @Autowired
     private TaskRepository taskRepository;
 
@@ -99,6 +92,17 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             tasks.add(task);
         }
 
+        // Validace, že všechny entity patří do správné organizace/departmentu
+        validateDepartmentAccess(
+                department,
+                dept -> dept.getOrganization().getId(),
+                Department::getId
+        );
+        validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
+        for (Task task : tasks) {
+            validateOrganizationAccess(task, t -> t.getOrganization().getId());
+        }
+
         clientMapper.requestToClient(client, dto, department, caregiver, tasks);
 
         // Set personalNumber if provided, otherwise use ID after save
@@ -130,12 +134,27 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     public Client updateClient(Long id, ClientRequestDTO dto) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        // Validace oprávnění
+        validateUpdateAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+
         return saveClient(client, dto);
     }
 
     public Client terminateClient(Long id, ClientTerminateDTO dto) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        // Validace oprávnění
+        validateUpdateAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
 
         client.setActive(false);
         client.setTerminationDate(dto.getTerminationDate());
@@ -147,6 +166,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     public Client activateClient(Long id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        // Validace oprávnění
+        validateUpdateAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
 
         client.setActive(true);
         client.setTerminationDate(null);

@@ -1,9 +1,6 @@
 package cz.zcu.kiv.caretracker.mapper;
 
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
-import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
-import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
@@ -12,12 +9,9 @@ import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
-import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
-import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 

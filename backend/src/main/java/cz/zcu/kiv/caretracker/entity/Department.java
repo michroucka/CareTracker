@@ -21,7 +21,7 @@ public class Department {
     @Column(nullable = false)
     private String city;
 
-    @Column(name = "postal_code", nullable = false, length = 10)
+    @Column(name = "postal_code", nullable = false, length = 6)
     private String postalCode;
 
     @OneToMany(mappedBy = "department")

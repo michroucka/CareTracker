@@ -1,7 +1,7 @@
 package cz.zcu.kiv.caretracker.dto.client;
 
-import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
-import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.TaskDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;

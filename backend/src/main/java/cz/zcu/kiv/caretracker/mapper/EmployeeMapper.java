@@ -1,7 +1,10 @@
 package cz.zcu.kiv.caretracker.mapper;
 
-import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
+import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
+import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +33,14 @@ public class EmployeeMapper {
         dto.setDepartment(departmentMapper.toDTO(employee.getDepartment()));
 
         return dto;
+    }
+
+    public void requestToEmployee(Employee employee, EmployeeRequestDTO dto, Department department) {
+        employee.setFirstName(dto.getFirstName());
+        employee.setLastName(dto.getLastName());
+        employee.setRole(EmployeeRole.valueOf(dto.getRole()));
+        employee.setDepartment(department);
+        employee.setOrganization(department.getOrganization());
     }
 
     public List<EmployeeDTO> toDTOList(List<Employee> employees) {

@@ -1,9 +1,10 @@
 package cz.zcu.kiv.caretracker.mapper;
 
-import cz.zcu.kiv.caretracker.dto.DepartmentDTO;
-import cz.zcu.kiv.caretracker.dto.EmployeeDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
+import cz.zcu.kiv.caretracker.entity.Organization;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,6 +34,14 @@ public class DepartmentMapper {
         dto.setName(department.getCity());
 
         return dto;
+    }
+
+    public void requestToDepartment(Department department, DepartmentRequestDTO dto, Employee coordinator, Organization organization) {
+        department.setStreet(dto.getStreet());
+        department.setCity(dto.getCity());
+        department.setPostalCode(dto.getPostalCode());
+        department.setCoordinator(coordinator);
+        department.setOrganization(organization);
     }
 
     public List<DepartmentDTO> toDTOList(List<Department> departments) {

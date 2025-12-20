@@ -3,7 +3,9 @@ package cz.zcu.kiv.caretracker.controller;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.entity.IndividualPlan;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.service.ClientService;
 import org.slf4j.Logger;
@@ -22,7 +24,6 @@ public class ClientController {
 
     @Autowired
     private ClientMapper clientMapper;
-
     @Autowired
     private ClientService clientService;
 
@@ -75,8 +76,4 @@ public class ClientController {
         Client updatedClient = clientService.activateClient(id);
         return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
     }
-
-
-
-
 }
