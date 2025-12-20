@@ -3,6 +3,9 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
@@ -27,6 +30,12 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private EmployeeRepository employeeRepository;
     @Autowired
     private TaskRepository taskRepository;
+    @Autowired
+    private IndividualPlanRepository individualPlanRepository;
+    @Autowired
+    private cz.zcu.kiv.caretracker.mapper.IndividualPlanMapper individualPlanMapper;
+    @Autowired
+    private cz.zcu.kiv.caretracker.mapper.IndividualPlanContentMapper individualPlanContentMapper;
 
     /**
      * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
@@ -76,6 +85,89 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 client -> client.getOrganization().getId(),
                 client -> client.getDepartment().getId(),
                 clientMapper::toDTO
+        );
+    }
+
+    /**
+     * Vrací individuální plán klienta s AKTUÁLNÍ verzí contentu jako DTO.
+     * Validuje, že má uživatel přístup ke klientovi.
+     *
+     * @param clientId ID klienta
+     * @return IndividualPlanDTO s aktuální verzí, pokud existuje
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebyl nalezen
+     */
+    @Transactional(readOnly = true)
+    public Optional<IndividualPlanDTO> getClientIndividualPlan(Long clientId) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Vrátit plán s aktuální verzí
+        return individualPlanRepository.findByClientId(clientId)
+                .map(individualPlanMapper::toDTO);
+    }
+
+    /**
+     * Vrací seznam verzí individuálního plánu klienta (pouze metadata, bez velkého contentu).
+     * Použij pro zobrazení seznamu verzí v UI.
+     *
+     * @param clientId ID klienta
+     * @return Seznam verzí s metadaty (od nejnovější)
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     */
+    @Transactional(readOnly = true)
+    public List<IndividualPlanVersionSummaryDTO> getClientIndividualPlanHistory(Long clientId) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Najít plán
+        IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+
+        // Vrátit jen metadata verzí (už jsou seřazené @OrderBy("versionNumber DESC"))
+        return individualPlanContentMapper.toVersionSummaryList(plan.getContentVersions());
+    }
+
+    /**
+     * Vrací KONKRÉTNÍ verzi contentu individuálního plánu klienta (s plným contentem).
+     * Použij pro zobrazení detailu konkrétní verze.
+     *
+     * @param clientId ID klienta
+     * @param versionNumber Číslo verze (1, 2, 3...)
+     * @return Konkrétní verze s plným contentem
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient, plán nebo verze nebyla nalezena
+     */
+    @Transactional(readOnly = true)
+    public IndividualPlanContentDTO getClientIndividualPlanVersion(Long clientId, Integer versionNumber) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Najít plán
+        IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+
+        // Najít konkrétní verzi s plným contentem
+        return plan.getContentVersions().stream()
+                .filter(content -> content.getVersionNumber().equals(versionNumber))
+                .findFirst()
+                .map(individualPlanContentMapper::toDTO)
+                .orElseThrow(() -> new RuntimeException("Version " + versionNumber + " not found"));
+    }
+
+    /**
+     * Helper metoda pro validaci přístupu ke klientovi.
+     * Vyhodí SecurityException, pokud uživatel nemá přístup.
+     */
+    private void validateClientAccess(Long clientId) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        validateDepartmentAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
     }
 

@@ -1,9 +1,16 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.List;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "individual_plan")
 public class IndividualPlan {
@@ -21,7 +28,12 @@ public class IndividualPlan {
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Organization organization;
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    @OneToOne
+    @JoinColumn(name = "current_content_id")
+    private IndividualPlanContent currentContent;
+
+    @OneToMany(mappedBy = "individualPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("versionNumber DESC")
+    @JsonIgnore
+    private List<IndividualPlanContent> contentVersions;
 }

@@ -3,7 +3,9 @@ package cz.zcu.kiv.caretracker.controller;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.IndividualPlan;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
@@ -43,6 +45,33 @@ public class ClientController {
         return clientService.getClientById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/individual-plan")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<IndividualPlanDTO> getClientIndividualPlan(@PathVariable Long id) {
+        log.info("Fetching individual plan for client: {}", id);
+        return clientService.getClientIndividualPlan(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/individual-plan/history")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<List<IndividualPlanVersionSummaryDTO>> getClientIndividualPlanHistory(@PathVariable Long id) {
+        log.info("Fetching individual plan history for client: {}", id);
+        List<IndividualPlanVersionSummaryDTO> history = clientService.getClientIndividualPlanHistory(id);
+
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/{id}/individual-plan/{version}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<IndividualPlanContentDTO> getClientIndividualPlanByVersion(@PathVariable Long id, @PathVariable Integer version) {
+        log.info("Fetching individual plan version {} for client: {}", version, id);
+        IndividualPlanContentDTO content = clientService.getClientIndividualPlanVersion(id, version);
+
+        return ResponseEntity.ok(content);
     }
 
     @PostMapping
