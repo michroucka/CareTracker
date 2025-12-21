@@ -18,6 +18,7 @@ import {
 import {Save, CalendarDays, X, Pencil, ListFilter} from "lucide-react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
 import { unitTypeTranslations } from "../../../constants/performedTaskConstants.js";
+import {ReadOnlyField} from "../../ReadOnlyField.jsx";
 
 export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading, performedTask, clients = [], caregivers = [] , tasks = []}) {
     const [clientId, setClientId] = React.useState(null);
@@ -213,197 +214,242 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
                         >
                             <div className="flex flex-col gap-4 w-full">
 
-                                <Autocomplete
-                                    isRequired
-                                    isDisabled={isDisabled}
-                                    isInvalid={!!errors.clientId}
-                                    errorMessage={errors.clientId}
-                                    label="Klient"
-                                    labelPlacement="inside"
-                                    name="clientId"
-                                    selectedKey={clientId ? clientId.toString() : null}
-                                    onSelectionChange={(key) => {
-                                        setClientId(key ? parseInt(key) : null);
-                                        if (errors.clientId) {
-                                            setErrors({ ...errors, clientId: undefined });
-                                        }
-                                    }}
-                                >
-                                    {clients.map((client) => (
-                                        <AutocompleteItem
-                                            key={client.id.toString()}
-                                            value={client.id.toString()}
-                                            textValue={client.name}
-                                        >
-                                            {client.name}
-                                        </AutocompleteItem>
-                                    ))}
-                                </Autocomplete>
-
-                                <div className="flex items-center">
+                                {isEditMode ? (
                                     <Autocomplete
                                         isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.taskId}
-                                        errorMessage={errors.taskId}
-                                        label="Úkon"
+                                        isDisabled={isSubmitting}
+                                        isInvalid={!!errors.clientId}
+                                        errorMessage={errors.clientId}
+                                        label="Klient"
                                         labelPlacement="inside"
-                                        name="taskId"
-                                        selectedKey={taskId ? taskId.toString() : null}
+                                        name="clientId"
+                                        selectedKey={clientId ? clientId.toString() : null}
                                         onSelectionChange={(key) => {
-                                            setTaskId(key ? parseInt(key) : null);
-                                            if (errors.taskId) {
-                                                setErrors({ ...errors, taskId: undefined });
+                                            setClientId(key ? parseInt(key) : null);
+                                            if (errors.clientId) {
+                                                setErrors({ ...errors, clientId: undefined });
                                             }
                                         }}
                                     >
-                                        {filteredTasks.map((task) => (
+                                        {clients.map((client) => (
                                             <AutocompleteItem
-                                                key={task.id.toString()}
-                                                value={task.id.toString()}
-                                                textValue={task.name}
+                                                key={client.id.toString()}
+                                                value={client.id.toString()}
+                                                textValue={client.name}
                                             >
-                                                {task.name}
+                                                {client.name}
                                             </AutocompleteItem>
                                         ))}
                                     </Autocomplete>
+                                ) : (
+                                    <ReadOnlyField
+                                        label="Klient"
+                                        value={clients.find(c => c.id === clientId)?.name || '-'}
+                                    />
+                                )}
 
-                                    <Tooltip
-                                        content="Zobrazit všechny úkony"
-                                        placement="bottom"
-                                    >
-                                        <Button
-                                            isIconOnly
-                                            isDisabled={isDisabled}
-                                            onPress={() => {
-                                                const newShowAllTasks = !showAllTasks;
-                                                setShowAllTasks(newShowAllTasks);
-                                                // Pokud se přepíná na pouze klientovy tasky a task není mezi nimi, resetuj task
-                                                if (!newShowAllTasks && taskId && selectedClient?.tasks) {
-                                                    const clientTaskIds = selectedClient.tasks.map(t => t.id);
-                                                    if (!clientTaskIds.includes(taskId)) {
-                                                        setTaskId(null);
-                                                    }
+                                {isEditMode ? (
+                                    <div className="flex items-center">
+                                        <Autocomplete
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                            isInvalid={!!errors.taskId}
+                                            errorMessage={errors.taskId}
+                                            label="Úkon"
+                                            labelPlacement="inside"
+                                            name="taskId"
+                                            selectedKey={taskId ? taskId.toString() : null}
+                                            onSelectionChange={(key) => {
+                                                setTaskId(key ? parseInt(key) : null);
+                                                if (errors.taskId) {
+                                                    setErrors({ ...errors, taskId: undefined });
                                                 }
                                             }}
-                                            variant="light"
-                                            color={showAllTasks ? 'primary' : 'default'}
-                                            children={<ListFilter size={20} />}
-                                            className="m-2"
+                                        >
+                                            {filteredTasks.map((task) => (
+                                                <AutocompleteItem
+                                                    key={task.id.toString()}
+                                                    value={task.id.toString()}
+                                                    textValue={task.name}
+                                                >
+                                                    {task.name}
+                                                </AutocompleteItem>
+                                            ))}
+                                        </Autocomplete>
 
-                                        />
-                                    </Tooltip>
-                                </div>
+                                        <Tooltip
+                                            content="Zobrazit všechny úkony"
+                                            placement="bottom"
+                                        >
+                                            <Button
+                                                isIconOnly
+                                                isDisabled={isSubmitting}
+                                                onPress={() => {
+                                                    const newShowAllTasks = !showAllTasks;
+                                                    setShowAllTasks(newShowAllTasks);
+                                                    // Pokud se přepíná na pouze klientovy tasky a task není mezi nimi, resetuj task
+                                                    if (!newShowAllTasks && taskId && selectedClient?.tasks) {
+                                                        const clientTaskIds = selectedClient.tasks.map(t => t.id);
+                                                        if (!clientTaskIds.includes(taskId)) {
+                                                            setTaskId(null);
+                                                        }
+                                                    }
+                                                }}
+                                                variant="light"
+                                                color={showAllTasks ? 'primary' : 'default'}
+                                                children={<ListFilter size={20} />}
+                                                className="m-2"
+
+                                            />
+                                        </Tooltip>
+                                    </div>
+                                ) : (
+                                    <ReadOnlyField
+                                        label="Úkon"
+                                        value={tasks.find(t => t.id === taskId)?.name || '-'}
+                                    />
+                                )}
 
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <NumberInput
-                                        isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.taskId}
-                                        errorMessage={errors.taskId}
-                                        label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
-                                        labelPlacement="inside"
-                                        name="unitCount"
-                                        type="number"
-                                        value={unitCount}
-                                        onValueChange={setUnitCount}
-                                        minValue={allowDecimals ? 0.01 : 1}
-                                        step={allowDecimals ? 0.01 : 1}
-                                        formatOptions={allowDecimals ? {
-                                            minimumFractionDigits: 0,
-                                            maximumFractionDigits: 2
-                                        } : {
-                                            minimumFractionDigits: 0,
-                                            maximumFractionDigits: 0
-                                        }}
-                                        isWheelDisabled
-                                    />
+                                    {isEditMode ? (
+                                        <NumberInput
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                            isInvalid={!!errors.taskId}
+                                            errorMessage={errors.taskId}
+                                            label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
+                                            labelPlacement="inside"
+                                            name="unitCount"
+                                            type="number"
+                                            value={unitCount}
+                                            onValueChange={setUnitCount}
+                                            minValue={allowDecimals ? 0.01 : 1}
+                                            step={allowDecimals ? 0.01 : 1}
+                                            formatOptions={allowDecimals ? {
+                                                minimumFractionDigits: 0,
+                                                maximumFractionDigits: 2
+                                            } : {
+                                                minimumFractionDigits: 0,
+                                                maximumFractionDigits: 0
+                                            }}
+                                            isWheelDisabled
+                                        />
+                                    ) : (
+                                        <ReadOnlyField
+                                            label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
+                                            value={unitCount}
+                                        />
+                                    )}
 
-                                    <Select
-                                        isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.caregiverIds}
-                                        errorMessage={errors.caregiverIds}
-                                        label="Pečovatelé"
-                                        labelPlacement="inside"
-                                        name="caregiverIds"
-                                        selectionMode="multiple"
-                                        selectedKeys={caregiverIds.map(id => id.toString())}
-                                        onSelectionChange={(keys) => {
-                                            const selectedIds = Array.from(keys).map(key => parseInt(key));
-                                            setCaregiverIds(selectedIds);
-                                            if (errors.caregiverIds) {
-                                                setErrors({...errors, caregiverIds: undefined});
-                                            }
-                                        }}
-                                        classNames={{
-                                            trigger: "min-h-12",
-                                        }}
-                                        renderValue={(items) => {
-                                            const count = items.length;
-                                            return `Celkem: ${count}`;
-                                        }}
-                                    >
-                                        {caregivers.map((caregiver) => {
-                                            const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
-                                            return (
-                                                <SelectItem
-                                                    key={caregiver.id.toString()}
-                                                    value={caregiver.id.toString()}
-                                                    textValue={caregiverName}
-                                                >
-                                                    {caregiverName}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </Select>
+                                    {isEditMode ? (
+                                        <Select
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                            isInvalid={!!errors.caregiverIds}
+                                            errorMessage={errors.caregiverIds}
+                                            label="Pečovatelé"
+                                            labelPlacement="inside"
+                                            name="caregiverIds"
+                                            selectionMode="multiple"
+                                            selectedKeys={caregiverIds.map(id => id.toString())}
+                                            onSelectionChange={(keys) => {
+                                                const selectedIds = Array.from(keys).map(key => parseInt(key));
+                                                setCaregiverIds(selectedIds);
+                                                if (errors.caregiverIds) {
+                                                    setErrors({...errors, caregiverIds: undefined});
+                                                }
+                                            }}
+                                            classNames={{
+                                                trigger: "min-h-12",
+                                            }}
+                                            renderValue={(items) => {
+                                                const count = items.length;
+                                                return `Celkem: ${count}`;
+                                            }}
+                                        >
+                                            {caregivers.map((caregiver) => {
+                                                const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                                return (
+                                                    <SelectItem
+                                                        key={caregiver.id.toString()}
+                                                        value={caregiver.id.toString()}
+                                                        textValue={caregiverName}
+                                                    >
+                                                        {caregiverName}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Pečovatelé"
+                                            value={caregiverIds.length > 0 ? `Celkem: ${caregiverIds.length}` : '-'}
+                                        />
+                                    )}
                                 </div>
 
-                                <DatePicker
-                                    hideTimeZone
-                                    isDisabled={isDisabled}
-                                    isInvalid={!!errors.date}
-                                    errorMessage={errors.date}
-                                    label="Datum"
-                                    labelPlacement="inside"
-                                    name="date"
-                                    value={date ? parseDateTime(date) : null}
-                                    onChange={(date) => {
-                                        setDate(date ? date.toString() : "");
-                                        if (errors.date) {
-                                            setErrors({ ...errors, date: undefined });
-                                        }
-                                    }}
-                                    showMonthAndYearPickers
-                                    selectorIcon={<CalendarDays size={18}/>}
-                                    minValue={new CalendarDateTime(1900, 1, 1, 0, 0)}
-                                    maxValue={(() => {
-                                        const zonedNow = now(getLocalTimeZone());
-                                        return new CalendarDateTime(
-                                            zonedNow.year,
-                                            zonedNow.month,
-                                            zonedNow.day,
-                                            zonedNow.hour,
-                                            zonedNow.minute,
-                                            0
-                                        );
-                                    })()}
-                                    isRequired
-                                    classNames={{
-                                        segment: "text-default-500"
-                                    }}
-                                />
+                                {isEditMode ? (
+                                    <DatePicker
+                                        hideTimeZone
+                                        isDisabled={isSubmitting}
+                                        isInvalid={!!errors.date}
+                                        errorMessage={errors.date}
+                                        label="Datum"
+                                        labelPlacement="inside"
+                                        name="date"
+                                        value={date ? parseDateTime(date) : null}
+                                        onChange={(date) => {
+                                            setDate(date ? date.toString() : "");
+                                            if (errors.date) {
+                                                setErrors({ ...errors, date: undefined });
+                                            }
+                                        }}
+                                        showMonthAndYearPickers
+                                        selectorIcon={<CalendarDays size={18}/>}
+                                        minValue={new CalendarDateTime(1900, 1, 1, 0, 0)}
+                                        maxValue={(() => {
+                                            const zonedNow = now(getLocalTimeZone());
+                                            return new CalendarDateTime(
+                                                zonedNow.year,
+                                                zonedNow.month,
+                                                zonedNow.day,
+                                                zonedNow.hour,
+                                                zonedNow.minute,
+                                                0
+                                            );
+                                        })()}
+                                        isRequired
+                                        classNames={{
+                                            segment: "text-default-500"
+                                        }}
+                                    />
+                                ) : (
+                                    <ReadOnlyField
+                                        label="Datum"
+                                        value={date ? new Date(date).toLocaleString('cs-CZ', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) : '-'}
+                                    />
+                                )}
 
-                                <Textarea
-                                    isDisabled={isDisabled}
-                                    label="Poznámky"
-                                    labelPlacement="inside"
-                                    name="notes"
-                                    value={notes}
-                                    onValueChange={setNotes}
-                                    minRows={2}
-                                />
+                                {isEditMode ? (
+                                    <Textarea
+                                        isDisabled={isSubmitting}
+                                        label="Poznámky"
+                                        labelPlacement="inside"
+                                        name="notes"
+                                        value={notes}
+                                        onValueChange={setNotes}
+                                        minRows={2}
+                                    />
+                                ) : (
+                                    <ReadOnlyField label="Poznámky" value={notes} />
+                                )}
                             </div>
                         </Form>
                     ) : (

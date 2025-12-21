@@ -20,6 +20,7 @@ import React from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../../utils/formatters.js";
 import {benefitsOptions, terminationReasonOptions} from "../../../constants/clientConstants.js";
+import {ReadOnlyField} from "../../ReadOnlyField.jsx";
 
 export function ClientDetailModal({ isOpen, onClose, onSubmit, canEdit, client, isLoading, departments = [], caregivers = [], tasks = [] }) {
     const [isEditMode, setIsEditMode] = React.useState(false);
@@ -244,391 +245,503 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, canEdit, client, 
                             <div className="flex flex-col gap-4 w-full">
                                 {/* Základní informace */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.firstName}
-                                        errorMessage={errors.firstName}
-                                        label="Jméno"
-                                        labelPlacement="inside"
-                                        name="firstName"
-                                        value={firstName}
-                                        onValueChange={(value) => {
-                                            setFirstName(value);
-                                            if (errors.firstName) {
-                                                setErrors({ ...errors, firstName: undefined });
-                                            }
-                                        }}
-                                        isRequired
-                                    />
-
-                                    <Input
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.lastName}
-                                        errorMessage={errors.lastName}
-                                        label="Příjmení"
-                                        labelPlacement="inside"
-                                        name="lastName"
-                                        value={lastName}
-                                        onValueChange={(value) => {
-                                            setLastName(value);
-                                            if (errors.lastName) {
-                                                setErrors({ ...errors, lastName: undefined });
-                                            }
-                                        }}
-                                        isRequired
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Select
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.gender}
-                                        errorMessage={errors.gender}
-                                        label="Pohlaví"
-                                        labelPlacement="inside"
-                                        name="gender"
-                                        selectedKeys={gender ? [gender] : []}
-                                        onSelectionChange={(keys) => {
-                                            setGender(Array.from(keys)[0]);
-                                            if (errors.gender) {
-                                                setErrors({ ...errors, gender: undefined });
-                                            }
-                                        }}
-                                        isRequired
-                                    >
-                                        <SelectItem key="MALE" value="MALE">Muž</SelectItem>
-                                        <SelectItem key="FEMALE" value="FEMALE">Žena</SelectItem>
-                                    </Select>
-
-                                    <DatePicker
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.dateOfBirth}
-                                        errorMessage={errors.dateOfBirth}
-                                        label="Datum narození"
-                                        labelPlacement="inside"
-                                        name="dateOfBirth"
-                                        value={dateOfBirth ? parseDate(dateOfBirth) : null}
-                                        onChange={(date) => {
-                                            setDateOfBirth(date ? date.toString() : "");
-                                            if (errors.dateOfBirth) {
-                                                setErrors({ ...errors, dateOfBirth: undefined });
-                                            }
-                                        }}
-                                        showMonthAndYearPickers
-                                        selectorIcon={<CalendarDays size={18} />}
-                                        placeholderValue={new CalendarDate(1960, 1, 1)}
-                                        minValue={new CalendarDate(1900, 1, 1)}
-                                        maxValue={today(getLocalTimeZone())}
-                                        isRequired
-                                        classNames={{
-                                            segment: "text-default-500"
-                                        }}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Select
-                                        isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.departmentId}
-                                        errorMessage={errors.departmentId}
-                                        label="Středisko"
-                                        labelPlacement="inside"
-                                        name="departmentId"
-                                        selectedKeys={departmentId ? [departmentId.toString()] : []}
-                                        onSelectionChange={(keys) => {
-                                            const selectedId = Array.from(keys)[0];
-                                            setDepartmentId(selectedId ? parseInt(selectedId) : null);
-                                            if (errors.departmentId) {
-                                                setErrors({ ...errors, departmentId: undefined });
-                                            }
-                                        }}
-                                    >
-                                        {departments.map((dept) => (
-                                            <SelectItem
-                                                key={dept.id.toString()}
-                                                value={dept.id.toString()}
-                                                textValue={dept.name}
-                                            >
-                                                {dept.name}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-
-                                    <Select
-                                        isRequired
-                                        isDisabled={isDisabled || !departmentId}
-                                        isInvalid={!!errors.caregiverId}
-                                        errorMessage={errors.caregiverId}
-                                        label="Klíčový pracovník"
-                                        labelPlacement="inside"
-                                        name="caregiverId"
-                                        selectedKeys={caregiverId ? [caregiverId.toString()] : []}
-                                        onSelectionChange={(keys) => {
-                                            const selectedId = Array.from(keys)[0];
-                                            setCaregiverId(selectedId ? parseInt(selectedId) : null);
-                                            if (errors.caregiverId) {
-                                                setErrors({ ...errors, caregiverId: undefined });
-                                            }
-                                        }}
-                                    >
-                                        {filteredCaregivers.map((caregiver) => {
-                                            const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
-                                            return (
-                                                <SelectItem
-                                                    key={caregiver.id.toString()}
-                                                    value={caregiver.id.toString()}
-                                                    textValue={caregiverName}
-                                                >
-                                                    {caregiverName}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </Select>
-                                </div>
-
-                                {/* Adresa */}
-                                <Input
-                                    isRequired
-                                    isDisabled={isDisabled}
-                                    isInvalid={!!errors.street}
-                                    errorMessage={errors.street}
-                                    label="Ulice a číslo popisné"
-                                    labelPlacement="inside"
-                                    name="street"
-                                    value={street}
-                                    onValueChange={(value) => {
-                                        setStreet(value);
-                                        if (errors.street) {
-                                            setErrors({ ...errors, street: undefined });
-                                        }
-                                    }}
-                                />
-
-                                <div className="grid grid-cols-3 gap-4">
-                                    <Input
-                                        isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.city}
-                                        errorMessage={errors.city}
-                                        label="Město"
-                                        labelPlacement="inside"
-                                        name="city"
-                                        value={city}
-                                        onValueChange={(value) => {
-                                            setCity(value);
-                                            if (errors.city) {
-                                                setErrors({ ...errors, city: undefined });
-                                            }
-                                        }}
-                                        className="col-span-2"
-                                    />
-                                    <Input
-                                        isRequired
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.postalCode}
-                                        errorMessage={errors.postalCode}
-                                        label="PSČ"
-                                        labelPlacement="inside"
-                                        name="postalCode"
-                                        value={postalCode}
-                                        onValueChange={(value) => {
-                                            setPostalCode(formatPostalCode(value));
-                                            if (errors.postalCode) {
-                                                setErrors({ ...errors, postalCode: undefined });
-                                            }
-                                        }}
-                                        maxLength={6}
-                                    />
-                                </div>
-
-                                <div className="flex gap-4 items-start">
-                                    <Input
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.email}
-                                        errorMessage={errors.email}
-                                        label="Email"
-                                        labelPlacement="inside"
-                                        name="email"
-                                        type="email"
-                                        value={email}
-                                        onValueChange={(value) => {
-                                            setEmail(value);
-                                            if (errors.email) {
-                                                setErrors({ ...errors, email: undefined });
-                                            }
-                                        }}
-                                    />
-
-                                    <div className="flex items-center h-14">
-                                        <Checkbox
-                                            name="legallyCompetent"
-                                            isSelected={legallyCompetent}
-                                            onValueChange={setLegallyCompetent}
-                                            isDisabled={isDisabled}
-                                        >
-                                            Svéprávný
-                                        </Checkbox>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Input
-                                        isDisabled={isDisabled}
-                                        isInvalid={!!errors.phone}
-                                        errorMessage={errors.phone}
-                                        label="Telefon"
-                                        labelPlacement="inside"
-                                        name="phone"
-                                        type="tel"
-                                        value={phone}
-                                        onValueChange={(value) => {
-                                            setPhone(formatPhoneNumber(value));
-                                            if (errors.phone) {
-                                                setErrors({ ...errors, phone: undefined });
-                                            }
-                                        }}
-                                        maxLength={17}
-                                    />
-
-                                    <NumberInput
-                                        hideStepper
-                                        isDisabled={isDisabled}
-                                        label="Osobní číslo"
-                                        labelPlacement="inside"
-                                        name="personalNumber"
-                                        type="number"
-                                        value={personalNumber}
-                                        onValueChange={setPersonalNumber}
-                                    />
-                                </div>
-
-                                {/* Další informace */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Select
-                                        disallowEmptySelection
-                                        isDisabled={isDisabled}
-                                        label="Příspěvek na péči"
-                                        labelPlacement="inside"
-                                        name="benefits"
-                                        selectedKeys={[benefits]}
-                                        onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
-                                    >
-                                        {benefitsOptions.map((b) => (
-                                            <SelectItem key={b.key} value={b.key}>
-                                                {b.name}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-
-                                    <Select
-                                        isDisabled={isDisabled}
-                                        label="Úkony"
-                                        labelPlacement="inside"
-                                        name="taskIds"
-                                        selectionMode="multiple"
-                                        selectedKeys={taskIds.map(id => id.toString())}
-                                        onSelectionChange={(keys) => {
-                                            const selectedIds = Array.from(keys).map(key => parseInt(key));
-                                            setTaskIds(selectedIds);
-                                        }}
-                                        classNames={{
-                                            trigger: "min-h-12",
-                                        }}
-                                        renderValue={(items) => {
-                                            return `Celkem: ${items.length}`;
-                                        }}
-                                    >
-                                        {tasks.map((task) => (
-                                            <SelectItem
-                                                key={task.id.toString()}
-                                                value={task.id.toString()}
-                                                textValue={task.name}
-                                            >
-                                                {task.name}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                </div>
-
-                                <Textarea
-                                    isDisabled={isDisabled}
-                                    label="Kontakt na příbuzné"
-                                    labelPlacement="inside"
-                                    name="relativesContact"
-                                    value={relativesContact}
-                                    onValueChange={setRelativesContact}
-                                    minRows={2}
-                                />
-
-                                <Textarea
-                                    isDisabled={isDisabled}
-                                    label="Praktický lékař"
-                                    labelPlacement="inside"
-                                    name="generalPractitioner"
-                                    value={generalPractitioner}
-                                    onValueChange={setGeneralPractitioner}
-                                    minRows={2}
-                                />
-
-                                <Textarea
-                                    isDisabled={isDisabled}
-                                    label="Poznámky"
-                                    labelPlacement="inside"
-                                    name="notes"
-                                    value={notes}
-                                    onValueChange={setNotes}
-                                    minRows={2}
-                                />
-
-                                {!client.active && (
-                                    <>
-                                        <DatePicker
-                                            isDisabled={isDisabled}
-                                            isInvalid={!!errors.terminationDate}
-                                            errorMessage={errors.terminationDate}
-                                            label="Datum ukončení smlouvy"
+                                    {isEditMode ? (
+                                        <Input
+                                            isInvalid={!!errors.firstName}
+                                            errorMessage={errors.firstName}
+                                            label="Jméno"
                                             labelPlacement="inside"
-                                            name="terminationDate"
-                                            value={terminationDate ? parseDate(terminationDate) : null}
+                                            name="firstName"
+                                            value={firstName}
+                                            onValueChange={(value) => {
+                                                setFirstName(value);
+                                                if (errors.firstName) {
+                                                    setErrors({ ...errors, firstName: undefined });
+                                                }
+                                            }}
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Jméno" value={firstName} />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <Input
+                                            isInvalid={!!errors.lastName}
+                                            errorMessage={errors.lastName}
+                                            label="Příjmení"
+                                            labelPlacement="inside"
+                                            name="lastName"
+                                            value={lastName}
+                                            onValueChange={(value) => {
+                                                setLastName(value);
+                                                if (errors.lastName) {
+                                                    setErrors({ ...errors, lastName: undefined });
+                                                }
+                                            }}
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Příjmení" value={lastName} />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    {isEditMode ? (
+                                        <Select
+                                            isInvalid={!!errors.gender}
+                                            errorMessage={errors.gender}
+                                            label="Pohlaví"
+                                            labelPlacement="inside"
+                                            name="gender"
+                                            selectedKeys={gender ? [gender] : []}
+                                            onSelectionChange={(keys) => {
+                                                setGender(Array.from(keys)[0]);
+                                                if (errors.gender) {
+                                                    setErrors({ ...errors, gender: undefined });
+                                                }
+                                            }}
+                                            isRequired
+                                            isDisabled={isSubmitting}
+                                        >
+                                            <SelectItem key="MALE" value="MALE">Muž</SelectItem>
+                                            <SelectItem key="FEMALE" value="FEMALE">Žena</SelectItem>
+                                        </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Pohlaví"
+                                            value={gender === 'MALE' ? 'Muž' : gender === 'FEMALE' ? 'Žena' : '-'}
+                                        />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <DatePicker
+                                            isInvalid={!!errors.dateOfBirth}
+                                            errorMessage={errors.dateOfBirth}
+                                            label="Datum narození"
+                                            labelPlacement="inside"
+                                            name="dateOfBirth"
+                                            value={dateOfBirth ? parseDate(dateOfBirth) : null}
                                             onChange={(date) => {
-                                                setTerminationDate(date ? date.toString() : "");
-                                                if (errors.terminationDate) {
-                                                    setErrors({ ...errors, terminationDate: undefined});
+                                                setDateOfBirth(date ? date.toString() : "");
+                                                if (errors.dateOfBirth) {
+                                                    setErrors({ ...errors, dateOfBirth: undefined });
                                                 }
                                             }}
                                             showMonthAndYearPickers
                                             selectorIcon={<CalendarDays size={18} />}
+                                            placeholderValue={new CalendarDate(1960, 1, 1)}
                                             minValue={new CalendarDate(1900, 1, 1)}
                                             maxValue={today(getLocalTimeZone())}
                                             isRequired
+                                            isDisabled={isSubmitting}
                                             classNames={{
                                                 segment: "text-default-500"
                                             }}
                                         />
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Datum narození"
+                                            value={dateOfBirth ? new Date(dateOfBirth).toLocaleDateString('cs-CZ') : '-'}
+                                        />
+                                    )}
+                                </div>
 
+                                <div className="grid grid-cols-2 gap-4">
+                                    {isEditMode ? (
                                         <Select
-                                            isDisabled={isDisabled}
-                                            isInvalid={!!errors.terminationReason}
-                                            errorMessage={errors.terminationReason}
-                                            label="Důvod ukončení smlouvy"
+                                            isRequired
+                                            isInvalid={!!errors.departmentId}
+                                            errorMessage={errors.departmentId}
+                                            label="Středisko"
                                             labelPlacement="inside"
-                                            name="terminationReason"
-                                            selectedKeys={terminationReason ? [terminationReason] : []}
+                                            name="departmentId"
+                                            selectedKeys={departmentId ? [departmentId.toString()] : []}
                                             onSelectionChange={(keys) => {
-                                                setTerminationReason(Array.from(keys)[0]);
-                                                if (errors.terminationReason) {
-                                                    setErrors({ ...errors, terminationReason: undefined });
+                                                const selectedId = Array.from(keys)[0];
+                                                setDepartmentId(selectedId ? parseInt(selectedId) : null);
+                                                if (errors.departmentId) {
+                                                    setErrors({ ...errors, departmentId: undefined });
                                                 }
                                             }}
-                                            isRequired
+                                            isDisabled={isSubmitting}
                                         >
-                                            {terminationReasonOptions.map((reason) => (
-                                                <SelectItem key={reason.key} value={reason.key}>
-                                                    {reason.name}
+                                            {departments.map((dept) => (
+                                                <SelectItem
+                                                    key={dept.id.toString()}
+                                                    value={dept.id.toString()}
+                                                    textValue={dept.name}
+                                                >
+                                                    {dept.name}
                                                 </SelectItem>
                                             ))}
                                         </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Středisko"
+                                            value={departments.find(d => d.id === departmentId)?.name || '-'}
+                                        />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <Select
+                                            isRequired
+                                            isDisabled={isSubmitting || !departmentId}
+                                            isInvalid={!!errors.caregiverId}
+                                            errorMessage={errors.caregiverId}
+                                            label="Klíčový pracovník"
+                                            labelPlacement="inside"
+                                            name="caregiverId"
+                                            selectedKeys={caregiverId ? [caregiverId.toString()] : []}
+                                            onSelectionChange={(keys) => {
+                                                const selectedId = Array.from(keys)[0];
+                                                setCaregiverId(selectedId ? parseInt(selectedId) : null);
+                                                if (errors.caregiverId) {
+                                                    setErrors({ ...errors, caregiverId: undefined });
+                                                }
+                                            }}
+                                        >
+                                            {filteredCaregivers.map((caregiver) => {
+                                                const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                                return (
+                                                    <SelectItem
+                                                        key={caregiver.id.toString()}
+                                                        value={caregiver.id.toString()}
+                                                        textValue={caregiverName}
+                                                    >
+                                                        {caregiverName}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Klíčový pracovník"
+                                            value={
+                                                caregivers.find(c => c.id === caregiverId)
+                                                    ? `${caregivers.find(c => c.id === caregiverId).firstName} ${caregivers.find(c => c.id === caregiverId).lastName}`
+                                                    : '-'
+                                            }
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Adresa */}
+                                {isEditMode ? (
+                                    <Input
+                                        isRequired
+                                        isInvalid={!!errors.street}
+                                        errorMessage={errors.street}
+                                        label="Ulice a číslo popisné"
+                                        labelPlacement="inside"
+                                        name="street"
+                                        value={street}
+                                        onValueChange={(value) => {
+                                            setStreet(value);
+                                            if (errors.street) {
+                                                setErrors({ ...errors, street: undefined });
+                                            }
+                                        }}
+                                        isDisabled={isSubmitting}
+                                    />
+                                ) : (
+                                    <ReadOnlyField label="Ulice a číslo popisné" value={street} />
+                                )}
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    {isEditMode ? (
+                                        <Input
+                                            isRequired
+                                            isInvalid={!!errors.city}
+                                            errorMessage={errors.city}
+                                            label="Město"
+                                            labelPlacement="inside"
+                                            name="city"
+                                            value={city}
+                                            onValueChange={(value) => {
+                                                setCity(value);
+                                                if (errors.city) {
+                                                    setErrors({ ...errors, city: undefined });
+                                                }
+                                            }}
+                                            className="col-span-2"
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Město" value={city} className="col-span-2" />
+                                    )}
+                                    {isEditMode ? (
+                                        <Input
+                                            isRequired
+                                            isInvalid={!!errors.postalCode}
+                                            errorMessage={errors.postalCode}
+                                            label="PSČ"
+                                            labelPlacement="inside"
+                                            name="postalCode"
+                                            value={postalCode}
+                                            onValueChange={(value) => {
+                                                setPostalCode(formatPostalCode(value));
+                                                if (errors.postalCode) {
+                                                    setErrors({ ...errors, postalCode: undefined });
+                                                }
+                                            }}
+                                            maxLength={6}
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="PSČ" value={postalCode} />
+                                    )}
+                                </div>
+
+                                <div className="flex gap-4 items-start">
+                                    {isEditMode ? (
+                                        <Input
+                                            isInvalid={!!errors.email}
+                                            errorMessage={errors.email}
+                                            label="Email"
+                                            labelPlacement="inside"
+                                            name="email"
+                                            type="email"
+                                            value={email}
+                                            onValueChange={(value) => {
+                                                setEmail(value);
+                                                if (errors.email) {
+                                                    setErrors({ ...errors, email: undefined });
+                                                }
+                                            }}
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Email" value={email} />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <div className="flex items-center h-14">
+                                            <Checkbox
+                                                name="legallyCompetent"
+                                                isSelected={legallyCompetent}
+                                                onValueChange={setLegallyCompetent}
+                                                isDisabled={isSubmitting}
+                                            >
+                                                Svéprávný
+                                            </Checkbox>
+                                        </div>
+                                    ) : (
+                                        <ReadOnlyField label="Svéprávný" value={legallyCompetent ? 'Ano' : 'Ne'} />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    {isEditMode ? (
+                                        <Input
+                                            isInvalid={!!errors.phone}
+                                            errorMessage={errors.phone}
+                                            label="Telefon"
+                                            labelPlacement="inside"
+                                            name="phone"
+                                            type="tel"
+                                            value={phone}
+                                            onValueChange={(value) => {
+                                                setPhone(formatPhoneNumber(value));
+                                                if (errors.phone) {
+                                                    setErrors({ ...errors, phone: undefined });
+                                                }
+                                            }}
+                                            maxLength={17}
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Telefon" value={phone} />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <NumberInput
+                                            hideStepper
+                                            label="Osobní číslo"
+                                            labelPlacement="inside"
+                                            name="personalNumber"
+                                            type="number"
+                                            value={personalNumber}
+                                            onValueChange={setPersonalNumber}
+                                            isDisabled={isSubmitting}
+                                        />
+                                    ) : (
+                                        <ReadOnlyField label="Osobní číslo" value={personalNumber} />
+                                    )}
+                                </div>
+
+                                {/* Další informace */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    {isEditMode ? (
+                                        <Select
+                                            disallowEmptySelection
+                                            label="Příspěvek na péči"
+                                            labelPlacement="inside"
+                                            name="benefits"
+                                            selectedKeys={[benefits]}
+                                            onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
+                                            isDisabled={isSubmitting}
+                                        >
+                                            {benefitsOptions.map((b) => (
+                                                <SelectItem key={b.key} value={b.key}>
+                                                    {b.name}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Příspěvek na péči"
+                                            value={benefitsOptions.find(b => b.key === benefits)?.name || '-'}
+                                        />
+                                    )}
+
+                                    {isEditMode ? (
+                                        <Select
+                                            label="Úkony"
+                                            labelPlacement="inside"
+                                            name="taskIds"
+                                            selectionMode="multiple"
+                                            selectedKeys={taskIds.map(id => id.toString())}
+                                            onSelectionChange={(keys) => {
+                                                const selectedIds = Array.from(keys).map(key => parseInt(key));
+                                                setTaskIds(selectedIds);
+                                            }}
+                                            classNames={{
+                                                trigger: "min-h-12",
+                                            }}
+                                            renderValue={(items) => {
+                                                return `Celkem: ${items.length}`;
+                                            }}
+                                            isDisabled={isSubmitting}
+                                        >
+                                            {tasks.map((task) => (
+                                                <SelectItem
+                                                    key={task.id.toString()}
+                                                    value={task.id.toString()}
+                                                    textValue={task.name}
+                                                >
+                                                    {task.name}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    ) : (
+                                        <ReadOnlyField
+                                            label="Úkony"
+                                            value={
+                                                taskIds.length > 0
+                                                    ? tasks.filter(t => taskIds.includes(t.id)).map(t => t.name).join(', ')
+                                                    : '-'
+                                            }
+                                        />
+                                    )}
+                                </div>
+
+                                {isEditMode ? (
+                                    <Textarea
+                                        label="Kontakt na příbuzné"
+                                        labelPlacement="inside"
+                                        name="relativesContact"
+                                        value={relativesContact}
+                                        onValueChange={setRelativesContact}
+                                        minRows={2}
+                                        isDisabled={isSubmitting}
+                                    />
+                                ) : (
+                                    <ReadOnlyField label="Kontakt na příbuzné" value={relativesContact} />
+                                )}
+
+                                {isEditMode ? (
+                                    <Textarea
+                                        label="Praktický lékař"
+                                        labelPlacement="inside"
+                                        name="generalPractitioner"
+                                        value={generalPractitioner}
+                                        onValueChange={setGeneralPractitioner}
+                                        minRows={2}
+                                        isDisabled={isSubmitting}
+                                    />
+                                ) : (
+                                    <ReadOnlyField label="Praktický lékař" value={generalPractitioner} />
+                                )}
+
+                                {isEditMode ? (
+                                    <Textarea
+                                        isDisabled={isSubmitting}
+                                        label="Poznámky"
+                                        labelPlacement="inside"
+                                        name="notes"
+                                        value={notes}
+                                        onValueChange={setNotes}
+                                        minRows={2}
+                                    />
+                                ) : (
+                                    <ReadOnlyField label="Poznámky" value={notes} />
+                                )}
+
+                                {!client.active && (
+                                    <>
+                                        {isEditMode ? (
+                                            <DatePicker
+                                                isInvalid={!!errors.terminationDate}
+                                                errorMessage={errors.terminationDate}
+                                                label="Datum ukončení smlouvy"
+                                                labelPlacement="inside"
+                                                name="terminationDate"
+                                                value={terminationDate ? parseDate(terminationDate) : null}
+                                                onChange={(date) => {
+                                                    setTerminationDate(date ? date.toString() : "");
+                                                    if (errors.terminationDate) {
+                                                        setErrors({ ...errors, terminationDate: undefined});
+                                                    }
+                                                }}
+                                                showMonthAndYearPickers
+                                                selectorIcon={<CalendarDays size={18} />}
+                                                minValue={new CalendarDate(1900, 1, 1)}
+                                                maxValue={today(getLocalTimeZone())}
+                                                isRequired
+                                                isDisabled={isSubmitting}
+                                                classNames={{
+                                                    segment: "text-default-500"
+                                                }}
+                                            />
+                                        ) : (
+                                            <ReadOnlyField
+                                                label="Datum ukončení smlouvy"
+                                                value={terminationDate ? new Date(terminationDate).toLocaleDateString('cs-CZ') : '-'}
+                                            />
+                                        )}
+
+                                        {isEditMode ? (
+                                            <Select
+                                                isInvalid={!!errors.terminationReason}
+                                                errorMessage={errors.terminationReason}
+                                                label="Důvod ukončení smlouvy"
+                                                labelPlacement="inside"
+                                                name="terminationReason"
+                                                selectedKeys={terminationReason ? [terminationReason] : []}
+                                                onSelectionChange={(keys) => {
+                                                    setTerminationReason(Array.from(keys)[0]);
+                                                    if (errors.terminationReason) {
+                                                        setErrors({ ...errors, terminationReason: undefined });
+                                                    }
+                                                }}
+                                                isRequired
+                                                isDisabled={isSubmitting}
+                                            >
+                                                {terminationReasonOptions.map((reason) => (
+                                                    <SelectItem key={reason.key} value={reason.key}>
+                                                        {reason.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </Select>
+                                        ) : (
+                                            <ReadOnlyField
+                                                label="Důvod ukončení smlouvy"
+                                                value={terminationReasonOptions.find(r => r.key === terminationReason)?.name || '-'}
+                                            />
+                                        )}
                                     </>
                                 )}
                             </div>

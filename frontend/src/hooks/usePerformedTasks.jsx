@@ -2,7 +2,7 @@ import { useState } from "react";
 import {getJSON, postJSON, putJSON, deleteJSON} from "../api/api.js";
 import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX, Trash2} from "lucide-react";
+import {ClipboardCheck, ClipboardX, CloudAlert, CircleCheck, Trash2} from "lucide-react";
 import {showToast} from "../components/MyToast.jsx";
 
 export function usePerformedTasks() {
@@ -62,7 +62,8 @@ export function usePerformedTasks() {
             const updated = await putJSON(`/performed-tasks/${id}`, updatedData);
 
             setPerformedTasks(prev => sortByKey(
-                [...prev, updated], "date", "descending"
+                prev.map(task => task.id === id ? updated : task),
+                "date", "descending"
             ));
 
             showToast({
