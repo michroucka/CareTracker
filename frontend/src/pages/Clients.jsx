@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Button,
     Dropdown,
@@ -29,6 +30,7 @@ import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.j
 import {ClientTerminateModal} from "../components/modals/client/ClientTerminateModal.jsx";
 
 function Clients() {
+    const navigate = useNavigate();
     const [filterValue, setFilterValue] = React.useState("");
     const [activeFilter, setActiveFilter] = React.useState(new Set(["true"]));
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
@@ -490,6 +492,7 @@ function Clients() {
                                     <DropdownItem key="view-ip"
                                                   startContent={<FileText />}
                                                   variant="light"
+                                                  onPress={() => navigate(`/clients/${client.id}/individual-plan`)}
                                     >
                                         Individuální plán
                                     </DropdownItem>

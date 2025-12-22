@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,4 +25,10 @@ public class DailyRecord {
     @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "individual_plan_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    private IndividualPlan individualPlan;
 }

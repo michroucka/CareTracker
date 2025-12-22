@@ -223,8 +223,6 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, canEdit, client, 
         }
     }
 
-    const isDisabled = !isEditMode || isSubmitting;
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
             <ModalContent>

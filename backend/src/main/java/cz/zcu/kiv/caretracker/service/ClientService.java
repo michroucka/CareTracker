@@ -3,7 +3,9 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
@@ -36,6 +38,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private cz.zcu.kiv.caretracker.mapper.IndividualPlanMapper individualPlanMapper;
     @Autowired
     private cz.zcu.kiv.caretracker.mapper.IndividualPlanContentMapper individualPlanContentMapper;
+    @Autowired
+    private DailyRecordRepository dailyRecordRepository;
 
     /**
      * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
@@ -271,5 +275,217 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         client.setTerminationReason(null);
 
         return clientRepository.save(client);
+    }
+
+    /**
+     * Helper metoda pro mapování dat z DTO do IndividualPlanContent entity.
+     * Používá se jak při vytváření první verze, tak při vytváření nových verzí.
+     */
+    private void mapContentFields(IndividualPlanContent content, IndividualPlanContentRequestDTO dto) {
+        content.setProcessedDate(dto.getProcessedDate());
+        content.setPlannedUpdateDate(dto.getPlannedUpdateDate());
+
+        // Osobní údaje
+        content.setLikes(dto.getLikes());
+        content.setDislikes(dto.getDislikes());
+        content.setStrengths(dto.getStrengths());
+        content.setAspirations(dto.getAspirations());
+        content.setLifePath(dto.getLifePath());
+        content.setAdditionalInfo(dto.getAdditionalInfo());
+
+        // Oblasti péče
+        content.setHygiene(dto.getHygiene());
+        content.setSelfCare(dto.getSelfCare());
+        content.setMobility(dto.getMobility());
+        content.setDiet(dto.getDiet());
+        content.setHomeCare(dto.getHomeCare());
+        content.setSocialContact(dto.getSocialContact());
+        content.setActivities(dto.getActivities());
+        content.setHealth(dto.getHealth());
+        content.setExercisingRights(dto.getExercisingRights());
+    }
+
+    /**
+     * Vytvoří PRVNÍ individuální plán pro klienta.
+     * Pokud klient už plán má, vyhodí výjimku.
+     *
+     * @param clientId ID klienta
+     * @param contentDTO Data pro první verzi plánu
+     * @return Vytvořený plán jako DTO
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebyl nalezen nebo už má plán
+     */
+    @Transactional
+    public IndividualPlanDTO createIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        // Kontrola, že klient ještě nemá plán
+        if (individualPlanRepository.findByClientId(clientId).isPresent()) {
+            throw new RuntimeException("Individual plan already exists for this client");
+        }
+
+        // Validace oprávnění pro update
+        validateUpdateAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+
+        // Vytvořit hlavní IndividualPlan
+        IndividualPlan plan = new IndividualPlan();
+        plan.setClient(client);
+        plan.setOrganization(client.getOrganization());
+
+        // Vytvořit PRVNÍ verzi contentu
+        IndividualPlanContent firstVersion = new IndividualPlanContent();
+        firstVersion.setIndividualPlan(plan);
+        firstVersion.setVersionNumber(1);
+        mapContentFields(firstVersion, contentDTO);
+
+        // Nastavit první verzi jako aktuální
+        plan.setCurrentContent(firstVersion);
+        plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
+
+        // Uložit vše
+        IndividualPlan savedPlan = individualPlanRepository.save(plan);
+
+        return individualPlanMapper.toDTO(savedPlan);
+    }
+
+    /**
+     * Vytvoří NOVOU verzi individuálního plánu pro klienta.
+     * Původní verze zůstávají zachované jako historie.
+     *
+     * @param clientId ID klienta
+     * @param contentDTO Data pro novou verzi plánu
+     * @return Aktualizovaný plán jako DTO
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     */
+    @Transactional
+    public IndividualPlanDTO updateIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Najít existující plán
+        IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+
+        // Validace oprávnění pro update
+        validateUpdateAccess(
+                plan.getClient(),
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+
+        // Získat nejvyšší číslo verze
+        Integer maxVersion = plan.getContentVersions().stream()
+                .map(IndividualPlanContent::getVersionNumber)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        // Vytvořit NOVOU verzi contentu
+        IndividualPlanContent newVersion = new IndividualPlanContent();
+        newVersion.setIndividualPlan(plan);
+        newVersion.setVersionNumber(maxVersion + 1);
+        mapContentFields(newVersion, contentDTO);
+
+        // Aktualizovat currentContent na novou verzi
+        plan.setCurrentContent(newVersion);
+        plan.getContentVersions().add(newVersion);
+
+        // Uložit změny
+        IndividualPlan savedPlan = individualPlanRepository.save(plan);
+
+        return individualPlanMapper.toDTO(savedPlan);
+    }
+
+    /**
+     * Vytvoří a přidá nový daily record k individuálnímu plánu klienta.
+     * Neovlivňuje verzování - daily records jsou globální pro celý plán.
+     *
+     * @param clientId ID klienta
+     * @param dailyRecordDTO Data pro vytvoření daily record
+     * @return Aktualizovaný plán jako DTO
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     */
+    @Transactional
+    public IndividualPlanDTO addDailyRecordToIndividualPlan(Long clientId, DailyRecordRequestDTO dailyRecordDTO) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Najít plán
+        IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+
+        // Validace oprávnění pro update
+        validateUpdateAccess(
+                plan.getClient(),
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+
+        // Vytvořit nový daily record
+        DailyRecord dailyRecord = new DailyRecord();
+        dailyRecord.setDate(dailyRecordDTO.getDate());
+        dailyRecord.setContent(dailyRecordDTO.getContent());
+
+        // Uložit daily record
+        DailyRecord savedDailyRecord = dailyRecordRepository.save(dailyRecord);
+
+        // Inicializovat seznam, pokud je null
+        if (plan.getDailyRecords() == null) {
+            plan.setDailyRecords(new ArrayList<>());
+        }
+
+        // Přidat daily record
+        plan.getDailyRecords().add(savedDailyRecord);
+
+        // Uložit změny
+        IndividualPlan savedPlan = individualPlanRepository.save(plan);
+
+        return individualPlanMapper.toDTO(savedPlan);
+    }
+
+    /**
+     * Odebere daily record z individuálního plánu klienta.
+     * Neovlivňuje verzování - daily records jsou globální pro celý plán.
+     *
+     * @param clientId ID klienta
+     * @param dailyRecordId ID daily record k odebrání
+     * @return Aktualizovaný plán jako DTO
+     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
+     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     */
+    @Transactional
+    public IndividualPlanDTO removeDailyRecordFromIndividualPlan(Long clientId, Long dailyRecordId) {
+        // Validace přístupu
+        validateClientAccess(clientId);
+
+        // Najít plán
+        IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+
+        // Validace oprávnění pro update
+        validateUpdateAccess(
+                plan.getClient(),
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+
+        // Odebrat daily record
+        if (plan.getDailyRecords() != null) {
+            plan.getDailyRecords().removeIf(dr -> dr.getId().equals(dailyRecordId));
+        }
+
+        // Uložit změny
+        IndividualPlan savedPlan = individualPlanRepository.save(plan);
+
+        return individualPlanMapper.toDTO(savedPlan);
     }
 }

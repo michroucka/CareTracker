@@ -3,11 +3,8 @@ package cz.zcu.kiv.caretracker.mapper;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
-import cz.zcu.kiv.caretracker.entity.DailyRecord;
-import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.IndividualPlan;
 import cz.zcu.kiv.caretracker.entity.IndividualPlanContent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,9 +12,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class IndividualPlanContentMapper {
-
-    @Autowired
-    private DailyRecordMapper dailyRecordMapper;
 
     public IndividualPlanContentDTO toDTO(IndividualPlanContent content) {
         if (content == null) {
@@ -49,18 +43,13 @@ public class IndividualPlanContentMapper {
         dto.setHealth(content.getHealth());
         dto.setExercisingRights(content.getExercisingRights());
 
-        // Daily records
-        dto.setDailyRecords(dailyRecordMapper.toDTOList(content.getDailyRecords()));
-
         return dto;
     }
 
     public void requestToContent(
             IndividualPlanContent content,
             IndividualPlanContentRequestDTO dto,
-            IndividualPlan individualPlan,
-            Employee createdBy,
-            List<DailyRecord> dailyRecords
+            IndividualPlan individualPlan
     ) {
         content.setIndividualPlan(individualPlan);
         content.setProcessedDate(dto.getProcessedDate());
@@ -84,9 +73,6 @@ public class IndividualPlanContentMapper {
         content.setActivities(dto.getActivities());
         content.setHealth(dto.getHealth());
         content.setExercisingRights(dto.getExercisingRights());
-
-        // Metadata
-        content.setDailyRecords(dailyRecords);
     }
 
     public List<IndividualPlanContentDTO> toDTOList(List<IndividualPlanContent> contents) {

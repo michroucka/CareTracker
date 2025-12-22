@@ -192,8 +192,6 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
         }
     }
 
-    const isDisabled = !isEditMode || isSubmitting;
-
     return (
         <Modal isOpen={isOpen}
                onClose={onClose}

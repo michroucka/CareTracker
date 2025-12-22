@@ -8,6 +8,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Clients from "../pages/Clients";
 import PerformedTasks from "../pages/PerformedTasks"
+import IndividualPlan from "../pages/IndividualPlan";
 
 export default function App() {
     return (
@@ -30,6 +31,15 @@ export default function App() {
                         element={
                             <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                 <Clients />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/clients/:clientId/individual-plan"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
+                                <IndividualPlan />
                             </ProtectedRoute>
                         }
                     />

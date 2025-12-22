@@ -32,7 +32,4 @@ public class IndividualPlanContentRequestDTO {
     private String activities;
     private String health;
     private String exercisingRights;
-
-    // Daily records
-    private List<Long> dailyRecordIds;
 }

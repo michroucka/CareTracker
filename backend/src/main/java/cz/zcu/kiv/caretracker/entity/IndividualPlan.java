@@ -36,4 +36,9 @@ public class IndividualPlan {
     @OrderBy("versionNumber DESC")
     @JsonIgnore
     private List<IndividualPlanContent> contentVersions;
+
+    @OneToMany(mappedBy = "individualPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("date DESC")
+    @JsonIgnore
+    private List<DailyRecord> dailyRecords;
 }

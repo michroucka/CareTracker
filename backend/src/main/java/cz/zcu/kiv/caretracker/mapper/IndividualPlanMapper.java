@@ -1,10 +1,7 @@
 package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
-import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanRequestDTO;
-import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.IndividualPlan;
-import cz.zcu.kiv.caretracker.entity.Organization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +13,9 @@ public class IndividualPlanMapper {
 
     @Autowired
     private IndividualPlanContentMapper contentMapper;
+
+    @Autowired
+    private DailyRecordMapper dailyRecordMapper;
 
     public IndividualPlanDTO toDTO(IndividualPlan plan) {
         if (plan == null) {
@@ -34,17 +34,10 @@ public class IndividualPlanMapper {
         // Current content
         dto.setCurrentContent(contentMapper.toDTO(plan.getCurrentContent()));
 
-        return dto;
-    }
+        // Daily records (global for all versions)
+        dto.setDailyRecords(dailyRecordMapper.toDTOList(plan.getDailyRecords()));
 
-    public void requestToPlan(
-            IndividualPlan plan,
-            IndividualPlanRequestDTO dto,
-            Client client,
-            Organization organization
-    ) {
-        plan.setClient(client);
-        plan.setOrganization(organization);
+        return dto;
     }
 
     public List<IndividualPlanDTO> toDTOList(List<IndividualPlan> plans) {

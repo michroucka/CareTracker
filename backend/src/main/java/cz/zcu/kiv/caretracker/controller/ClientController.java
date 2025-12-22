@@ -3,7 +3,9 @@ package cz.zcu.kiv.caretracker.controller;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
+import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
@@ -74,6 +76,7 @@ public class ClientController {
         return ResponseEntity.ok(content);
     }
 
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
     public ResponseEntity<ClientDTO> createClient(@RequestBody ClientRequestDTO dto) {
@@ -104,5 +107,37 @@ public class ClientController {
         log.info("Activating client with id: {}", id);
         Client updatedClient = clientService.activateClient(id);
         return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
+    }
+
+    @PostMapping("/{id}/individual-plan")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<IndividualPlanDTO> createClientIndividualPlan(@PathVariable Long id, @RequestBody IndividualPlanContentRequestDTO dto) {
+        log.info("Creating individual plan for client: {}", id);
+        IndividualPlanDTO createdPlan = clientService.createIndividualPlan(id, dto);
+        return ResponseEntity.ok(createdPlan);
+    }
+
+    @PutMapping("/{id}/individual-plan")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<IndividualPlanDTO> updateClientIndividualPlan(@PathVariable Long id, @RequestBody IndividualPlanContentRequestDTO dto) {
+        log.info("Updating individual plan for client: {}", id);
+        IndividualPlanDTO updatedPlan = clientService.updateIndividualPlan(id, dto);
+        return ResponseEntity.ok(updatedPlan);
+    }
+
+    @PostMapping("/{id}/individual-plan/daily-records")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<IndividualPlanDTO> addDailyRecordToIndividualPlan(@PathVariable Long id, @RequestBody DailyRecordRequestDTO dto) {
+        log.info("Creating and adding daily record to individual plan for client: {}", id);
+        IndividualPlanDTO updatedPlan = clientService.addDailyRecordToIndividualPlan(id, dto);
+        return ResponseEntity.ok(updatedPlan);
+    }
+
+    @DeleteMapping("/{id}/individual-plan/daily-records/{dailyRecordId}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<IndividualPlanDTO> removeDailyRecordFromIndividualPlan(@PathVariable Long id, @PathVariable Long dailyRecordId) {
+        log.info("Removing daily record {} from individual plan for client: {}", dailyRecordId, id);
+        IndividualPlanDTO updatedPlan = clientService.removeDailyRecordFromIndividualPlan(id, dailyRecordId);
+        return ResponseEntity.ok(updatedPlan);
     }
 }

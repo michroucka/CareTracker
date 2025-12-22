@@ -94,12 +94,4 @@ public class IndividualPlanContent {
     @Lob
     @Column(name = "exercising_rights", columnDefinition = "TEXT")
     private String exercisingRights;
-
-    @ManyToMany
-    @JoinTable(
-        name = "individual_plan_content_daily_record",
-        joinColumns = @JoinColumn(name = "individual_plan_content_id"),
-        inverseJoinColumns = @JoinColumn(name = "daily_record_id")
-    )
-    private List<DailyRecord> dailyRecords;
 }

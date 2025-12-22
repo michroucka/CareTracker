@@ -38,7 +38,4 @@ public class IndividualPlanContentDTO {
     // Metadata
     private Long createdById;
     private String createdByName;
-
-    // Daily records
-    private List<DailyRecordDTO> dailyRecords;
 }
