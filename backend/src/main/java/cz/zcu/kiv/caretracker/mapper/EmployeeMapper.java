@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
@@ -31,6 +32,22 @@ public class EmployeeMapper {
         dto.setActive(employee.getActive());
 
         dto.setDepartment(departmentMapper.toDTO(employee.getDepartment()));
+
+        return dto;
+    }
+
+    /**
+     * Převede Employee entitu na EmployeeSummaryDTO (pouze základní informace)
+     */
+    public EmployeeSummaryDTO toSummaryDTO(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+
+        EmployeeSummaryDTO dto = new EmployeeSummaryDTO();
+        dto.setId(employee.getId());
+        dto.setFirstName(employee.getFirstName());
+        dto.setLastName(employee.getLastName());
 
         return dto;
     }

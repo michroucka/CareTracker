@@ -110,7 +110,7 @@ public class ClientController {
     }
 
     @PostMapping("/{id}/individual-plan")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<IndividualPlanDTO> createClientIndividualPlan(@PathVariable Long id, @RequestBody IndividualPlanContentRequestDTO dto) {
         log.info("Creating individual plan for client: {}", id);
         IndividualPlanDTO createdPlan = clientService.createIndividualPlan(id, dto);
@@ -118,7 +118,7 @@ public class ClientController {
     }
 
     @PutMapping("/{id}/individual-plan")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<IndividualPlanDTO> updateClientIndividualPlan(@PathVariable Long id, @RequestBody IndividualPlanContentRequestDTO dto) {
         log.info("Updating individual plan for client: {}", id);
         IndividualPlanDTO updatedPlan = clientService.updateIndividualPlan(id, dto);
@@ -126,7 +126,7 @@ public class ClientController {
     }
 
     @PostMapping("/{id}/individual-plan/daily-records")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<IndividualPlanDTO> addDailyRecordToIndividualPlan(@PathVariable Long id, @RequestBody DailyRecordRequestDTO dto) {
         log.info("Creating and adding daily record to individual plan for client: {}", id);
         IndividualPlanDTO updatedPlan = clientService.addDailyRecordToIndividualPlan(id, dto);
@@ -134,7 +134,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}/individual-plan/daily-records/{dailyRecordId}")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<IndividualPlanDTO> removeDailyRecordFromIndividualPlan(@PathVariable Long id, @PathVariable Long dailyRecordId) {
         log.info("Removing daily record {} from individual plan for client: {}", dailyRecordId, id);
         IndividualPlanDTO updatedPlan = clientService.removeDailyRecordFromIndividualPlan(id, dailyRecordId);

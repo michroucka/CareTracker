@@ -27,6 +27,11 @@ public class DailyRecord {
     private String content;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "created_by_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Employee createdBy;
+
+    @ManyToOne(optional = false)
     @JoinColumn(name = "individual_plan_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore

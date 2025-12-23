@@ -3,21 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import {
     Button,
+    Card,
+    CardHeader,
+    CardBody,
+    CardFooter,
+    Divider,
     Dropdown,
     DropdownTrigger,
     DropdownMenu,
     DropdownItem,
     Form,
     Spinner,
-    Textarea, Alert
+    Textarea,
+    Alert
 } from "@heroui/react";
 import { ReadOnlyField } from "../components/ReadOnlyField.jsx";
 import { today, getLocalTimeZone } from "@internationalized/date";
-import { ThumbsUp, Save, Pencil, X, ChevronLeft, Plus, ChevronDown, ThumbsDown, Star, Heart, Route, Info, Bath, PersonStanding, Footprints, Utensils, House, MessagesSquare, Hand, Cross, ScrollText, UserRound, Phone } from "lucide-react";
+import { ThumbsUp, Save, Pencil, X, ChevronLeft, Plus, ChevronDown, ThumbsDown, Star, Heart, Route, Info, Bath, PersonStanding, Footprints, Utensils, House, MessagesSquare, Hand, Cross, ScrollText, UserRound, Phone, Calendar, User, Trash2 } from "lucide-react";
 import { useIndividualPlan } from "../hooks/useIndividualPlan.jsx";
 import { useClients } from "../hooks/useClients.jsx";
 import { showToast } from "../components/MyToast.jsx";
 import { BackToTopButton } from "../components/BackToTopButton.jsx";
+import { DailyRecordCreateModal } from "../components/modals/individualPlan/DailyRecordCreateModal.jsx";
+import { DailyRecordDeleteModal } from "../components/modals/individualPlan/DailyRecordDeleteModal.jsx";
 import {formatDate} from "../utils/formatters.js";
 import {benefitsOptions} from "../constants/clientConstants.js";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
@@ -40,6 +48,8 @@ function IndividualPlan() {
         fetchIndividualPlanByVersion,
         createIndividualPlan,
         updateIndividualPlan,
+        addDailyRecord,
+        removeDailyRecord,
         reset
     } = useIndividualPlan();
 
@@ -47,6 +57,9 @@ function IndividualPlan() {
     const [isEditMode, setIsEditMode] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedVersionNumber, setSelectedVersionNumber] = useState(null);
+    const [isDailyRecordModalOpen, setIsDailyRecordModalOpen] = useState(false);
+    const [isDailyRecordDeleteModalOpen, setIsDailyRecordDeleteModalOpen] = useState(false);
+    const [selectedDailyRecordId, setSelectedDailyRecordId] = useState(null);
     const hasShownPermissionToast = React.useRef(false);
 
     // Form state
@@ -92,9 +105,9 @@ function IndividualPlan() {
                 } else {
                     // Pokud nemá IP, zkontroluj oprávnění
                     const isCaregiver = user && clientData && user.employeeId === clientData.caregiver?.id;
-                    const isAdminOrCoordinator = user && ["SUPERADMIN", "ADMIN"].includes(user.role);
+                    const isAdmin = user && ["SUPERADMIN", "ADMIN"].includes(user.role);
 
-                    if (!isCaregiver && !isAdminOrCoordinator) {
+                    if (!isCaregiver && !isAdmin) {
                         // Uživatel není oprávněn vytvořit IP - zobraz toast jen jednou
                         if (!hasShownPermissionToast.current) {
                             hasShownPermissionToast.current = true;
@@ -295,6 +308,48 @@ function IndividualPlan() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Handler pro přidání denního záznamu
+    const handleAddDailyRecord = async (dailyRecordData) => {
+        try {
+            await addDailyRecord(clientId, dailyRecordData);
+            setIsDailyRecordModalOpen(false);
+        } catch (error) {
+            console.error("Error adding daily record:", error);
+            throw error; // Re-throw aby modal zůstal otevřený při chybě
+        }
+    };
+
+    // Handler pro otevření delete modalu
+    const handleOpenDeleteModal = (dailyRecordId) => {
+        setSelectedDailyRecordId(dailyRecordId);
+        setIsDailyRecordDeleteModalOpen(true);
+    };
+
+    // Handler pro smazání denního záznamu
+    const handleDeleteDailyRecord = async (dailyRecordId) => {
+        try {
+            await removeDailyRecord(clientId, dailyRecordId);
+            setIsDailyRecordDeleteModalOpen(false);
+            setSelectedDailyRecordId(null);
+        } catch (error) {
+            console.error("Error deleting daily record:", error);
+            throw error;
+        }
+    };
+
+    // Kontrola zda může uživatel smazat konkrétní daily record
+    const canDeleteDailyRecord = (record) => {
+        if (!user) return false;
+
+        // Admin může smazat jakýkoliv záznam
+        if (["SUPERADMIN", "ADMIN"].includes(user.role)) {
+            return true;
+        }
+
+        // Caregiver a Coordinator mohou smazat pouze záznamy, které vytvořili oni
+        return record.createdBy.id === user.employeeId;
     };
 
     // Může editovat pouze klíčový pracovník klienta nebo admin
@@ -702,49 +757,132 @@ function IndividualPlan() {
                         </div>
                     )}
 
-                    <div className="flex w-full justify-between items-center pt-4">
-                        {isEditMode ? (
-                            <>
-                                <Button
-                                    variant="bordered"
-                                    startContent={<X size={16} />}
-                                    onPress={handleCancelEdit}
-                                    isDisabled={isSubmitting}
-                                >
-                                    Zrušit
-                                </Button>
+                    {isEditMode ? (
+                        <div className="flex w-full items-center pt-4 justify-between">
+                            <Button
+                                variant="bordered"
+                                startContent={<X size={16} />}
+                                onPress={handleCancelEdit}
+                                isDisabled={isSubmitting}
+                            >
+                                Zrušit
+                            </Button>
+                            <Button
+                                color="primary"
+                                startContent={<Save size={16} />}
+                                onPress={handleSubmit}
+                                isLoading={isSubmitting}
+                                isDisabled={isSubmitting}
+                            >
+                                {isSubmitting
+                                    ? "Ukládání..."
+                                    : individualPlan
+                                        ? "Uložit novou verzi"
+                                        : "Vytvořit plán"
+                                }
+                            </Button>
+                        </div>
+                    ) : (
+                        canEdit && !isViewingOldVersion && (
+                            <div className="flex w-full items-center pt-4 justify-center">
                                 <Button
                                     color="primary"
-                                    startContent={<Save size={16} />}
-                                    onPress={handleSubmit}
-                                    isLoading={isSubmitting}
-                                    isDisabled={isSubmitting}
+                                    startContent={individualPlan ? <Plus size={16} /> : <Pencil size={16} />}
+                                    onPress={handleEnterEditMode}
                                 >
-                                    {isSubmitting
-                                        ? "Ukládání..."
-                                        : individualPlan
-                                            ? "Uložit novou verzi"
-                                            : "Vytvořit plán"
-                                    }
+                                    {individualPlan ? "Vytvořit novou verzi" : "Vytvořit plán"}
                                 </Button>
-                            </>
-                        ) : (
-                            <>
-                                <div />
-                                {canEdit && !isViewingOldVersion && (
-                                    <Button
-                                        color="primary"
-                                        startContent={individualPlan ? <Plus size={16} /> : <Pencil size={16} />}
-                                        onPress={handleEnterEditMode}
-                                    >
-                                        {individualPlan ? "Vytvořit novou verzi" : "Vytvořit plán"}
-                                    </Button>
-                                )}
-                            </>
-                        )}
-                    </div>
+                            </div>
+                        )
+                    )}
                 </Form>
             ) : null}
+
+            <Divider className="mt-6" />
+
+            {/* Denní záznamy sekce */}
+            {individualPlan && !loading && (
+                <div className="mt-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h2>Denní záznamy</h2>
+                        <Button
+                            color="primary"
+                            startContent={<Plus size={16} />}
+                            onPress={() => setIsDailyRecordModalOpen(true)}
+                        >
+                            Přidat záznam
+                        </Button>
+                    </div>
+
+                    {/* Seznam záznamů */}
+                    {individualPlan.dailyRecords && individualPlan.dailyRecords.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {individualPlan.dailyRecords
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                .map((record) => (
+                                    <Card key={record.id} className="w-full h-full">
+                                        <CardHeader className="flex justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={16} className="text-default-400" />
+                                                <span className="text-small font-semibold">
+                                                    {formatDate(record.date)}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <User size={16} className="text-default-400" />
+                                                <span className="text-small text-default-500">
+                                                    {record.createdBy.firstName} {record.createdBy.lastName}
+                                                </span>
+                                            </div>
+                                        </CardHeader>
+                                        <Divider />
+                                        <CardBody>
+                                            <p className="whitespace-pre-wrap">{record.content}</p>
+                                        </CardBody>
+                                        {canDeleteDailyRecord(record) && (
+                                            <>
+                                                <Divider />
+                                                <CardFooter className="justify-end p-1.5">
+                                                    <Button
+                                                        size="sm"
+                                                        color="danger"
+                                                        variant="light"
+                                                        startContent={<Trash2 size={14} />}
+                                                        onPress={() => handleOpenDeleteModal(record.id)}
+                                                    >
+                                                        Smazat
+                                                    </Button>
+                                                </CardFooter>
+                                            </>
+                                        )}
+                                    </Card>
+                                ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-default-400 py-8">
+                            Zatím zde nejsou žádné denní záznamy
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {/* Daily Record Create Modal */}
+            <DailyRecordCreateModal
+                isOpen={isDailyRecordModalOpen}
+                onClose={() => setIsDailyRecordModalOpen(false)}
+                onSubmit={handleAddDailyRecord}
+            />
+
+            {/* Daily Record Delete Modal */}
+            <DailyRecordDeleteModal
+                isOpen={isDailyRecordDeleteModalOpen}
+                onClose={() => {
+                    setIsDailyRecordDeleteModalOpen(false);
+                    setSelectedDailyRecordId(null);
+                }}
+                onSubmit={handleDeleteDailyRecord}
+                dailyRecordId={selectedDailyRecordId}
+            />
 
             <BackToTopButton />
         </div>

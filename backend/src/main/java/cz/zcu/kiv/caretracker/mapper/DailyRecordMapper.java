@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordDTO;
 import cz.zcu.kiv.caretracker.entity.DailyRecord;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,6 +10,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class DailyRecordMapper {
+
+    @Autowired
+    private EmployeeMapper employeeMapper;
 
     public DailyRecordDTO toDTO(DailyRecord dailyRecord) {
         if (dailyRecord == null) {
@@ -19,6 +23,7 @@ public class DailyRecordMapper {
         dto.setId(dailyRecord.getId());
         dto.setDate(dailyRecord.getDate());
         dto.setContent(dailyRecord.getContent());
+        dto.setCreatedBy(employeeMapper.toSummaryDTO(dailyRecord.getCreatedBy()));
 
         return dto;
     }

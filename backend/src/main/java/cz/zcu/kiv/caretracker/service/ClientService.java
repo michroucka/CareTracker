@@ -10,6 +10,7 @@ import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
+import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -278,6 +279,58 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
+     * Validuje, že uživatel má oprávnění upravovat individuální plán klienta.
+     * Oprávnění má:
+     * - SUPERADMIN (vždy)
+     * - ADMIN ze stejné organizace
+     * - CAREGIVER přiřazený ke klientovi
+     *
+     * @param client Klient, jehož individuální plán se má upravovat
+     * @throws SecurityException Pokud uživatel nemá oprávnění
+     */
+    private void validateIndividualPlanUpdateAccess(Client client) {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+
+        // SUPERADMIN má přístup ke všemu
+        if (role == UserRole.SUPERADMIN) {
+            return;
+        }
+
+        // Zaměstnanci musí mít přiřazenou organizaci
+        if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
+            throw new SecurityException("Employee must have an associated organization");
+        }
+
+        Long userOrgId = user.getEmployee().getOrganization().getId();
+        Long clientOrgId = client.getOrganization().getId();
+
+        // Kontrola, že uživatel je ze stejné organizace jako klient
+        if (!userOrgId.equals(clientOrgId)) {
+            throw new SecurityException("Access denied: Client is from a different organization");
+        }
+
+        // ADMIN má přístup ke všem klientům ve své organizaci
+        if (role == UserRole.ADMIN) {
+            return;
+        }
+
+        // CAREGIVER a COORDINATOR mohou upravovat pouze individuální plány klientů, ke kterým jsou přiřazeni
+        if (role == UserRole.CAREGIVER || role == UserRole.COORDINATOR) {
+            Long assignedCaregiverId = client.getCaregiver().getId();
+            Long currentEmployeeId = user.getEmployee().getId();
+
+            if (!assignedCaregiverId.equals(currentEmployeeId)) {
+                throw new SecurityException("Employee can only modify individual plans for their assigned clients");
+            }
+            return;
+        }
+
+        // Jiné role nemají oprávnění upravovat individuální plány
+        throw new SecurityException("User does not have permission to modify individual plans");
+    }
+
+    /**
      * Helper metoda pro mapování dat z DTO do IndividualPlanContent entity.
      * Používá se jak při vytváření první verze, tak při vytváření nových verzí.
      */
@@ -328,12 +381,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             throw new RuntimeException("Individual plan already exists for this client");
         }
 
-        // Validace oprávnění pro update
-        validateUpdateAccess(
-                client,
-                c -> c.getOrganization().getId(),
-                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
-        );
+        // Validace oprávnění pro úpravu individuálního plánu
+        validateIndividualPlanUpdateAccess(client);
 
         // Vytvořit hlavní IndividualPlan
         IndividualPlan plan = new IndividualPlan();
@@ -375,12 +424,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
 
-        // Validace oprávnění pro update
-        validateUpdateAccess(
-                plan.getClient(),
-                c -> c.getOrganization().getId(),
-                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
-        );
+        // Validace oprávnění pro úpravu individuálního plánu
+        validateIndividualPlanUpdateAccess(plan.getClient());
 
         // Získat nejvyšší číslo verze
         Integer maxVersion = plan.getContentVersions().stream()
@@ -423,7 +468,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
 
-        // Validace oprávnění pro update
+        // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(
                 plan.getClient(),
                 c -> c.getOrganization().getId(),
@@ -434,6 +479,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         DailyRecord dailyRecord = new DailyRecord();
         dailyRecord.setDate(dailyRecordDTO.getDate());
         dailyRecord.setContent(dailyRecordDTO.getContent());
+        dailyRecord.setCreatedBy(getCurrentUser().getEmployee());
+        dailyRecord.setIndividualPlan(plan);
 
         // Uložit daily record
         DailyRecord savedDailyRecord = dailyRecordRepository.save(dailyRecord);
@@ -471,7 +518,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
 
-        // Validace oprávnění pro update
+        // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(
                 plan.getClient(),
                 c -> c.getOrganization().getId(),
