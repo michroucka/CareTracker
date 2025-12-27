@@ -83,6 +83,29 @@ function IndividualPlan() {
 
     const [errors, setErrors] = useState({});
 
+    // Helper function to initialize form from content
+    const initializeFormFromContent = (content) => {
+        if (!content) return;
+
+        setProcessedDate(content.processedDate || "");
+        setPlannedUpdateDate(content.plannedUpdateDate || "");
+        setLikes(content.likes || "");
+        setDislikes(content.dislikes || "");
+        setStrengths(content.strengths || "");
+        setAspirations(content.aspirations || "");
+        setLifePath(content.lifePath || "");
+        setAdditionalInfo(content.additionalInfo || "");
+        setHygiene(content.hygiene || "");
+        setSelfCare(content.selfCare || "");
+        setMobility(content.mobility || "");
+        setDiet(content.diet || "");
+        setHomeCare(content.homeCare || "");
+        setSocialContact(content.socialContact || "");
+        setActivities(content.activities || "");
+        setHealth(content.health || "");
+        setExercisingRights(content.exercisingRights || "");
+    };
+
     // Načíst data při mount
     useEffect(() => {
         async function loadData() {
@@ -141,25 +164,7 @@ function IndividualPlan() {
 
     // Inicializuj formulář když se změní currentContent
     useEffect(() => {
-        if (currentContent) {
-            setProcessedDate(currentContent.processedDate || "");
-            setPlannedUpdateDate(currentContent.plannedUpdateDate || "");
-            setLikes(currentContent.likes || "");
-            setDislikes(currentContent.dislikes || "");
-            setStrengths(currentContent.strengths || "");
-            setAspirations(currentContent.aspirations || "");
-            setLifePath(currentContent.lifePath || "");
-            setAdditionalInfo(currentContent.additionalInfo || "");
-            setHygiene(currentContent.hygiene || "");
-            setSelfCare(currentContent.selfCare || "");
-            setMobility(currentContent.mobility || "");
-            setDiet(currentContent.diet || "");
-            setHomeCare(currentContent.homeCare || "");
-            setSocialContact(currentContent.socialContact || "");
-            setActivities(currentContent.activities || "");
-            setHealth(currentContent.health || "");
-            setExercisingRights(currentContent.exercisingRights || "");
-        }
+        initializeFormFromContent(currentContent);
     }, [currentContent]);
 
     // Handler pro změnu verze
@@ -175,39 +180,10 @@ function IndividualPlan() {
         // Načti nejnovější verzi pokud nejsme na ní
         if (individualPlan?.currentContent && selectedVersionNumber !== individualPlan.currentContent.versionNumber) {
             setSelectedVersionNumber(individualPlan.currentContent.versionNumber);
-            const content = individualPlan.currentContent;
-            setLikes(content.likes || "");
-            setDislikes(content.dislikes || "");
-            setStrengths(content.strengths || "");
-            setAspirations(content.aspirations || "");
-            setLifePath(content.lifePath || "");
-            setAdditionalInfo(content.additionalInfo || "");
-            setHygiene(content.hygiene || "");
-            setSelfCare(content.selfCare || "");
-            setMobility(content.mobility || "");
-            setDiet(content.diet || "");
-            setHomeCare(content.homeCare || "");
-            setSocialContact(content.socialContact || "");
-            setActivities(content.activities || "");
-            setHealth(content.health || "");
-            setExercisingRights(content.exercisingRights || "");
+            initializeFormFromContent(individualPlan.currentContent);
         } else if (currentContent) {
             // Pokud jsme už na nejnovější verzi, načti její obsah
-            setLikes(currentContent.likes || "");
-            setDislikes(currentContent.dislikes || "");
-            setStrengths(currentContent.strengths || "");
-            setAspirations(currentContent.aspirations || "");
-            setLifePath(currentContent.lifePath || "");
-            setAdditionalInfo(currentContent.additionalInfo || "");
-            setHygiene(currentContent.hygiene || "");
-            setSelfCare(currentContent.selfCare || "");
-            setMobility(currentContent.mobility || "");
-            setDiet(currentContent.diet || "");
-            setHomeCare(currentContent.homeCare || "");
-            setSocialContact(currentContent.socialContact || "");
-            setActivities(currentContent.activities || "");
-            setHealth(currentContent.health || "");
-            setExercisingRights(currentContent.exercisingRights || "");
+            initializeFormFromContent(currentContent);
         }
 
         // Vždy nastav nové datumy při zapnutí edit módu (vytváření nové verze)
@@ -225,23 +201,7 @@ function IndividualPlan() {
 
         // Reset formulář na aktuální content
         if (currentContent) {
-            setProcessedDate(currentContent.processedDate || "");
-            setPlannedUpdateDate(currentContent.plannedUpdateDate || "");
-            setLikes(currentContent.likes || "");
-            setDislikes(currentContent.dislikes || "");
-            setStrengths(currentContent.strengths || "");
-            setAspirations(currentContent.aspirations || "");
-            setLifePath(currentContent.lifePath || "");
-            setAdditionalInfo(currentContent.additionalInfo || "");
-            setHygiene(currentContent.hygiene || "");
-            setSelfCare(currentContent.selfCare || "");
-            setMobility(currentContent.mobility || "");
-            setDiet(currentContent.diet || "");
-            setHomeCare(currentContent.homeCare || "");
-            setSocialContact(currentContent.socialContact || "");
-            setActivities(currentContent.activities || "");
-            setHealth(currentContent.health || "");
-            setExercisingRights(currentContent.exercisingRights || "");
+            initializeFormFromContent(currentContent);
         } else {
             // Pokud jsme v create mode a zrušíme, vrátíme se na clients
             navigate("/clients");
