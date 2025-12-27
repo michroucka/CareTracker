@@ -257,8 +257,6 @@ export const ClientForm = React.forwardRef(({
                     onChange={setPicture}
                     isDisabled={isLoading}
                     isReadOnly={isReadOnly}
-                    label="Fotografie klienta"
-                    className="mx-auto"
                 />
 
                 {/* Basic Information */}

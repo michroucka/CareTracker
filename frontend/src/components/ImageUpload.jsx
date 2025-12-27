@@ -22,8 +22,7 @@ export function ImageUpload({
     onChange,
     isDisabled = false,
     isReadOnly = false,
-    label = "Fotografie",
-    description = "JPG, PNG, max 5 MB",
+    label ,
     isInvalid = false,
     errorMessage = "",
     className = "",
@@ -130,8 +129,8 @@ export function ImageUpload({
 
     if (isReadOnly && !preview) {
         return (
-            <div className={`flex flex-col gap-2 ${className}`}>
-                <span className="text-sm text-foreground-500">{label}</span>
+            <div className={`flex flex-col items-center gap-2 ${className}`}>
+                {label && <span className="text-sm text-foreground-500">{label}</span>}
                 <span className="text-sm text-foreground">Bez fotografie</span>
             </div>
         );
@@ -139,19 +138,19 @@ export function ImageUpload({
 
     if (isReadOnly && preview) {
         return (
-            <div className={`flex items-center gap-3 ${className}`}>
+            <div className={`flex flex-col items-center gap-2 ${className}`}>
+                {label && <span className="text-sm text-foreground-500">{label}</span>}
                 <img
                     src={preview}
                     alt="Client"
-                    className="w-20 h-20 object-cover rounded-lg border-2 border-default-200"
+                    className="w-32 h-32 object-cover rounded-full border-2 border-default-200"
                 />
-                <span className="text-sm text-foreground-500">{label}</span>
             </div>
         );
     }
 
     return (
-        <div className={`flex items-start gap-3 ${className}`}>
+        <div className={`flex flex-col items-center gap-2 ${className}`}>
             <input
                 ref={fileInputRef}
                 type="file"
@@ -161,27 +160,13 @@ export function ImageUpload({
                 className="hidden"
             />
 
-            {preview ? (
-                <div className="relative">
-                    <img
-                        src={preview}
-                        alt="Preview"
-                        className={`w-20 h-20 object-cover rounded-full border-2 ${isInvalid ? 'border-danger' : 'border-default-200'}`}
-                    />
-                    {!isDisabled && (
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            color="danger"
-                            variant="solid"
-                            className="absolute -top-1 -right-1 min-w-6 h-6 min-w-6 w-6 rounded-full"
-                            onPress={handleRemove}
-                        >
-                            <X size={14} />
-                        </Button>
-                    )}
-                </div>
-            ) : (
+            {label && (
+                <label className="text-default font-medium text-foreground">
+                    {label}
+                </label>
+            )}
+
+            <div className="relative">
                 <div
                     onClick={handleClick}
                     onDragEnter={handleDrag}
@@ -189,39 +174,51 @@ export function ImageUpload({
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                     className={`
-                        w-20 h-20 flex items-center justify-center rounded-full border-2 border-dashed transition-all
-                        ${dragActive ? 'border-primary bg-primary/10' : 'border-default-300'}
-                        ${isInvalid ? 'border-danger' : ''}
-                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:bg-default-50'}
+                        relative w-32 h-32 rounded-full overflow-hidden transition-all duration-300 ease-in-out group
+                        ${isInvalid ? 'border-2 border-danger' : 'border-2 border-default-200'}
+                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'}
                     `}
                 >
-                    <Camera size={32} className="text-default-400" />
+                    {preview ? (
+                        <>
+                            <img
+                                src={preview}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                            />
+                            {!isDisabled && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
+                                    <Camera size={40} className="text-white/50" />
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className={`
+                            w-full h-full flex items-center justify-center
+                            ${dragActive ? 'bg-primary/10' : 'bg-default-100'}
+                            transition-colors
+                        `}>
+                            <Camera size={40} className="text-default-400" />
+                        </div>
+                    )}
                 </div>
-            )}
 
-            <div className="flex flex-col gap-1 flex-1">
-                {label && (
-                    <label className="text-sm font-medium text-foreground">
-                        {label}
-                    </label>
-                )}
-                <p className="text-xs text-default-500">
-                    {description}
-                </p>
-                <Button
-                    size="sm"
-                    variant="flat"
-                    className="w-fit mt-1"
-                    startContent={<Upload size={14} />}
-                    isDisabled={isDisabled}
-                    onPress={handleClick}
-                >
-                    Vybrat soubor
-                </Button>
-                {isInvalid && errorMessage && (
-                    <p className="text-xs text-danger mt-1">{errorMessage}</p>
+                {preview && !isDisabled && (
+                    <Button
+                        isIconOnly
+                        color="danger"
+                        variant="light"
+                        className="absolute -top-1 -right-1 min-w-6 h-6 w-6 rounded-full z-10"
+                        onPress={handleRemove}
+                    >
+                        <X size={20} />
+                    </Button>
                 )}
             </div>
+
+            {isInvalid && errorMessage && (
+                <p className="text-xs text-danger">{errorMessage}</p>
+            )}
         </div>
     );
 }
