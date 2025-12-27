@@ -11,11 +11,12 @@ import {
     AutocompleteItem,
 } from "@heroui/react";
 import { CalendarDays } from "lucide-react";
-import React from "react";
+import React, {useState} from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../utils/formatters.js";
 import { benefitsOptions, terminationReasonOptions } from "../../constants/clientConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
+import { ImageUpload } from "../ImageUpload.jsx";
 
 /**
  * Reusable client form component used in both create and edit modals
@@ -43,6 +44,7 @@ export const ClientForm = React.forwardRef(({
     userDept = null,
     showTermination = false,
 }, formRef) => {
+    const [picture, setPicture] = useState(null);
     const [firstName, setFirstName] = React.useState("");
     const [lastName, setLastName] = React.useState("");
     const [gender, setGender] = React.useState("");
@@ -69,6 +71,7 @@ export const ClientForm = React.forwardRef(({
     // Initialize form with initial data
     React.useEffect(() => {
         if (initialData) {
+            setPicture(initialData.picture || initialData.pictureUrl || null);
             setFirstName(initialData.firstName || "");
             setLastName(initialData.lastName || "");
             setGender(initialData.gender || "");
@@ -180,6 +183,7 @@ export const ClientForm = React.forwardRef(({
         setErrors({});
 
         const formData = {
+            picture: picture || null,
             firstName,
             lastName,
             gender,
@@ -209,6 +213,7 @@ export const ClientForm = React.forwardRef(({
 
     // Reset form
     const resetForm = () => {
+        setPicture(null);
         setFirstName("");
         setLastName("");
         setGender("");
@@ -246,6 +251,16 @@ export const ClientForm = React.forwardRef(({
             onSubmit={handleSubmit}
         >
             <div className="flex flex-col gap-4 w-full">
+                {/* Profile Picture */}
+                <ImageUpload
+                    value={picture}
+                    onChange={setPicture}
+                    isDisabled={isLoading}
+                    isReadOnly={isReadOnly}
+                    label="Fotografie klienta"
+                    className="mx-auto"
+                />
+
                 {/* Basic Information */}
                 <div className="grid grid-cols-2 gap-4">
                     {isReadOnly ? (
