@@ -12,13 +12,14 @@ import { showToast } from "./MyToast.jsx";
  * @param {boolean} props.isDisabled - Whether the upload is disabled
  * @param {boolean} props.isReadOnly - Whether in read-only mode
  * @param {string} props.label - Label for the upload area
- * @param {string} props.description - Description text
  * @param {boolean} props.isInvalid - Whether the field has an error
  * @param {string} props.errorMessage - Error message to display
  * @param {string} props.className - Additional CSS classes for the wrapper
  */
 export function ImageUpload({
     value = null,
+    size = 32,
+    iconSize,
     onChange,
     isDisabled = false,
     isReadOnly = false,
@@ -31,13 +32,16 @@ export function ImageUpload({
     const [preview, setPreview] = React.useState(null);
     const [dragActive, setDragActive] = React.useState(false);
 
+    // Calculate icon size based on component size if not explicitly provided
+    const actualIconSize = iconSize ?? Math.round(size * 1.25);
+
     // Generate preview URL
     React.useEffect(() => {
         if (value instanceof File) {
             const objectUrl = URL.createObjectURL(value);
             setPreview(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
-        } else if (typeof value === 'string' && value) {
+        } else if (typeof value === 'string' && value && value !== 'DELETE') {
             setPreview(value);
         } else {
             setPreview(null);
@@ -115,7 +119,7 @@ export function ImageUpload({
     };
 
     const handleRemove = () => {
-        onChange?.(null);
+        onChange?.("DELETE"); // Send special "DELETE" marker instead of null
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -127,24 +131,31 @@ export function ImageUpload({
         }
     };
 
-    if (isReadOnly && !preview) {
+    if (isReadOnly) {
         return (
             <div className={`flex flex-col items-center gap-2 ${className}`}>
-                {label && <span className="text-sm text-foreground-500">{label}</span>}
-                <span className="text-sm text-foreground">Bez fotografie</span>
-            </div>
-        );
-    }
+                {label && (
+                    <label className="font-medium text-foreground">
+                        {label}
+                    </label>
+                )}
 
-    if (isReadOnly && preview) {
-        return (
-            <div className={`flex flex-col items-center gap-2 ${className}`}>
-                {label && <span className="text-sm text-foreground-500">{label}</span>}
-                <img
-                    src={preview}
-                    alt="Client"
-                    className="w-32 h-32 object-cover rounded-full border-2 border-default-200"
-                />
+                <div
+                    className="rounded-full border-2 overflow-hidden border-default-200"
+                    style={{ width: `${size * 4}px`, height: `${size * 4}px` }}
+                >
+                    {preview ? (
+                        <img
+                            src={preview}
+                            alt="Client"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-default-100">
+                            <Camera size={actualIconSize} className="text-default-400" />
+                        </div>
+                    )}
+                </div>
             </div>
         );
     }
@@ -161,7 +172,7 @@ export function ImageUpload({
             />
 
             {label && (
-                <label className="text-default font-medium text-foreground">
+                <label className="font-medium text-foreground">
                     {label}
                 </label>
             )}
@@ -174,10 +185,11 @@ export function ImageUpload({
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                     className={`
-                        relative w-32 h-32 rounded-full overflow-hidden transition-all duration-300 ease-in-out group
+                        relative rounded-full overflow-hidden transition-all duration-300 ease-in-out group
                         ${isInvalid ? 'border-2 border-danger' : 'border-2 border-default-200'}
                         ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'}
                     `}
+                    style={{ width: `${size * 4}px`, height: `${size * 4}px` }}
                 >
                     {preview ? (
                         <>
@@ -188,7 +200,7 @@ export function ImageUpload({
                             />
                             {!isDisabled && (
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
-                                    <Camera size={40} className="text-white/50" />
+                                    <Camera size={actualIconSize} className="text-white/50" />
                                 </div>
                             )}
                         </>
@@ -198,7 +210,7 @@ export function ImageUpload({
                             ${dragActive ? 'bg-primary/10' : 'bg-default-100'}
                             transition-colors
                         `}>
-                            <Camera size={40} className="text-default-400" />
+                            <Camera size={actualIconSize} className="text-default-400" />
                         </div>
                     )}
                 </div>

@@ -96,6 +96,9 @@ public class Client {
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Employee caregiver;
 
+    @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Picture picture;
+
     @ManyToMany
     @JoinTable(
             name = "client_task",

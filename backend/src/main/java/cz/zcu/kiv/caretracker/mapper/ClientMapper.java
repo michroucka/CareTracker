@@ -53,6 +53,7 @@ public class ClientMapper {
         dto.setNotes(client.getNotes());
         dto.setCreated(client.getCreated());
         dto.setActive(client.getActive());
+        dto.setHasPicture(client.getPicture() != null);
 
         // Mapování vnořených objektů
         dto.setDepartment(departmentMapper.toDTO(client.getDepartment()));

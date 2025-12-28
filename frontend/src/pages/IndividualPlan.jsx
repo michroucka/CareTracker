@@ -29,6 +29,7 @@ import { DailyRecordDeleteModal } from "../components/modals/individualPlan/Dail
 import {formatDate} from "../utils/formatters.js";
 import {benefitsOptions} from "../constants/clientConstants.js";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
+import {ImageUpload} from "../components/ImageUpload.jsx";
 
 function IndividualPlan() {
     const { clientId } = useParams();
@@ -393,6 +394,14 @@ function IndividualPlan() {
             <h2 className="my-4">
                 Základní informace
             </h2>
+
+            { client && client.pictureUrl && (
+                <ImageUpload
+                    value={client.pictureUrl}
+                    isReadOnly
+                    size={48}
+                />
+            )}
 
             <div className="flex flex-col gap-4 w-full mb-4">
                 <div className="flex flex-row gap-2 w-full items-center mt-2">

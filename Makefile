@@ -18,17 +18,17 @@ stop:
 restart:
 	docker-compose restart $(service)
 
+# Restart jedné služby
+restart-%:
+	docker-compose restart $*
+
 # Build bez cache
 build:
 	docker-compose build --no-cache
 
 # Rebuild a restart (použít při změně package.json)
 rebuild:
-	docker-compose up --build -d
-
-# Rebuild jen frontendu
-rebuild-frontend:
-	docker-compose up --build -d frontend
+	docker-compose up --build -d $(s)
 
 # Vyčistit volumes a rebuild
 clean:

@@ -87,3 +87,51 @@ export async function deleteJSON(endpoint) {
 
     return response;
 }
+
+export async function uploadFile(endpoint, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function fetchImage(endpoint) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "GET",
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+}
+
+export async function deleteImage(endpoint) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(message);
+    }
+
+    return response;
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getJSON, postJSON, putJSON } from "../api/api.js";
+import { getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { CloudAlert, UserRoundCheck, UserRoundX } from "lucide-react";
@@ -48,6 +48,19 @@ export function useClients() {
     const fetchClient = async (id) => {
         try {
             const client = await getJSON(`/clients/${id}`);
+
+            // Pokud má klient obrázek, načti ho
+            if (client.hasPicture) {
+                try {
+                    const imageUrl = await fetchImage(`/clients/${id}/picture`);
+                    client.pictureUrl = imageUrl;
+                } catch (imgErr) {
+                    console.error("Error fetching client picture:", imgErr);
+                    // Klient se načetl, jen se nepodařilo načíst obrázek
+                    client.pictureUrl = null;
+                }
+            }
+
             return client;
         } catch (err) {
             console.error("Error fetching client:", err);
@@ -59,7 +72,26 @@ export function useClients() {
     // Vytvoření klienta
     const createClient = async (clientData) => {
         try {
-            const newClient = await postJSON("/clients", clientData);
+            // Oddělení picture od ostatních dat
+            const { picture, ...clientDataWithoutPicture } = clientData;
+
+            // Vytvoření klienta
+            const newClient = await postJSON("/clients", clientDataWithoutPicture);
+
+            // Pokud je obrázek vybrán, nahraj ho
+            if (picture && picture instanceof File) {
+                try {
+                    await uploadFile(`/clients/${newClient.id}/picture`, picture);
+                } catch (uploadErr) {
+                    console.error("Error uploading picture:", uploadErr);
+                    // Klient je vytvořen, ale obrázek se nenahrál - zobrazíme upozornění
+                    showToast({
+                        title: "Klient vytvořen, ale obrázek se nenahrál",
+                        description: "Můžete ho nahrát později při editaci",
+                        color: "warning",
+                    });
+                }
+            }
 
             // Přidej do seznamu s mapováním
             const mappedClient = mapClient(newClient);
@@ -85,7 +117,53 @@ export function useClients() {
     // Aktualizace klienta
     const updateClient = async (id, updatedData) => {
         try {
-            const updated = await putJSON(`/clients/${id}`, updatedData);
+            // Oddělení picture od ostatních dat
+            const { picture, ...updatedDataWithoutPicture } = updatedData;
+
+            // Aktualizace klienta
+            const updated = await putJSON(`/clients/${id}`, updatedDataWithoutPicture);
+
+            // Pokud má být obrázek smazán (special "DELETE" marker)
+            if (picture === "DELETE") {
+                try {
+                    await deleteImage(`/clients/${id}/picture`);
+                    updated.hasPicture = false;
+                    updated.pictureUrl = null;
+                } catch (deleteErr) {
+                    console.error("Error deleting picture:", deleteErr);
+                    showToast({
+                        title: "Klient aktualizován, ale obrázek se nesmazal",
+                        description: "Zkuste to prosím znovu",
+                        color: "warning",
+                    });
+                }
+            }
+            // Pokud je obrázek vybrán a je to nový soubor, nahraj ho
+            else if (picture && picture instanceof File) {
+                try {
+                    await uploadFile(`/clients/${id}/picture`, picture);
+                    updated.hasPicture = true; // Mark that client now has picture
+                } catch (uploadErr) {
+                    console.error("Error uploading picture:", uploadErr);
+                    // Klient je aktualizován, ale obrázek se nenahrál - zobrazíme upozornění
+                    showToast({
+                        title: "Klient aktualizován, ale obrázek se nenahrál",
+                        description: "Zkuste to prosím znovu",
+                        color: "warning",
+                    });
+                }
+            }
+
+            // Pokud má klient obrázek, načti ho pro zobrazení
+            if (updated.hasPicture) {
+                try {
+                    const imageUrl = await fetchImage(`/clients/${id}/picture`);
+                    updated.pictureUrl = imageUrl;
+                } catch (imgErr) {
+                    console.error("Error fetching updated client picture:", imgErr);
+                    updated.pictureUrl = null;
+                }
+            }
 
             // Aktualizuj v seznamu s mapováním
             const mappedClient = mapClient(updated);

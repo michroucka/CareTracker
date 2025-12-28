@@ -34,7 +34,8 @@ public class ClientDTO {
     private String notes;
     private LocalDate created;
     private Boolean active;
-    
+    private Boolean hasPicture;
+
     // Vnořené objekty
     private DepartmentDTO department;
     private EmployeeDTO caregiver;
