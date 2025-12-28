@@ -44,38 +44,46 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     /**
      * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     * - SUPERADMIN: Vidí všechny klienty
+     * - SUPERADMIN: Vidí všechny klienty, nebo klienty z konkrétní organizace pokud je zadán organizationId
      * - ADMIN: Vidí pouze klienty z jeho organizace
      * - COORDINATOR: Vidí pouze klienty z jeho oddělení
      * - CAREGIVER: Vidí pouze klienty z jeho oddělení
      * - CLIENT: Nemá přístup (ošetřeno na úrovni controlleru)
+     *
+     * @param activeOnly Filtrovat pouze aktivní klienty
+     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
      */
     @Transactional(readOnly = true)
-    protected List<ClientDTO> getClientsByRole(boolean activeOnly) {
+    protected List<ClientDTO> getClientsByRole(boolean activeOnly, Long organizationId) {
         return filterEntitiesByRole(
                 () -> activeOnly ? clientRepository.findByActiveTrue() : clientRepository.findAll(),
                 orgId -> activeOnly ? clientRepository.findByActiveTrueAndOrganizationId(orgId)
                                     : clientRepository.findByOrganizationId(orgId),
                 deptId -> activeOnly ? clientRepository.findByActiveTrueAndDepartmentId(deptId)
                                      : clientRepository.findByDepartmentId(deptId),
-                clientMapper::toDTOList
+                clientMapper::toDTOList,
+                organizationId
         );
     }
 
     /**
      * Vrací aktivní klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     *
+     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
      */
     @Transactional(readOnly = true)
-    public List<ClientDTO> getAllActiveClients() {
-        return getClientsByRole(true);
+    public List<ClientDTO> getAllActiveClients(Long organizationId) {
+        return getClientsByRole(true, organizationId);
     }
 
     /**
      * Vrací všechny klienty (včetně neaktivních) filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     *
+     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
      */
     @Transactional(readOnly = true)
-    public List<ClientDTO> getAllClients() {
-        return getClientsByRole(false);
+    public List<ClientDTO> getAllClients(Long organizationId) {
+        return getClientsByRole(false, organizationId);
     }
 
     /**

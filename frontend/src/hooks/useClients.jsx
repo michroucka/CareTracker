@@ -15,6 +15,7 @@ export function useClients() {
             name: `${client.firstName} ${client.lastName}`,
             gender: client.gender,
             address: `${client.street}, ${client.city}`,
+            organization: client.organization,
             department: client.department,
             caregiver: client.caregiver,
             active: client.active,
@@ -26,10 +27,13 @@ export function useClients() {
         return clients.map((client) => mapClient(client));
     }
 
-    const fetchClients = async () => {
+    const fetchClients = async (organizationId = null) => {
         try {
             setLoading(true);
-            const clients = await getJSON("/clients");
+            const url = organizationId
+                ? `/clients?organizationId=${organizationId}`
+                : '/clients';
+            const clients = await getJSON(url);
 
             // Mapuj data z backendu DTO
             const mappedClients = mapClients(clients);
@@ -245,6 +249,7 @@ export function useClients() {
 
     return {
         clients,
+        setClients,
         loading,
         fetchClients,
         fetchClient,

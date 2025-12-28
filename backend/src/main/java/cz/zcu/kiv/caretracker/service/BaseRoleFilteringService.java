@@ -268,17 +268,48 @@ public abstract class BaseRoleFilteringService<T, D> {
             Function<Long, List<T>> departmentQuery,
             Function<List<T>, List<D>> mapper
     ) {
+        return filterEntitiesByRole(superAdminQuery, organizationQuery, departmentQuery, mapper, null);
+    }
+
+    /**
+     * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
+     * Podporuje volitelné filtrování podle organizationId pro SUPERADMIN.
+     * - SUPERADMIN: Pokud je zadán requestedOrganizationId, filtruje podle něj. Jinak vidí všechna data.
+     * - ADMIN: Vidí data z celé své organizace (ignoruje requestedOrganizationId)
+     * - COORDINATOR/CAREGIVER: Vidí data ze svého oddělení (ignoruje requestedOrganizationId)
+     *
+     * @param superAdminQuery Query pro SUPERADMIN bez filtru (např. repository::findAll)
+     * @param organizationQuery Query s organizationId filtrem (např. repository::findByOrganizationId)
+     * @param departmentQuery Query s departmentId filtrem (např. repository::findByDepartmentId)
+     * @param mapper Funkce pro převod List<T> na List<D> (např. mapper::toDTOList)
+     * @param requestedOrganizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
+     * @return Seznam DTO filtrovaných podle role a případně organizationId
+     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace/oddělení
+     */
+    protected List<D> filterEntitiesByRole(
+            Supplier<List<T>> superAdminQuery,
+            Function<Long, List<T>> organizationQuery,
+            Function<Long, List<T>> departmentQuery,
+            Function<List<T>, List<D>> mapper,
+            Long requestedOrganizationId
+    ) {
         User user = getCurrentUser();
         List<T> entities;
         UserRole role = user.getRole();
 
         // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
-            entities = superAdminQuery.get();
+            if (requestedOrganizationId != null) {
+                // Filtrovat podle zadané organizace
+                entities = organizationQuery.apply(requestedOrganizationId);
+            } else {
+                // Vrátit všechna data
+                entities = superAdminQuery.get();
+            }
         }
         // Zaměstnanci - filtrování podle organizace/oddělení
         else if (user.getEmployee() != null) {
-            // ADMIN vidí data z celé organizace
+            // ADMIN vidí data z celé organizace (ignoruje requestedOrganizationId)
             if (role == UserRole.ADMIN) {
                 if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Admin must have an associated organization");
@@ -286,7 +317,7 @@ public abstract class BaseRoleFilteringService<T, D> {
                 Long organizationId = user.getEmployee().getOrganization().getId();
                 entities = organizationQuery.apply(organizationId);
             }
-            // COORDINATOR a CAREGIVER vidí pouze data ze svého oddělení
+            // COORDINATOR a CAREGIVER vidí pouze data ze svého oddělení (ignoruje requestedOrganizationId)
             else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getDepartment() == null) {
                     throw new SecurityException("Employee must have an associated department");

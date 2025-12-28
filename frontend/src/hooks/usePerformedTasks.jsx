@@ -9,10 +9,13 @@ export function usePerformedTasks() {
     const [performedTasks, setPerformedTasks] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchPerformedTasks = async () => {
+    const fetchPerformedTasks = async (organizationId = null) => {
         try {
             setLoading(true);
-            const performedTasks = await getJSON("/performed-tasks");
+            const url = organizationId
+                ? `/performed-tasks?organizationId=${organizationId}`
+                : '/performed-tasks';
+            const performedTasks = await getJSON(url);
 
             const sorted = sortByKey(performedTasks, 'date', 'descending');
             setPerformedTasks(sorted);
@@ -102,6 +105,7 @@ export function usePerformedTasks() {
 
     return {
         performedTasks,
+        setPerformedTasks,
         loading,
         fetchPerformedTasks,
         fetchPerformedTask,

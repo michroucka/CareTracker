@@ -20,6 +20,7 @@ import {useClients} from "../hooks/useClients.jsx";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useTasks} from "../hooks/useTasks.jsx";
+import {useOrganizations} from "../hooks/useOrganizations.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {activeOptions, columns, genderOptions, genderTranslations} from "../constants/clientConstants.js";
 import {useAuth} from "../contexts/AuthContext.tsx";
@@ -33,6 +34,7 @@ function Clients() {
     const navigate = useNavigate();
     const [filterValue, setFilterValue] = React.useState("");
     const [activeFilter, setActiveFilter] = React.useState(new Set(["true"]));
+    const [organizationFilter, setOrganizationFilter] = React.useState(new Set());
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
     const [sortDescriptor, setSortDescriptor] = React.useState({
@@ -43,6 +45,7 @@ function Clients() {
     const { user } = useAuth();
     const {
         clients,
+        setClients,
         loading,
         fetchClients,
         fetchClient,
@@ -52,6 +55,7 @@ function Clients() {
         activateClient
     } = useClients();
     const { departments, fetchDepartments } = useDepartments();
+    const { organizations, fetchOrganizations } = useOrganizations();
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
@@ -80,11 +84,15 @@ function Clients() {
     }, [isMobile]);
 
     React.useEffect(() => {
-        fetchClients();
+        // Pro superadmina nenačítáme klienty, dokud nevybere organizaci
+        if (user?.role !== "SUPERADMIN") {
+            fetchClients();
+        }
         fetchDepartments();
+        fetchOrganizations();
         fetchEmployees();
         fetchTasks();
-    }, []);
+    }, [user]);
 
     React.useEffect(() => {
         if (user?.departmentId && departments.length > 0) {
@@ -95,6 +103,22 @@ function Clients() {
         }
     }, [user, departments]);
 
+    // Když superadmin změní organizaci, znovu načíst klienty s filtrem
+    React.useEffect(() => {
+        if (user?.role === "SUPERADMIN") {
+            if (organizationFilter.size > 0 && organizations.length > 0) {
+                const selectedOrgName = Array.from(organizationFilter)[0];
+                const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+                if (selectedOrg) {
+                    fetchClients(selectedOrg.id);
+                }
+            } else {
+                // Pokud není vybraná organizace, smaž data
+                setClients([]);
+            }
+        }
+    }, [organizationFilter, user, organizations]);
+
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
@@ -103,21 +127,64 @@ function Clients() {
     const hasSearchFilter = Boolean(filterValue);
 
     // Options pro filtry z API endpointů (již seřazené v hooks)
+    const organizationOptions = React.useMemo(() => {
+        return organizations.map(org => ({
+            name: org.name,
+            key: org.name
+        }));
+    }, [organizations]);
+
+    // Filtrované departments podle vybrané organizace (pro superadminy)
+    const filteredDepartments = React.useMemo(() => {
+        if (user?.role !== "SUPERADMIN" || organizationFilter.size === 0) {
+            return departments;
+        }
+
+        // Pro superadmina s vybranou organizací - filtruj departments podle organizace
+        const selectedOrgName = Array.from(organizationFilter)[0];
+        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+        if (!selectedOrg) {
+            return [];
+        }
+
+        return departments.filter(dept => dept.organization?.id === selectedOrg.id);
+    }, [departments, organizations, organizationFilter, user]);
+
     const departmentOptions = React.useMemo(() => {
-        return departments.map(dept => ({
+        return filteredDepartments.map(dept => ({
             name: dept.name,
             key: dept.name
         }));
-    }, [departments]);
+    }, [filteredDepartments]);
 
+    // Filtrované employees podle organizace (pro superadminy) a podle departmentu
     const filteredEmployees = React.useMemo(() => {
-        if (departmentFilter.has("all")) {
-            return employees;
+        let filtered = [...employees];
+
+        // Pro superadmina - filtruj podle organizace
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+            if (selectedOrg) {
+                filtered = filtered.filter(employee =>
+                    employee.organization?.id === selectedOrg.id
+                );
+            } else {
+                return [];
+            }
         }
-        return employees.filter(employee =>
-            departmentFilter.has(employee.department?.name)
-        );
-    }, [employees, departmentFilter]);
+
+        // Filtruj podle departmentu
+        if (!departmentFilter.has("all")) {
+            filtered = filtered.filter(employee =>
+                departmentFilter.has(employee.department?.name)
+            );
+        }
+
+        return filtered;
+    }, [employees, departmentFilter, organizationFilter, organizations, user]);
 
     const caregiverOptions = React.useMemo(() => {
         return filteredEmployees.map(emp => ({
@@ -178,6 +245,11 @@ function Clients() {
 
     const onClear = React.useCallback(() => {
         setFilterValue("");
+    }, []);
+
+    // Handler pro změnu organization filtru (single select)
+    const handleOrganizationFilterChange = React.useCallback((keys) => {
+        setOrganizationFilter(new Set(keys));
     }, []);
 
     // Handler pro změnu department filtru
@@ -326,6 +398,30 @@ function Clients() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        {user?.role === "SUPERADMIN" && (
+                            <Dropdown>
+                                <DropdownTrigger className="hidden sm:flex">
+                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                        Organizace
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu
+                                    aria-label="Organization Filter"
+                                    closeOnSelect={true}
+                                    selectedKeys={organizationFilter}
+                                    selectionMode="single"
+                                    onSelectionChange={handleOrganizationFilterChange}
+                                    className="max-h-60 overflow-y-auto"
+                                >
+                                    {organizationOptions.map((org) => (
+                                        <DropdownItem key={org.key}>
+                                            {org.name}
+                                        </DropdownItem>
+                                    ))}
+                                </DropdownMenu>
+                            </Dropdown>
+                        )}
+
                         {canAlterClient && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -354,7 +450,12 @@ function Clients() {
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                    <Button
+                                        endContent={<ChevronDown className="size-4" />}
+                                        variant="flat"
+                                        className="text-foreground"
+                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                    >
                                         Oddělení
                                     </Button>
                                 </DropdownTrigger>
@@ -379,7 +480,12 @@ function Clients() {
 
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
-                                <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                <Button
+                                    endContent={<ChevronDown className="size-4" />}
+                                    variant="flat"
+                                    className="text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                >
                                     Pečovatel
                                 </Button>
                             </DropdownTrigger>
@@ -419,6 +525,7 @@ function Clients() {
     }, [
         filterValue,
         activeFilter,
+        organizationFilter,
         departmentFilter,
         caregiverFilter,
         filteredItems.length,
@@ -427,11 +534,14 @@ function Clients() {
         onClear,
         genderOptions,
         activeOptions,
+        organizationOptions,
         departmentOptions,
         caregiverOptions,
+        handleOrganizationFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
         canAlterClient,
+        user,
     ]);
 
     const renderCell = React.useCallback((client, columnKey) => {
@@ -563,7 +673,11 @@ function Clients() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"Žádní klienti nenalezeni"} items={sortedItems}>
+                <TableBody
+                    emptyContent={
+                    (user?.role === "SUPERADMIN" && organizationFilter.size === 0) ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
+                    }
+                    items={sortedItems}>
                     {(item) => (
                         <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

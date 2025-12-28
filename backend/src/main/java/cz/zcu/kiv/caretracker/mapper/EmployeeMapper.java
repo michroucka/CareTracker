@@ -33,6 +33,14 @@ public class EmployeeMapper {
 
         dto.setDepartment(departmentMapper.toDTO(employee.getDepartment()));
 
+        // Mapuj organizaci
+        if (employee.getOrganization() != null) {
+            EmployeeDTO.OrganizationInfo orgInfo = new EmployeeDTO.OrganizationInfo();
+            orgInfo.setId(employee.getOrganization().getId());
+            orgInfo.setName(employee.getOrganization().getName());
+            dto.setOrganization(orgInfo);
+        }
+
         return dto;
     }
 

@@ -38,14 +38,15 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      * - EMPLOYEE: Nemá přístup (ošetřeno na úrovni controlleru)
      */
     @Transactional(readOnly = true)
-    protected List<EmployeeDTO> getEmployeesByRole(boolean activeOnly) {
+    protected List<EmployeeDTO> getEmployeesByRole(boolean activeOnly, Long organizationId) {
         return filterEntitiesByRole(
                 () -> activeOnly ? employeeRepository.findByActiveTrue() : employeeRepository.findAll(),
                 orgId -> activeOnly ? employeeRepository.findByActiveTrueAndOrganizationId(orgId)
                         : employeeRepository.findByOrganizationId(orgId),
                 deptId -> activeOnly ? employeeRepository.findByActiveTrueAndDepartmentId(deptId)
                         : employeeRepository.findByDepartmentId(deptId),
-                employeeMapper::toDTOList
+                employeeMapper::toDTOList,
+                organizationId
         );
     }
 
@@ -53,16 +54,16 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      * Vrací aktivní zaměstnance filtrované podle role a organizačního kontextu přihlášeného uživatele.
      */
     @Transactional(readOnly = true)
-    public List<EmployeeDTO> getAllActiveEmployees() {
-        return getEmployeesByRole(true);
+    public List<EmployeeDTO> getAllActiveEmployees(Long organizationId) {
+        return getEmployeesByRole(true, organizationId);
     }
 
     /**
      * Vrací všechny zaměstnance (včetně neaktivních) filtrované podle role a organizačního kontextu přihlášeného uživatele.
      */
     @Transactional(readOnly = true)
-    public List<EmployeeDTO> getAllEmployees() {
-        return getEmployeesByRole(false);
+    public List<EmployeeDTO> getAllEmployees(Long organizationId) {
+        return getEmployeesByRole(false, organizationId);
     }
 
     /**

@@ -13,7 +13,8 @@ export const ROLE_LABELS = {
     ADMIN: "Administrátor",
     COORDINATOR: "Koordinátor",
     CAREGIVER: "Pečovatel",
-    CLIENT: "Klient"
+    CLIENT: "Klient",
+    MANAGER: "Vedoucí"
 };
 
 /**

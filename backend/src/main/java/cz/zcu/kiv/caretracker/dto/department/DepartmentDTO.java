@@ -11,4 +11,13 @@ public class DepartmentDTO {
     private Long id;
     private String name;
     private String address;
+    private OrganizationInfo organization;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OrganizationInfo {
+        private Long id;
+        private String name;
+    }
 }

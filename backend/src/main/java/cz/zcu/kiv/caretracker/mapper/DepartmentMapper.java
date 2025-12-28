@@ -33,6 +33,14 @@ public class DepartmentMapper {
         // Použij město jako jméno oddělení (můžeš změnit podle potřeby)
         dto.setName(department.getCity());
 
+        // Mapuj organizaci
+        if (department.getOrganization() != null) {
+            DepartmentDTO.OrganizationInfo orgInfo = new DepartmentDTO.OrganizationInfo();
+            orgInfo.setId(department.getOrganization().getId());
+            orgInfo.setName(department.getOrganization().getName());
+            dto.setOrganization(orgInfo);
+        }
+
         return dto;
     }
 

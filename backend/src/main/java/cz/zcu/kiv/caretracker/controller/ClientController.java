@@ -43,9 +43,11 @@ public class ClientController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<ClientDTO>> getAllClients() {
-        log.info("Fetching all clients");
-        List<ClientDTO> clients = clientService.getAllClients();
+    public ResponseEntity<List<ClientDTO>> getAllClients(
+            @RequestParam(required = false) Long organizationId
+    ) {
+        log.info("Fetching all clients" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<ClientDTO> clients = clientService.getAllClients(organizationId);
 
         return ResponseEntity.ok(clients);
     }

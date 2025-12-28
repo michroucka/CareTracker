@@ -16,4 +16,13 @@ public class EmployeeDTO {
     private Boolean active;
 
     private DepartmentDTO department;
+    private OrganizationInfo organization;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OrganizationInfo {
+        private Long id;
+        private String name;
+    }
 }

@@ -1,6 +1,3 @@
-import {SelectItem} from "@heroui/react";
-import React from "react";
-
 export const columns = [
     {name: "JMÉNO", key: "name", sortable: true},
     {name: "POHLAVÍ", key: "gender"},

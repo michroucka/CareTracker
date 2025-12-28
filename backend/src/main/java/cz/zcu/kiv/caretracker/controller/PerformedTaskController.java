@@ -28,9 +28,11 @@ public class PerformedTaskController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<PerformedTaskDTO>> getAllPerformedTasks() {
-        log.info("Fetching all performed tasks");
-        List<PerformedTaskDTO> performedTasks = performedTaskService.getAllPerformedTasks();
+    public ResponseEntity<List<PerformedTaskDTO>> getAllPerformedTasks(
+            @RequestParam(required = false) Long organizationId
+    ) {
+        log.info("Fetching all performed tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<PerformedTaskDTO> performedTasks = performedTaskService.getAllPerformedTasks(organizationId);
 
         return ResponseEntity.ok(performedTasks);
     }

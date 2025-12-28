@@ -27,13 +27,23 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    /**
+     * Vrací všechny provedené úkony filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     * - SUPERADMIN: Vidí všechny úkony, nebo úkony z konkrétní organizace pokud je zadán organizationId
+     * - ADMIN: Vidí pouze úkony z jeho organizace
+     * - COORDINATOR: Vidí pouze úkony z jeho oddělení
+     * - CAREGIVER: Vidí pouze úkony z jeho oddělení
+     *
+     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
+     */
     @Transactional(readOnly = true)
-    public List<PerformedTaskDTO> getAllPerformedTasks() {
+    public List<PerformedTaskDTO> getAllPerformedTasks(Long organizationId) {
         return filterEntitiesByRole(
                 performedTaskRepository::findAll,
                 performedTaskRepository::findByOrganizationId,
                 performedTaskRepository::findByDepartmentId,
-                performedTaskMapper::toDTOList
+                performedTaskMapper::toDTOList,
+                organizationId
         );
     }
 

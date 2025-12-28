@@ -25,9 +25,11 @@ public class EmployeeController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        log.info("Fetching all employees");
-        List<EmployeeDTO> employees = employeeService.getAllEmployees();
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployees(
+            @RequestParam(required = false) Long organizationId
+    ) {
+        log.info("Fetching all employees" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<EmployeeDTO> employees = employeeService.getAllEmployees(organizationId);
 
         return ResponseEntity.ok(employees);
     }
