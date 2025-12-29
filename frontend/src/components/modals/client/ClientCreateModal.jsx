@@ -40,10 +40,10 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departm
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">Přidat nového klienta</ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[50vh]">
+                <ModalBody>
                     <ClientForm
                         ref={formRef}
                         onSubmit={handleSubmit}

@@ -54,12 +54,12 @@ export function DeleteConfirmationModal({
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="sm">
+        <Modal isOpen={isOpen} onClose={onClose} size="sm" scrollBehavior="outside">
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center pb-0">
                     {title}
                 </ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[50vh] text-foreground/50 text-sm gap-1">
+                <ModalBody className="text-foreground/50 text-sm gap-1">
                     <p>{message}</p>
                     {warningMessage && (
                         <p className="text-danger/75">{warningMessage}</p>

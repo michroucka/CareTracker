@@ -67,12 +67,12 @@ export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, client
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center">
                     Detail klienta
                 </ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[50vh]">
+                <ModalBody>
                     {isLoading ? (
                         <div className="flex justify-center items-center py-8">
                             <Spinner size="lg" label="Načítání klienta..." />

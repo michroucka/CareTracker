@@ -67,10 +67,10 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">Detail provedeného úkonu</ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[50vh]">
+                <ModalBody>
                     {isLoading ? (
                         <div className="flex justify-center items-center py-8">
                             <Spinner size="lg" label="Načítání úkonu..." />

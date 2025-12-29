@@ -38,7 +38,7 @@ function Clients() {
     const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
     const [sortDescriptor, setSortDescriptor] = React.useState({
-        column: "name",
+        column: "fullName",
         direction: "ascending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
@@ -78,7 +78,7 @@ function Clients() {
     // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
-            return columns.filter(col => col.key === "name" || col.key === "actions");
+            return columns.filter(col => col.key === "fullName" || col.key === "actions");
         }
         return columns;
     }, [isMobile]);
@@ -200,7 +200,7 @@ function Clients() {
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredClients = filteredClients.filter((client) =>
-                removeDiacritics(client.name).includes(normalizedSearchValue),
+                removeDiacritics(client.fullName).includes(normalizedSearchValue),
             );
         }
 
@@ -232,7 +232,7 @@ function Clients() {
     }, [clients, filterValue, hasSearchFilter, activeFilter, departmentFilter, caregiverFilter]);
 
     const sortedItems = React.useMemo(() => {
-        return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
+        return sortByKey(sortByKey(filteredItems, "firstName", sortDescriptor.direction), "lastName", sortDescriptor.direction);
     }, [sortDescriptor, filteredItems]);
 
     const onSearchChange = React.useCallback((value) => {
@@ -548,7 +548,7 @@ function Clients() {
         const cellValue = client[columnKey];
 
         switch (columnKey) {
-            case "name":
+            case "fullName":
                 return (
                     <div className="flex flex-col">
                         <p className="font-bold text-small">{cellValue}</p>

@@ -71,12 +71,13 @@ export function EmployeeTerminateModal({ isOpen, onClose, onSubmit, clientId, cl
         <Modal isOpen={isOpen}
                onClose={onClose}
                size="lg"
+               scrollBehavior="outside"
         >
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center">
                     Deaktivovat klienta {clientName}
                 </ModalHeader>
-                <ModalBody className="overflow-y-auto max-h-[50vh]">
+                <ModalBody>
                     <Form
                         className="w-full space-y-4"
                         validationErrors={errors}

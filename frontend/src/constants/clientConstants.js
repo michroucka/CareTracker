@@ -1,5 +1,5 @@
 export const columns = [
-    {name: "JMÉNO", key: "name", sortable: true},
+    {name: "JMÉNO", key: "fullName", sortable: true},
     {name: "POHLAVÍ", key: "gender"},
     {name: "ADRESA", key: "address"},
     {name: "ODDĚLENÍ", key: "department"},

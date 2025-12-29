@@ -12,7 +12,9 @@ export function useClients() {
     function mapClient(client) {
         return {
             id: client.id,
-            name: `${client.firstName} ${client.lastName}`,
+            firstName: client.firstName,
+            lastName: client.lastName,
+            fullName: `${client.firstName} ${client.lastName}`,
             gender: client.gender,
             address: `${client.street}, ${client.city}`,
             organization: client.organization,
@@ -38,7 +40,7 @@ export function useClients() {
             // Mapuj data z backendu DTO
             const mappedClients = mapClients(clients);
 
-            const sorted = sortByKey(mappedClients, 'name', 'ascending');
+            const sorted = sortByKey(mappedClients, 'lastName', 'ascending');
             setClients(sorted);
         } catch (err) {
             console.error("Error fetching clients: ", err);
@@ -101,7 +103,7 @@ export function useClients() {
             const mappedClient = mapClient(newClient);
 
             setClients(prev =>
-                sortByKey([...prev, mappedClient], 'name', 'ascending')
+                sortByKey([...prev, mappedClient], 'lastName', 'ascending')
             );
 
             showToast({
@@ -174,7 +176,7 @@ export function useClients() {
 
             setClients(prev => sortByKey(
                 prev.map(client => client.id === id ? mappedClient : client),
-                'name',
+                'lastName',
                 'ascending'
             ));
 
@@ -202,7 +204,7 @@ export function useClients() {
 
             setClients(prev => sortByKey(
                 prev.map(client => client.id === id ? mappedClient : client),
-                'name',
+                'lastName',
                 'ascending'
             ));
 
@@ -229,7 +231,7 @@ export function useClients() {
 
             setClients(prev => sortByKey(
                 prev.map(client => client.id === id ? mappedClient : client),
-                'name',
+                'lastName',
                 'ascending'
             ));
 

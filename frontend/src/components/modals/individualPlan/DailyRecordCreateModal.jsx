@@ -93,6 +93,7 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
             isOpen={isOpen}
             onClose={onClose}
             size="lg"
+            scrollBehavior="outside"
         >
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">Přidat denní záznam</ModalHeader>

@@ -240,9 +240,9 @@ export const PerformedTaskForm = React.forwardRef(({
                             <AutocompleteItem
                                 key={client.id.toString()}
                                 value={client.id.toString()}
-                                textValue={client.name}
+                                textValue={client.fullName}
                             >
-                                {client.name}
+                                {client.fullName}
                             </AutocompleteItem>
                         ))}
                     </Autocomplete>
