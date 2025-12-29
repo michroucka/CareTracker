@@ -675,7 +675,8 @@ function Clients() {
                 </TableHeader>
                 <TableBody
                     emptyContent={
-                    (user?.role === "SUPERADMIN" && organizationFilter.size === 0) ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
+                    (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
+                        ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
                     }
                     items={sortedItems}>
                     {(item) => (

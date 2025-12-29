@@ -609,7 +609,12 @@ function PerformedTasks() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"Žádné provedené úkony nenalezeny"} items={sortedItems}>
+                <TableBody
+                    emptyContent={
+                    (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
+                        ? "Vyberte prosím organizaci" : "Žádné provedené úkony nenalezeny"
+                    }
+                    items={sortedItems}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

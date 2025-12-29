@@ -14,7 +14,12 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*", "http://192.168.*.*:*") // localhost + local network
+                        .allowedOriginPatterns(
+                                "http://localhost:*",
+                                "http://192.168.*.*:*", // localhost + local network
+                                "https://*.ngrok-free.dev", // ngrok tunnels
+                                "https://*.ngrok.io" // alternative ngrok domain
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

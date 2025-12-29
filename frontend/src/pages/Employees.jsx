@@ -548,7 +548,8 @@ function Employees() {
                 </TableHeader>
                 <TableBody
                     emptyContent={
-                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0) ? "Vyberte prosím organizaci" : "Žádní zaměstnanci nenalezeni"
+                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
+                            ? "Vyberte prosím organizaci" : "Žádní zaměstnanci nenalezeni"
                     }
                     items={sortedItems}>
                     {(item) => (
