@@ -12,4 +12,6 @@ public class EmployeeRequestDTO {
     private String lastName;
     private String role;
     private Long departmentId;
+    private String email;
+    private Boolean isAdmin;
 }

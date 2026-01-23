@@ -46,4 +46,8 @@ public class Employee {
     @ManyToMany(mappedBy = "caregivers")
     @JsonIgnore
     private List<PerformedTask> performed_tasks;
+
+    @OneToOne(mappedBy = "employee")
+    @JsonIgnore
+    private User user;
 }

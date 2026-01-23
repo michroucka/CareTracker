@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,6 +31,12 @@ public class EmployeeMapper {
         dto.setLastName(employee.getLastName());
         dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
         dto.setActive(employee.getActive());
+
+        // Mapuj email z připojeného User účtu
+        if (employee.getUser() != null) {
+            dto.setEmail(employee.getUser().getEmail());
+            dto.setIsAdmin(Objects.equals(employee.getUser().getRole().toString(), "ADMIN"));
+        }
 
         dto.setDepartment(departmentMapper.toDTO(employee.getDepartment()));
 

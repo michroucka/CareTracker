@@ -14,6 +14,8 @@ public class EmployeeDTO {
     private String lastName;
     private String role;
     private Boolean active;
+    private String email;
+    private Boolean isAdmin;
 
     private DepartmentDTO department;
     private OrganizationInfo organization;

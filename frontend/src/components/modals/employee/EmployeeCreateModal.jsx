@@ -8,9 +8,9 @@ import {
 } from "@heroui/react";
 import { Plus } from "lucide-react";
 import React from "react";
-import { ClientForm } from "../../forms/ClientForm.jsx";
+import {EmployeeForm} from "../../forms/EmployeeForm.jsx";
 
-export function EmployeeCreateModal({ isOpen, onClose, onSubmit, userDept, departments = [], caregivers = [], tasks = [] }) {
+export function EmployeeCreateModal({ isOpen, onClose, onSubmit, userDept, userRole, departments = [], }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const formRef = React.useRef();
 
@@ -42,16 +42,15 @@ export function EmployeeCreateModal({ isOpen, onClose, onSubmit, userDept, depar
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
             <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Přidat nového klienta</ModalHeader>
+                <ModalHeader className="flex flex-col gap-1">Přidat nového zaměstnance</ModalHeader>
                 <ModalBody>
-                    <ClientForm
+                    <EmployeeForm
                         ref={formRef}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
                         departments={departments}
-                        caregivers={caregivers}
-                        tasks={tasks}
                         userDept={userDept}
+                        userRole={userRole}
                     />
                 </ModalBody>
                 <ModalFooter className="justify-between">
@@ -72,7 +71,7 @@ export function EmployeeCreateModal({ isOpen, onClose, onSubmit, userDept, depar
                         endContent={<Plus className="size-4" />}
                         onPress={handleFormSubmit}
                     >
-                        {isLoading ? "Ukládání..." : "Přidat klienta"}
+                        {isLoading ? "Ukládání..." : "Přidat zaměstnance"}
                     </Button>
                 </ModalFooter>
             </ModalContent>

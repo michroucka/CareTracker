@@ -1,0 +1,2 @@
+ALTER TABLE app_user
+ALTER COLUMN username DROP NOT NULL;

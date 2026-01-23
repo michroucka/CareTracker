@@ -78,7 +78,7 @@ function Employees() {
     }, [isMobile]);
 
     React.useEffect(() => {
-        // Pro superadmina nenačítáme klienty, dokud nevybere organizaci
+        // Pro superadmina nenačítáme zaměstnance, dokud nevybere organizaci
         if (user?.role !== "SUPERADMIN") {
             fetchEmployees();
         }
@@ -95,7 +95,7 @@ function Employees() {
         }
     }, [user, departments]);
 
-    // Když superadmin změní organizaci, znovu načíst klienty s filtrem
+    // Když superadmin změní organizaci, znovu načíst zaměstnance s filtrem
     React.useEffect(() => {
         if (user?.role === "SUPERADMIN") {
             if (organizationFilter.size > 0 && organizations.length > 0) {
@@ -526,9 +526,6 @@ function Employees() {
             <Table
                 isVirtualized
                 aria-label="Employees table"
-                classNames={{
-                    th: "bg-content1",
-                }}
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
@@ -565,6 +562,7 @@ function Employees() {
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreateEmployee}
                 userDept={user?.departmentId}
+                userRole={user?.role}
                 departments={departments}
             />
 
@@ -573,6 +571,7 @@ function Employees() {
                 onClose={handleCloseDetailModal}
                 onSubmit={handleUpdateEmployee}
                 canEdit={canAlterEmployee}
+                userRole={user?.role}
                 employee={selectedEmployee}
                 isLoading={isLoadingDetail}
                 departments={departments}

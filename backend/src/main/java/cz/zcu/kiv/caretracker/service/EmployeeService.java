@@ -28,6 +28,8 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     private TaskRepository taskRepository;
     @Autowired
     private ClientRepository clientRepository;
+    @Autowired
+    private UserService userService;
 
     /**
      * Vrací zaměstnance filtrované podle role a organizačního kontextu přihlášeného uživatele.
@@ -93,8 +95,28 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         );
 
         employeeMapper.requestToEmployee(employee, dto, department);
+        employee = employeeRepository.save(employee);
 
-        return employeeRepository.save(employee);
+        // Zpracování User účtu
+        handleUserAccount(employee, dto);
+
+        return employee;
+    }
+
+    /**
+     * Zpracuje vytvoření/aktualizaci/smazání User účtu pro zaměstnance.
+     */
+    private void handleUserAccount(Employee employee, EmployeeRequestDTO dto) {
+        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
+            // Uživatel chce vytvořit/aktualizovat účet
+            if (employee.getUser() == null) {
+                // Vytvoř nový User účet
+                userService.createUserForEmployee(employee, dto.getEmail(), dto.getIsAdmin());
+            } else {
+                // Aktualizuj existující User účet
+                userService.updateUserForEmployee(employee, dto.getEmail(), dto.getIsAdmin());
+            }
+        }
     }
 
     public Employee createEmployee(EmployeeRequestDTO dto) {

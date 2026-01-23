@@ -10,19 +10,20 @@ import {
 import { Save, Pencil, X } from "lucide-react";
 import React from "react";
 import { ClientForm } from "../../forms/ClientForm.jsx";
+import {EmployeeForm} from "../../forms/EmployeeForm.jsx";
 
-export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, client, isLoading, departments = [], caregivers = [], tasks = [] }) {
+export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, userRole, employee, isLoading, departments = [] }) {
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [currentClientData, setCurrentClientData] = React.useState(null);
+    const [currentEmployeeData, setCurrentEmployeeData] = React.useState(null);
     const formRef = React.useRef();
 
     // Update current client data when client prop changes
     React.useEffect(() => {
-        if (client) {
-            setCurrentClientData(client);
+        if (employee) {
+            setCurrentEmployeeData(employee);
         }
-    }, [client]);
+    }, [employee]);
 
     // Reset edit mode when modal closes
     React.useEffect(() => {
@@ -33,7 +34,7 @@ export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, client
 
     // Enter edit mode
     const handleEnterEditMode = () => {
-        if (currentClientData && canEdit) {
+        if (currentEmployeeData && canEdit) {
             setIsEditMode(true);
         }
     };
@@ -42,16 +43,16 @@ export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, client
     const handleCancelEdit = () => {
         setIsEditMode(false);
         // Force re-render of form with current data
-        setCurrentClientData({ ...currentClientData });
+        setCurrentEmployeeData({ ...currentEmployeeData });
     };
 
     // Submit changes
     async function handleSubmit(formData) {
         setIsSubmitting(true);
         try {
-            if (onSubmit && client) {
-                const updatedClient = await onSubmit(client.id, formData);
-                setCurrentClientData(updatedClient);
+            if (onSubmit && employee) {
+                const updatedEmployee = await onSubmit(employee.id, formData);
+                setCurrentEmployeeData(updatedEmployee);
             }
             setIsEditMode(false);
         } catch (error) {
@@ -70,28 +71,26 @@ export function EmployeeDetailModal({ isOpen, onClose, onSubmit, canEdit, client
         <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center">
-                    Detail klienta
+                    Detail zaměstnance
                 </ModalHeader>
                 <ModalBody>
                     {isLoading ? (
                         <div className="flex justify-center items-center py-8">
-                            <Spinner size="lg" label="Načítání klienta..." />
+                            <Spinner size="lg" label="Načítání zaměstnance..." />
                         </div>
-                    ) : client ? (
-                        <ClientForm
+                    ) : employee ? (
+                        <EmployeeForm
                             ref={formRef}
-                            initialData={currentClientData}
+                            initialData={currentEmployeeData}
                             onSubmit={handleSubmit}
-                            isLoading={isSubmitting}
+                            isLoading={isLoading}
                             isReadOnly={!isEditMode}
                             departments={departments}
-                            caregivers={caregivers}
-                            tasks={tasks}
-                            showTermination={!client.active}
+                            userRole={userRole}
                         />
                     ) : (
                         <div className="text-center py-8 text-gray-500">
-                            Klient nebyl nalezen
+                            Zaměstnanec nebyl nalezen
                         </div>
                     )}
                 </ModalBody>
