@@ -525,6 +525,7 @@ function Employees() {
         <>
             <Table
                 isVirtualized
+                isHeaderSticky
                 aria-label="Employees table"
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}

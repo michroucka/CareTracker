@@ -2,14 +2,13 @@ package cz.zcu.kiv.caretracker.repository;
 
 import cz.zcu.kiv.caretracker.entity.Client;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ClientRepository extends JpaRepository<Client, Long> {
+public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecificationExecutor<Client> {
     List<Client> findByActiveTrue();
 
     // Filtrování podle oddělení (pro CAREGIVER a COORDINATOR)

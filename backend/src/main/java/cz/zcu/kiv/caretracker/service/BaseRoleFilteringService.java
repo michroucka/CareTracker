@@ -462,4 +462,100 @@ public abstract class BaseRoleFilteringService<T, D> {
 
         throw new SecurityException("User does not have permission to view this entity");
     }
+
+    /**
+     * Vypočítá filtry pro organizaci a oddělení podle role přihlášeného uživatele.
+     * Slouží pro použití s JPA Specifications nebo vlastními queries.
+     *
+     * Role-based logika:
+     * - SUPERADMIN: Může použít requestedOrganizationId (nebo null pro všechny organizace)
+     *               a requestedDepartmentIds jak jsou zadány
+     * - ADMIN: Vidí jen svou organizaci, může filtrovat podle requestedDepartmentIds
+     * - COORDINATOR/CAREGIVER: Vidí jen své oddělení, requestedDepartmentIds se ignorují
+     *                          (nebo se zkontroluje, že obsahují pouze jejich oddělení)
+     *
+     * @param requestedOrganizationId ID organizace z request parametru (může být null)
+     * @param requestedDepartmentIds Seznam ID oddělení z request parametru (může být null nebo prázdný)
+     * @return RoleBasedFilters s vypočítanými hodnotami podle role
+     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace/oddělení
+     */
+    protected RoleBasedFilters calculateRoleBasedFilters(
+            Long requestedOrganizationId,
+            List<Long> requestedDepartmentIds
+    ) {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+
+        if (role == UserRole.SUPERADMIN) {
+            // SUPERADMIN může používat parametry jak jsou
+            return new RoleBasedFilters(requestedOrganizationId, requestedDepartmentIds);
+
+        } else if (role == UserRole.ADMIN) {
+            // ADMIN vidí jen svou organizaci
+            if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
+                throw new SecurityException("Admin must have an associated organization");
+            }
+            Long userOrgId = user.getEmployee().getOrganization().getId();
+
+            // Může filtrovat podle departmentIds v rámci své organizace
+            return new RoleBasedFilters(userOrgId, requestedDepartmentIds);
+
+        } else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+            // COORDINATOR/CAREGIVER vidí jen své oddělení
+            if (user.getEmployee() == null || user.getEmployee().getDepartment() == null) {
+                throw new SecurityException("Employee must have an associated department");
+            }
+
+            Long userOrgId = user.getEmployee().getOrganization().getId();
+            Long userDeptId = user.getEmployee().getDepartment().getId();
+
+            // Pokud uživatel zadal departmentIds, zkontroluj přístup
+            if (requestedDepartmentIds != null && !requestedDepartmentIds.isEmpty()) {
+                // Pokud požaduje oddělení, ke kterým nemá přístup, vrať noAccess
+                if (!requestedDepartmentIds.contains(userDeptId)) {
+                    return RoleBasedFilters.noAccess();
+                }
+            }
+
+            // Vždy filtruj podle jeho oddělení
+            return new RoleBasedFilters(userOrgId, java.util.Collections.singletonList(userDeptId));
+
+        } else {
+            throw new SecurityException("User does not have permission to view this data");
+        }
+    }
+
+    /**
+     * Vypočítá filtry pro organizaci podle role přihlášeného uživatele.
+     * Verze bez filtrování podle oddělení.
+     *
+     * Role-based logika:
+     * - SUPERADMIN: Může použít requestedOrganizationId (nebo null pro všechny organizace)
+     * - ADMIN/COORDINATOR/CAREGIVER: Vidí jen svou organizaci
+     *
+     * @param requestedOrganizationId ID organizace z request parametru (může být null)
+     * @return RoleBasedFilters s vypočítanou hodnotou organizationId podle role
+     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace
+     */
+    protected RoleBasedFilters calculateRoleBasedFiltersOrganizationOnly(Long requestedOrganizationId) {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+
+        if (role == UserRole.SUPERADMIN) {
+            // SUPERADMIN může používat parametr jak je
+            return new RoleBasedFilters(requestedOrganizationId, null);
+
+        } else if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+            // Všichni zaměstnanci vidí jen svou organizaci
+            if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
+                throw new SecurityException("Employee must have an associated organization");
+            }
+            Long userOrgId = user.getEmployee().getOrganization().getId();
+
+            return new RoleBasedFilters(userOrgId, null);
+
+        } else {
+            throw new SecurityException("User does not have permission to view this data");
+        }
+    }
 }

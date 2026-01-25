@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
@@ -10,7 +11,6 @@ import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
-import cz.zcu.kiv.caretracker.entity.IndividualPlan;
 import cz.zcu.kiv.caretracker.entity.Picture;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.service.ClientService;
@@ -43,11 +43,14 @@ public class ClientController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<ClientDTO>> getAllClients(
-            @RequestParam(required = false) Long organizationId
+    public ResponseEntity<List<ClientSummaryDTO>> getClients(
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam(required = false) Boolean status,
+            @RequestParam(required = false) List<Long> departmentIds,
+            @RequestParam(required = false) List<Long> caregiverIds
     ) {
-        log.info("Fetching all clients" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<ClientDTO> clients = clientService.getAllClients(organizationId);
+        log.info("Fetching clients" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<ClientSummaryDTO> clients = clientService.getClients(organizationId, status, departmentIds, caregiverIds);
 
         return ResponseEntity.ok(clients);
     }

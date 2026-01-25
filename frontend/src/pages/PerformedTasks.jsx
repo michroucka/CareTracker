@@ -588,10 +588,8 @@ function PerformedTasks() {
         <>
             <Table
                 isVirtualized
+                isHeaderSticky
                 aria-label="Performed tasks table"
-                classNames={{
-                    th: "bg-content1",
-                }}
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}

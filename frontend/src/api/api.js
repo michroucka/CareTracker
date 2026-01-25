@@ -23,11 +23,12 @@ export async function post(endpoint, data) {
     return response;
 }
 
-export async function getJSON(endpoint) {
+export async function getJSON(endpoint, options = {}) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        signal: options.signal, // Podpora pro AbortController
     });
 
     if (!response.ok) {

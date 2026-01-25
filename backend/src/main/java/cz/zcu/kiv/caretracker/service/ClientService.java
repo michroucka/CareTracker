@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
@@ -13,11 +14,14 @@ import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.*;
+import cz.zcu.kiv.caretracker.specification.ClientSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,13 +81,40 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Vrací všechny klienty (včetně neaktivních) filtrované podle role a organizačního kontextu přihlášeného uživatele.
+     * Vrací klienty filtrované podle role, organizačního kontextu a dalších kritérií.
+     * Používá JPA Specifications pro flexibilní a efektivní filtrování na úrovni databáze.
+     *
+     * - SUPERADMIN: Může filtrovat podle organizationId (nebo vidět vše), status, departmentIds, caregiverIds
+     * - ADMIN: Vidí pouze svou organizaci, může filtrovat podle status, departmentIds, caregiverIds
+     * - COORDINATOR/CAREGIVER: Vidí pouze své oddělení, může filtrovat podle status, caregiverIds
      *
      * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
+     * @param status Volitelný status klienta (true = aktivní, false = neaktivní, null = všichni)
+     * @param departmentIds Volitelný seznam ID oddělení pro filtrování
+     * @param caregiverIds Volitelný seznam ID caregiverů pro filtrování
+     * @return Seznam ClientSummaryDTO filtrovaných podle kritérií
      */
     @Transactional(readOnly = true)
-    public List<ClientDTO> getAllClients(Long organizationId) {
-        return getClientsByRole(false, organizationId);
+    public List<ClientSummaryDTO> getClients(Long organizationId, Boolean status, List<Long> departmentIds, List<Long> caregiverIds) {
+        // Vypočítat filtry podle role uživatele (reusable metoda z BaseRoleFilteringService)
+        RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
+
+        // Pokud uživatel nemá přístup, vrať prázdný seznam
+        if (roleFilters.isNoAccess()) {
+            return Collections.emptyList();
+        }
+
+        // Sestavit specification s filtry
+        Specification<Client> spec = ClientSpecifications.withFilters(
+                roleFilters.getOrganizationId(),
+                status,
+                roleFilters.getDepartmentIds(),
+                caregiverIds
+        );
+
+        // Provést dotaz a převést na DTO
+        List<Client> clients = clientRepository.findAll(spec);
+        return clientMapper.toSummaryDTOList(clients);
     }
 
     /**

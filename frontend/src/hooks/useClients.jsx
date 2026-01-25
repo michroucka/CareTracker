@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage } from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
@@ -8,20 +8,24 @@ import { sortByKey } from "../utils/sorting.js";
 export function useClients() {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const abortControllerRef = useRef(null);
 
     function mapClient(client) {
         return {
-            id: client.id,
-            firstName: client.firstName,
-            lastName: client.lastName,
+            ...client,
             fullName: `${client.firstName} ${client.lastName}`,
-            gender: client.gender,
             address: `${client.street}, ${client.city}`,
-            organization: client.organization,
-            department: client.department,
-            caregiver: client.caregiver,
-            active: client.active,
-            tasks: client.tasks || [],
+            // Flat struktura - department a caregiver jsou jen ID a názvy
+            // Pro zobrazení používáme přímo názvy z DTO
+            department: client.departmentId ? {
+                id: client.departmentId,
+                name: client.departmentName
+            } : null,
+            caregiver: client.caregiverId ? {
+                id: client.caregiverId,
+                firstName: client.caregiverFirstName,
+                lastName: client.caregiverLastName
+            } : null
         };
     }
 
@@ -29,23 +33,64 @@ export function useClients() {
         return clients.map((client) => mapClient(client));
     }
 
-    const fetchClients = async (organizationId = null) => {
+    const fetchClients = async (filters = {}) => {
+        // Zruš předchozí request pokud stále běží
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Vytvoř nový AbortController pro tento request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
+            // Vyčisti staré data před načtením nových
+            setClients([]);
             setLoading(true);
-            const url = organizationId
-                ? `/clients?organizationId=${organizationId}`
-                : '/clients';
-            const clients = await getJSON(url);
+
+            const params = new URLSearchParams();
+
+            if (filters.organizationId) {
+                params.append("organizationId", filters.organizationId);
+            }
+
+            if (filters.status !== undefined && filters.status !== null) {
+                params.append("status", filters.status);
+            }
+
+            if (filters.departmentIds && filters.departmentIds.length > 0) {
+                filters.departmentIds.forEach((departmentId) => {
+                    params.append("departmentIds", departmentId);
+                })
+            }
+
+            if (filters.caregiverIds && filters.caregiverIds.length > 0) {
+                filters.caregiverIds.forEach((caregiverId) => {
+                    params.append("caregiverIds", caregiverId);
+                })
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/clients?${queryString}` : "/clients";
+            const clients = await getJSON(url, { signal: controller.signal });
 
             // Mapuj data z backendu DTO
             const mappedClients = mapClients(clients);
-
             const sorted = sortByKey(mappedClients, 'lastName', 'ascending');
             setClients(sorted);
+
+            // Vypni loading pouze pokud tento request nebyl abortnut mezitím
+            setLoading(false);
         } catch (err) {
+            // Ignoruj abort chyby (request byl zrušen, což je OK)
+            if (err.name === 'AbortError') {
+                console.log("Request was cancelled");
+                // DŮLEŽITÉ: Nevypínej loading - probíhá jiný request!
+                return;
+            }
+
             console.error("Error fetching clients: ", err);
             showErrorToast(err, "Chyba při načítání klientů", { icon: <CloudAlert /> });
-        } finally {
             setLoading(false);
         }
     };

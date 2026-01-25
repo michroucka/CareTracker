@@ -59,6 +59,7 @@ function Clients() {
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
+    const hasLoadedMetadata = React.useRef(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedClient, setSelectedClient ] = React.useState(null);
@@ -81,47 +82,6 @@ function Clients() {
             return columns.filter(col => col.key === "fullName" || col.key === "actions");
         }
         return columns;
-    }, [isMobile]);
-
-    React.useEffect(() => {
-        // Pro superadmina nenačítáme klienty, dokud nevybere organizaci
-        if (user?.role !== "SUPERADMIN") {
-            fetchClients();
-        }
-        fetchDepartments();
-        fetchOrganizations();
-        fetchEmployees();
-        fetchTasks();
-    }, [user]);
-
-    React.useEffect(() => {
-        if (user?.departmentId && departments.length > 0) {
-            const userDepartment = departments.find(dept => dept.id === user.departmentId);
-            if (userDepartment) {
-                setDepartmentFilter(new Set([userDepartment.name]));
-            }
-        }
-    }, [user, departments]);
-
-    // Když superadmin změní organizaci, znovu načíst klienty s filtrem
-    React.useEffect(() => {
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size > 0 && organizations.length > 0) {
-                const selectedOrgName = Array.from(organizationFilter)[0];
-                const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-                if (selectedOrg) {
-                    fetchClients(selectedOrg.id);
-                }
-            } else {
-                // Pokud není vybraná organizace, smaž data
-                setClients([]);
-            }
-        }
-    }, [organizationFilter, user, organizations]);
-
-    // Dynamická výška tabulky podle velikosti obrazovky
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
 
     const hasSearchFilter = Boolean(filterValue);
@@ -204,32 +164,8 @@ function Clients() {
             );
         }
 
-        // Filtr podle aktivity (filtruj jen když nejsou vybrané obě možnosti)
-        if (activeFilter.size < 2) {
-            filteredClients = filteredClients.filter((client) =>
-                activeFilter.has(client?.active?.toString()),
-            );
-        }
-
-        // Filtr podle oddělení
-        if (!departmentFilter.has("all")) {
-            filteredClients = filteredClients.filter((client) =>
-                departmentFilter.has(client.department?.name),
-            );
-        }
-
-        // Filtr podle pečovatele
-        if (!caregiverFilter.has("all")) {
-            filteredClients = filteredClients.filter((client) => {
-                const caregiverName = client.caregiver
-                    ? `${client.caregiver.firstName} ${client.caregiver.lastName}`
-                    : null;
-                return caregiverFilter.has(caregiverName);
-            });
-        }
-
         return filteredClients;
-    }, [clients, filterValue, hasSearchFilter, activeFilter, departmentFilter, caregiverFilter]);
+    }, [clients, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(sortByKey(filteredItems, "firstName", sortDescriptor.direction), "lastName", sortDescriptor.direction);
@@ -289,6 +225,131 @@ function Clients() {
             setCaregiverFilter(newKeys);
         }
     }, [caregiverFilter]);
+
+    // Dynamická výška tabulky podle velikosti obrazovky
+    React.useEffect(() => {
+        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
+    }, [isMobile]);
+
+    React.useEffect(() => {
+        // Načíst metadata pouze jednou (při prvním render s user)
+        if (!user || hasLoadedMetadata.current) {
+            return;
+        }
+
+        hasLoadedMetadata.current = true;
+
+        // Načíst metadata (departments, organizations, employees, tasks)
+        // Klienty načítáme až v dalším useEffectu s filtry
+        fetchDepartments();
+        fetchOrganizations();
+        fetchEmployees();
+        fetchTasks();
+    }, [user]);
+
+    React.useEffect(() => {
+        // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
+        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all")) {
+            const userDepartment = departments.find(dept => dept.id === user.departmentId);
+            if (userDepartment) {
+                setDepartmentFilter(new Set([userDepartment.name]));
+            }
+        }
+    }, [user, departments]);
+
+    // Když se změní filtry, znovu načíst klienty s filtrem
+    React.useEffect(() => {
+        // Počkej, dokud se nenačtou metadata (departments, employees, organizations)
+        if (departments.length === 0 || employees.length === 0) {
+            return;
+        }
+
+        // Vypočítat filteredDepartments uvnitř useEffectu (aby to nebylo v dependencies)
+        let currentFilteredDepartments = departments;
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+            if (selectedOrg) {
+                currentFilteredDepartments = departments.filter(dept => dept.organization?.id === selectedOrg.id);
+            }
+        }
+
+        // Vypočítat filteredEmployees uvnitř useEffectu
+        let currentFilteredEmployees = [...employees];
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+            if (selectedOrg) {
+                currentFilteredEmployees = currentFilteredEmployees.filter(emp => emp.organization?.id === selectedOrg.id);
+            }
+        }
+        if (!departmentFilter.has("all")) {
+            currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.name));
+        }
+
+        if (user?.role === "SUPERADMIN") {
+            // Superadmin musi vybrat organization
+            if (organizationFilter.size === 0) {
+                // Pokud není vybraná organizace, smaž data
+                setClients([]);
+                return;
+            }
+
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+            if (!selectedOrg) return;
+
+            // Sestavit filtry
+            const filters = {
+                organizationId: selectedOrg.id,
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+            };
+
+            fetchClients(filters);
+        } else {
+            // Ostatní role
+            const filters = {
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+            };
+
+            fetchClients(filters);
+        }
+    }, [organizationFilter, activeFilter, departmentFilter, caregiverFilter, user, organizations, departments, employees]);
+
+    // Helper funkce pro převod filtrů z Set na parametry
+    function getStatusFromFilter(activeFilter) {
+        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
+        if (activeFilter.size === 0 || activeFilter.size === 2) {
+            return undefined;
+        }
+        // Jinak vrať true nebo false
+        return activeFilter.has("true");
+    }
+
+    function getDepartmentIdsFromFilter(departmentFilter, departments) {
+        if (departmentFilter.has("all")) {
+            return undefined;
+        }
+        // Převést názvy oddělení na ID
+        return departments
+            .filter(dept => departmentFilter.has(dept.name))
+            .map(dept => dept.id);
+    }
+
+    function getCaregiverIdsFromFilter(caregiverFilter, employees) {
+        if (caregiverFilter.has("all")) {
+            return undefined;
+        }
+        // Převést jména pečovatelů na ID
+        return employees
+            .filter(emp => caregiverFilter.has(emp.fullName))
+            .map(emp => emp.id);
+    }
 
     async function handleSelectClient(clientId) {
         try {
@@ -640,22 +701,16 @@ function Clients() {
         }
     }, [canAlterClient]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner size="lg" variant="gradient" label="Načítání klientů..." />
-            </div>
-        );
-    }
+    // Kontrola jestli se načítají metadata nebo klienti
+    const isLoadingMetadata = departments.length === 0 || employees.length === 0;
+    const isLoading = loading || isLoadingMetadata;
 
     return (
         <>
             <Table
                 isVirtualized
+                isHeaderSticky
                 aria-label="Clients table"
-                classNames={{
-                    th: "bg-content1",
-                }}
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
@@ -674,11 +729,14 @@ function Clients() {
                     )}
                 </TableHeader>
                 <TableBody
+                    isLoading={isLoading}
+                    loadingContent={<Spinner label="Načítání klientů..." />}
                     emptyContent={
-                    (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
-                        ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
+                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
+                            ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
                     }
-                    items={sortedItems}>
+                    items={sortedItems}
+                >
                     {(item) => (
                         <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
