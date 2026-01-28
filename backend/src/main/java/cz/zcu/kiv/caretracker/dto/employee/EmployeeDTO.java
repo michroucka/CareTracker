@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.dto.employee;
 
-import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
+import cz.zcu.kiv.caretracker.dto.organization.OrganizationSummaryDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,14 +18,6 @@ public class EmployeeDTO {
     private String email;
     private Boolean isAdmin;
 
-    private DepartmentDTO department;
-    private OrganizationInfo organization;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OrganizationInfo {
-        private Long id;
-        private String name;
-    }
+    private DepartmentSummaryDTO department;
+    private OrganizationSummaryDTO organization;
 }

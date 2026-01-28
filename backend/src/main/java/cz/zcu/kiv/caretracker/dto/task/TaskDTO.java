@@ -1,6 +1,5 @@
-package cz.zcu.kiv.caretracker.dto;
+package cz.zcu.kiv.caretracker.dto.task;
 
-import cz.zcu.kiv.caretracker.enums.UnitType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

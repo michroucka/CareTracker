@@ -7,6 +7,7 @@ import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +17,10 @@ import java.util.stream.Collectors;
 @Component
 public class EmployeeMapper {
     @Autowired
+    @Lazy
     DepartmentMapper departmentMapper;
+    @Autowired
+    OrganizationMapper organizationMapper;
     /**
      * Převede Employee entitu na EmployeeDTO
      */
@@ -38,14 +42,11 @@ public class EmployeeMapper {
             dto.setIsAdmin(Objects.equals(employee.getUser().getRole().toString(), "ADMIN"));
         }
 
-        dto.setDepartment(departmentMapper.toDTO(employee.getDepartment()));
+        dto.setDepartment(departmentMapper.toSummaryDTO(employee.getDepartment()));
 
         // Mapuj organizaci
         if (employee.getOrganization() != null) {
-            EmployeeDTO.OrganizationInfo orgInfo = new EmployeeDTO.OrganizationInfo();
-            orgInfo.setId(employee.getOrganization().getId());
-            orgInfo.setName(employee.getOrganization().getName());
-            dto.setOrganization(orgInfo);
+            dto.setOrganization(organizationMapper.toSummaryDTO(employee.getOrganization()));
         }
 
         return dto;
@@ -82,6 +83,16 @@ public class EmployeeMapper {
 
         return employees.stream()
                 .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<EmployeeSummaryDTO> toSummaryDTOList(List<Employee> employees) {
+        if (employees == null) {
+            return null;
+        }
+
+        return employees.stream()
+                .map(this::toSummaryDTO)
                 .collect(Collectors.toList());
     }
 }

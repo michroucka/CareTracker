@@ -217,7 +217,7 @@ export const PerformedTaskForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField
                         label="Klient"
-                        value={clients.find(c => c.id === clientId)?.name || '-'}
+                        value={clients.find(c => c.id === clientId)?.fullName || '-'}
                     />
                 ) : (
                     <Autocomplete
@@ -342,7 +342,7 @@ export const PerformedTaskForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Pečovatelé"
-                            value={caregiverIds.length > 0 ? `Celkem: ${caregiverIds.length}` : '-'}
+                            value={caregiverIds.length > 0 ? caregiverIds.length > 1 ? `Celkem: ${caregiverIds.length}` : caregivers.find(c => c.id === caregiverIds[0])?.fullName : '-'}
                         />
                     ) : (
                         <Select
@@ -453,5 +453,5 @@ export const PerformedTaskForm = React.forwardRef(({
         </Form>
     );
 });
-
+// TODO add price
 PerformedTaskForm.displayName = "PerformedTaskForm";

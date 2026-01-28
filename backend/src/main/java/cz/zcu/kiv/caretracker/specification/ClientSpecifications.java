@@ -1,17 +1,16 @@
 package cz.zcu.kiv.caretracker.specification;
 
 import cz.zcu.kiv.caretracker.entity.Client;
-import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Třída poskytující JPA Specifications pro dynamické filtrování Client entit.
  * Používá se pro sestavení flexibilních dotazů s různými kombinacemi filtrů.
+ * Dědí z BaseSpecifications pro sdílení společné logiky.
  */
-public class ClientSpecifications {
+public class ClientSpecifications extends BaseSpecifications<Client> {
 
     /**
      * Vytvoří specification pro filtrování podle organizace.
@@ -20,12 +19,7 @@ public class ClientSpecifications {
      * @return Specification pro filtrování podle organizace
      */
     public static Specification<Client> hasOrganization(Long organizationId) {
-        return (root, query, criteriaBuilder) -> {
-            if (organizationId == null) {
-                return criteriaBuilder.conjunction(); // Vždy pravda (nefiltruje)
-            }
-            return criteriaBuilder.equal(root.get("organization").get("id"), organizationId);
-        };
+        return filterByOrganization("organization", organizationId);
     }
 
     /**
@@ -35,12 +29,7 @@ public class ClientSpecifications {
      * @return Specification pro filtrování podle statusu
      */
     public static Specification<Client> hasStatus(Boolean active) {
-        return (root, query, criteriaBuilder) -> {
-            if (active == null) {
-                return criteriaBuilder.conjunction(); // Vždy pravda (nefiltruje)
-            }
-            return criteriaBuilder.equal(root.get("active"), active);
-        };
+        return filterByStatus("active", active);
     }
 
     /**
@@ -50,12 +39,7 @@ public class ClientSpecifications {
      * @return Specification pro filtrování podle oddělení
      */
     public static Specification<Client> hasDepartments(List<Long> departmentIds) {
-        return (root, query, criteriaBuilder) -> {
-            if (departmentIds == null || departmentIds.isEmpty()) {
-                return criteriaBuilder.conjunction(); // Vždy pravda (nefiltruje)
-            }
-            return root.get("department").get("id").in(departmentIds);
-        };
+        return filterByDepartments("department", departmentIds);
     }
 
     /**
@@ -65,12 +49,7 @@ public class ClientSpecifications {
      * @return Specification pro filtrování podle caregiverů
      */
     public static Specification<Client> hasCaregivers(List<Long> caregiverIds) {
-        return (root, query, criteriaBuilder) -> {
-            if (caregiverIds == null || caregiverIds.isEmpty()) {
-                return criteriaBuilder.conjunction(); // Vždy pravda (nefiltruje)
-            }
-            return root.get("caregiver").get("id").in(caregiverIds);
-        };
+        return filterByCaregivers("caregiver", caregiverIds);
     }
 
     /**

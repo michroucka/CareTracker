@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
+import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
@@ -35,10 +36,29 @@ public class PerformedTaskMapper {
         dto.setUnitCount(pt.getUnitCount());
         dto.setNotes(pt.getNotes());
 
-        dto.setClient(clientMapper.toDTO(pt.getClient()));
+        dto.setClient(clientMapper.toSummaryDTOWithTasks(pt.getClient()));
         dto.setTask(taskMapper.toDTO(pt.getTask()));
-        dto.setDepartment(departmentMapper.toDTO(pt.getDepartment()));
-        dto.setCaregivers(employeeMapper.toDTOList(pt.getCaregivers()));
+        dto.setDepartment(departmentMapper.toSummaryDTO(pt.getDepartment()));
+        dto.setCaregivers(employeeMapper.toSummaryDTOList(pt.getCaregivers()));
+
+        return dto;
+    }
+
+    public PerformedTaskSummaryDTO toSummaryDTO(PerformedTask performedTask) {
+        if (performedTask == null) {
+            return null;
+        }
+
+        PerformedTaskSummaryDTO dto = new PerformedTaskSummaryDTO();
+        dto.setId(performedTask.getId());
+        dto.setDate(performedTask.getDate());
+        dto.setUnitCount(performedTask.getUnitCount());
+        dto.setClientName(performedTask.getClient().getFullName());
+        dto.setTaskName(performedTask.getTask().getName());
+        dto.setUnitType(performedTask.getTask().getUnitType().toString());
+
+        dto.setDepartment(departmentMapper.toSummaryDTO(performedTask.getDepartment()));
+        dto.setCaregivers(employeeMapper.toSummaryDTOList(performedTask.getCaregivers()));
 
         return dto;
     }
@@ -66,6 +86,16 @@ public class PerformedTaskMapper {
 
         return performedTasks.stream()
                 .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<PerformedTaskSummaryDTO> toSummaryDTOList(List<PerformedTask> performedTasks) {
+        if (performedTasks == null) {
+            return null;
+        }
+
+        return performedTasks.stream()
+                .map(this::toSummaryDTO)
                 .collect(Collectors.toList());
     }
 }

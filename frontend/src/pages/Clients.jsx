@@ -4,7 +4,8 @@ import {
     Button,
     Dropdown,
     DropdownItem,
-    DropdownMenu, DropdownSection,
+    DropdownMenu,
+    DropdownSection,
     DropdownTrigger,
     Input,
     Spinner,
@@ -443,7 +444,7 @@ function Clients() {
         }
     }
 
-
+    // TODO pridat filtr modal na mobile view
 
     const topContent = React.useMemo(() => {
         return (
@@ -701,9 +702,19 @@ function Clients() {
         }
     }, [canAlterClient]);
 
-    // Kontrola jestli se načítají metadata nebo klienti
+    // Kontrola jestli se načítají metadata nebo data
+    // hasLoadedData sleduje, jestli už proběhlo první načtení
+    const hasLoadedData = React.useRef(false);
+
+    React.useEffect(() => {
+        // Označit jako načteno, jakmile se dokončí první načtení
+        if (!loading && departments.length > 0 && employees.length > 0) {
+            hasLoadedData.current = true;
+        }
+    }, [loading, departments.length, employees.length]);
+
     const isLoadingMetadata = departments.length === 0 || employees.length === 0;
-    const isLoading = loading || isLoadingMetadata;
+    const isLoading = loading || isLoadingMetadata || !hasLoadedData.current;
 
     return (
         <>
@@ -772,7 +783,7 @@ function Clients() {
                 onClose={handleCloseTerminateModal}
                 onSubmit={handleTerminateClient}
                 clientId={selectedClient?.id}
-                clientName={`${selectedClient?.firstName} ${selectedClient?.lastName}`}
+                clientName={selectedClient?.fullName}
             />
         </>
     );

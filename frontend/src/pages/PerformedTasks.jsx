@@ -71,6 +71,8 @@ function PerformedTasks() {
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
 
+    const hasLoadedMetadata = React.useRef(false);
+
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
@@ -80,49 +82,6 @@ function PerformedTasks() {
             return columns.filter(col => ["client", "task", "date", "actions"].includes(col.key));
         }
         return columns;
-    }, [isMobile]);
-
-    React.useEffect(() => {
-        // Pro superadmina nenačítáme úkony, dokud nevybere organizaci
-        if (user?.role !== "SUPERADMIN") {
-            fetchPerformedTasks();
-        }
-        fetchClients();
-        fetchDepartments();
-        fetchOrganizations();
-        fetchEmployees();
-        fetchTasks();
-    }, [user]);
-
-    // Nastavení defaultního filtru podle department uživatele
-    React.useEffect(() => {
-        if (user?.departmentId && departments.length > 0) {
-            const userDepartment = departments.find(dept => dept.id === user.departmentId);
-            if (userDepartment) {
-                setDepartmentFilter(new Set([userDepartment.name]));
-            }
-        }
-    }, [user, departments]);
-
-    // Když superadmin změní organizaci, znovu načíst úkony s filtrem
-    React.useEffect(() => {
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size > 0 && organizations.length > 0) {
-                const selectedOrgName = Array.from(organizationFilter)[0];
-                const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-                if (selectedOrg) {
-                    fetchPerformedTasks(selectedOrg.id);
-                }
-            } else {
-                // Pokud není vybraná organizace, smaž data
-                setPerformedTasks([]);
-            }
-        }
-    }, [organizationFilter, user, organizations]);
-
-    // Dynamická výška tabulky podle velikosti obrazovky
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
 
     const hasSearchFilter = Boolean(filterValue);
@@ -212,9 +171,7 @@ function PerformedTasks() {
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) =>
-                removeDiacritics(
-                    performedTask.client.firstName + " " + performedTask.client.lastName
-                ).includes(normalizedSearchValue),
+                removeDiacritics(performedTask.clientName).includes(normalizedSearchValue)
             );
         }
 
@@ -298,6 +255,130 @@ function PerformedTasks() {
         }
     }, [caregiverFilter]);
 
+    // Dynamická výška tabulky podle velikosti obrazovky
+    React.useEffect(() => {
+        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
+    }, [isMobile]);
+
+    React.useEffect(() => {
+        // Načíst metadata pouze jednou (při prvním render s user)
+        if (!user || hasLoadedMetadata.current) {
+            return;
+        }
+
+        hasLoadedMetadata.current = true;
+
+        // Načíst metadata (departments, organizations, employees, tasks)
+        // Ukony načítáme až v dalším useEffectu s filtry
+        fetchClients();
+        fetchDepartments();
+        fetchOrganizations();
+        fetchEmployees();
+        fetchTasks();
+    }, [user]);
+
+    React.useEffect(() => {
+        // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
+        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all")) {
+            const userDepartment = departments.find(dept => dept.id === user.departmentId);
+            if (userDepartment) {
+                setDepartmentFilter(new Set([userDepartment.name]));
+            }
+        }
+    }, [user, departments]);
+
+    // Když se změní filtry, znovu načíst ukony s filtrem
+    React.useEffect(() => {
+        // Počkej, dokud se nenačtou metadata (departments, employees, organizations)
+        if (departments.length === 0 || employees.length === 0) {
+            return;
+        }
+
+        // Vypočítat filteredDepartments uvnitř useEffectu (aby to nebylo v dependencies)
+        let currentFilteredDepartments = departments;
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+            if (selectedOrg) {
+                currentFilteredDepartments = departments.filter(dept => dept.organization?.id === selectedOrg.id);
+            }
+        }
+
+        // Vypočítat filteredEmployees uvnitř useEffectu
+        let currentFilteredEmployees = [...employees];
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+            if (selectedOrg) {
+                currentFilteredEmployees = currentFilteredEmployees.filter(emp => emp.organization?.id === selectedOrg.id);
+            }
+        }
+        if (!departmentFilter.has("all")) {
+            currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.name));
+        }
+
+        if (user?.role === "SUPERADMIN") {
+            // Superadmin musi vybrat organization
+            if (organizationFilter.size === 0) {
+                // Pokud není vybraná organizace, smaž data
+                setPerformedTasks([]);
+                return;
+            }
+
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+            if (!selectedOrg) return;
+
+            // Sestavit filtry
+            const filters = {
+                organizationId: selectedOrg.id,
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+            };
+
+            fetchPerformedTasks(filters);
+        } else {
+            // Ostatní role
+            const filters = {
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+            };
+
+            fetchPerformedTasks(filters);
+        }
+    }, [organizationFilter, departmentFilter, caregiverFilter, user, organizations, departments, employees]);
+
+    function getDepartmentIdsFromFilter(departmentFilter, departments) {
+        if (departmentFilter.has("all")) {
+            return undefined;
+        }
+        // Převést názvy oddělení na ID
+        return departments
+            .filter(dept => departmentFilter.has(dept.name))
+            .map(dept => dept.id);
+    }
+
+    function getCaregiverIdsFromFilter(caregiverFilter, employees) {
+        if (caregiverFilter.has("all")) {
+            return undefined;
+        }
+        // Převést jména pečovatelů na ID
+        return employees
+            .filter(emp => caregiverFilter.has(emp.fullName))
+            .map(emp => emp.id);
+    }
+
+    async function handleSelectPerformedTask(performedTaskId) {
+        try {
+            const performedTaskData = await fetchPerformedTask(performedTaskId);
+            setSelectedPerformedTask(performedTaskData);
+        } catch (error) {
+            console.error("Failed to load performed task:", error);
+            throw error;
+        }
+    }
+
     const handleOpenCreateModal = () => {
         setIsCreateModalOpen(true);
     }
@@ -321,16 +402,6 @@ function PerformedTasks() {
             return await updatePerformedTask(performedTaskId, performedTaskData);
         } catch (error) {
             console.error("Failed to update performed task:", error);
-            throw error;
-        }
-    }
-
-    async function handleSelectPerformedTask(performedTaskId) {
-        try {
-            const performedTaskData = await fetchPerformedTask(performedTaskId);
-            setSelectedPerformedTask(performedTaskData);
-        } catch (error) {
-            console.error("Failed to load performed task:", error);
             throw error;
         }
     }
@@ -518,14 +589,14 @@ function PerformedTasks() {
             case "task":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{performedTask.task?.name}</p>
+                        <p className="text-small">{performedTask.taskName}</p>
                     </div>
                 );
             case "client":
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {performedTask.client?.firstName} {performedTask.client?.lastName}
+                            {performedTask.clientName}
                         </p>
                     </div>
                 );
@@ -533,10 +604,11 @@ function PerformedTasks() {
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {cellValue}x {unitTypeTranslations[performedTask.task?.unitType].toLowerCase() || "-"}
+                            {cellValue}x {unitTypeTranslations[performedTask.unitType].toLowerCase() || "-"}
                         </p>
                     </div>
                 );
+                // TODO add price column
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">
@@ -576,13 +648,19 @@ function PerformedTasks() {
         }
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner size="lg" variant="gradient" label="Načítání úkonů..." />
-            </div>
-        );
-    }
+    // Kontrola jestli se načítají metadata nebo data
+    // hasLoadedData sleduje, jestli už proběhlo první načtení
+    const hasLoadedData = React.useRef(false);
+
+    React.useEffect(() => {
+        // Označit jako načteno, jakmile se dokončí první načtení
+        if (!loading && departments.length > 0 && employees.length > 0) {
+            hasLoadedData.current = true;
+        }
+    }, [loading, departments.length, employees.length]);
+
+    const isLoadingMetadata = departments.length === 0 || employees.length === 0;
+    const isLoading = loading || isLoadingMetadata || !hasLoadedData.current;
 
     return (
         <>
@@ -608,6 +686,8 @@ function PerformedTasks() {
                     )}
                 </TableHeader>
                 <TableBody
+                    isLoading={isLoading}
+                    loadingContent={<Spinner label="Načítání úkonů..." />}
                     emptyContent={
                     (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
                         ? "Vyberte prosím organizaci" : "Žádné provedené úkony nenalezeny"

@@ -28,12 +28,12 @@ public class Department {
     @JsonIgnore
     private List<Employee> employees;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coordinator_id")
     @JsonIgnore
     private Employee coordinator;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
     @JsonIgnore
     private Organization organization;

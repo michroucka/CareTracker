@@ -15,17 +15,6 @@ export function useClients() {
             ...client,
             fullName: `${client.firstName} ${client.lastName}`,
             address: `${client.street}, ${client.city}`,
-            // Flat struktura - department a caregiver jsou jen ID a názvy
-            // Pro zobrazení používáme přímo názvy z DTO
-            department: client.departmentId ? {
-                id: client.departmentId,
-                name: client.departmentName
-            } : null,
-            caregiver: client.caregiverId ? {
-                id: client.caregiverId,
-                firstName: client.caregiverFirstName,
-                lastName: client.caregiverLastName
-            } : null
         };
     }
 
@@ -85,7 +74,6 @@ export function useClients() {
             // Ignoruj abort chyby (request byl zrušen, což je OK)
             if (err.name === 'AbortError') {
                 console.log("Request was cancelled");
-                // DŮLEŽITÉ: Nevypínej loading - probíhá jiný request!
                 return;
             }
 

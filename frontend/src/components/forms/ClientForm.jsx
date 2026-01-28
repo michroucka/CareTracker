@@ -618,7 +618,7 @@ export const ClientForm = React.forwardRef(({
                             label="Úkony"
                             value={
                                 taskIds.length > 0
-                                    ? tasks.filter(t => taskIds.includes(t.id)).map(t => t.name).join(', ')
+                                    ? `Celkem: ${taskIds.length}`
                                     : '-'
                             }
                         />

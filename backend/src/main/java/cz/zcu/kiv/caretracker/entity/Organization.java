@@ -21,7 +21,7 @@ public class Organization {
     @Column(nullable = false)
     private Boolean active = Boolean.TRUE;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private Employee manager;
 

@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientShortDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
@@ -57,8 +58,8 @@ public class ClientMapper {
         dto.setHasPicture(client.getPicture() != null);
 
         // Mapování vnořených objektů
-        dto.setDepartment(departmentMapper.toDTO(client.getDepartment()));
-        dto.setCaregiver(employeeMapper.toDTO(client.getCaregiver()));
+        dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));
+        dto.setCaregiver(employeeMapper.toSummaryDTO(client.getCaregiver()));
         dto.setTasks(taskMapper.toDTOList(client.getTasks()));
 
         return dto;
@@ -68,12 +69,12 @@ public class ClientMapper {
      * Převede Client entitu na ClientSummaryDTO (lightweight, flat struktura).
      * Nepoužívá vnořené objekty - jen ID a názvy pro minimalizaci duplicity dat.
      */
-    public ClientSummaryDTO toSummaryDTO(Client client) {
+    public ClientShortDTO toShortDTO(Client client) {
         if (client == null) {
             return null;
         }
 
-        ClientSummaryDTO dto = new ClientSummaryDTO();
+        ClientShortDTO dto = new ClientShortDTO();
         dto.setId(client.getId());
         dto.setFirstName(client.getFirstName());
         dto.setLastName(client.getLastName());
@@ -82,33 +83,43 @@ public class ClientMapper {
         dto.setCity(client.getCity());
         dto.setActive(client.getActive());
 
-        // Department - jen ID a název (frontend má již načtený seznam departments)
         if (client.getDepartment() != null) {
-            dto.setDepartmentId(client.getDepartment().getId());
-            dto.setDepartmentName(client.getDepartment().getCity());
+            dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));
         }
 
-        // Caregiver - jen ID a jméno (frontend má již načtený seznam caregivers)
         if (client.getCaregiver() != null) {
-            dto.setCaregiverId(client.getCaregiver().getId());
-            dto.setCaregiverFirstName(client.getCaregiver().getFirstName());
-            dto.setCaregiverLastName(client.getCaregiver().getLastName());
+            dto.setCaregiver(employeeMapper.toSummaryDTO(client.getCaregiver()));
+        }
+
+        if (client.getTasks() != null) {
+            dto.setTasks(taskMapper.toDTOList(client.getTasks()));
+        }
+
+         return dto;
+    }
+
+    private ClientSummaryDTO toSummaryDTO(Client client, boolean withTasks) {
+        if (client == null) {
+            return null;
+        }
+
+        ClientSummaryDTO dto = new ClientSummaryDTO();
+        dto.setId(client.getId());
+        dto.setFullName(client.getFullName());
+
+        if (withTasks) {
+            dto.setTasks(taskMapper.toDTOList(client.getTasks()));
         }
 
         return dto;
     }
 
-    /**
-     * Převede seznam Client entit na seznam ClientSummaryDTO
-     */
-    public List<ClientSummaryDTO> toSummaryDTOList(List<Client> clients) {
-        if (clients == null) {
-            return null;
-        }
+    public ClientSummaryDTO toSummaryDTO(Client client) {
+        return toSummaryDTO(client, false);
+    }
 
-        return clients.stream()
-                .map(this::toSummaryDTO)
-                .collect(Collectors.toList());
+    public ClientSummaryDTO toSummaryDTOWithTasks(Client client) {
+        return toSummaryDTO(client, true);
     }
 
     /**
@@ -155,6 +166,39 @@ public class ClientMapper {
 
         return clients.stream()
                 .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Převede seznam Client entit na seznam ClientSummaryDTO
+     */
+    public List<ClientShortDTO> toShortDTOList(List<Client> clients) {
+        if (clients == null) {
+            return null;
+        }
+
+        return clients.stream()
+                .map(this::toShortDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClientSummaryDTO> toSummaryDTOList(List<Client> clients) {
+        if (clients == null) {
+            return null;
+        }
+
+        return clients.stream()
+                .map(this::toSummaryDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClientSummaryDTO> toSummaryDTOListWithTasks(List<Client> clients) {
+        if (clients == null) {
+            return null;
+        }
+
+        return clients.stream()
+                .map(this::toSummaryDTOWithTasks)
                 .collect(Collectors.toList());
     }
 }

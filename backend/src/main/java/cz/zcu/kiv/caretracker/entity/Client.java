@@ -81,17 +81,17 @@ public class Client {
     @Column(nullable = false)
     private Boolean active = Boolean.TRUE;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Department department;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Organization organization;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "caregiver_id", nullable = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Employee caregiver;
@@ -99,12 +99,15 @@ public class Client {
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private Picture picture;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "client_task",
             joinColumns = @JoinColumn(name = "client_id"),
             inverseJoinColumns = @JoinColumn(name = "task_id")
     )
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Task> tasks;
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

@@ -2,7 +2,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
-import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientShortDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
@@ -43,14 +43,14 @@ public class ClientController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<ClientSummaryDTO>> getClients(
+    public ResponseEntity<List<ClientShortDTO>> getClients(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) Boolean status,
             @RequestParam(required = false) List<Long> departmentIds,
             @RequestParam(required = false) List<Long> caregiverIds
     ) {
         log.info("Fetching clients" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<ClientSummaryDTO> clients = clientService.getClients(organizationId, status, departmentIds, caregiverIds);
+        List<ClientShortDTO> clients = clientService.getClients(organizationId, status, departmentIds, caregiverIds);
 
         return ResponseEntity.ok(clients);
     }
@@ -94,10 +94,10 @@ public class ClientController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<ClientDTO> createClient(@RequestBody ClientRequestDTO dto) {
+    public ResponseEntity<ClientShortDTO> createClient(@RequestBody ClientRequestDTO dto) {
         log.info("Creating new client: {} {}", dto.getFirstName(), dto.getLastName());
         Client savedClient = clientService.createClient(dto);
-        return ResponseEntity.ok(clientMapper.toDTO(savedClient));
+        return ResponseEntity.ok(clientMapper.toShortDTO(savedClient));
     }
 
     @PutMapping("/{id}")
@@ -110,18 +110,18 @@ public class ClientController {
 
     @PutMapping("/{id}/terminate")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<ClientDTO> terminateClient(@PathVariable Long id, @RequestBody ClientTerminateDTO dto) {
+    public ResponseEntity<ClientShortDTO> terminateClient(@PathVariable Long id, @RequestBody ClientTerminateDTO dto) {
         log.info("Terminating client with id: {}", id);
         Client updatedClient = clientService.terminateClient(id, dto);
-        return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
+        return ResponseEntity.ok(clientMapper.toShortDTO(updatedClient));
     }
 
     @PutMapping("/{id}/activate")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<ClientDTO> activateClient(@PathVariable Long id) {
+    public ResponseEntity<ClientShortDTO> activateClient(@PathVariable Long id) {
         log.info("Activating client with id: {}", id);
         Client updatedClient = clientService.activateClient(id);
-        return ResponseEntity.ok(clientMapper.toDTO(updatedClient));
+        return ResponseEntity.ok(clientMapper.toShortDTO(updatedClient));
     }
 
     @PostMapping("/{id}/individual-plan")

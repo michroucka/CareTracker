@@ -1,8 +1,8 @@
 package cz.zcu.kiv.caretracker.dto.client;
 
-import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
-import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.employee.EmployeeSummaryDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,8 +36,7 @@ public class ClientDTO {
     private Boolean active;
     private Boolean hasPicture;
 
-    // Vnořené objekty
-    private DepartmentDTO department;
-    private EmployeeDTO caregiver;
+    private DepartmentSummaryDTO department;
+    private EmployeeSummaryDTO caregiver;
     private List<TaskDTO> tasks;
 }

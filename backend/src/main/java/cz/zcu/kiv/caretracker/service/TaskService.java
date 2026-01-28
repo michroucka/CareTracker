@@ -1,17 +1,13 @@
 package cz.zcu.kiv.caretracker.service;
 
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
-import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
-import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
-import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 

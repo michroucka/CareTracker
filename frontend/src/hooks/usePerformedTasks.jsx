@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON, deleteJSON} from "../api/api.js";
 import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
@@ -8,21 +8,56 @@ import {showToast} from "../components/MyToast.jsx";
 export function usePerformedTasks() {
     const [performedTasks, setPerformedTasks] = useState([]);
     const [loading, setLoading] = useState(false);
+    const abortControllerRef = useRef(null);
 
-    const fetchPerformedTasks = async (organizationId = null) => {
+    const fetchPerformedTasks = async (filters = {}) => {
+        // Zruš předchozí request pokud stále běží
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Vytvoř nový AbortController pro tento request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
+            setPerformedTasks([]);
             setLoading(true);
-            const url = organizationId
-                ? `/performed-tasks?organizationId=${organizationId}`
-                : '/performed-tasks';
-            const performedTasks = await getJSON(url);
+
+            const params = new URLSearchParams();
+
+            if (filters.organizationId) {
+                params.append("organizationId", filters.organizationId);
+            }
+
+            if (filters.departmentIds && filters.departmentIds.length > 0) {
+                filters.departmentIds.forEach((departmentId) => {
+                    params.append("departmentIds", departmentId);
+                })
+            }
+
+            if (filters.caregiverIds && filters.caregiverIds.length > 0) {
+                filters.caregiverIds.forEach((caregiverId) => {
+                    params.append("caregiverIds", caregiverId);
+                })
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/performed-tasks?${queryString}` : "/performed-tasks";
+            const performedTasks = await getJSON(url, { signal: controller.signal });
 
             const sorted = sortByKey(performedTasks, 'date', 'descending');
             setPerformedTasks(sorted);
+
+            setLoading(false);
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log("Request was cancelled");
+                return;
+            }
+
             console.error("Error fetching performed tasks: ", error);
             showErrorToast(error, "Chyba při načítání provedených úkonů", { icon: <CloudAlert /> });
-        } finally {
             setLoading(false);
         }
     };
@@ -64,8 +99,20 @@ export function usePerformedTasks() {
         try {
             const updated = await putJSON(`/performed-tasks/${id}`, updatedData);
 
+            // Transformovat PerformedTaskDTO na PerformedTaskSummaryDTO strukturu pro seznam
+            const summaryFormat = {
+                id: updated.id,
+                date: updated.date,
+                unitCount: updated.unitCount,
+                clientName: updated.client?.fullName,
+                taskName: updated.task?.name,
+                unitType: updated.task?.unitType,
+                department: updated.department,
+                caregivers: updated.caregivers
+            };
+
             setPerformedTasks(prev => sortByKey(
-                prev.map(task => task.id === id ? updated : task),
+                prev.map(task => task.id === id ? summaryFormat : task),
                 "date", "descending"
             ));
 

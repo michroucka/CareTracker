@@ -2,16 +2,17 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
+import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
+import cz.zcu.kiv.caretracker.specification.PerformedTaskSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask, PerformedTaskDTO> {
@@ -37,14 +38,21 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
      * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
      */
     @Transactional(readOnly = true)
-    public List<PerformedTaskDTO> getAllPerformedTasks(Long organizationId) {
-        return filterEntitiesByRole(
-                performedTaskRepository::findAll,
-                performedTaskRepository::findByOrganizationId,
-                performedTaskRepository::findByDepartmentId,
-                performedTaskMapper::toDTOList,
-                organizationId
+    public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds) {
+        RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
+
+        if (roleFilters.isNoAccess()) {
+            return Collections.emptyList();
+        }
+
+        Specification<PerformedTask> spec = PerformedTaskSpecifications.withFilters(
+                roleFilters.getOrganizationId(),
+                roleFilters.getDepartmentIds(),
+                caregiverIds
         );
+
+        List<PerformedTask> performedTasks = performedTaskRepository.findAll(spec);
+        return performedTaskMapper.toSummaryDTOList(performedTasks);
     }
 
     @Transactional(readOnly = true)

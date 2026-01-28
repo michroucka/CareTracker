@@ -1,9 +1,6 @@
 package cz.zcu.kiv.caretracker.controller;
 
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
-import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
-import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
-import cz.zcu.kiv.caretracker.entity.PerformedTask;
+import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.service.TaskService;

@@ -2,7 +2,7 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
-import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
+import cz.zcu.kiv.caretracker.dto.client.ClientShortDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientTerminateDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.DailyRecordRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
@@ -47,40 +47,6 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private DailyRecordRepository dailyRecordRepository;
 
     /**
-     * Vrací klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     * - SUPERADMIN: Vidí všechny klienty, nebo klienty z konkrétní organizace pokud je zadán organizationId
-     * - ADMIN: Vidí pouze klienty z jeho organizace
-     * - COORDINATOR: Vidí pouze klienty z jeho oddělení
-     * - CAREGIVER: Vidí pouze klienty z jeho oddělení
-     * - CLIENT: Nemá přístup (ošetřeno na úrovni controlleru)
-     *
-     * @param activeOnly Filtrovat pouze aktivní klienty
-     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     */
-    @Transactional(readOnly = true)
-    protected List<ClientDTO> getClientsByRole(boolean activeOnly, Long organizationId) {
-        return filterEntitiesByRole(
-                () -> activeOnly ? clientRepository.findByActiveTrue() : clientRepository.findAll(),
-                orgId -> activeOnly ? clientRepository.findByActiveTrueAndOrganizationId(orgId)
-                                    : clientRepository.findByOrganizationId(orgId),
-                deptId -> activeOnly ? clientRepository.findByActiveTrueAndDepartmentId(deptId)
-                                     : clientRepository.findByDepartmentId(deptId),
-                clientMapper::toDTOList,
-                organizationId
-        );
-    }
-
-    /**
-     * Vrací aktivní klienty filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     *
-     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     */
-    @Transactional(readOnly = true)
-    public List<ClientDTO> getAllActiveClients(Long organizationId) {
-        return getClientsByRole(true, organizationId);
-    }
-
-    /**
      * Vrací klienty filtrované podle role, organizačního kontextu a dalších kritérií.
      * Používá JPA Specifications pro flexibilní a efektivní filtrování na úrovni databáze.
      *
@@ -95,8 +61,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @return Seznam ClientSummaryDTO filtrovaných podle kritérií
      */
     @Transactional(readOnly = true)
-    public List<ClientSummaryDTO> getClients(Long organizationId, Boolean status, List<Long> departmentIds, List<Long> caregiverIds) {
-        // Vypočítat filtry podle role uživatele (reusable metoda z BaseRoleFilteringService)
+    public List<ClientShortDTO> getClients(Long organizationId, Boolean status, List<Long> departmentIds, List<Long> caregiverIds) {
+        // Vypočítat filtry podle role uživatele
         RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
 
         // Pokud uživatel nemá přístup, vrať prázdný seznam
@@ -114,7 +80,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Provést dotaz a převést na DTO
         List<Client> clients = clientRepository.findAll(spec);
-        return clientMapper.toSummaryDTOList(clients);
+        return clientMapper.toShortDTOList(clients);
     }
 
     /**

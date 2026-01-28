@@ -1,8 +1,6 @@
 package cz.zcu.kiv.caretracker.dto.performedTask;
 
-import cz.zcu.kiv.caretracker.dto.client.ClientSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
-import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeSummaryDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,14 +12,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PerformedTaskDTO {
+public class PerformedTaskSummaryDTO {
     private Long id;
     private LocalDateTime date;
     private Integer unitCount;
-    private String notes;
+    private String clientName;
+    private String taskName;
+    private String unitType;
+    // TODO add price
 
-    private ClientSummaryDTO client;
-    private TaskDTO task;
     private DepartmentSummaryDTO department;
     private List<EmployeeSummaryDTO> caregivers;
 }

@@ -1,6 +1,6 @@
 package cz.zcu.kiv.caretracker.mapper;
 
-import cz.zcu.kiv.caretracker.dto.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.entity.Organization;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.UnitType;

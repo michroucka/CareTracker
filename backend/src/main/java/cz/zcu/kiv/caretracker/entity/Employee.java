@@ -33,12 +33,12 @@ public class Employee {
     @Column(nullable = false)
     private Boolean active = Boolean.TRUE;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     @JsonIgnore
     private Department department;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
     @JsonIgnore
     private Organization organization;

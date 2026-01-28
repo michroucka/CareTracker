@@ -2,9 +2,11 @@ package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
+import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Organization;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,6 +14,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class DepartmentMapper {
+    @Autowired
+    OrganizationMapper organizationMapper;
+
     /**
      * Převede Department entitu na DepartmentDTO
      */
@@ -35,11 +40,21 @@ public class DepartmentMapper {
 
         // Mapuj organizaci
         if (department.getOrganization() != null) {
-            DepartmentDTO.OrganizationInfo orgInfo = new DepartmentDTO.OrganizationInfo();
-            orgInfo.setId(department.getOrganization().getId());
-            orgInfo.setName(department.getOrganization().getName());
-            dto.setOrganization(orgInfo);
+            dto.setOrganization(organizationMapper.toSummaryDTO(department.getOrganization()));
         }
+
+        return dto;
+    }
+
+    public DepartmentSummaryDTO toSummaryDTO(Department department) {
+        if (department == null) {
+            return null;
+        }
+
+        DepartmentSummaryDTO dto = new DepartmentSummaryDTO();
+        dto.setId(department.getId());
+        dto.setName(department.getCity());
+        dto.setOrganizationId(department.getOrganization().getId());
 
         return dto;
     }

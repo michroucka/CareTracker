@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
+import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.service.PerformedTaskService;
@@ -28,11 +29,13 @@ public class PerformedTaskController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<PerformedTaskDTO>> getAllPerformedTasks(
-            @RequestParam(required = false) Long organizationId
+    public ResponseEntity<List<PerformedTaskSummaryDTO>> getPerformedTasks(
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam(required = false) List<Long> departmentIds,
+            @RequestParam(required = false) List<Long> caregiverIds
     ) {
-        log.info("Fetching all performed tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<PerformedTaskDTO> performedTasks = performedTaskService.getAllPerformedTasks(organizationId);
+        log.info("Fetching performed tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<PerformedTaskSummaryDTO> performedTasks = performedTaskService.getPerformedTasks(organizationId, departmentIds, caregiverIds);
 
         return ResponseEntity.ok(performedTasks);
     }
@@ -48,10 +51,10 @@ public class PerformedTaskController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<PerformedTaskDTO> createPerformedTask(@RequestBody PerformedTaskRequestDTO dto) {
+    public ResponseEntity<PerformedTaskSummaryDTO> createPerformedTask(@RequestBody PerformedTaskRequestDTO dto) {
         log.info("Creating new performed task");
         PerformedTask savedPerformedTask = performedTaskService.createPerformedTask(dto);
-        return ResponseEntity.ok(performedTaskMapper.toDTO(savedPerformedTask));
+        return ResponseEntity.ok(performedTaskMapper.toSummaryDTO(savedPerformedTask));
     }
 
     @PutMapping("/{id}")
