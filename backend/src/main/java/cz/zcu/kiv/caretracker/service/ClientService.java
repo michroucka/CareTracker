@@ -10,6 +10,7 @@ import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentRequestDTO
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
@@ -73,7 +74,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Validace status parametru podle role
         // CAREGIVER nemá přístup k neaktivním klientům
-        Employee currentUser = getCurrentUser();
+        Employee currentUser = getCurrentUser().getEmployee();
         if (currentUser.getRole() == EmployeeRole.CAREGIVER) {
             status = true; // Vynucený filtr jen na aktivní klienty
         }

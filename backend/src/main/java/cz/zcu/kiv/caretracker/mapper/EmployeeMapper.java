@@ -44,11 +44,6 @@ public class EmployeeMapper {
 
         dto.setDepartment(departmentMapper.toSummaryDTO(employee.getDepartment()));
 
-        // Mapuj organizaci
-        if (employee.getOrganization() != null) {
-            dto.setOrganization(organizationMapper.toSummaryDTO(employee.getOrganization()));
-        }
-
         return dto;
     }
 

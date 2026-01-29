@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
@@ -8,6 +8,7 @@ import {showToast} from "../components/MyToast.jsx";
 export function useEmployees() {
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
+    const abortControllerRef = useRef(null);
 
     function mapEmployee(employee) {
         return ({
@@ -20,23 +21,54 @@ export function useEmployees() {
         return employees.map((employee) => mapEmployee(employee));
     }
 
-    const fetchEmployees = async (organizationId = null) => {
+    const fetchEmployees = async (filters = {}) => {
+        // Zruš předchozí request pokud stále běží
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Vytvoř nový AbortController pro tento request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
+            setEmployees([])
             setLoading(true);
-            const url = organizationId
-                ? `/employees?organizationId=${organizationId}`
-                : '/employees';
-            const employees = await getJSON(url);
+
+            const params = new URLSearchParams();
+
+            if (filters.organizationId) {
+                params.append("organizationId", filters.organizationId);
+            }
+
+            if (filters.status !== undefined && filters.status !== null) {
+                params.append("status", filters.status);
+            }
+
+            if (filters.departmentIds && filters.departmentIds.length > 0) {
+                filters.departmentIds.forEach((departmentId) => {
+                    params.append("departmentIds", departmentId);
+                })
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/employees?${queryString}` : "/employees";
+            const employees = await getJSON(url, { signal: controller.signal });
 
             // Add fullName field
             const mappedEmployees = mapEmployees(employees);
-
             const sorted = sortByKey(mappedEmployees, 'fullName', 'ascending');
             setEmployees(sorted);
+
+            setLoading(false);
         } catch (err) {
+            if (err.name === 'AbortError') {
+                console.log("Request was cancelled");
+                return;
+            }
+
             console.error("Error fetching employees:", err);
             showErrorToast(err, "Chyba při načítání zaměstnanců", { icon: <CloudAlert /> });
-        } finally {
             setLoading(false);
         }
     };

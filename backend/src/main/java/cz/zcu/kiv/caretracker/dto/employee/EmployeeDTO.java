@@ -1,7 +1,6 @@
 package cz.zcu.kiv.caretracker.dto.employee;
 
 import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
-import cz.zcu.kiv.caretracker.dto.organization.OrganizationSummaryDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,5 +18,4 @@ public class EmployeeDTO {
     private Boolean isAdmin;
 
     private DepartmentSummaryDTO department;
-    private OrganizationSummaryDTO organization;
 }

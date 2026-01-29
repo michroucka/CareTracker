@@ -63,18 +63,15 @@ public class EmployeeSpecifications extends BaseSpecifications<Employee> {
      * @param organizationId ID organizace (může být null)
      * @param departmentIds Seznam ID oddělení (může být null nebo prázdný)
      * @param active Status zaměstnance (může být null)
-     * @param role Role zaměstnance (může být null)
      * @return Kombinovaná specification se všemi filtry
      */
     public static Specification<Employee> withFilters(
             Long organizationId,
             List<Long> departmentIds,
-            Boolean active,
-            EmployeeRole role
+            Boolean active
     ) {
         return hasOrganization(organizationId)
                 .and(hasDepartments(departmentIds))
-                .and(hasStatus(active))
-                .and(hasRole(role));
+                .and(hasStatus(active));
     }
 }

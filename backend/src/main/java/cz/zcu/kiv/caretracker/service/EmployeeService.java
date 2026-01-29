@@ -2,17 +2,23 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
+import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Department;
+import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
+import cz.zcu.kiv.caretracker.specification.ClientSpecifications;
+import cz.zcu.kiv.caretracker.specification.EmployeeSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,40 +38,46 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     private UserService userService;
 
     /**
-     * Vrací zaměstnance filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     * - SUPERADMIN: Vidí všechny zaměstnance
-     * - ADMIN: Vidí pouze zaměstnance z jeho organizace
-     * - COORDINATOR: Vidí pouze zaměstnance z jeho oddělení
-     * - CAREGIVER: Vidí pouze zaměstnance z jeho oddělení
-     * - EMPLOYEE: Nemá přístup (ošetřeno na úrovni controlleru)
+     * Vrací zamestnance filtrované podle role, organizačního kontextu a dalších kritérií.
+     * Používá JPA Specifications pro flexibilní a efektivní filtrování na úrovni databáze.
+     *
+     * - SUPERADMIN: Může filtrovat podle organizationId (nebo vidět vše), status, departmentIds
+     * - ADMIN: Vidí pouze svou organizaci, může filtrovat podle status, departmentIds
+     * - COORDINATOR: Vidí pouze své oddělení, může filtrovat podle status
+     * - CAREGIVER: Vidí pouze své oddělení a pouze aktivní klienty
+     *
+     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
+     * @param status Volitelný status zamestnance (true = aktivní, false = neaktivní, null = všichni) - pro CAREGIVER vždy vynuceno na true
+     * @param departmentIds Volitelný seznam ID oddělení pro filtrování
+     * @return Seznam EmployeeDTO filtrovaných podle kritérií
      */
     @Transactional(readOnly = true)
-    protected List<EmployeeDTO> getEmployeesByRole(boolean activeOnly, Long organizationId) {
-        return filterEntitiesByRole(
-                () -> activeOnly ? employeeRepository.findByActiveTrue() : employeeRepository.findAll(),
-                orgId -> activeOnly ? employeeRepository.findByActiveTrueAndOrganizationId(orgId)
-                        : employeeRepository.findByOrganizationId(orgId),
-                deptId -> activeOnly ? employeeRepository.findByActiveTrueAndDepartmentId(deptId)
-                        : employeeRepository.findByDepartmentId(deptId),
-                employeeMapper::toDTOList,
-                organizationId
+    public List<EmployeeDTO> getEmployees(Long organizationId, Boolean status, List<Long> departmentIds) {
+        // Vypočítat filtry podle role uživatele
+        RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
+
+        // Pokud uživatel nemá přístup, vrať prázdný seznam
+        if (roleFilters.isNoAccess()) {
+            return Collections.emptyList();
+        }
+
+        // Validace status parametru podle role
+        // CAREGIVER nemá přístup k neaktivním zamestnancum
+        Employee currentUser = getCurrentUser().getEmployee();
+        if (currentUser.getRole() == EmployeeRole.CAREGIVER) {
+            status = true;
+        }
+
+        // Sestavit specification s filtry
+        Specification<Employee> spec = EmployeeSpecifications.withFilters(
+                roleFilters.getOrganizationId(),
+                roleFilters.getDepartmentIds(),
+                status
         );
-    }
 
-    /**
-     * Vrací aktivní zaměstnance filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     */
-    @Transactional(readOnly = true)
-    public List<EmployeeDTO> getAllActiveEmployees(Long organizationId) {
-        return getEmployeesByRole(true, organizationId);
-    }
-
-    /**
-     * Vrací všechny zaměstnance (včetně neaktivních) filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     */
-    @Transactional(readOnly = true)
-    public List<EmployeeDTO> getAllEmployees(Long organizationId) {
-        return getEmployeesByRole(false, organizationId);
+        // Provést dotaz a převést na DTO
+        List<Employee> employees = employeeRepository.findAll(spec);
+        return employeeMapper.toDTOList(employees);
     }
 
     /**
