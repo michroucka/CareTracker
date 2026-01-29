@@ -26,7 +26,7 @@ public class UserService {
         user.setEmployee(employee);
         user.setEmail(email);
         user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
-        user.setActive(false); // Účet bude aktivní až po dokončení aktivace
+        user.setActive(true);
 
         // Vygeneruj aktivační token
         String activationToken = UUID.randomUUID().toString();
@@ -47,5 +47,21 @@ public class UserService {
         user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
 
         return userRepository.save(user);
+    }
+
+    private User changeUserStatus(User user, Boolean active) {
+        user.setActive(active);
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User deactivateUserForEmployee(Employee employee) {
+        return changeUserStatus(employee.getUser(), false);
+    }
+
+    @Transactional
+    public User activateUserForEmployee(Employee employee) {
+        return changeUserStatus(employee.getUser(), true);
     }
 }

@@ -162,6 +162,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         );
 
         employee.setActive(false);
+        userService.deactivateUserForEmployee(employee);
 
         return employeeRepository.save(employee);
     }
@@ -178,6 +179,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         );
 
         employee.setActive(true);
+        userService.activateUserForEmployee(employee);
 
         return employeeRepository.save(employee);
     }
