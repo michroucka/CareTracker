@@ -1,0 +1,17 @@
+package cz.zcu.kiv.caretracker.dto.department;
+
+import cz.zcu.kiv.caretracker.dto.organization.OrganizationSummaryDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DepartmentDTO {
+    private Long id;
+    private String name;
+    private String address;
+
+    private OrganizationSummaryDTO organization;
+}

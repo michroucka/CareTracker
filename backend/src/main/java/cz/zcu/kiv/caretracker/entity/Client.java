@@ -1,12 +1,23 @@
 package cz.zcu.kiv.caretracker.entity;
 
+import cz.zcu.kiv.caretracker.enums.BenefitLevel;
+import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
+@Table(name = "client")
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,32 +29,85 @@ public class Client {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(nullable = false)
+    private Gender gender;
+
+    @Column(name = "personal_number")
+    private Long personalNumber;
+
     @Column(name = "date_of_birth", nullable = false)
-    private String dateOfBirth;
+    private LocalDate dateOfBirth;
+
+    @Column(name = "termination_date")
+    private LocalDate terminationDate;
+
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "termination_reason")
+    private TerminationReason terminationReason;
 
     private String email;
+    @Column(length = 16)
     private String phone;
-    private String address;
-    private String city;
 
     @Column(nullable = false)
-    private boolean active = true;
+    private String street;
 
-    @ManyToOne
-    @JoinColumn(name = "department_id")
+    @Column(nullable = false)
+    private String city;
+
+    @Column(name = "postal_code", nullable = false, length = 6)
+    private String postalCode;
+
+    @Column(name = "legally_competent", nullable = false)
+    private Boolean legallyCompetent;
+
+    @Enumerated
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(nullable = false)
+    private BenefitLevel benefits;
+
+    @Column(columnDefinition = "TEXT", name = "relatives_contact")
+    private String relativesContact;
+
+    @Column(columnDefinition = "TEXT", name = "general_practitioner")
+    private String generalPractitioner;
+
+    private String notes;
+    private LocalDate created = LocalDate.now();
+
+    @Column(nullable = false)
+    private Boolean active = Boolean.TRUE;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private Department department;
 
-    @ManyToOne
-    @JoinColumn(name = "caregiver_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Organization organization;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "caregiver_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private Employee caregiver;
 
-    @ManyToMany
+    @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Picture picture;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "client_task",
             joinColumns = @JoinColumn(name = "client_id"),
             inverseJoinColumns = @JoinColumn(name = "task_id")
     )
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Task> tasks;
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

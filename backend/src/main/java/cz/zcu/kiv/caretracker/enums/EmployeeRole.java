@@ -1,16 +1,18 @@
 package cz.zcu.kiv.caretracker.enums;
 
 public enum EmployeeRole {
-    CAREGIVER("Pečovatel"),
-    COORDINATOR("Koordinátor");
+    CAREGIVER,
+    COORDINATOR,
+    MANAGER;
 
-    private final String displayName;
-
-    EmployeeRole(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
+    /**
+     * Převede EmployeeRole na odpovídající UserRole.
+     */
+    public UserRole toUserRole() {
+        return switch (this) {
+            case CAREGIVER -> UserRole.CAREGIVER;
+            case COORDINATOR -> UserRole.COORDINATOR;
+            case MANAGER -> UserRole.ADMIN;
+        };
     }
 }

@@ -4,6 +4,7 @@ services:
   # Spring Boot Backend
   backend:
     container_name: caretracker-backend
+    image: caretracker-backend:dev
     build:
       context: ./backend
     ports:
@@ -22,6 +23,7 @@ services:
   # Vite React Frontend
   frontend:
     container_name: caretracker-frontend
+    image: caretracker-frontend:dev
     build:
       context: ./frontend
     ports:
@@ -29,8 +31,6 @@ services:
     volumes:
       - ./frontend:/app
       - node_modules_cache:/app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8080/api
     depends_on:
       - backend
 
