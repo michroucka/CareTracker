@@ -1,4 +1,5 @@
 import React from "react";
+import {useSearchParams} from "react-router-dom";
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useClients} from "../hooks/useClients.jsx";
 import {useDepartments} from "../hooks/useDepartments.jsx";
@@ -39,6 +40,7 @@ import {PerformedTaskDetailModal} from "../components/modals/performedTask/Perfo
 import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
 
 function PerformedTasks() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
     const {
         performedTasks,
@@ -56,10 +58,27 @@ function PerformedTasks() {
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
 
-    const [filterValue, setFilterValue] = React.useState("");
-    const [organizationFilter, setOrganizationFilter] = React.useState(new Set());
-    const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
-    const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
+    // Helper funkce pro inicializaci filtrů z URL
+    const getInitialFilterValue = () => searchParams.get("search") || "";
+    const getInitialOrganizationFilter = () => {
+        const org = searchParams.get("organization");
+        return org ? new Set([org]) : new Set();
+    };
+    const getInitialDepartmentFilter = () => {
+        const depts = searchParams.get("departments");
+        if (!depts) return new Set(["all"]);
+        return depts === "all" ? new Set(["all"]) : new Set(depts.split(","));
+    };
+    const getInitialCaregiverFilter = () => {
+        const caregivers = searchParams.get("caregivers");
+        if (!caregivers) return new Set(["all"]);
+        return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
+    };
+
+    const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
+    const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
+    const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
+    const [caregiverFilter, setCaregiverFilter] = React.useState(getInitialCaregiverFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({
         column: "date",
         direction: "descending",
@@ -277,15 +296,77 @@ function PerformedTasks() {
         fetchTasks();
     }, [user]);
 
+    // Validace filtrů podle role uživatele
+    React.useEffect(() => {
+        if (!user) return;
+
+        const allowedToSelectOrg = user.role === "SUPERADMIN";
+        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
+
+        // Pouze SUPERADMIN může vybírat organizaci
+        if (!allowedToSelectOrg && organizationFilter.size > 0) {
+            setOrganizationFilter(new Set());
+        }
+
+        // CAREGIVER a COORDINATOR nemůže filtrovat podle oddělení - použít jejich vlastní oddělení
+        if (!allowedToFilterDepartment && user.departmentId && departments.length > 0) {
+            const userDepartment = departments.find(dept => dept.id === user.departmentId);
+            if (userDepartment && !departmentFilter.has(userDepartment.name)) {
+                setDepartmentFilter(new Set([userDepartment.name]));
+            }
+        }
+    }, [user, departments]);
+
     React.useEffect(() => {
         // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
-        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all")) {
+        // Ale pouze pokud v URL není žádný specifický department filter (aby se nepřepisoval uložený stav)
+        const urlDepartments = searchParams.get("departments");
+        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
             if (userDepartment) {
                 setDepartmentFilter(new Set([userDepartment.name]));
             }
         }
     }, [user, departments]);
+
+    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
+    React.useEffect(() => {
+        if (!user) return; // Počkat na načtení user
+
+        const params = new URLSearchParams();
+        const allowedToSelectOrg = user.role === "SUPERADMIN";
+        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
+
+        // Search filter
+        if (filterValue) {
+            params.set("search", filterValue);
+        }
+
+        // Organization filter - pouze pro SUPERADMIN
+        if (allowedToSelectOrg && organizationFilter.size > 0) {
+            params.set("organization", Array.from(organizationFilter)[0]);
+        }
+
+        // Department filter - CAREGIVER a COORDINATOR nemůže měnit
+        if (allowedToFilterDepartment) {
+            if (!departmentFilter.has("all")) {
+                params.set("departments", Array.from(departmentFilter).join(","));
+            } else {
+                params.set("departments", "all");
+            }
+        }
+        // Pro CAREGIVER a COORDINATOR neukladat departments do URL (vždy jen jejich oddělení)
+
+        // Caregiver filter
+        if (!caregiverFilter.has("all")) {
+            params.set("caregivers", Array.from(caregiverFilter).join(","));
+        } else {
+            params.set("caregivers", "all");
+        }
+
+        // Aktualizovat URL bez vytvoření nového záznamu v historii
+        setSearchParams(params, { replace: true });
+    }, [filterValue, organizationFilter, departmentFilter, caregiverFilter, user]);
 
     // Když se změní filtry, znovu načíst ukony s filtrem
     React.useEffect(() => {
@@ -485,7 +566,7 @@ function PerformedTasks() {
                             </Dropdown>
                         )}
 
-                        {user.role !== "CAREGIVER" && (
+                        {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
                                     <Button

@@ -140,7 +140,7 @@ function IndividualPlan() {
                                 description: "Individuální plán může vytvořit pouze klíčový pracovník klienta.",
                                 color: "warning"
                             });
-                            navigate("/clients");
+                            navigate(-1);
                         }
                         return;
                     }
@@ -204,8 +204,8 @@ function IndividualPlan() {
         if (currentContent) {
             initializeFormFromContent(currentContent);
         } else {
-            // Pokud jsme v create mode a zrušíme, vrátíme se na clients
-            navigate("/clients");
+            // Pokud jsme v create mode a zrušíme, vrátíme se zpět
+            navigate(-1);
         }
     };
 
@@ -331,7 +331,7 @@ function IndividualPlan() {
                 <Button
                     variant="flat"
                     startContent={<ChevronLeft size={18} />}
-                    onPress={() => navigate("/clients")}
+                    onPress={() => navigate(-1)}
                 >
                     Zpět
                 </Button>

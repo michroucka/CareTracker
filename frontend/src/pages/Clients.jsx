@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Button,
     Dropdown,
@@ -33,11 +33,36 @@ import {ClientTerminateModal} from "../components/modals/client/ClientTerminateM
 
 function Clients() {
     const navigate = useNavigate();
-    const [filterValue, setFilterValue] = React.useState("");
-    const [activeFilter, setActiveFilter] = React.useState(new Set(["true"]));
-    const [organizationFilter, setOrganizationFilter] = React.useState(new Set());
-    const [departmentFilter, setDepartmentFilter] = React.useState(new Set(["all"]));
-    const [caregiverFilter, setCaregiverFilter] = React.useState(new Set(["all"]));
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Helper funkce pro inicializaci filtrů z URL
+    const getInitialFilterValue = () => searchParams.get("search") || "";
+    const getInitialActiveFilter = () => {
+        const status = searchParams.get("status");
+        if (status === null) return new Set(["true"]);
+        if (status === "all") return new Set(["true", "false"]);
+        return new Set([status]);
+    };
+    const getInitialOrganizationFilter = () => {
+        const org = searchParams.get("organization");
+        return org ? new Set([org]) : new Set();
+    };
+    const getInitialDepartmentFilter = () => {
+        const depts = searchParams.get("departments");
+        if (!depts) return new Set(["all"]);
+        return depts === "all" ? new Set(["all"]) : new Set(depts.split(","));
+    };
+    const getInitialCaregiverFilter = () => {
+        const caregivers = searchParams.get("caregivers");
+        if (!caregivers) return new Set(["all"]);
+        return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
+    };
+
+    const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
+    const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
+    const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
+    const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
+    const [caregiverFilter, setCaregiverFilter] = React.useState(getInitialCaregiverFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({
         column: "fullName",
         direction: "ascending",
@@ -248,15 +273,90 @@ function Clients() {
         fetchTasks();
     }, [user]);
 
+    // Validace filtrů podle role uživatele
+    React.useEffect(() => {
+        if (!user) return;
+
+        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
+        const allowedToSelectOrg = user.role === "SUPERADMIN";
+
+        // CAREGIVER nemá přístup k active filtru - resetovat na "true" (jen aktivní)
+        if (!allowedToSeeInactive && !activeFilter.has("true")) {
+            setActiveFilter(new Set(["true"]));
+        }
+        if (!allowedToSeeInactive && activeFilter.size === 2) {
+            setActiveFilter(new Set(["true"]));
+        }
+
+        // Pouze SUPERADMIN může vybírat organizaci
+        if (!allowedToSelectOrg && organizationFilter.size > 0) {
+            setOrganizationFilter(new Set());
+        }
+    }, [user]);
+
     React.useEffect(() => {
         // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
-        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all")) {
+        // Ale pouze pokud v URL není žádný specifický department filter (aby se nepřepisoval uložený stav)
+        const urlDepartments = searchParams.get("departments");
+        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
             if (userDepartment) {
                 setDepartmentFilter(new Set([userDepartment.name]));
             }
         }
     }, [user, departments]);
+
+    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
+    React.useEffect(() => {
+        if (!user) return; // Počkat na načtení user
+
+        const params = new URLSearchParams();
+        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
+        const allowedToSelectOrg = user.role === "SUPERADMIN";
+
+        // Search filter
+        if (filterValue) {
+            params.set("search", filterValue);
+        }
+
+        // Status filter - pouze pro oprávněné role
+        if (allowedToSeeInactive) {
+            if (activeFilter.size === 2) {
+                params.set("status", "all");
+            } else if (activeFilter.has("true")) {
+                params.set("status", "true");
+            } else if (activeFilter.has("false")) {
+                params.set("status", "false");
+            }
+        }
+        // Pro CAREGIVER neukladat status do URL (vždy jen aktivní)
+
+        // Organization filter - pouze pro SUPERADMIN
+        if (allowedToSelectOrg && organizationFilter.size > 0) {
+            params.set("organization", Array.from(organizationFilter)[0]);
+        }
+
+        // Department filter - pouze pro SUPERADMIN a ADMIN
+        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
+        if (allowedToFilterDepartment) {
+            if (!departmentFilter.has("all")) {
+                params.set("departments", Array.from(departmentFilter).join(","));
+            } else {
+                params.set("departments", "all");
+            }
+        }
+        // Pro CAREGIVER a COORDINATOR neukladat departments do URL (vždy jen jejich oddělení)
+
+        // Caregiver filter
+        if (!caregiverFilter.has("all")) {
+            params.set("caregivers", Array.from(caregiverFilter).join(","));
+        } else {
+            params.set("caregivers", "all");
+        }
+
+        // Aktualizovat URL bez vytvoření nového záznamu v historii
+        setSearchParams(params, { replace: true });
+    }, [filterValue, activeFilter, organizationFilter, departmentFilter, caregiverFilter, user]);
 
     // Když se změní filtry, znovu načíst klienty s filtrem
     React.useEffect(() => {

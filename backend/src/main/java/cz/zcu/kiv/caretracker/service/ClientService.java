@@ -52,10 +52,11 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      *
      * - SUPERADMIN: Může filtrovat podle organizationId (nebo vidět vše), status, departmentIds, caregiverIds
      * - ADMIN: Vidí pouze svou organizaci, může filtrovat podle status, departmentIds, caregiverIds
-     * - COORDINATOR/CAREGIVER: Vidí pouze své oddělení, může filtrovat podle status, caregiverIds
+     * - COORDINATOR: Vidí pouze své oddělení, může filtrovat podle status, caregiverIds
+     * - CAREGIVER: Vidí pouze své oddělení a pouze aktivní klienty, může filtrovat podle caregiverIds
      *
      * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     * @param status Volitelný status klienta (true = aktivní, false = neaktivní, null = všichni)
+     * @param status Volitelný status klienta (true = aktivní, false = neaktivní, null = všichni) - pro CAREGIVER vždy vynuceno na true
      * @param departmentIds Volitelný seznam ID oddělení pro filtrování
      * @param caregiverIds Volitelný seznam ID caregiverů pro filtrování
      * @return Seznam ClientSummaryDTO filtrovaných podle kritérií
@@ -68,6 +69,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         // Pokud uživatel nemá přístup, vrať prázdný seznam
         if (roleFilters.isNoAccess()) {
             return Collections.emptyList();
+        }
+
+        // Validace status parametru podle role
+        // CAREGIVER nemá přístup k neaktivním klientům
+        Employee currentUser = getCurrentUser();
+        if (currentUser.getRole() == EmployeeRole.CAREGIVER) {
+            status = true; // Vynucený filtr jen na aktivní klienty
         }
 
         // Sestavit specification s filtry
