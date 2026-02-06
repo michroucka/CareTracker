@@ -11,7 +11,6 @@ import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
-import cz.zcu.kiv.caretracker.specification.ClientSpecifications;
 import cz.zcu.kiv.caretracker.specification.EmployeeSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;

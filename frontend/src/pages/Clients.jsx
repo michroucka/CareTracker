@@ -84,8 +84,8 @@ function Clients() {
     const { organizations, fetchOrganizations } = useOrganizations();
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
-    const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const hasLoadedMetadata = React.useRef(false);
+    const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedClient, setSelectedClient ] = React.useState(null);

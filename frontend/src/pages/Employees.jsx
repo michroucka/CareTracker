@@ -73,6 +73,7 @@ function Employees() {
     } = useEmployees();
     const { departments, fetchDepartments } = useDepartments();
     const { organizations, fetchOrganizations } = useOrganizations();
+    const hasLoadedMetadata = React.useRef(false);
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
@@ -143,22 +144,8 @@ function Employees() {
             );
         }
 
-        // Filtr podle aktivity (filtruj jen když nejsou vybrané obě možnosti)
-        if (activeFilter.size < 2) {
-            filteredEmployees = filteredEmployees.filter((employee) =>
-                activeFilter.has(employee?.active?.toString()),
-            );
-        }
-
-        // Filtr podle oddělení
-        if (!departmentFilter.has("all")) {
-            filteredEmployees = filteredEmployees.filter((employee) =>
-                departmentFilter.has(employee.department?.name),
-            );
-        }
-
         return filteredEmployees;
-    }, [employees, filterValue, hasSearchFilter, activeFilter, departmentFilter]);
+    }, [employees, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -206,10 +193,15 @@ function Employees() {
     }, [isMobile]);
 
     React.useEffect(() => {
-        // Pro superadmina nenačítáme zaměstnance, dokud nevybere organizaci
-        if (user?.role !== "SUPERADMIN") {
-            fetchEmployees();
+        // Načíst metadata pouze jednou (při prvním render s user)
+        if (!user || hasLoadedMetadata.current) {
+            return;
         }
+
+        hasLoadedMetadata.current = true;
+
+        // Načíst metadata (departments, organizations)
+        // Zamestnance načítáme až v dalším useEffectu s filtry
         fetchDepartments();
         fetchOrganizations();
     }, [user]);
@@ -292,21 +284,74 @@ function Employees() {
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, organizationFilter, departmentFilter, user]);
 
-    // Když superadmin změní organizaci, znovu načíst zaměstnance s filtrem
+    // Když se změní filtry, znovu načíst klienty s filtrem
     React.useEffect(() => {
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size > 0 && organizations.length > 0) {
-                const selectedOrgName = Array.from(organizationFilter)[0];
-                const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-                if (selectedOrg) {
-                    fetchEmployees(selectedOrg.id);
-                }
-            } else {
-                // Pokud není vybraná organizace, smaž data
-                setEmployees([]);
+        // Počkej, dokud se nenačtou metadata (departments, organizations)
+        if (departments.length === 0) {
+            return;
+        }
+
+        // Vypočítat filteredDepartments uvnitř useEffectu (aby to nebylo v dependencies)
+        let currentFilteredDepartments = departments;
+        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+            if (selectedOrg) {
+                currentFilteredDepartments = departments.filter(dept => dept.organization?.id === selectedOrg.id);
             }
         }
-    }, [organizationFilter, user, organizations]);
+
+        if (user?.role === "SUPERADMIN") {
+            // Superadmin musi vybrat organization
+            if (organizationFilter.size === 0) {
+                // Pokud není vybraná organizace, smaž data
+                setEmployees([]);
+                return;
+            }
+
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+            if (!selectedOrg) return;
+
+            // Sestavit filtry
+            const filters = {
+                organizationId: selectedOrg.id,
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments)
+            };
+
+            fetchEmployees(filters);
+        } else {
+            // Ostatní role
+            const filters = {
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments)
+            };
+
+            fetchEmployees(filters);
+        }
+    }, [organizationFilter, activeFilter, departmentFilter, user, organizations, departments]);
+
+    // Helper funkce pro převod filtrů z Set na parametry
+    function getStatusFromFilter(activeFilter) {
+        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
+        if (activeFilter.size === 0 || activeFilter.size === 2) {
+            return undefined;
+        }
+        // Jinak vrať true nebo false
+        return activeFilter.has("true");
+    }
+
+    function getDepartmentIdsFromFilter(departmentFilter, departments) {
+        if (departmentFilter.has("all")) {
+            return undefined;
+        }
+        // Převést názvy oddělení na ID
+        return departments
+            .filter(dept => departmentFilter.has(dept.name))
+            .map(dept => dept.id);
+    }
 
     async function handleSelectEmployee(employeeId) {
         try {
