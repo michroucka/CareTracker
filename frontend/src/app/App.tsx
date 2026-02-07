@@ -10,6 +10,7 @@ import Clients from "../pages/Clients";
 import PerformedTasks from "../pages/PerformedTasks"
 import IndividualPlan from "../pages/IndividualPlan";
 import Employees from "../pages/Employees";
+import Activate from "../pages/Activate";
 
 export default function App() {
     return (
@@ -60,6 +61,15 @@ export default function App() {
                             <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                 <Employees />
                             </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/activate"
+                        element={
+                            <PublicOnlyRoute>
+                                <Activate />
+                            </PublicOnlyRoute>
                         }
                     />
                 </Routes>

@@ -14,7 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {ChevronDown, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {ChevronDown, Mail, MoreVertical, Plus, Search, Send, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useOrganizations} from "../hooks/useOrganizations.jsx";
@@ -70,6 +70,7 @@ function Employees() {
         updateEmployee,
         terminateEmployee,
         activateEmployee,
+        resendActivationEmail
     } = useEmployees();
     const { departments, fetchDepartments } = useDepartments();
     const { organizations, fetchOrganizations } = useOrganizations();
@@ -616,6 +617,15 @@ function Employees() {
 
                                 {canAlterEmployee ? (
                                     <DropdownSection>
+                                        {!employee.isActivated && employee.email ? (
+                                            <DropdownItem key="resend"
+                                                          startContent={<Mail />}
+                                                          variant="light"
+                                                          onPress={() => resendActivationEmail(employee.id)}
+                                            >
+                                                Poslat aktivační email
+                                            </DropdownItem>
+                                        ) : null }
                                         {employee.active ? (
                                             <DropdownItem key="terminate"
                                                           startContent={<UserRoundX />}

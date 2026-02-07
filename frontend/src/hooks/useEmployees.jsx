@@ -1,7 +1,7 @@
 import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
+import {CloudAlert, UserRoundCheck, UserRoundX, MailCheck, MailX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
 import {showToast} from "../components/MyToast.jsx";
 
@@ -182,6 +182,30 @@ export function useEmployees() {
         }
     };
 
+    const resendActivationEmail = async (id) => {
+        try {
+            const response = await postJSON(`/employees/${id}/resend`);
+
+            if (response.success) {
+                showToast({
+                    title: response.message,
+                    color: "success",
+                    icon: <MailCheck />
+                })
+            } else {
+                showToast({
+                    title: response.message,
+                    color: "danger",
+                    icon: <MailX />
+                })
+            }
+        } catch (err) {
+            console.error("Error resending activation email:", err);
+            showErrorToast(err, "Chyba při odesílání aktivačního emailu", { icon: <MailX /> });
+            throw err;
+        }
+    }
+
     return {
         employees,
         setEmployees,
@@ -192,5 +216,6 @@ export function useEmployees() {
         updateEmployee,
         terminateEmployee,
         activateEmployee,
+        resendActivationEmail
     };
 }

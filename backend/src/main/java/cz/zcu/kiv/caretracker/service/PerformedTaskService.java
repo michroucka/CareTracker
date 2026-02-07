@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import cz.zcu.kiv.caretracker.specification.PerformedTaskSpecifications;
@@ -68,13 +69,13 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
     private PerformedTask savePerformedTask(PerformedTask performedTask, PerformedTaskRequestDTO dto) {
         Client client = clientRepository.findById(dto.getClientId())
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
         Task task = taskRepository.findById(dto.getTaskId())
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
         List<Employee> caregivers = new ArrayList<>();
         for (Long employeeId : dto.getCaregiverIds()) {
             Employee caregiver = employeeRepository.findById(employeeId)
-                    .orElseThrow(() -> new RuntimeException("Employee not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
             caregivers.add(caregiver);
         }
@@ -102,7 +103,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
     public PerformedTask updatePerformedTask(Long id, PerformedTaskRequestDTO dto) {
         PerformedTask task = performedTaskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Performed task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -116,7 +117,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
     public void deletePerformedTask(Long id) {
         PerformedTask task = performedTaskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Performed task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(

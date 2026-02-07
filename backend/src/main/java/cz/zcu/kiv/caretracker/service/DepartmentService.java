@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.DepartmentMapper;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
@@ -49,7 +50,7 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         Organization organization = user.getEmployee().getOrganization();
 
         Employee coordinator = employeeRepository.findById(dto.getCoordinatorId())
-                        .orElseThrow(() -> new RuntimeException("Employee not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         departmentMapper.requestToDepartment(department, dto, coordinator, organization);
 
@@ -63,7 +64,7 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
 
     public Department updateDepartment(Long id, DepartmentRequestDTO dto) {
         Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
 
         // Validace oprávnění
         validateOrganizationAccess(department, d -> d.getOrganization().getId());

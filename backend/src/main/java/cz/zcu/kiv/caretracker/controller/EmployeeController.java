@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -75,5 +76,23 @@ public class EmployeeController {
         log.info("Activating employee with id: {}", id);
         Employee updatedEmployee = employeeService.activateEmployee(id);
         return ResponseEntity.ok(employeeMapper.toDTO(updatedEmployee));
+    }
+
+    @PostMapping("/{id}/resend")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<Map<String, Object>> resendActivationEmail(@PathVariable Long id) {
+        log.info("Resending activation email to employee with id : {}", id);
+        try {
+            employeeService.resendActivationEmail(id);
+            return ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "message", "Aktivační email byl úspěšně odeslán"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
     }
 }

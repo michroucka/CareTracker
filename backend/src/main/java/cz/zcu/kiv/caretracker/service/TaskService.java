@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +66,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
     public Task updateTask(Long id, TaskDTO dto) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
 
         // Validace oprávnění
         validateOrganizationAccess(task, t -> t.getOrganization().getId());
@@ -75,7 +76,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
     public Task terminateTask(Long id) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
 
         // Validace oprávnění
         validateOrganizationAccess(task, t -> t.getOrganization().getId());

@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.UserRole;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -54,12 +55,12 @@ public abstract class BaseRoleFilteringService<T, D> {
      */
     protected <E> void validateOrganizationAccess(E entity, Function<E, Long> organizationIdGetter) {
         if (entity == null) {
-            throw new IllegalArgumentException("Entity cannot be null");
+            throw new ValidationException("Entita nemůže být null");
         }
 
         Long entityOrgId = organizationIdGetter.apply(entity);
         if (entityOrgId == null) {
-            throw new IllegalArgumentException("Entity must have an organization");
+            throw new ValidationException("Entita musí mít přiřazenou organizaci");
         }
 
         validateOrganizationId(entityOrgId);
@@ -75,7 +76,7 @@ public abstract class BaseRoleFilteringService<T, D> {
      */
     protected void validateOrganizationId(Long organizationId) {
         if (organizationId == null) {
-            throw new IllegalArgumentException("Organization ID cannot be null");
+            throw new ValidationException("ID organizace nemůže být null");
         }
 
         User user = getCurrentUser();
@@ -115,14 +116,14 @@ public abstract class BaseRoleFilteringService<T, D> {
             Function<E, Long> departmentIdGetter
     ) {
         if (entity == null) {
-            throw new IllegalArgumentException("Entity cannot be null");
+            throw new ValidationException("Entita nemůže být null");
         }
 
         Long entityOrgId = organizationIdGetter.apply(entity);
         Long entityDeptId = departmentIdGetter.apply(entity);
 
         if (entityOrgId == null) {
-            throw new IllegalArgumentException("Entity must have an organization");
+            throw new ValidationException("Entita musí mít přiřazenou organizaci");
         }
 
         validateDepartmentId(entityDeptId, entityOrgId);
@@ -140,7 +141,7 @@ public abstract class BaseRoleFilteringService<T, D> {
      */
     protected void validateDepartmentId(Long departmentId, Long organizationId) {
         if (organizationId == null) {
-            throw new IllegalArgumentException("Organization ID cannot be null");
+            throw new ValidationException("ID organizace nemůže být null");
         }
 
         User user = getCurrentUser();

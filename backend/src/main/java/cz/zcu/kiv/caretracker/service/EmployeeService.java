@@ -6,12 +6,14 @@ import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.specification.EmployeeSpecifications;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,8 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     private ClientRepository clientRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private EntityManager entityManager;
 
     /**
      * Vrací zamestnance filtrované podle role, organizačního kontextu a dalších kritérií.
@@ -96,7 +100,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
 
     private Employee saveEmployee(Employee employee, EmployeeRequestDTO dto) {
         Department department = departmentRepository.findById(dto.getDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
 
         // Validace, že department patří do organizace uživatele
         validateDepartmentAccess(
@@ -108,8 +112,13 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         employeeMapper.requestToEmployee(employee, dto, department);
         employee = employeeRepository.save(employee);
 
-        // Zpracování User účtu
         handleUserAccount(employee, dto);
+
+        entityManager.flush();
+        entityManager.detach(employee);
+
+        employee = employeeRepository.findById(employee.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         return employee;
     }
@@ -130,14 +139,16 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         }
     }
 
+    @Transactional
     public Employee createEmployee(EmployeeRequestDTO dto) {
         Employee employee = new Employee();
         return saveEmployee(employee, dto);
     }
 
+    @Transactional
     public Employee updateEmployee(Long id, EmployeeRequestDTO dto) {
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         // Validace, že má uživatel oprávnění upravit tohoto zaměstnance
         validateUpdateAccess(
@@ -151,7 +162,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
 
     public Employee terminateEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -168,7 +179,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
 
     public Employee activateEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -181,5 +192,12 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         userService.activateUserForEmployee(employee);
 
         return employeeRepository.save(employee);
+    }
+
+    public void resendActivationEmail(Long id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
+
+        userService.resendActivationEmail(employee.getUser());
     }
 }

@@ -46,6 +46,14 @@ export const EmployeeForm = React.forwardRef(({
 
     const [errors, setErrors] = React.useState({});
 
+    // Vymaž email a isAdmin když je zaškrtnut "Nevytvářet účet"
+    React.useEffect(() => {
+        if (doNotCreateAccount) {
+            setEmail("");
+            setIsAdmin(false);
+        }
+    }, [doNotCreateAccount]);
+
     const userIsAdmin = ["ADMIN", "SUPERADMIN"].includes(userRole);
 
     // Initialize form with initial data
@@ -113,9 +121,13 @@ export const EmployeeForm = React.forwardRef(({
             lastName,
             role,
             departmentId,
-            email,
-            isAdmin
         };
+
+        // Přidej email a isAdmin pouze pokud se má vytvořit účet
+        if (!doNotCreateAccount) {
+            formData.email = email;
+            formData.isAdmin = isAdmin;
+        }
 
         if (onSubmit) {
             await onSubmit(formData);

@@ -13,6 +13,8 @@ import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import cz.zcu.kiv.caretracker.specification.ClientSpecifications;
@@ -114,7 +116,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param clientId ID klienta
      * @return IndividualPlanDTO s aktuální verzí, pokud existuje
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebyl nalezen
+     * @throws ResourceNotFoundException Pokud klient nebyl nalezen
      */
     @Transactional(readOnly = true)
     public Optional<IndividualPlanDTO> getClientIndividualPlan(Long clientId) {
@@ -133,7 +135,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param clientId ID klienta
      * @return Seznam verzí s metadaty (od nejnovější)
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
      */
     @Transactional(readOnly = true)
     public List<IndividualPlanVersionSummaryDTO> getClientIndividualPlanHistory(Long clientId) {
@@ -142,7 +144,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+                .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         // Vrátit jen metadata verzí (už jsou seřazené @OrderBy("versionNumber DESC"))
         return individualPlanContentMapper.toVersionSummaryList(plan.getContentVersions());
@@ -156,7 +158,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param versionNumber Číslo verze (1, 2, 3...)
      * @return Konkrétní verze s plným contentem
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient, plán nebo verze nebyla nalezena
+     * @throws ResourceNotFoundException Pokud klient, plán nebo verze nebyla nalezena
      */
     @Transactional(readOnly = true)
     public IndividualPlanContentDTO getClientIndividualPlanVersion(Long clientId, Integer versionNumber) {
@@ -165,14 +167,14 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+                .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         // Najít konkrétní verzi s plným contentem
         return plan.getContentVersions().stream()
                 .filter(content -> content.getVersionNumber().equals(versionNumber))
                 .findFirst()
                 .map(individualPlanContentMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Version " + versionNumber + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Verze " + versionNumber + " nebyla nalezena"));
     }
 
     /**
@@ -181,7 +183,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      */
     private void validateClientAccess(Long clientId) {
         Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
         validateDepartmentAccess(
                 client,
@@ -192,13 +194,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     private Client saveClient(Client client, ClientRequestDTO dto) {
         Department department = departmentRepository.findById(dto.getDepartmentId())
-                        .orElseThrow(() -> new RuntimeException("Department not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
-                        .orElseThrow(() -> new RuntimeException("Employee not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
         List<Task> tasks = new ArrayList<>();
         for (Long taskId : dto.getTaskIds()) {
             Task task = taskRepository.findById(taskId)
-                    .orElseThrow(() -> new RuntimeException("Task not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
 
             tasks.add(task);
         }
@@ -244,7 +246,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     public Client updateClient(Long id, ClientRequestDTO dto) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -258,7 +260,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     public Client terminateClient(Long id, ClientTerminateDTO dto) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -276,7 +278,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     public Client activateClient(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
         // Validace oprávnění
         validateUpdateAccess(
@@ -380,7 +382,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param contentDTO Data pro první verzi plánu
      * @return Vytvořený plán jako DTO
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebyl nalezen nebo už má plán
+     * @throws ResourceNotFoundException Pokud klient nebyl nalezen nebo už má plán
      */
     @Transactional
     public IndividualPlanDTO createIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
@@ -388,11 +390,11 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         validateClientAccess(clientId);
 
         Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
         // Kontrola, že klient ještě nemá plán
         if (individualPlanRepository.findByClientId(clientId).isPresent()) {
-            throw new RuntimeException("Individual plan already exists for this client");
+            throw new ValidationException("Individuální plán pro tohoto klienta již existuje");
         }
 
         // Validace oprávnění pro úpravu individuálního plánu
@@ -427,7 +429,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param contentDTO Data pro novou verzi plánu
      * @return Aktualizovaný plán jako DTO
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
      */
     @Transactional
     public IndividualPlanDTO updateIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
@@ -436,7 +438,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Najít existující plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+                .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         // Validace oprávnění pro úpravu individuálního plánu
         validateIndividualPlanUpdateAccess(plan.getClient());
@@ -471,7 +473,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param dailyRecordDTO Data pro vytvoření daily record
      * @return Aktualizovaný plán jako DTO
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
      */
     @Transactional
     public IndividualPlanDTO addDailyRecordToIndividualPlan(Long clientId, DailyRecordRequestDTO dailyRecordDTO) {
@@ -480,7 +482,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+                .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(
@@ -521,7 +523,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param dailyRecordId ID daily record k odebrání
      * @return Aktualizovaný plán jako DTO
      * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws RuntimeException Pokud klient nebo plán nebyl nalezen
+     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
      */
     @Transactional
     public IndividualPlanDTO removeDailyRecordFromIndividualPlan(Long clientId, Long dailyRecordId) {
@@ -530,7 +532,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Individual plan not found for client"));
+                .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(

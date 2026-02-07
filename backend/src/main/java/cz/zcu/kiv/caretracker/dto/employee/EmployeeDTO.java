@@ -16,6 +16,7 @@ public class EmployeeDTO {
     private Boolean active;
     private String email;
     private Boolean isAdmin;
+    private Boolean isActivated;
 
     private DepartmentSummaryDTO department;
 }
