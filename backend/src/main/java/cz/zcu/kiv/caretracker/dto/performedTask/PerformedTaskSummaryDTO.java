@@ -15,11 +15,11 @@ import java.util.List;
 public class PerformedTaskSummaryDTO {
     private Long id;
     private LocalDateTime date;
-    private Integer unitCount;
+    private Double unitCount;
     private String clientName;
     private String taskName;
     private String unitType;
-    // TODO add price
+    private Integer price;
 
     private DepartmentSummaryDTO department;
     private List<EmployeeSummaryDTO> caregivers;

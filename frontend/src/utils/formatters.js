@@ -1,3 +1,15 @@
+export function formatNumber(value, options = {}) {
+    if (value === null || value === undefined || value === '') return '';
+
+    const formatter = new Intl.NumberFormat('cs-CZ', {
+        minimumFractionDigits: options.minDecimals ?? 0,
+        maximumFractionDigits: options.maxDecimals ?? 2,
+        ...options
+    });
+
+    return formatter.format(value);
+}
+
 // Formátování telefonního čísla: volitelně +XXX a pak XXX XXX XXX
 export function formatPhoneNumber(value) {
     // Povolit pouze + na začátku a číslice

@@ -45,7 +45,7 @@ public class PerformedTask {
     private LocalDateTime date;
 
     @Column(name="unit_count", nullable = false)
-    private Integer unitCount;
+    private Double unitCount;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

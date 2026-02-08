@@ -13,7 +13,7 @@ import {
 import { CalendarDays, ListFilter } from "lucide-react";
 import React from "react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
-import { unitTypeTranslations } from "../../constants/performedTaskConstants.js";
+import {calculatePrice, unitTypeTranslations} from "../../constants/performedTaskConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
 
 /**
@@ -121,13 +121,6 @@ export const PerformedTaskForm = React.forwardRef(({
         return !isReadOnly && !selectedClient;
     }, [isReadOnly, selectedClient]);
 
-    // Reset selected task if not in filtered tasks
-    React.useEffect(() => {
-        if (taskId && !filteredTasks.find(task => task.id === taskId)) {
-            setTaskId(null);
-        }
-    }, [taskId, filteredTasks]);
-
     // Auto-enable showAllTasks if selected task is not in client's tasks (for edit mode)
     React.useEffect(() => {
         if (taskId && clientId && !showAllTasks && initialData) {
@@ -137,6 +130,18 @@ export const PerformedTaskForm = React.forwardRef(({
             }
         }
     }, [taskId, clientId, filteredTasks, showAllTasks, initialData]);
+
+    // Reset selected task if not in filtered tasks (only when user manually changes filter, not during initialization)
+    React.useEffect(() => {
+        // Don't reset if we're in edit mode and still initializing (showAllTasks might not be set yet)
+        if (initialData && !showAllTasks) {
+            return;
+        }
+
+        if (taskId && !filteredTasks.find(task => task.id === taskId)) {
+            setTaskId(null);
+        }
+    }, [taskId, filteredTasks, initialData, showAllTasks]);
 
     // Validate form
     const validateForm = () => {
@@ -313,6 +318,7 @@ export const PerformedTaskForm = React.forwardRef(({
                         <ReadOnlyField
                             label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
                             value={unitCount}
+                            type="number"
                         />
                     ) : (
                         <NumberInput
@@ -386,54 +392,65 @@ export const PerformedTaskForm = React.forwardRef(({
                     )}
                 </div>
 
-                {/* Date Picker */}
-                {isReadOnly ? (
+                {/* Date Picker and Price*/}
+                <div className="grid grid-cols-2 gap-4">
+                    {isReadOnly ? (
+                        <ReadOnlyField
+                            label="Datum"
+                            value={date ? new Date(date).toLocaleString('cs-CZ', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '-'}
+                        />
+                    ) : (
+                        <DatePicker
+                            hideTimeZone
+                            isDisabled={isDisabled}
+                            isInvalid={!!errors.date}
+                            errorMessage={errors.date}
+                            label="Datum"
+                            labelPlacement="inside"
+                            name="date"
+                            value={date ? parseDateTime(date) : null}
+                            onChange={(date) => {
+                                setDate(date ? date.toString() : "");
+                                if (errors.date) {
+                                    setErrors({ ...errors, date: undefined });
+                                }
+                            }}
+                            showMonthAndYearPickers
+                            selectorIcon={<CalendarDays size={18} />}
+                            minValue={new CalendarDateTime(1900, 1, 1, 0, 0)}
+                            maxValue={(() => {
+                                const zonedNow = now(getLocalTimeZone());
+                                return new CalendarDateTime(
+                                    zonedNow.year,
+                                    zonedNow.month,
+                                    zonedNow.day,
+                                    zonedNow.hour,
+                                    zonedNow.minute,
+                                    0
+                                );
+                            })()}
+                            isRequired
+                            classNames={{
+                                segment: "text-default-500"
+                            }}
+                        />
+                    )}
+
+
                     <ReadOnlyField
-                        label="Datum"
-                        value={date ? new Date(date).toLocaleString('cs-CZ', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '-'}
-                    />
-                ) : (
-                    <DatePicker
-                        hideTimeZone
+                        label="Cena"
+                        value={calculatePrice(tasks.find(t => t.id === taskId), unitCount)}
+                        type="number"
+                        endContent="Kč"
                         isDisabled={isDisabled}
-                        isInvalid={!!errors.date}
-                        errorMessage={errors.date}
-                        label="Datum"
-                        labelPlacement="inside"
-                        name="date"
-                        value={date ? parseDateTime(date) : null}
-                        onChange={(date) => {
-                            setDate(date ? date.toString() : "");
-                            if (errors.date) {
-                                setErrors({ ...errors, date: undefined });
-                            }
-                        }}
-                        showMonthAndYearPickers
-                        selectorIcon={<CalendarDays size={18} />}
-                        minValue={new CalendarDateTime(1900, 1, 1, 0, 0)}
-                        maxValue={(() => {
-                            const zonedNow = now(getLocalTimeZone());
-                            return new CalendarDateTime(
-                                zonedNow.year,
-                                zonedNow.month,
-                                zonedNow.day,
-                                zonedNow.hour,
-                                zonedNow.minute,
-                                0
-                            );
-                        })()}
-                        isRequired
-                        classNames={{
-                            segment: "text-default-500"
-                        }}
                     />
-                )}
+                </div>
 
                 {/* Notes */}
                 {isReadOnly ? (
@@ -453,5 +470,4 @@ export const PerformedTaskForm = React.forwardRef(({
         </Form>
     );
 });
-// TODO add price
 PerformedTaskForm.displayName = "PerformedTaskForm";

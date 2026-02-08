@@ -8,7 +8,7 @@ import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useTasks} from "../hooks/useTasks.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
-import {removeDiacritics, formatDateTime} from "../utils/formatters.js";
+import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
 import {
     Button,
@@ -685,11 +685,18 @@ function PerformedTasks() {
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {cellValue}x {unitTypeTranslations[performedTask.unitType].toLowerCase() || "-"}
+                            {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType].toLowerCase() || "-"}
                         </p>
                     </div>
                 );
-                // TODO add price column
+            case "price":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">
+                            {formatNumber(cellValue)} Kč
+                        </p>
+                    </div>
+                );
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">

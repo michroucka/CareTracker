@@ -3,6 +3,7 @@ export const columns = [
     {name: "ÚKON", key: "task"},
     {name: "POČET", key: "unitCount"},
     {name: "DATUM", key: "date", sortable: true},
+    {name: "CENA", key: "price"},
     {name: "AKCE", key: "actions"},
 ];
 
@@ -13,11 +14,10 @@ export const unitTypeTranslations = {
     "KG": "Kg",
 }
 
-export const calculatePrice = (performedTask) => {
-    if (performedTask.task.unitType === "HOUR") {
-        // Pro časové úkony: minuty → hodiny → cena
-        return (performedTask.unitCount / 60) * performedTask.task.unitPrice;
+export const calculatePrice = (task, unitCount) => {
+    if (task?.unitType === "HOUR") {
+        return Math.round(unitCount * task?.unitPrice / 60);
     }
-    // Pro ostatní: přímý výpočet
-    return performedTask.unitCount * performedTask.task.unitPrice;
+
+    return task ? unitCount * task?.unitPrice : 0;
 }

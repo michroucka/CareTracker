@@ -4,6 +4,7 @@ import { sortByKey } from "../utils/sorting.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {ClipboardCheck, ClipboardX, CloudAlert, CircleCheck, Trash2} from "lucide-react";
 import {showToast} from "../components/MyToast.jsx";
+import {calculatePrice} from "../constants/performedTaskConstants.js";
 
 export function usePerformedTasks() {
     const [performedTasks, setPerformedTasks] = useState([]);
@@ -107,6 +108,7 @@ export function usePerformedTasks() {
                 clientName: updated.client?.fullName,
                 taskName: updated.task?.name,
                 unitType: updated.task?.unitType,
+                price: calculatePrice(updated.task, updated.unitCount),
                 department: updated.department,
                 caregivers: updated.caregivers
             };
