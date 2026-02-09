@@ -14,7 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {ChevronDown, Mail, MoreVertical, Plus, Search, Send, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {ChevronDown, Funnel, Mail, MoreVertical, Plus, Search, Send, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useOrganizations} from "../hooks/useOrganizations.jsx";
@@ -27,6 +27,7 @@ import {ROLE_LABELS} from "../constants/roles.js";
 import {EmployeeCreateModal} from "../components/modals/employee/EmployeeCreateModal.jsx";
 import {EmployeeDetailModal} from "../components/modals/employee/EmployeeDetailModal.jsx";
 import {EmployeeTerminateModal} from "../components/modals/employee/EmployeeTerminateModal.jsx";
+import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import {useSearchParams} from "react-router-dom";
 
 function Employees() {
@@ -80,6 +81,7 @@ function Employees() {
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedEmployee, setSelectedEmployee ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
+    const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
@@ -445,6 +447,20 @@ function Employees() {
         }
     }
 
+    const handleOpenFiltersModal = () => {
+        setIsFiltersModalOpen(true);
+    };
+
+    const handleCloseFiltersModal = () => {
+        setIsFiltersModalOpen(false);
+    }
+
+    const handleFiltersChange = React.useCallback((filters) => {
+        setActiveFilter(filters.activeFilter);
+        setOrganizationFilter(filters.organizationFilter);
+        setDepartmentFilter(filters.departmentFilter);
+    }, []);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -459,6 +475,14 @@ function Employees() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            className="sm:hidden"
+                            onPress={handleOpenFiltersModal}
+                        >
+                            <Funnel className="size-4" />
+                        </Button>
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -486,7 +510,13 @@ function Employees() {
                         {canAlterEmployee && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                    <Button
+                                        endContent={<ChevronDown
+                                            className="size-4" />}
+                                        variant="flat"
+                                        className="text-foreground"
+                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                    >
                                         Status
                                     </Button>
                                 </DropdownTrigger>
@@ -568,6 +598,7 @@ function Employees() {
         departmentOptions,
         handleOrganizationFilterChange,
         handleDepartmentFilterChange,
+        handleOpenFiltersModal,
         canAlterEmployee,
         user,
     ]);
@@ -727,6 +758,20 @@ function Employees() {
                 onSubmit={handleTerminateEmployee}
                 employeeId={selectedEmployee?.id}
                 employeeName={`${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`}
+            />
+
+            <FiltersModal
+                isOpen={isFiltersModalOpen}
+                onClose={handleCloseFiltersModal}
+                onSubmit={handleFiltersChange}
+                user={user}
+                showStatusFilter={canAlterEmployee}
+                initialActiveFilter={activeFilter}
+                initialOrganizationFilter={organizationFilter}
+                initialDepartmentFilter={departmentFilter}
+                activeOptions={activeOptions}
+                organizationOptions={organizationOptions}
+                departmentOptions={departmentOptions}
             />
         </>
     );

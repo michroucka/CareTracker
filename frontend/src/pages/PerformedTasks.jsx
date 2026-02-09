@@ -28,6 +28,7 @@ import {
 } from "@heroui/react";
 import {
     ChevronDown,
+    Funnel,
     MoreVertical,
     Plus,
     Search,
@@ -38,6 +39,7 @@ import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
 import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
+import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 
 function PerformedTasks() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -89,6 +91,7 @@ function PerformedTasks() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
+    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
 
     const hasLoadedMetadata = React.useRef(false);
 
@@ -98,7 +101,7 @@ function PerformedTasks() {
     // Filtrované sloupce pro mobile
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
-            return columns.filter(col => ["client", "task", "date", "actions"].includes(col.key));
+            return columns.filter(col => ["client", "task", "actions"].includes(col.key));
         }
         return columns;
     }, [isMobile]);
@@ -528,6 +531,20 @@ function PerformedTasks() {
         }
     }
 
+    const handleOpenFiltersModal = () => {
+        setIsFiltersModalOpen(true);
+    };
+
+    const handleCloseFiltersModal = () => {
+        setIsFiltersModalOpen(false);
+    }
+
+    const handleFiltersChange = React.useCallback((filters) => {
+        setOrganizationFilter(filters.organizationFilter);
+        setDepartmentFilter(filters.departmentFilter);
+        setCaregiverFilter(filters.caregiverFilter);
+    }, []);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -542,6 +559,14 @@ function PerformedTasks() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            className="sm:hidden"
+                            onPress={handleOpenFiltersModal}
+                        >
+                            <Funnel className="size-4" />
+                        </Button>
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -654,6 +679,7 @@ function PerformedTasks() {
         handleOrganizationFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
+        handleOpenFiltersModal,
         user,
     ]);
 
@@ -814,6 +840,19 @@ function PerformedTasks() {
                 onClose={handleCloseDeleteModal}
                 onSubmit={handleDeletePerformedTask}
                 performedTaskId={selectedPerformedTask?.id}
+            />
+
+            <FiltersModal
+                isOpen={isFiltersModalOpen}
+                onClose={handleCloseFiltersModal}
+                onSubmit={handleFiltersChange}
+                user={user}
+                initialOrganizationFilter={organizationFilter}
+                initialDepartmentFilter={departmentFilter}
+                initialCaregiverFilter={caregiverFilter}
+                organizationOptions={organizationOptions}
+                departmentOptions={departmentOptions}
+                caregiverOptions={caregiverOptions}
             />
         </>
     );

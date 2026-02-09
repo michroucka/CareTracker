@@ -16,7 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {ChevronDown, FileText, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {ChevronDown, FileText, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
 import {useClients} from "../hooks/useClients.jsx";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
@@ -30,6 +30,7 @@ import {removeDiacritics} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
 import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.jsx";
 import {ClientTerminateModal} from "../components/modals/client/ClientTerminateModal.jsx";
+import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 
 function Clients() {
     const navigate = useNavigate();
@@ -90,6 +91,7 @@ function Clients() {
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedClient, setSelectedClient ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
+    const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
@@ -544,7 +546,20 @@ function Clients() {
         }
     }
 
-    // TODO pridat filtr modal na mobile view
+    const handleOpenFiltersModal = () => {
+        setIsFiltersModalOpen(true);
+    };
+
+    const handleCloseFiltersModal = () => {
+        setIsFiltersModalOpen(false);
+    }
+
+    const handleFiltersChange = React.useCallback((filters) => {
+        setActiveFilter(filters.activeFilter);
+        setOrganizationFilter(filters.organizationFilter);
+        setDepartmentFilter(filters.departmentFilter);
+        setCaregiverFilter(filters.caregiverFilter);
+    }, []);
 
     const topContent = React.useMemo(() => {
         return (
@@ -560,6 +575,14 @@ function Clients() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            className="sm:hidden"
+                            onPress={handleOpenFiltersModal}
+                        >
+                            <Funnel className="size-4" />
+                        </Button>
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -587,7 +610,13 @@ function Clients() {
                         {canAlterClient && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                    <Button
+                                        endContent={<ChevronDown
+                                            className="size-4" />}
+                                        variant="flat"
+                                        className="text-foreground"
+                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                    >
                                         Status
                                     </Button>
                                 </DropdownTrigger>
@@ -702,6 +731,7 @@ function Clients() {
         handleOrganizationFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
+        handleOpenFiltersModal,
         canAlterClient,
         user,
     ]);
@@ -884,6 +914,22 @@ function Clients() {
                 onSubmit={handleTerminateClient}
                 clientId={selectedClient?.id}
                 clientName={selectedClient?.fullName}
+            />
+
+            <FiltersModal
+                isOpen={isFiltersModalOpen}
+                onClose={handleCloseFiltersModal}
+                onSubmit={handleFiltersChange}
+                user={user}
+                showStatusFilter={canAlterClient}
+                initialActiveFilter={activeFilter}
+                initialOrganizationFilter={organizationFilter}
+                initialDepartmentFilter={departmentFilter}
+                initialCaregiverFilter={caregiverFilter}
+                activeOptions={activeOptions}
+                organizationOptions={organizationOptions}
+                departmentOptions={departmentOptions}
+                caregiverOptions={caregiverOptions}
             />
         </>
     );
