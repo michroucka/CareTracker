@@ -6,6 +6,7 @@ import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
+import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
@@ -66,8 +67,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
 
         // Validace status parametru podle role
         // CAREGIVER nemá přístup k neaktivním zamestnancum
-        Employee currentUser = getCurrentUser().getEmployee();
-        if (currentUser.getRole() == EmployeeRole.CAREGIVER) {
+        if (getCurrentUser().getRole() == UserRole.CAREGIVER) {
             status = true;
         }
 

@@ -24,15 +24,31 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     private EmployeeRepository employeeRepository;
 
     @Transactional(readOnly = true)
-    public List<DepartmentDTO> getAllDepartments() {
-        return filterEntitiesByRole(
-                departmentRepository::findAll,
-                departmentRepository::findByOrganizationId,
-                deptId -> departmentRepository.findById(deptId)
-                        .map(List::of)
-                        .orElse(List.of()),
-                departmentMapper::toDTOList
-        );
+    public List<DepartmentDTO> getAllDepartments(Long organizationId) {
+        // Calculate filters based on user role
+        RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, null);
+
+        // If user has no access, return empty list
+        if (roleFilters.isNoAccess()) {
+            return List.of();
+        }
+
+        // Fetch departments based on computed organizationId
+        List<Department> departments;
+        if (roleFilters.getOrganizationId() != null) {
+            departments = departmentRepository.findByOrganizationId(roleFilters.getOrganizationId());
+        } else if (roleFilters.getDepartmentIds() != null && !roleFilters.getDepartmentIds().isEmpty()) {
+            // COORDINATOR or CAREGIVER - return their department
+            Long deptId = roleFilters.getDepartmentIds().get(0);
+            departments = departmentRepository.findById(deptId)
+                    .map(List::of)
+                    .orElse(List.of());
+        } else {
+            // SUPERADMIN without organizationId filter - return all
+            departments = departmentRepository.findAll();
+        }
+
+        return departmentMapper.toDTOList(departments);
     }
 
     @Transactional(readOnly = true)
@@ -47,7 +63,13 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
 
     private Department saveDepartment(Department department, DepartmentRequestDTO dto) {
         User user = getCurrentUser();
-        Organization organization = user.getEmployee().getOrganization();
+        Employee employee = user.getEmployee();
+
+        if (employee == null) {
+            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat oddělení");
+        }
+
+        Organization organization = employee.getOrganization();
 
         Employee coordinator = employeeRepository.findById(dto.getCoordinatorId())
                         .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));

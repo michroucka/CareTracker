@@ -8,10 +8,21 @@ export function useDepartments() {
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchDepartments = async () => {
+    const fetchDepartments = async (filters = {}) => {
         try {
+            setDepartments([]);
             setLoading(true);
-            const departments = await getJSON("/departments");
+
+            const params = new URLSearchParams();
+
+            if (filters.organizationId) {
+                params.append("organizationId", filters.organizationId);
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/departments?${queryString}` : "/departments";
+            const departments = await getJSON(url);
+
             const sorted = sortByKey(departments, 'name', 'ascending');
             setDepartments(sorted);
         } catch (err) {

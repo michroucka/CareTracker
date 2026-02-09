@@ -122,47 +122,20 @@ function Clients() {
         }));
     }, [organizations]);
 
-    // Filtrované departments podle vybrané organizace (pro superadminy)
-    const filteredDepartments = React.useMemo(() => {
-        if (user?.role !== "SUPERADMIN" || organizationFilter.size === 0) {
-            return departments;
-        }
-
-        // Pro superadmina s vybranou organizací - filtruj departments podle organizace
-        const selectedOrgName = Array.from(organizationFilter)[0];
-        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-        if (!selectedOrg) {
-            return [];
-        }
-
-        return departments.filter(dept => dept.organization?.id === selectedOrg.id);
-    }, [departments, organizations, organizationFilter, user]);
-
+    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
+    // Pro SUPERADMIN: načteno s filtrem organizationId z API
+    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
-        return filteredDepartments.map(dept => ({
+        return departments.map(dept => ({
             name: dept.name,
             key: dept.name
         }));
-    }, [filteredDepartments]);
+    }, [departments]);
 
-    // Filtrované employees podle organizace (pro superadminy) a podle departmentu
+    // Filtrované employees podle departmentu
+    // Pro SUPERADMIN: employees už jsou načtené s filtrem organizationId z API, takže filtrujeme jen podle departmentu
     const filteredEmployees = React.useMemo(() => {
         let filtered = [...employees];
-
-        // Pro superadmina - filtruj podle organizace
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-            if (selectedOrg) {
-                filtered = filtered.filter(employee =>
-                    employee.organization?.id === selectedOrg.id
-                );
-            } else {
-                return [];
-            }
-        }
 
         // Filtruj podle departmentu
         if (!departmentFilter.has("all")) {
@@ -172,7 +145,7 @@ function Clients() {
         }
 
         return filtered;
-    }, [employees, departmentFilter, organizationFilter, organizations, user]);
+    }, [employees, departmentFilter]);
 
     const caregiverOptions = React.useMemo(() => {
         return filteredEmployees.map(emp => ({
@@ -267,12 +240,16 @@ function Clients() {
 
         hasLoadedMetadata.current = true;
 
-        // Načíst metadata (departments, organizations, employees, tasks)
-        // Klienty načítáme až v dalším useEffectu s filtry
-        fetchDepartments();
-        fetchOrganizations();
-        fetchEmployees();
-        fetchTasks();
+        // Pro SUPERADMIN načíst jen organizace, ostatní metadata až po výběru organizace
+        // Pro ostatní role načíst vše
+        if (user.role === "SUPERADMIN") {
+            fetchOrganizations();
+        } else {
+            fetchDepartments();
+            fetchOrganizations();
+            fetchEmployees();
+            fetchTasks();
+        }
     }, [user]);
 
     // Validace filtrů podle role uživatele
@@ -338,9 +315,12 @@ function Clients() {
             params.set("organization", Array.from(organizationFilter)[0]);
         }
 
-        // Department filter - pouze pro SUPERADMIN a ADMIN
+        // Pro SUPERADMIN: department a caregiver filtry jen když je vybraná organizace
+        const shouldSaveFilters = user.role !== "SUPERADMIN" || organizationFilter.size > 0;
+
+        // Department filter - pouze pro SUPERADMIN a ADMIN (a jen když je vybraná organizace pro SUPERADMIN)
         const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
-        if (allowedToFilterDepartment) {
+        if (allowedToFilterDepartment && shouldSaveFilters) {
             if (!departmentFilter.has("all")) {
                 params.set("departments", Array.from(departmentFilter).join(","));
             } else {
@@ -349,43 +329,74 @@ function Clients() {
         }
         // Pro CAREGIVER a COORDINATOR neukladat departments do URL (vždy jen jejich oddělení)
 
-        // Caregiver filter
-        if (!caregiverFilter.has("all")) {
-            params.set("caregivers", Array.from(caregiverFilter).join(","));
-        } else {
-            params.set("caregivers", "all");
+        // Caregiver filter - jen když je vybraná organizace (pro SUPERADMIN)
+        if (shouldSaveFilters) {
+            if (!caregiverFilter.has("all")) {
+                params.set("caregivers", Array.from(caregiverFilter).join(","));
+            } else {
+                params.set("caregivers", "all");
+            }
         }
 
         // Aktualizovat URL bez vytvoření nového záznamu v historii
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, organizationFilter, departmentFilter, caregiverFilter, user]);
 
-    // Když se změní filtry, znovu načíst klienty s filtrem
+    // Pro SUPERADMIN načíst metadata když vybere organizaci
     React.useEffect(() => {
-        // Počkej, dokud se nenačtou metadata (departments, employees, organizations)
-        if (departments.length === 0 || employees.length === 0) {
+        if (user?.role !== "SUPERADMIN") return;
+        if (organizations.length === 0) return;
+        if (organizationFilter.size === 0) {
+            // Pokud není vybraná organizace, vyčisti jen clients (ne metadata)
+            setClients([]);
             return;
         }
 
-        // Vypočítat filteredDepartments uvnitř useEffectu (aby to nebylo v dependencies)
-        let currentFilteredDepartments = departments;
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-            if (selectedOrg) {
-                currentFilteredDepartments = departments.filter(dept => dept.organization?.id === selectedOrg.id);
+        const selectedOrgName = Array.from(organizationFilter)[0];
+        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+        if (!selectedOrg) return;
+
+        // Načíst metadata s filtrem podle vybrané organizace
+        fetchDepartments({ organizationId: selectedOrg.id });
+        fetchEmployees({ organizationId: selectedOrg.id });
+        fetchTasks({ organizationId: selectedOrg.id });
+    }, [user, organizations, organizationFilter]);
+
+    // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
+    const prevOrganizationFilter = React.useRef(organizationFilter);
+    React.useEffect(() => {
+        if (user?.role !== "SUPERADMIN") return;
+
+        // Zkontroluj jestli se organizace změnila (ne jen při prvním renderu)
+        if (prevOrganizationFilter.current.size > 0 || organizationFilter.size > 0) {
+            const prevOrg = Array.from(prevOrganizationFilter.current)[0];
+            const currentOrg = Array.from(organizationFilter)[0];
+
+            // Pokud se organizace změnila nebo byla odvolána, resetuj filtry
+            if (prevOrg !== currentOrg) {
+                setDepartmentFilter(new Set(["all"]));
+                setCaregiverFilter(new Set(["all"]));
             }
         }
 
-        // Vypočítat filteredEmployees uvnitř useEffectu
-        let currentFilteredEmployees = [...employees];
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-            if (selectedOrg) {
-                currentFilteredEmployees = currentFilteredEmployees.filter(emp => emp.organization?.id === selectedOrg.id);
-            }
+        prevOrganizationFilter.current = organizationFilter;
+    }, [user, organizationFilter]);
+
+    // Když se změní filtry, znovu načíst klienty s filtrem
+    React.useEffect(() => {
+        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
+        if (user?.role === "SUPERADMIN") {
+            if (organizations.length === 0 || organizationFilter.size === 0) return;
+            if (departments.length === 0 || employees.length === 0) return;
+        } else {
+            // Pro ostatní role: počkej na metadata
+            if (departments.length === 0 || employees.length === 0) return;
         }
+
+        // Departments jsou již filtrovány backendem podle organizationId
+        // Employees jsou již filtrovány backendem podle organizationId
+        // Filtrujeme pouze employees podle departmentu (pro UI účely)
+        let currentFilteredEmployees = [...employees];
         if (!departmentFilter.has("all")) {
             currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.name));
         }
@@ -407,7 +418,7 @@ function Clients() {
             const filters = {
                 organizationId: selectedOrg.id,
                 status: getStatusFromFilter(activeFilter),
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
             };
 
@@ -416,7 +427,7 @@ function Clients() {
             // Ostatní role
             const filters = {
                 status: getStatusFromFilter(activeFilter),
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
             };
 
@@ -843,8 +854,10 @@ function Clients() {
         }
     }, [loading, departments.length, employees.length]);
 
+    // Pro SUPERADMIN bez vybrané organizace není loading (zobrazí se "Vyberte prosím organizaci")
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
     const isLoadingMetadata = departments.length === 0 || employees.length === 0;
-    const isLoading = loading || isLoadingMetadata || !hasLoadedData.current;
+    const isLoading = !isSuperadminWithoutOrg && (loading || isLoadingMetadata || !hasLoadedData.current);
 
     return (
         <>

@@ -36,8 +36,32 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskDTO> getAllTasks() {
-        return getTasksByRole(false);
+    public List<TaskDTO> getAllTasks(Long organizationId, Boolean status) {
+        // Calculate filters based on user role
+        RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, null);
+
+        // If user has no access, return empty list
+        if (roleFilters.isNoAccess()) {
+            return List.of();
+        }
+
+        // Determine activeOnly based on status parameter
+        // null = all, true = active only, false = inactive only
+        // For simplicity, we'll support null (all) and true (active)
+        boolean activeOnly = status != null && status;
+
+        // Fetch tasks based on computed organizationId
+        List<Task> tasks;
+        if (roleFilters.getOrganizationId() != null) {
+            tasks = activeOnly
+                ? taskRepository.findByActiveTrueAndOrganizationId(roleFilters.getOrganizationId())
+                : taskRepository.findByOrganizationId(roleFilters.getOrganizationId());
+        } else {
+            // SUPERADMIN without organizationId filter - return all
+            tasks = activeOnly ? taskRepository.findByActiveTrue() : taskRepository.findAll();
+        }
+
+        return taskMapper.toDTOList(tasks);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +76,13 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
     private Task saveTask(Task task, TaskDTO dto) {
         User user = getCurrentUser();
-        Organization organization = user.getEmployee().getOrganization();
+        Employee employee = user.getEmployee();
+
+        if (employee == null) {
+            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat úkoly");
+        }
+
+        Organization organization = employee.getOrganization();
 
         taskMapper.toTask(task, dto, organization);
 

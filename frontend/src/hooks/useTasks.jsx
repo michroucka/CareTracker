@@ -8,10 +8,25 @@ export function useTasks() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchTasks = async () => {
+    const fetchTasks = async (filters = {}) => {
         try {
+            setTasks([]);
             setLoading(true);
-            const tasks = await getJSON("/tasks");
+
+            const params = new URLSearchParams();
+
+            if (filters.organizationId) {
+                params.append("organizationId", filters.organizationId);
+            }
+
+            if (filters.status !== undefined && filters.status !== null) {
+                params.append("status", filters.status);
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/tasks?${queryString}` : "/tasks";
+            const tasks = await getJSON(url);
+
             const sorted = sortByKey(tasks, 'name', 'ascending');
             setTasks(sorted);
         } catch (err) {

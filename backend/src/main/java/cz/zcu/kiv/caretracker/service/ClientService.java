@@ -76,8 +76,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Validace status parametru podle role
         // CAREGIVER nemá přístup k neaktivním klientům
-        Employee currentUser = getCurrentUser().getEmployee();
-        if (currentUser.getRole() == EmployeeRole.CAREGIVER) {
+        if (getCurrentUser().getRole() == UserRole.CAREGIVER) {
             status = true; // Vynucený filtr jen na aktivní klienty
         }
 
@@ -491,11 +490,17 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
 
+        // Kontrola, že uživatel má přiřazený Employee objekt
+        Employee currentEmployee = getCurrentUser().getEmployee();
+        if (currentEmployee == null) {
+            throw new SecurityException("Pouze zaměstnanci mohou vytvářet záznamy do individuálního plánu");
+        }
+
         // Vytvořit nový daily record
         DailyRecord dailyRecord = new DailyRecord();
         dailyRecord.setDate(dailyRecordDTO.getDate());
         dailyRecord.setContent(dailyRecordDTO.getContent());
-        dailyRecord.setCreatedBy(getCurrentUser().getEmployee());
+        dailyRecord.setCreatedBy(currentEmployee);
         dailyRecord.setIndividualPlan(plan);
 
         // Uložit daily record
