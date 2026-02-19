@@ -33,13 +33,14 @@ import {
     Plus,
     Search,
     Trash2,
-    Eye
+    Eye, Printer
 } from "lucide-react";
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
 import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
+import MonthYearPicker from "../components/MonthYearPicker.jsx";
 
 function PerformedTasks() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -92,6 +93,7 @@ function PerformedTasks() {
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
     const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
+    const [monthYearFilter, setMonthYearFilter] = React.useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
 
     const hasLoadedMetadata = React.useRef(false);
 
@@ -579,6 +581,9 @@ function PerformedTasks() {
                         >
                             <Funnel className="size-4" />
                         </Button>
+
+                        <MonthYearPicker onChange={setMonthYearFilter}/>
+
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -671,8 +676,11 @@ function PerformedTasks() {
                         </Button>
                     </div>
                 </div>
-                <div className="flex flex-row justify-start items-center">
+                <div className="flex flex-row justify-between items-center">
                     <span className="text-small">Celkem {filteredItems.length} úkonů</span>
+                    <Button isIconOnly variant="light" size="sm">
+                        <Printer className="size-4.5" />
+                    </Button>
                 </div>
             </div>
         );
