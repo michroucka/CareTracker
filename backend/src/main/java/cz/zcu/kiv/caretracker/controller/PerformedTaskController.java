@@ -32,10 +32,12 @@ public class PerformedTaskController {
     public ResponseEntity<List<PerformedTaskSummaryDTO>> getPerformedTasks(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) List<Long> departmentIds,
-            @RequestParam(required = false) List<Long> caregiverIds
+            @RequestParam(required = false) List<Long> caregiverIds,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year
     ) {
         log.info("Fetching performed tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<PerformedTaskSummaryDTO> performedTasks = performedTaskService.getPerformedTasks(organizationId, departmentIds, caregiverIds);
+        List<PerformedTaskSummaryDTO> performedTasks = performedTaskService.getPerformedTasks(organizationId, departmentIds, caregiverIds, month, year);
 
         return ResponseEntity.ok(performedTasks);
     }

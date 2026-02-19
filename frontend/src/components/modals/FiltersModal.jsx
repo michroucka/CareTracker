@@ -12,6 +12,7 @@ import {
     ModalHeader
 } from "@heroui/react";
 import {ChevronDown, Funnel} from "lucide-react";
+import MonthYearPicker from "../MonthYearPicker.jsx";
 
 export function FiltersModal({
                                  isOpen,
@@ -27,6 +28,8 @@ export function FiltersModal({
                                  departmentOptions,
                                  initialCaregiverFilter,
                                  caregiverOptions,
+                                 showMonthYearFilter = false,
+                                 initialMonthYearFilter,
                              }) {
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -34,6 +37,7 @@ export function FiltersModal({
     const [organizationFilter, setOrganizationFilter] = React.useState(initialOrganizationFilter || new Set());
     const [departmentFilter, setDepartmentFilter] = React.useState(initialDepartmentFilter || new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(initialCaregiverFilter || new Set(["all"]));
+    const [monthYearFilter, setMonthYearFilter] = React.useState(initialMonthYearFilter);
 
     // Reset local state when modal opens with new initial values
     React.useEffect(() => {
@@ -42,6 +46,7 @@ export function FiltersModal({
             if (initialOrganizationFilter !== undefined) setOrganizationFilter(initialOrganizationFilter);
             if (initialDepartmentFilter !== undefined) setDepartmentFilter(initialDepartmentFilter);
             if (initialCaregiverFilter !== undefined) setCaregiverFilter(initialCaregiverFilter);
+            if (initialMonthYearFilter !== undefined) setMonthYearFilter(initialMonthYearFilter);
         }
     }, [isOpen, initialActiveFilter, initialOrganizationFilter, initialDepartmentFilter, initialCaregiverFilter]);
 
@@ -100,6 +105,7 @@ export function FiltersModal({
                     organizationFilter,
                     departmentFilter,
                     caregiverFilter,
+                    monthYearFilter,
                 });
             }
             onClose();
@@ -116,6 +122,14 @@ export function FiltersModal({
                 <ModalHeader className="flex flex-col gap-1">Filtry</ModalHeader>
                 <ModalBody>
                     <div className="flex flex-col gap-4 w-full">
+                        {showMonthYearFilter && (
+                            <MonthYearPicker
+                                className="w-full"
+                                defaultValue={monthYearFilter}
+                                onChange={setMonthYearFilter}
+                            />
+                        )}
+
                         {user?.role === "SUPERADMIN" && organizationOptions && organizationOptions.length > 0 && (
                             <Dropdown>
                                 <DropdownTrigger>

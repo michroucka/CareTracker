@@ -39,7 +39,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
      * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
      */
     @Transactional(readOnly = true)
-    public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds) {
+    public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds, Integer month, Integer year) {
         RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
 
         if (roleFilters.isNoAccess()) {
@@ -49,7 +49,8 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         Specification<PerformedTask> spec = PerformedTaskSpecifications.withFilters(
                 roleFilters.getOrganizationId(),
                 roleFilters.getDepartmentIds(),
-                caregiverIds
+                caregiverIds,
+                month, year
         );
 
         List<PerformedTask> performedTasks = performedTaskRepository.findAll(spec);

@@ -12,6 +12,7 @@ import {
 } from "@heroui/react";
 import { Save, CalendarDays } from "lucide-react";
 import { getLocalTimeZone, now, CalendarDate, parseDate } from "@internationalized/date";
+import {minYear} from "../../../constants/globalConstants.js";
 
 export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
     const [date, setDate] = React.useState(() => {
@@ -123,7 +124,7 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
                                 }}
                                 showMonthAndYearPickers
                                 selectorIcon={<CalendarDays size={18}/>}
-                                minValue={new CalendarDate(1900, 1, 1)}
+                                minValue={new CalendarDate(minYear, 1, 1)}
                                 maxValue={(() => {
                                     const zonedNow = now(getLocalTimeZone());
                                     return new CalendarDate(

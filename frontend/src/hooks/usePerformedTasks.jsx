@@ -43,6 +43,14 @@ export function usePerformedTasks() {
                 })
             }
 
+            if (filters.month !== undefined) {
+                params.append("month", filters.month + 1); // getMonth() je 0-based, backend čeká 1-12
+            }
+
+            if (filters.year !== undefined) {
+                params.append("year", filters.year);
+            }
+
             const queryString = params.toString();
             const url = queryString ? `/performed-tasks?${queryString}` : "/performed-tasks";
             const performedTasks = await getJSON(url, { signal: controller.signal });

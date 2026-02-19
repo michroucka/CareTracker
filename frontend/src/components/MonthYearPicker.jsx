@@ -1,51 +1,80 @@
-import { useState } from "react";
-import { Button, Popover, PopoverTrigger, PopoverContent, Select, SelectItem } from "@heroui/react";
-import { ChevronDown } from "lucide-react";
+import React, { useState } from "react";
+import {
+    Button,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    Select,
+    SelectItem
+} from "@heroui/react";
+import { CalendarDays } from "lucide-react";
+import {minYear} from "../constants/globalConstants.js";
 
-const months = ["Leden","Únor","Březen","Duben","Květen","Červen",
-    "Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
-const currentYear = new Date().getFullYear();
-const years = [currentYear];
-const minYear = 1900;
+const months = [
+    "Led", "Úno", "Bře", "Dub", "Kvě", "Čer",
+    "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"
+];
 
-while (years[years.length - 1] >= minYear) years.push(years[years.length - 1] - 1);
+export default function MonthYearPicker({ className = "", onChange, defaultValue }) {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
 
-export default function MonthYearPicker({ onChange }) {
-    const [month, setMonth] = useState(new Date().getMonth());
-    const [year, setYear] = useState(currentYear);
+    const [selectedMonth, setSelectedMonth] = useState(defaultValue?.month ?? currentMonth);
+    const [selectedYear, setSelectedYear] = useState(defaultValue?.year ?? currentYear);
+    const [isOpen, setIsOpen] = useState(false);
 
-    const handleConfirm = () => {
-        onChange({ month, year });
-    };
+    const years = Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i);
 
     return (
-        <Popover>
+        <Popover isOpen={isOpen} onOpenChange={setIsOpen} placement="bottom">
             <PopoverTrigger>
-                <Button variant="flat" endContent={<ChevronDown className="size-4" />}>{months[month]} {year}</Button>
+                <Button
+                    variant="flat"
+                    endContent={<CalendarDays className="size-4 ms-2" />}
+                    className={`justify-between ${className}`}
+                >
+                    {months[selectedMonth]} {selectedYear}
+                </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-4 flex flex-col gap-3 w-[200px]">
-                <Select
-                    label="Měsíc"
-                    disallowEmptySelection
-                    selectedKeys={new Set([String(month)])}
-                    onSelectionChange={(keys) => setMonth(Number([...keys][0]))}
-                >
-                    {months.map((m, i) => (
-                        <SelectItem key={String(i)}>{m}</SelectItem>
-                    ))}
-                </Select>
-                <Select
-                    label="Rok"
-                    disallowEmptySelection
-                    selectedKeys={new Set([String(year)])}
-                    onSelectionChange={(keys) => setYear(Number([...keys][0]))}
-                >
-                    {years.map((y) => (
-                        <SelectItem key={String(y)}>{String(y)}</SelectItem>
-                    ))}
-                </Select>
-                <Button onPress={handleConfirm} color="primary" className="w-full">Potvrdit</Button>
+            <PopoverContent className="p-3 w-[175px]">
+                <div className="flex flex-col gap-4 w-full">
+                    <Select
+                        label="Rok"
+                        size="sm"
+                        selectedKeys={[selectedYear.toString()]}
+                        onChange={(e) => {
+                            const year = Number(e.target.value);
+                            setSelectedYear(year);
+                            onChange?.({ month: selectedMonth, year });
+                        }}
+                        disallowEmptySelection
+                    >
+                        {years.map((y) => (
+                            <SelectItem key={y} textValue={y.toString()}>{y}</SelectItem>
+                        ))}
+                    </Select>
+
+                    <div className="grid grid-cols-3 gap-2">
+                        {months.map((month, index) => (
+                            <Button
+                                key={month}
+                                size="sm"
+                                variant={selectedMonth === index ? "solid" : "light"}
+                                color={selectedMonth === index ? "primary" : "default"}
+                                isDisabled={selectedYear === currentYear && index > currentMonth}
+                                onPress={() => {
+                                    setSelectedMonth(index);
+                                    setIsOpen(false);
+                                    onChange?.({ month: index, year: selectedYear });
+                                }}
+                                className="min-w-0 px-0"
+                            >
+                                {month}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
             </PopoverContent>
         </Popover>
     );
-}
+};

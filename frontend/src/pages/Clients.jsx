@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-    Button,
+    Button, DatePicker,
     Dropdown,
     DropdownItem,
     DropdownMenu,
@@ -649,6 +649,11 @@ function Clients() {
                             </Dropdown>
                         )}
 
+                        <DatePicker
+                            showMonthAndYearPickers
+                            granularity="month"
+                        />
+
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -934,6 +939,7 @@ function Clients() {
                 onClose={handleCloseFiltersModal}
                 onSubmit={handleFiltersChange}
                 user={user}
+                showMonthYearFilter
                 showStatusFilter={canAlterClient}
                 initialActiveFilter={activeFilter}
                 initialOrganizationFilter={organizationFilter}

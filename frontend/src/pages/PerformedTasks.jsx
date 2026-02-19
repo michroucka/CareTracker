@@ -10,6 +10,7 @@ import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
 import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
+import {minYear} from "../constants/globalConstants.js";
 import {
     Button,
     Dropdown,
@@ -77,6 +78,15 @@ function PerformedTasks() {
         if (!caregivers) return new Set(["all"]);
         return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
     };
+    const getInitialMonthYearFilter = () => {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        const monthParam = Number(searchParams.get("month"));
+        const yearParam = Number(searchParams.get("year"));
+        const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
+        const year = (yearParam >= minYear && yearParam <= currentYear) ? yearParam : currentYear;
+        return { month, year };
+    };
 
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
@@ -93,7 +103,7 @@ function PerformedTasks() {
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
     const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
-    const [monthYearFilter, setMonthYearFilter] = React.useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
+    const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
 
     const hasLoadedMetadata = React.useRef(false);
 
@@ -172,26 +182,8 @@ function PerformedTasks() {
             );
         }
 
-        // Filtr podle oddělení
-        if (!departmentFilter.has("all")) {
-            filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) =>
-                departmentFilter.has(performedTask.department?.name),
-            );
-        }
-
-        // Filtr podle pečovatele (může být víc pečovatelů u jednoho úkonu)
-        if (!caregiverFilter.has("all")) {
-            filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) => {
-                // Zkontroluj, jestli alespoň jeden caregiver odpovídá filtru
-                return performedTask.caregivers?.some(caregiver => {
-                    const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
-                    return caregiverFilter.has(caregiverName);
-                });
-            });
-        }
-
         return filteredPerformedTasks;
-    }, [performedTasks, filterValue, hasSearchFilter, departmentFilter, caregiverFilter]);
+    }, [performedTasks, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -351,9 +343,13 @@ function PerformedTasks() {
             }
         }
 
+        // Month/year filter
+        params.set("month", monthYearFilter.month + 1);
+        params.set("year", monthYearFilter.year);
+
         // Aktualizovat URL bez vytvoření nového záznamu v historii
         setSearchParams(params, { replace: true });
-    }, [filterValue, organizationFilter, departmentFilter, caregiverFilter, user]);
+    }, [filterValue, organizationFilter, departmentFilter, caregiverFilter, monthYearFilter, user]);
 
     // Pro SUPERADMIN načíst metadata když vybere organizaci
     React.useEffect(() => {
@@ -433,6 +429,8 @@ function PerformedTasks() {
                 organizationId: selectedOrg.id,
                 departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+                month: monthYearFilter.month,
+                year: monthYearFilter.year,
             };
 
             fetchPerformedTasks(filters);
@@ -441,11 +439,13 @@ function PerformedTasks() {
             const filters = {
                 departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+                month: monthYearFilter.month,
+                year: monthYearFilter.year,
             };
 
             fetchPerformedTasks(filters);
         }
-    }, [organizationFilter, departmentFilter, caregiverFilter, user, organizations, departments, employees]);
+    }, [organizationFilter, departmentFilter, caregiverFilter, monthYearFilter, user, organizations, departments, employees]);
 
     function getDepartmentIdsFromFilter(departmentFilter, departments) {
         if (departmentFilter.has("all")) {
@@ -557,6 +557,7 @@ function PerformedTasks() {
         setOrganizationFilter(filters.organizationFilter);
         setDepartmentFilter(filters.departmentFilter);
         setCaregiverFilter(filters.caregiverFilter);
+        setMonthYearFilter(filters.monthYearFilter);
     }, []);
 
     const topContent = React.useMemo(() => {
@@ -582,7 +583,7 @@ function PerformedTasks() {
                             <Funnel className="size-4" />
                         </Button>
 
-                        <MonthYearPicker onChange={setMonthYearFilter}/>
+                        <MonthYearPicker onChange={setMonthYearFilter} className="hidden sm:flex"/>
 
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
@@ -678,8 +679,14 @@ function PerformedTasks() {
                 </div>
                 <div className="flex flex-row justify-between items-center">
                     <span className="text-small">Celkem {filteredItems.length} úkonů</span>
-                    <Button isIconOnly variant="light" size="sm">
-                        <Printer className="size-4.5" />
+
+                    <Button
+                        isIconOnly
+                        variant="light"
+                        size="sm"
+                        className="rounded-full"
+                    >
+                        <Printer className="size-5" />
                     </Button>
                 </div>
             </div>
@@ -875,6 +882,8 @@ function PerformedTasks() {
                 organizationOptions={organizationOptions}
                 departmentOptions={departmentOptions}
                 caregiverOptions={caregiverOptions}
+                showMonthYearFilter={true}
+                initialMonthYearFilter={monthYearFilter}
             />
         </>
     );
