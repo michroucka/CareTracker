@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,4 +58,15 @@ public class PerformedTask {
             inverseJoinColumns = @JoinColumn(name = "caregiver_id")
     )
     private List<Employee> caregivers;
+
+    public int calculatePrice() {
+        int price;
+        if (getTask().getUnitType() == UnitType.HOUR) {
+            price = (int) Math.round((getUnitCount() * getTask().getUnitPrice()) / 60.0);
+        } else {
+            price = (int) Math.round(getUnitCount() * getTask().getUnitPrice());
+        }
+
+        return price;
+    }
 }

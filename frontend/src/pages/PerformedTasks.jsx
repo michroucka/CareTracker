@@ -25,7 +25,7 @@ import {
     TableCell,
     TableColumn,
     TableHeader,
-    TableRow
+    TableRow, Tooltip
 } from "@heroui/react";
 import {
     ChevronDown,
@@ -42,6 +42,7 @@ import {PerformedTaskDetailModal} from "../components/modals/performedTask/Perfo
 import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import MonthYearPicker from "../components/MonthYearPicker.jsx";
+import {GenerateReceiptModal} from "../components/modals/performedTask/GenerateReceiptModal.jsx";
 
 function PerformedTasks() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -102,6 +103,7 @@ function PerformedTasks() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
+    const [isReceiptModalOpen, setIsReceiptModalOpen] = React.useState(false);
     const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
     const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
 
@@ -545,6 +547,14 @@ function PerformedTasks() {
         }
     }
 
+    const handleOpenReceiptModal = () => {
+        setIsReceiptModalOpen(true);
+    }
+
+    const handleCloseReceiptModal = () => {
+        setIsReceiptModalOpen(false);
+    }
+
     const handleOpenFiltersModal = () => {
         setIsFiltersModalOpen(true);
     };
@@ -680,14 +690,17 @@ function PerformedTasks() {
                 <div className="flex flex-row justify-between items-center">
                     <span className="text-small">Celkem {filteredItems.length} úkonů</span>
 
-                    <Button
-                        isIconOnly
-                        variant="light"
-                        size="sm"
-                        className="rounded-full"
-                    >
-                        <Printer className="size-5" />
-                    </Button>
+                    <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            className="rounded-full"
+                            onPress={handleOpenReceiptModal}
+                        >
+                            <Printer className="size-5" />
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
         );
@@ -869,6 +882,12 @@ function PerformedTasks() {
                 onClose={handleCloseDeleteModal}
                 onSubmit={handleDeletePerformedTask}
                 performedTaskId={selectedPerformedTask?.id}
+            />
+
+            <GenerateReceiptModal
+                isOpen={isReceiptModalOpen}
+                onClose={handleCloseReceiptModal}
+                clients={filteredClients}
             />
 
             <FiltersModal

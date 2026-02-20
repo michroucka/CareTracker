@@ -57,14 +57,7 @@ public class PerformedTaskMapper {
         dto.setClientName(performedTask.getClient().getFullName());
         dto.setTaskName(performedTask.getTask().getName());
         dto.setUnitType(performedTask.getTask().getUnitType().toString());
-
-        int price;
-        if (performedTask.getTask().getUnitType() == UnitType.HOUR) {
-            price = (int) Math.round((performedTask.getUnitCount() * performedTask.getTask().getUnitPrice()) / 60.0);
-        } else {
-            price = (int) Math.round(performedTask.getUnitCount() * performedTask.getTask().getUnitPrice());
-        }
-        dto.setPrice(price);
+        dto.setPrice(performedTask.calculatePrice());
 
         dto.setDepartment(departmentMapper.toSummaryDTO(performedTask.getDepartment()));
         dto.setCaregivers(employeeMapper.toSummaryDTOList(performedTask.getCaregivers()));

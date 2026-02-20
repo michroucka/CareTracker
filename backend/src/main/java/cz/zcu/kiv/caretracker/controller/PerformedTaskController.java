@@ -7,9 +7,12 @@ import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.service.PerformedTaskService;
+import cz.zcu.kiv.caretracker.service.ReceiptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +26,10 @@ public class PerformedTaskController {
 
     @Autowired
     private PerformedTaskService performedTaskService;
-
     @Autowired
     private PerformedTaskMapper performedTaskMapper;
+    @Autowired
+    private ReceiptService receiptService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
@@ -74,5 +78,21 @@ public class PerformedTaskController {
     public void deletePerformedTask(@PathVariable Long id) {
         log.info("Deleting performed task with id: {}", id);
         performedTaskService.deletePerformedTask(id);
+    }
+
+    @GetMapping("/receipt")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<byte[]> getReceipt(
+            @RequestParam Long clientId,
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
+        log.info("Fetching performed tasks receipt for client: {}, month: {}, year: {}", clientId, month, year);
+        byte[] pdf = receiptService.generateReceipt(clientId, month, year);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"stvrzenka-" + clientId + "-" + month + "-" + year + ".pdf\"")
+                .body(pdf);
     }
 }
