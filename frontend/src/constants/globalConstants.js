@@ -5,3 +5,8 @@ export const monthsShort = [
     "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"
 ];
 
+export const activeOptions = [
+    {name: "Aktivní", key: "true"},
+    {name: "Neaktivní", key: "false"},
+];
+

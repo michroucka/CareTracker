@@ -4,8 +4,3 @@ export const columns = [
     {name: "ODDĚLENÍ", key: "department"},
     {name: "AKCE", key: "actions"},
 ];
-
-export const activeOptions = [
-    {name: "Aktivní", key: "true"},
-    {name: "Neaktivní", key: "false"},
-];

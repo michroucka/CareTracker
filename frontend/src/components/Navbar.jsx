@@ -47,6 +47,7 @@ export default function AppNavbar() {
         { name: "Klienti", path: "/clients", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Provedené úkony", path: "/performed-tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Zaměstnanci", path: "/employees", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Úkony", path: "/tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     ];
 
     // Filtrování menu položek podle role uživatele

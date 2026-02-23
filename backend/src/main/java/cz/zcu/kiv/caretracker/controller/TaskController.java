@@ -26,7 +26,7 @@ public class TaskController {
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<List<TaskDTO>> getTasks(
-            @RequestParam Long organizationId,
+            @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) Boolean status
     ) {
         log.info("Fetching tasks for organization: " + organizationId);
