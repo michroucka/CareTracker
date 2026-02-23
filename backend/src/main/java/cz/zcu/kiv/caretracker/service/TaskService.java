@@ -19,24 +19,8 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
     @Autowired
     TaskMapper taskMapper;
 
-
     @Transactional(readOnly = true)
-    protected List<TaskDTO> getTasksByRole(boolean activeOnly) {
-        return filterEntitiesByRole(
-                () -> activeOnly ? taskRepository.findByActiveTrue() : taskRepository.findAll(),
-                orgId -> activeOnly ? taskRepository.findByActiveTrueAndOrganizationId(orgId)
-                        : taskRepository.findByOrganizationId(orgId),
-                taskMapper::toDTOList
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<TaskDTO> getAllActiveTasks() {
-        return getTasksByRole(true);
-    }
-
-    @Transactional(readOnly = true)
-    public List<TaskDTO> getAllTasks(Long organizationId, Boolean status) {
+    public List<TaskDTO> getTasks(Long organizationId, Boolean status) {
         // Calculate filters based on user role
         RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, null);
 
@@ -45,20 +29,16 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
             return List.of();
         }
 
-        // Determine activeOnly based on status parameter
-        // null = all, true = active only, false = inactive only
-        // For simplicity, we'll support null (all) and true (active)
-        boolean activeOnly = status != null && status;
-
         // Fetch tasks based on computed organizationId
+        // status: null = all, true = active only, false = inactive only
+        Long orgId = roleFilters.getOrganizationId();
         List<Task> tasks;
-        if (roleFilters.getOrganizationId() != null) {
-            tasks = activeOnly
-                ? taskRepository.findByActiveTrueAndOrganizationId(roleFilters.getOrganizationId())
-                : taskRepository.findByOrganizationId(roleFilters.getOrganizationId());
+        if (status == null) {
+            tasks = taskRepository.findByOrganizationId(orgId);
+        } else if (status) {
+            tasks = taskRepository.findByActiveTrueAndOrganizationId(orgId);
         } else {
-            // SUPERADMIN without organizationId filter - return all
-            tasks = activeOnly ? taskRepository.findByActiveTrue() : taskRepository.findAll();
+            tasks = taskRepository.findByActiveFalseAndOrganizationId(orgId);
         }
 
         return taskMapper.toDTOList(tasks);
@@ -79,7 +59,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         Employee employee = user.getEmployee();
 
         if (employee == null) {
-            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat úkoly");
+            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat úkony");
         }
 
         Organization organization = employee.getOrganization();
@@ -96,23 +76,29 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
     public Task updateTask(Long id, TaskDTO dto) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
+                .orElseThrow(() -> new ResourceNotFoundException("Úkon nebyl nalezen"));
 
-        // Validace oprávnění
         validateOrganizationAccess(task, t -> t.getOrganization().getId());
 
         return saveTask(task, dto);
     }
 
-    public Task terminateTask(Long id) {
+    private Task setTaskStatus(Long id, boolean status) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
+                .orElseThrow(() -> new ResourceNotFoundException("Úkon nebyl nalezen"));
 
-        // Validace oprávnění
         validateOrganizationAccess(task, t -> t.getOrganization().getId());
 
-        task.setActive(false);
+        task.setActive(status);
 
         return taskRepository.save(task);
+    }
+
+    public Task terminateTask(Long id) {
+        return setTaskStatus(id, false);
+    }
+
+    public Task activateTask(Long id) {
+        return setTaskStatus(id, true);
     }
 }

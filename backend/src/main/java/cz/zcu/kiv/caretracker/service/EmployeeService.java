@@ -158,38 +158,32 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         return saveEmployee(employee, dto);
     }
 
-    public Employee terminateEmployee(Long id) {
+    private Employee setEmployeeStatus(Long id, boolean status) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
-        // Validace oprávnění
         validateUpdateAccess(
                 employee,
                 emp -> emp.getOrganization().getId(),
                 emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
         );
 
-        employee.setActive(false);
-        userService.deactivateUserForEmployee(employee);
+        employee.setActive(status);
+        if (status) {
+            userService.activateUserForEmployee(employee);
+        } else {
+            userService.deactivateUserForEmployee(employee);
+        }
 
         return employeeRepository.save(employee);
     }
 
+    public Employee terminateEmployee(Long id) {
+        return setEmployeeStatus(id, false);
+    }
+
     public Employee activateEmployee(Long id) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
-
-        // Validace oprávnění
-        validateUpdateAccess(
-                employee,
-                emp -> emp.getOrganization().getId(),
-                emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
-        );
-
-        employee.setActive(true);
-        userService.activateUserForEmployee(employee);
-
-        return employeeRepository.save(employee);
+        return setEmployeeStatus(id, true);
     }
 
     public void resendActivationEmail(Long id) {

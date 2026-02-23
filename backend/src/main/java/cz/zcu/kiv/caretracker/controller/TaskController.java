@@ -25,21 +25,12 @@ public class TaskController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<TaskDTO>> getAllTasks(
-            @RequestParam(required = false) Long organizationId,
+    public ResponseEntity<List<TaskDTO>> getTasks(
+            @RequestParam Long organizationId,
             @RequestParam(required = false) Boolean status
     ) {
-        log.info("Fetching all tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<TaskDTO> tasks = taskService.getAllTasks(organizationId, status);
-
-        return ResponseEntity.ok(tasks);
-    }
-
-    @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<TaskDTO>> getAllActiveTasks() {
-        log.info("Fetching all active tasks");
-        List<TaskDTO> tasks = taskService.getAllActiveTasks();
+        log.info("Fetching tasks for organization: " + organizationId);
+        List<TaskDTO> tasks = taskService.getTasks(organizationId, status);
 
         return ResponseEntity.ok(tasks);
     }
@@ -76,5 +67,12 @@ public class TaskController {
     public Task terminateTask(@PathVariable Long id) {
         log.info("Terminating task with id: {}", id);
         return taskService.terminateTask(id);
+    }
+
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public Task activateTask(@PathVariable Long id) {
+        log.info("Activating task with id: {}", id);
+        return taskService.activateTask(id);
     }
 }

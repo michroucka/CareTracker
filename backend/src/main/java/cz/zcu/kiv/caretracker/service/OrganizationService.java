@@ -72,16 +72,20 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
         return saveOrganization(organization, dto);
     }
 
+    private Organization setOrganizationStatus(Long id, boolean status) {
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
+
+        organization.setActive(status);
+        return organizationRepository.save(organization);
+    }
+
     /**
      * Deaktivuje organizaci.
      * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
      */
     public Organization terminateOrganization(Long id) {
-        Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
-
-        organization.setActive(false);
-        return organizationRepository.save(organization);
+        return setOrganizationStatus(id, false);
     }
 
     /**
@@ -89,11 +93,7 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
      * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
      */
     public Organization activateOrganization(Long id) {
-        Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
-
-        organization.setActive(true);
-        return organizationRepository.save(organization);
+        return setOrganizationStatus(id, true);
     }
 
     private Organization saveOrganization(Organization organization, OrganizationRequestDTO dto) {
