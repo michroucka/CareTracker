@@ -39,8 +39,12 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                         selectedKeys={[selectedYear.toString()]}
                         onChange={(e) => {
                             const year = Number(e.target.value);
+                            const month = year === currentYear && selectedMonth > currentMonth
+                                ? currentMonth
+                                : selectedMonth;
                             setSelectedYear(year);
-                            onChange?.({ month: selectedMonth, year });
+                            setSelectedMonth(month);
+                            onChange?.({ month, year });
                         }}
                         disallowEmptySelection
                     >

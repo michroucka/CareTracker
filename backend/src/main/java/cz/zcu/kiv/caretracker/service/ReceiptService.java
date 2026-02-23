@@ -84,10 +84,12 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
 
             renderer.getFontResolver().addFont(
                     getClass().getClassLoader().getResource("fonts/Nunito-Regular.ttf").toURI().toString(),
+                    "Identity-H",
                     true
             );
             renderer.getFontResolver().addFont(
                     getClass().getClassLoader().getResource("fonts/Nunito-Bold.ttf").toURI().toString(),
+                    "Identity-H",
                     true
             );
 
@@ -120,7 +122,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
                     Map<String, String> row = new HashMap<>();
                     row.put("taskName", task.getName());
                     row.put("unitCount", String.valueOf(totalUnitCount));
-                    row.put("unitType", task.getUnitType().name());
+                    row.put("unitType", task.getUnitType().getLabel());
                     row.put("price", String.valueOf(totalPrice));
                     return row;
                 })

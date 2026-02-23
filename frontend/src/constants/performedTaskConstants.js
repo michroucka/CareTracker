@@ -8,10 +8,10 @@ export const columns = [
 ];
 
 export const unitTypeTranslations = {
-    "HOUR": "Min",
-    "OCCURRENCE": "Úkon",
-    "KM": "Km",
-    "KG": "Kg",
+    "HOUR": "min",
+    "OCCURRENCE": "úkon",
+    "KM": "km",
+    "KG": "kg",
 }
 
 export const calculatePrice = (task, unitCount) => {

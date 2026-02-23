@@ -649,11 +649,6 @@ function Clients() {
                             </Dropdown>
                         )}
 
-                        <DatePicker
-                            showMonthAndYearPickers
-                            granularity="month"
-                        />
-
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">

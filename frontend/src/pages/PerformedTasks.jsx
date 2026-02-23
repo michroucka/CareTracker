@@ -751,7 +751,7 @@ function PerformedTasks() {
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType].toLowerCase() || "-"}
+                            {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType] || "-"}
                         </p>
                     </div>
                 );

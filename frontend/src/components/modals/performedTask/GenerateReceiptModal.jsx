@@ -44,7 +44,7 @@ export function GenerateReceiptModal({ isOpen, onClose, clients = [] }) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `stvrzenka-${month}-${year}.pdf`;
+            a.download = `stvrzenka-${month + 1}-${year}.pdf`;
             a.click();
             URL.revokeObjectURL(url);
         } finally {
@@ -90,7 +90,7 @@ export function GenerateReceiptModal({ isOpen, onClose, clients = [] }) {
     return (
         <Modal isOpen={isOpen} onClose={handleClose} size="sm" scrollBehavior="outside">
             <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Zadat nový provedený úkon</ModalHeader>
+                <ModalHeader className="flex flex-col gap-1">Vygenerovat stvrzenku</ModalHeader>
                 <ModalBody>
                     <Form
                         className="w-full space-y-4"
@@ -126,7 +126,7 @@ export function GenerateReceiptModal({ isOpen, onClose, clients = [] }) {
                                 ))}
                             </Autocomplete>
 
-                            <MonthYearPicker onChange={(month, year) => {setMonth(month); setYear(year)}} />
+                            <MonthYearPicker onChange={({ month, year }) => {setMonth(month); setYear(year)}} />
                         </div>
                     </Form>
                 </ModalBody>

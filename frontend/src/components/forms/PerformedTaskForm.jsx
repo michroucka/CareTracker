@@ -109,7 +109,7 @@ export const PerformedTaskForm = React.forwardRef(({
     // Get unit label for selected task
     const unitLabel = React.useMemo(() => {
         if (!selectedTask?.unitType) return "";
-        return unitTypeTranslations[selectedTask.unitType]?.toLowerCase() || "";
+        return unitTypeTranslations[selectedTask.unitType] || "";
     }, [selectedTask]);
 
     // Check if unit supports decimals (KG, KM)
