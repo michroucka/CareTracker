@@ -77,7 +77,7 @@ function Activate() {
         if (!trimmedUsername) {
             newErrors.username = "Prosím zadejte uživatelské jméno";
         }
-        if (!trimmedUsername.length < 4) {
+        if (trimmedUsername.length < 4) {
             newErrors.username = "Uživatelské jméno musí obsahovat alespoň 4 znaky"
         }
         if (!trimmedPassword) {

@@ -689,6 +689,7 @@ function Employees() {
                                                           startContent={<UserRoundX />}
                                                           variant="light"
                                                           color="danger"
+                                                          isDisabled={employee.id === user?.employeeId}
                                                           onPress={() => handleOpenTerminateModal(employee.id)}
                                             >
                                                 Deaktivovat
