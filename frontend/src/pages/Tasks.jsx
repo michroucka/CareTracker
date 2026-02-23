@@ -211,14 +211,12 @@ function Employees() {
     React.useEffect(() => {
         // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
         if (user?.role === "SUPERADMIN") {
-            if (organizations.length === 0 || organizationFilter.size === 0) return;
-
-            // Superadmin musi vybrat organization
             if (organizationFilter.size === 0) {
-                // Pokud není vybraná organizace, smaž data
                 setTasks([]);
                 return;
             }
+
+            if (organizations.length === 0) return;
 
             const selectedOrgName = Array.from(organizationFilter)[0];
             const selectedOrg = organizations.find(org => org.name === selectedOrgName);

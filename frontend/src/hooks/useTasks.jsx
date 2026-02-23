@@ -9,8 +9,9 @@ export function useTasks() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const abortControllerRef = useRef(null);
+    const filtersRef = useRef({});
 
-    const fetchTasks = async (filters = {}) => {
+    const fetchTasks = async (filters = {}, { silent = false } = {}) => {
         // Zruš předchozí request pokud stále běží
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -21,8 +22,11 @@ export function useTasks() {
         abortControllerRef.current = controller;
 
         try {
-            setTasks([])
-            setLoading(true);
+            filtersRef.current = filters;
+            if (!silent) {
+                setTasks([]);
+                setLoading(true);
+            }
 
             const params = new URLSearchParams();
 
@@ -41,7 +45,7 @@ export function useTasks() {
             const sorted = sortByKey(tasks, 'name', 'ascending');
             setTasks(sorted);
 
-            setLoading(false);
+            if (!silent) setLoading(false);
         } catch (err) {
             if (err.name === 'AbortError') {
                 console.log("Request was cancelled");
@@ -50,7 +54,7 @@ export function useTasks() {
 
             console.error("Error fetching tasks:", err);
             showErrorToast(err, "Chyba při načítání úkolů", { icon: <CloudAlert /> });
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -90,10 +94,7 @@ export function useTasks() {
         try {
             const updated = await putJSON(`/tasks/${id}`, updatedData);
 
-            setTasks(prev => sortByKey(
-                prev.map(employee => employee.id === id ? updated : employee),
-                'name', 'ascending'
-            ));
+            fetchTasks(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Úkon úspěšně aktualizován",
@@ -113,10 +114,7 @@ export function useTasks() {
         try {
             const updated = await putJSON(`/tasks/${id}/terminate`);
 
-            setTasks(prev => sortByKey(
-                prev.map(employee => employee.id === id ? updated : employee),
-                'name', 'ascending'
-            ));
+            fetchTasks(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Úkon úspěšně deaktivován",
@@ -136,11 +134,7 @@ export function useTasks() {
         try {
             const updated = await putJSON(`/tasks/${id}/activate`);
 
-            setTasks(prev => sortByKey(
-                prev.map(employee => employee.id === id ? updated : employee),
-                'name',
-                'ascending'
-            ));
+            fetchTasks(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Úkon úspěšně aktivován",

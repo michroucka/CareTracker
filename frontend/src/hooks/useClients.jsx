@@ -9,6 +9,7 @@ export function useClients() {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
     const abortControllerRef = useRef(null);
+    const filtersRef = useRef({});
 
     function mapClient(client) {
         return {
@@ -22,7 +23,7 @@ export function useClients() {
         return clients.map((client) => mapClient(client));
     }
 
-    const fetchClients = async (filters = {}) => {
+    const fetchClients = async (filters = {}, { silent = false } = {}) => {
         // Zruš předchozí request pokud stále běží
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -33,9 +34,11 @@ export function useClients() {
         abortControllerRef.current = controller;
 
         try {
-            // Vyčisti staré data před načtením nových
-            setClients([]);
-            setLoading(true);
+            filtersRef.current = filters;
+            if (!silent) {
+                setClients([]);
+                setLoading(true);
+            }
 
             const params = new URLSearchParams();
 
@@ -68,8 +71,7 @@ export function useClients() {
             const sorted = sortByKey(mappedClients, 'lastName', 'ascending');
             setClients(sorted);
 
-            // Vypni loading pouze pokud tento request nebyl abortnut mezitím
-            setLoading(false);
+            if (!silent) setLoading(false);
         } catch (err) {
             // Ignoruj abort chyby (request byl zrušen, což je OK)
             if (err.name === 'AbortError') {
@@ -79,7 +81,7 @@ export function useClients() {
 
             console.error("Error fetching clients: ", err);
             showErrorToast(err, "Chyba při načítání klientů", { icon: <CloudAlert /> });
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -204,14 +206,7 @@ export function useClients() {
                 }
             }
 
-            // Aktualizuj v seznamu s mapováním
-            const mappedClient = mapClient(updated);
-
-            setClients(prev => sortByKey(
-                prev.map(client => client.id === id ? mappedClient : client),
-                'lastName',
-                'ascending'
-            ));
+            fetchClients(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Klient úspěšně aktualizován",
@@ -232,14 +227,7 @@ export function useClients() {
         try {
             const updated = await putJSON(`/clients/${id}/terminate`, data);
 
-            // Aktualizuj v seznamu s mapováním
-            const mappedClient = mapClient(updated);
-
-            setClients(prev => sortByKey(
-                prev.map(client => client.id === id ? mappedClient : client),
-                'lastName',
-                'ascending'
-            ));
+            fetchClients(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Klient úspěšně deaktivován",
@@ -259,14 +247,7 @@ export function useClients() {
         try {
             const updated = await putJSON(`/clients/${id}/activate`);
 
-            // Aktualizuj v seznamu s mapováním
-            const mappedClient = mapClient(updated);
-
-            setClients(prev => sortByKey(
-                prev.map(client => client.id === id ? mappedClient : client),
-                'lastName',
-                'ascending'
-            ));
+            fetchClients(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Klient úspěšně aktivován",
