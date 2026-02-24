@@ -719,14 +719,6 @@ function Employees() {
     const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
     const shouldShowLoading = !isSuperadminWithoutOrg && loading;
 
-    if (shouldShowLoading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner size="lg" variant="gradient" label="Načítání zaměstnanců..." />
-            </div>
-        );
-    }
-
     return (
         <>
             <Table
@@ -751,6 +743,8 @@ function Employees() {
                     )}
                 </TableHeader>
                 <TableBody
+                    isLoading={shouldShowLoading}
+                    loadingContent={<Spinner label="Načítání zaměstnanců..." />}
                     emptyContent={
                         (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
                             ? "Vyberte prosím organizaci" : "Žádní zaměstnanci nenalezeni"

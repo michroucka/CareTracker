@@ -3,7 +3,7 @@ import {useAccount} from "../hooks/useAccount.jsx";
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {getRoleLabel} from "../constants/roles.js";
 import React from "react";
-import {Button, Divider, Form, Input} from "@heroui/react";
+import {Button, Divider, Form, Input, Spinner} from "@heroui/react";
 import {Pencil, Save, UserRound, X, RefreshCw} from "lucide-react";
 
 
@@ -15,6 +15,7 @@ function Account() {
     const [errors, setErrors] = React.useState({});
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isEditMode, setIsEditMode] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
 
     // Záloha hodnot před editací pro možnost zrušení
     const [savedUsername, setSavedUsername] = React.useState("");
@@ -31,6 +32,8 @@ function Account() {
             setFullName(account.fullName);
             setSavedUsername(account.username);
             setSavedEmail(account.email);
+        }).finally(() => {
+            setIsLoading(false);
         });
     }, []);
 
@@ -82,6 +85,14 @@ function Account() {
         }
     };
 
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
+                <Spinner label="Načítání údajů..." />
+            </div>
+        );
+    }
 
     return (
         <Form
