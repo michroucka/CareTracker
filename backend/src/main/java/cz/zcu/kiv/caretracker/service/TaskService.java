@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
@@ -54,7 +55,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         );
     }
 
-    private Task saveTask(Task task, TaskDTO dto) {
+    private Task saveTask(Task task, TaskRequestDTO dto) {
         User user = getCurrentUser();
         Employee employee = user.getEmployee();
 
@@ -64,17 +65,17 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
         Organization organization = employee.getOrganization();
 
-        taskMapper.toTask(task, dto, organization);
+        taskMapper.requestToTask(task, dto, organization);
 
         return taskRepository.save(task);
     }
 
-    public Task createTask(TaskDTO dto) {
+    public Task createTask(TaskRequestDTO dto) {
         Task task = new Task();
         return saveTask(task, dto);
     }
 
-    public Task updateTask(Long id, TaskDTO dto) {
+    public Task updateTask(Long id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Úkon nebyl nalezen"));
 

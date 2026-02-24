@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.service.TaskService;
@@ -46,7 +47,7 @@ public class TaskController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
-    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO dto) {
+    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskRequestDTO dto) {
         log.info("Creating new task");
         Task savedTask = taskService.createTask(dto);
         return ResponseEntity.ok(taskMapper.toDTO(savedTask));
@@ -55,7 +56,7 @@ public class TaskController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     public ResponseEntity<TaskDTO> updateTask(
-            @PathVariable Long id, @RequestBody TaskDTO dto
+            @PathVariable Long id, @RequestBody TaskRequestDTO dto
     ) {
         log.info("Updating task with id: {}", id);
         Task updated = taskService.updateTask(id, dto);

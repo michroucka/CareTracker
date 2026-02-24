@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.mapper;
 
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Organization;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.UnitType;
@@ -28,7 +29,7 @@ public class TaskMapper {
         return dto;
     }
 
-    public void toTask(Task task, TaskDTO dto, Organization organization) {
+    public void requestToTask(Task task, TaskRequestDTO dto, Organization organization) {
         task.setName(dto.getName());
         task.setUnitPrice(dto.getUnitPrice());
         task.setUnitType(UnitType.valueOf(dto.getUnitType()));
