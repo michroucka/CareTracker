@@ -25,7 +25,6 @@ import {sortByKey} from "../utils/sorting.js";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import {useSearchParams} from "react-router-dom";
 import {useTasks} from "../hooks/useTasks.jsx";
-import {unitTypeTranslations} from "../constants/taskConstants.js";
 import {TaskCreateModal} from "../components/modals/task/TaskCreateModal.jsx";
 import {TaskDetailModal} from "../components/modals/task/TaskDetailModal.jsx";
 import {TaskTerminateModal} from "../components/modals/task/TaskTerminateModal.jsx";

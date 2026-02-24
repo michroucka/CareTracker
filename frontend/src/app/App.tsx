@@ -12,6 +12,7 @@ import IndividualPlan from "../pages/IndividualPlan";
 import Employees from "../pages/Employees";
 import Activate from "../pages/Activate";
 import Tasks from "../pages/Tasks";
+import Account from "../pages/Account";
 
 export default function App() {
     return (
@@ -80,6 +81,15 @@ export default function App() {
                             <PublicOnlyRoute>
                                 <Activate />
                             </PublicOnlyRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/account"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER, ROLES.CLIENT]}>
+                                <Account />
+                            </ProtectedRoute>
                         }
                     />
                 </Routes>

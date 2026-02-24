@@ -1,15 +1,23 @@
 package cz.zcu.kiv.caretracker.service;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
+import cz.zcu.kiv.caretracker.dto.user.PasswordResetRequestDTO;
+import cz.zcu.kiv.caretracker.dto.user.UserDTO;
+import cz.zcu.kiv.caretracker.dto.user.UserRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.TokenExpiredException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
+import cz.zcu.kiv.caretracker.mapper.UserMapper;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,14 +26,52 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserService {
+public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public UserDTO getCurrentUserDTO() {
+        User user = getCurrentUser();
+        return userMapper.toDTO(user);
+    }
+
+    @Transactional
+    public User updateCurrentUser(UserRequestDTO dto) {
+        User user = getCurrentUser();
+        userMapper.requestToUser(user, dto);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
+        User user = userRepository.findByActivationToken(dto.getToken())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid token"));
+
+        MessageResponseDTO response = new MessageResponseDTO();
+
+        if (dto.getPassword().equals(dto.getConfirmPassword())) {
+            String hashedPassword = passwordEncoder.encode(dto.getPassword());
+
+            user.setPassword(hashedPassword);
+            userRepository.save(user);
+
+            response.setSuccess(true);
+            response.setMessage("Heslo bylo úspěšně změněno");
+        } else {
+            response.setSuccess(false);
+            response.setMessage("Hesla se neshodují");
+        }
+        return response;
+    }
 
     /**
      * Vytvoří User účet pro zaměstnance s aktivačním tokenem.

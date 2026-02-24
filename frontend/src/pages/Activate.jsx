@@ -110,12 +110,11 @@ function Activate() {
 
             showToast({
                 title: "Účet byl úspěšně aktivován",
-                description: `Vítejte ${result.username}!`,
                 color: "success",
                 icon: <UserRoundCheck />
             });
 
-            navigate("/", { replace: true });
+            navigate("/login", { replace: true });
         } catch (error) {
             // postJSON vytáhne message z ErrorResponse nebo použije default
             console.error("Activation error:", error);
