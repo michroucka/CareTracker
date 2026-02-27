@@ -1,12 +1,13 @@
 import { Form, Input, Button, Divider, Spinner, Card, CardBody } from "@heroui/react";
 import React from "react";
-import { get, postJSON } from "../api/api.js";
+import { get, putJSON } from "../api/api.js";
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
 
-function Activate() {
-    // Získání tokenu z URL (?token=xyz)
+function ResetPassword() {
+    // Získání tokenu z URL
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
 
@@ -15,7 +16,6 @@ function Activate() {
     const [isTokenValid, setIsTokenValid] = React.useState(false);
 
     // Stavy pro formulář
-    const [username, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [passwordConfirm, setPasswordConfirm] = React.useState("");
     const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
@@ -23,6 +23,7 @@ function Activate() {
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const navigate = useNavigate();
+    const { logoutSilent } = useAuth();
 
     // Validace tokenu při načtení stránky
     React.useEffect(() => {
@@ -34,7 +35,7 @@ function Activate() {
             }
 
             try {
-                const response = await get(`/activation/validate?token=${token}`);
+                const response = await get(`/activation/validate-reset?token=${token}`);
                 const result = await response.json();
 
                 if (response.ok && result.success) {
@@ -66,18 +67,12 @@ function Activate() {
     const onSubmit = async (e) => {
         e.preventDefault();
 
-        const trimmedUsername = username.trim();
         const trimmedPassword = password.trim();
         const trimmedPasswordConfirm = passwordConfirm.trim();
 
         // Validace trimnutých hodnot
         const newErrors = {};
-        if (!trimmedUsername) {
-            newErrors.username = "Prosím zadejte uživatelské jméno";
-        }
-        if (trimmedUsername.length < 4) {
-            newErrors.username = "Uživatelské jméno musí obsahovat alespoň 4 znaky"
-        }
+
         if (!trimmedPassword) {
             newErrors.password = "Prosím zadejte heslo";
         }
@@ -96,23 +91,22 @@ function Activate() {
         setIsSubmitting(true);
 
         try {
-            // postJSON automaticky hází chyby při !response.ok
-            const result = await postJSON("/activation/complete", {
+            await putJSON("/activation/reset-password", {
                 token: token,
-                username: trimmedUsername,
                 password: trimmedPassword,
             });
 
+            await logoutSilent();
+
             showToast({
-                title: "Účet byl úspěšně aktivován",
+                title: "Heslo bylo úspěšně změněno",
                 color: "success",
                 icon: <UserRoundCheck />
             });
 
             navigate("/login", { replace: true });
         } catch (error) {
-            // postJSON vytáhne message z ErrorResponse nebo použije default
-            console.error("Activation error:", error);
+            console.error("Password reset error:", error);
             showToast({
                 title: error.message || "Server není dostupný",
                 color: "danger",
@@ -142,9 +136,9 @@ function Activate() {
                 <Card className="w-sm">
                     <CardBody className="flex flex-col items-center gap-4 py-8">
                         <AlertCircle className="size-16 text-danger" />
-                        <h2 className="text-xl font-semibold text-center">Neplatný aktivační odkaz</h2>
+                        <h2 className="text-xl font-semibold text-center">Neplatný odkaz pro obnovení hesla</h2>
                         <p className="text-center text-foreground/70">
-                            Tento odkaz je neplatný nebo již vypršel. Pokud potřebujete nový odkaz, kontaktujte administrátora.
+                            Tento odkaz je neplatný nebo již vypršel. Pokud potřebujete nový odkaz, zažádejte o nový na stránce přihlášení.
                         </p>
                     </CardBody>
                 </Card>
@@ -160,25 +154,8 @@ function Activate() {
             onSubmit={onSubmit}
         >
             <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
-                <h1 className="cursor-default">Aktivace účtu</h1>
+                <h1 className="cursor-default">Obnovení hesla</h1>
                 <Divider className="mb-3 w-5/6" />
-
-                <Input
-                    isRequired
-                    isDisabled={isSubmitting}
-                    isInvalid={!!errors.username}
-                    errorMessage={errors.username}
-                    label="Uživatelské jméno"
-                    labelPlacement="inside"
-                    name="username"
-                    value={username}
-                    onValueChange={(value) => {
-                        setUsername(value);
-                        if (errors.username) {
-                            setErrors({ ...errors, username: undefined });
-                        }
-                    }}
-                />
 
                 <Input
                     isRequired
@@ -209,7 +186,7 @@ function Activate() {
                     onValueChange={(value) => {
                         setPassword(value);
                         if (errors.password) {
-                            setErrors({ ...errors, password: undefined });
+                            setErrors({ ...errors, password: undefined, passwordConfirm: undefined });
                         }
                     }}
                 />
@@ -243,7 +220,7 @@ function Activate() {
                     onValueChange={(value) => {
                         setPasswordConfirm(value);
                         if (errors.passwordConfirm) {
-                            setErrors({ ...errors, passwordConfirm: undefined });
+                            setErrors({ ...errors, passwordConfirm: undefined, password: undefined });
                         }
                     }}
                 />
@@ -255,11 +232,11 @@ function Activate() {
                     isLoading={isSubmitting}
                     isDisabled={isSubmitting}
                 >
-                    {isSubmitting ? "Aktivuji účet..." : "Aktivovat účet"}
+                    {isSubmitting ? "Ukládání..." : "Změnit heslo"}
                 </Button>
             </div>
         </Form>
     );
 }
 
-export default Activate;
+export default ResetPassword;

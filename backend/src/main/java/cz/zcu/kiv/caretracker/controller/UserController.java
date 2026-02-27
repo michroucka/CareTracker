@@ -16,11 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -57,10 +53,8 @@ public class UserController {
         return ResponseEntity.ok(userMapper.toDTO(user));
     }
 
-    @PutMapping("/reset-password")
-    public ResponseEntity<MessageResponseDTO> resetPassword(PasswordResetRequestDTO dto) {
-        MessageResponseDTO response = userService.resetPassword(dto);
-
-        return ResponseEntity.ok(response);
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponseDTO> sendResetPasswordEmail() {
+        return ResponseEntity.ok(userService.sendResetPasswordEmail());
     }
 }

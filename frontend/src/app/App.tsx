@@ -13,6 +13,7 @@ import Employees from "../pages/Employees";
 import Activate from "../pages/Activate";
 import Tasks from "../pages/Tasks";
 import Account from "../pages/Account";
+import ResetPassword from "../pages/ResetPassword";
 
 export default function App() {
     return (
@@ -81,6 +82,13 @@ export default function App() {
                             <PublicOnlyRoute>
                                 <Activate />
                             </PublicOnlyRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/reset-password"
+                        element={
+                            <ResetPassword />
                         }
                     />
 

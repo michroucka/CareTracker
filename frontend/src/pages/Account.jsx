@@ -21,7 +21,7 @@ function Account() {
     const [savedUsername, setSavedUsername] = React.useState("");
     const [savedEmail, setSavedEmail] = React.useState("");
 
-    const {fetchAccountDetails, updateAccountDetails} = useAccount();
+    const {fetchAccountDetails, updateAccountDetails, requestResetPasswordEmail, isSendingReset} = useAccount();
     const {checkAuth} = useAuth();
 
     React.useEffect(() => {
@@ -192,7 +192,9 @@ function Account() {
                     className="w-full"
                     variant="flat"
                     type="button"
-                    startContent={<RefreshCw className="size-4" />}
+                    startContent={isSendingReset ? <Spinner size="sm" /> : <RefreshCw className="size-4" />}
+                    isDisabled={isSendingReset}
+                    onPress={requestResetPasswordEmail}
                 >
                     Obnovit heslo
                 </Button>

@@ -1,7 +1,7 @@
 import {Form, Input, Checkbox, Button, Divider, Link} from "@heroui/react";
 import React from "react";
-import { post } from "../api/api.js"
-import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX } from "lucide-react"
+import {post} from "../api/api.js"
+import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, ArrowLeft, MailCheck, MailX } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
@@ -17,9 +17,12 @@ function Login() {
     const location = useLocation();
     const { login, checkAuth } = useAuth();
 
+    const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+    const [email, setEmail] = React.useState("");
+
     const togglePassword = () => setIsPasswordVisible(!isPasswordVisible);
 
-    const onSubmit = async (e) => {
+    const submitLogin = async (e) => {
         e.preventDefault();
 
         // Validace před odesláním
@@ -97,7 +100,48 @@ function Login() {
         }
     };
 
-    return (
+    const submitForgot = async (e) => {
+        e.preventDefault();
+
+        const newErrors = {};
+        if (!email.trim()) {
+            newErrors.email = "Prosím zadejte email";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await post("/activation/forgot-password", { email: email });
+            const result = await response.json();
+
+            showToast({
+                title: result.message,
+                color: result.success ? "success" : "danger",
+                icon: result.success ? <MailCheck /> : <MailX />
+            });
+
+            if (result.success) {
+                setShowForgotPassword(false);
+                setEmail("");
+            }
+        } catch (error) {
+            console.error("Forgot password error:", error);
+            showToast({
+                title: error.message || "Server není dostupný",
+                color: "danger",
+                icon: <ServerOff />,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (!showForgotPassword ? (
         <Form
             className="w-full justify-center items-center space-y-4"
             validationErrors={errors}
@@ -107,7 +151,7 @@ function Login() {
                 setRemember(false);
                 setErrors({});
             }}
-            onSubmit={onSubmit}
+            onSubmit={submitLogin}
         >
             <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
                 <h1 className="cursor-default">Přihlášení</h1>
@@ -192,18 +236,67 @@ function Login() {
                     </Button>
                 </div>
 
-                {/* Mobile ver */}
-                <Link className="text-foreground/50 hover:text-primary self-start hidden sm:block" size="sm" href="/forgot-password">
-                    Zapomenuté heslo?
-                </Link>
-
-                {/* Desktop ver */}
-                <Link className="text-foreground/50 hover:text-primary self-start sm:hidden" size="md" href="/forgot-password">
+                <Link className="text-foreground/50 hover:text-primary cursor-pointer" onPress={() => setShowForgotPassword(true)}>
                     Zapomenuté heslo?
                 </Link>
             </div>
         </Form>
-    );
+    )
+        :
+    (
+        <Form
+            className="w-full justify-center items-center space-y-4"
+            validationErrors={errors}
+            onSubmit={submitForgot}
+        >
+            <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
+                <h2 className="cursor-default">Zapomenuté heslo</h2>
+                <Divider className="mb-3 w-5/6" />
+                <Input
+                    isDisabled={isLoading}
+                    isInvalid={!!errors.email}
+                    errorMessage={errors.email}
+                    label="Email"
+                    labelPlacement="inside"
+                    type="email"
+                    description="Sem Vám přijdou instrukce pro obnovení hesla"
+                    name="email"
+                    value={email}
+                    onValueChange={(value) => {
+                        setEmail(value);
+                        if (errors.email || errors.email) {
+                            setErrors({});
+                        }
+                    }}
+                    classNames={{
+                        description: "text-foreground/50"
+                    }}
+                />
+
+                <div className="flex gap-4 w-full">
+                    <Button
+                        className="w-full text-base"
+                        color="primary"
+                        type="submit"
+                        isLoading={isLoading}
+                        isDisabled={isLoading}
+                    >
+                        {isLoading ? "Odesílání..." : "Odeslat"}
+                    </Button>
+                </div>
+
+                <Link
+                    className="text-foreground/50 hover:text-primary cursor-pointer"
+                    onPress={() => {
+                        setShowForgotPassword(false);
+                        setEmail("");
+                    }}
+                >
+                    <ArrowLeft className="pe-1" /> Zpět na přihlášení
+                </Link>
+            </div>
+        </Form>
+    ));
 }
 
 export default Login;

@@ -94,7 +94,7 @@ public class EmailService {
     }
 
     /**
-     * Odešle resetovací email pro heslo (pro budoucí použití)
+     * Odešle resetovací email pro heslo
      */
     public void sendPasswordResetEmail(String email, String resetToken, String recipientName) {
         try {

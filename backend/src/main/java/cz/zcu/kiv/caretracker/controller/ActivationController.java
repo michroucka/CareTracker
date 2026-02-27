@@ -1,16 +1,15 @@
 package cz.zcu.kiv.caretracker.controller;
 
-import cz.zcu.kiv.caretracker.entity.User;
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
+import cz.zcu.kiv.caretracker.dto.user.CompleteActivationRequestDTO;
+import cz.zcu.kiv.caretracker.dto.user.PasswordResetRequestDTO;
 import cz.zcu.kiv.caretracker.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/activation")
@@ -24,55 +23,67 @@ public class ActivationController {
     private PasswordEncoder passwordEncoder;
 
     /**
-     * Validuje aktivační token bez aktivace účtu
+     * Validuje aktivační token - kontroluje expiraci i to, zda účet ještě není aktivován
      */
     @GetMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestParam String token) {
+    public ResponseEntity<MessageResponseDTO> validateActivationToken(@RequestParam String token) {
         boolean isValid = userService.validateActivationToken(token);
 
-        if (isValid) {
-            log.debug("Activation token validated successfully: {}", token.substring(0, 8) + "...");
-            return ResponseEntity.ok(Map.of(
-                    "valid", true,
-                    "message", "Token je validní"
-            ));
-        } else {
-            log.debug("Invalid or expired activation token: {}", token.substring(0, 8) + "...");
-            return ResponseEntity.ok(Map.of(
-                    "valid", false,
-                    "message", "Token je neplatný nebo vypršel"
-            ));
-        }
+        MessageResponseDTO response = new MessageResponseDTO(
+                isValid,
+                isValid ? "Token je validní" : "Token je neplatný nebo vypršel"
+        );
+
+        return isValid
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * Validuje token pro reset hesla - kontroluje pouze expiraci
+     */
+    @GetMapping("/validate-reset")
+    public ResponseEntity<MessageResponseDTO> validateResetToken(@RequestParam String token) {
+        boolean isValid = userService.validateToken(token);
+
+        MessageResponseDTO response = new MessageResponseDTO(
+                isValid,
+                isValid ? "Token je validní" : "Token je neplatný nebo vypršel"
+        );
+
+        return isValid
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.badRequest().body(response);
     }
 
     /**
      * Dokončí aktivaci účtu - nastaví username a heslo
      */
     @PostMapping("/complete")
-    public ResponseEntity<Map<String, Object>> completeActivation(@RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        String username = request.get("username");
-        String password = request.get("password");
-
-        if (token == null || username == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "Chybí povinné parametry"
-            ));
+    public ResponseEntity<MessageResponseDTO> completeActivation(@RequestBody CompleteActivationRequestDTO request) {
+        if (request.getToken() == null || request.getUsername() == null || request.getPassword() == null) {
+            return ResponseEntity.badRequest().body(new MessageResponseDTO(false, "Chybí povinné parametry"));
         }
 
-        // Zahashuj heslo
-        String hashedPassword = passwordEncoder.encode(password);
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         // Dokončení aktivace - výjimky se propagují do GlobalExceptionHandler
-        User user = userService.completeActivation(token, username, hashedPassword);
+        userService.completeActivation(request.getToken(), request.getUsername(), hashedPassword);
 
-        log.info("Account activation completed successfully for user: {}", username);
+        log.info("Account activation completed successfully for user: {}", request.getUsername());
 
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Účet byl úspěšně aktivován",
-                "username", user.getUsername()
-        ));
+        return ResponseEntity.ok(new MessageResponseDTO(true, "Účet byl úspěšně aktivován"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponseDTO> sendResetPasswordEmailPublic(@RequestParam String email) {
+        return ResponseEntity.ok(userService.sendResetPasswordEmailByEmail(email));
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<MessageResponseDTO> resetPassword(@RequestBody PasswordResetRequestDTO dto) {
+        MessageResponseDTO response = userService.resetPassword(dto);
+
+        return ResponseEntity.ok(response);
     }
 }

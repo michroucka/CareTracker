@@ -15,8 +15,6 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,23 +52,17 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     @Transactional
     public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
         User user = userRepository.findByActivationToken(dto.getToken())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid token"));
+                .orElseThrow(() -> new ResourceNotFoundException("Neplatný token"));
+        validateToken(dto.getToken());
 
-        MessageResponseDTO response = new MessageResponseDTO();
+        String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
-        if (dto.getPassword().equals(dto.getConfirmPassword())) {
-            String hashedPassword = passwordEncoder.encode(dto.getPassword());
+        user.setPassword(hashedPassword);
+        user.setActivationToken(null);
+        user.setTokenExpiry(null);
+        userRepository.save(user);
 
-            user.setPassword(hashedPassword);
-            userRepository.save(user);
-
-            response.setSuccess(true);
-            response.setMessage("Heslo bylo úspěšně změněno");
-        } else {
-            response.setSuccess(false);
-            response.setMessage("Hesla se neshodují");
-        }
-        return response;
+        return new MessageResponseDTO(true, "Heslo bylo úspěšně změněno");
     }
 
     /**
@@ -86,21 +78,18 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
         user.setActive(true);
 
-        // Vygeneruj aktivační token
         String activationToken = UUID.randomUUID().toString();
         user.setActivationToken(activationToken);
-        user.setTokenExpiry(LocalDateTime.now().plusDays(7)); // Token platný 7 dní
+        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
 
         User savedUser = userRepository.save(user);
 
-        // Odeslání aktivačního emailu
         try {
             String recipientName = employee.getFirstName() + " " + employee.getLastName();
             emailService.sendActivationEmail(email, activationToken, recipientName);
             log.info("Activation email sent for user: {}", email);
         } catch (Exception e) {
             log.error("Failed to send activation email for user: {}, error: {}", email, e.getMessage());
-            // Pokračujeme i při selhání emailu - uživatel je vytvořen
         }
 
         return savedUser;
@@ -165,7 +154,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     }
 
     /**
-     * Validuje aktivační token (bez aktivace účtu)
+     * Validuje token
      */
     @Transactional(readOnly = true)
     public boolean validateActivationToken(String token) {
@@ -177,17 +166,25 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         User user = userOpt.get();
 
-        // Kontrola expirace
         if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
             return false;
         }
 
         // Kontrola, zda už není aktivován
-        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+        return user.getUsername() == null || user.getUsername().isEmpty();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean validateToken(String token) {
+        Optional<User> userOpt = userRepository.findByActivationToken(token);
+
+        if (userOpt.isEmpty()) {
             return false;
         }
 
-        return true;
+        User user = userOpt.get();
+
+        return !user.getTokenExpiry().isBefore(LocalDateTime.now());
     }
 
     /**
@@ -223,5 +220,32 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         log.info("User activation completed for: {}", username);
 
         return savedUser;
+    }
+
+    @Transactional
+    public MessageResponseDTO sendResetPasswordEmail() {
+        User user = getCurrentUser();
+        return generateAndSendResetToken(user);
+    }
+
+    @Transactional
+    public MessageResponseDTO sendResetPasswordEmailByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Uživatel se zadaným emailem nenalezen"));
+        return generateAndSendResetToken(user);
+    }
+
+    private MessageResponseDTO generateAndSendResetToken(User user) {
+        String token = UUID.randomUUID().toString();
+        user.setActivationToken(token);
+        user.setTokenExpiry(LocalDateTime.now().plusHours(24));
+        userRepository.save(user);
+
+        String name = user.getEmployee() != null
+                ? user.getEmployee().getFullName()
+                : user.getUsername();
+        emailService.sendPasswordResetEmail(user.getEmail(), token, name);
+
+        return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
     }
 }

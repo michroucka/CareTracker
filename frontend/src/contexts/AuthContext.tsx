@@ -18,6 +18,7 @@ interface AuthContextType {
     loading: boolean;
     login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => void;
     logout: () => void;
+    logoutSilent: () => Promise<void>;
     checkAuth: () => Promise<void>;
 }
 
@@ -64,6 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
     };
 
+    const logoutSilent = async () => {
+        try {
+            await post("/logout", {});
+        } catch (error) {
+            console.error("Silent logout error:", error);
+        } finally {
+            setUser(null);
+        }
+    };
+
     const logout = async () => {
         try {
             const response = await post("/logout", {});
@@ -83,8 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // Redirect to home page after logout
                 navigate("/");
-            } else {
-                throw new Error("Odhlášení selhalo");
             }
         } catch (error) {
             console.error("Logout error:", error);
@@ -107,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, logoutSilent, checkAuth }}>
             {children}
         </AuthContext.Provider>
     );
