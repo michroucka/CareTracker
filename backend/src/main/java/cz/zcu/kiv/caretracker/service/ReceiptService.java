@@ -55,8 +55,9 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         Specification<PerformedTask> spec = PerformedTaskSpecifications.withFilters(
                 client.getOrganization().getId(),
                 null, null,
+                clientId,
                 month, year
-        ).and(PerformedTaskSpecifications.hasClient(clientId));
+        );
 
         List<PerformedTask> tasks = performedTaskRepository.findAll(spec);
         tasks.sort(Comparator.comparing(PerformedTask::getDate));

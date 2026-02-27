@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.controller;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
@@ -13,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -80,19 +80,9 @@ public class EmployeeController {
 
     @PostMapping("/{id}/resend")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
-    public ResponseEntity<Map<String, Object>> resendActivationEmail(@PathVariable Long id) {
+    public ResponseEntity<MessageResponseDTO> resendActivationEmail(@PathVariable Long id) {
         log.info("Resending activation email to employee with id : {}", id);
-        try {
-            employeeService.resendActivationEmail(id);
-            return ResponseEntity.ok().body(Map.of(
-                    "success", true,
-                    "message", "Aktivační email byl úspěšně odeslán"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        employeeService.resendActivationEmail(id);
+        return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
     }
 }

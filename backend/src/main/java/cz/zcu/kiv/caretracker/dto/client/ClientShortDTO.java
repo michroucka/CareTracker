@@ -23,6 +23,8 @@ public class ClientShortDTO {
     private String city;
     private Boolean active;
 
+    private Boolean userAccountActive;
+
     private DepartmentSummaryDTO department;
     private EmployeeSummaryDTO caregiver;
     private List<TaskDTO> tasks;

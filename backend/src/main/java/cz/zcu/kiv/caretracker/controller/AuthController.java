@@ -71,6 +71,15 @@ public class AuthController {
                     // Continue with basic auth info without employee context
                 }
 
+                // Přidání klientského kontextu pro CLIENT roli
+                try {
+                    if (user.getClient() != null) {
+                        response.put("clientId", user.getClient().getId());
+                    }
+                } catch (Exception e) {
+                    log.warn("Error loading client context for user '{}': {}", user.getUsername(), e.getMessage());
+                }
+
                 return response;
             }
             log.debug("Authentication status check - no authenticated user");

@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.user.PasswordResetRequestDTO;
 import cz.zcu.kiv.caretracker.dto.user.UserDTO;
 import cz.zcu.kiv.caretracker.dto.user.UserRequestDTO;
+import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.UserRole;
@@ -71,7 +72,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * Odešle aktivační email.
      */
     @Transactional
-    public User createUserForEmployee(Employee employee, String email, Boolean isAdmin) {
+    public void createUserForEmployee(Employee employee, String email, Boolean isAdmin) {
         User user = new User();
         user.setEmployee(employee);
         user.setEmail(email);
@@ -82,46 +83,67 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         user.setActivationToken(activationToken);
         user.setTokenExpiry(LocalDateTime.now().plusDays(7));
 
-        User savedUser = userRepository.save(user);
-
-        try {
-            String recipientName = employee.getFirstName() + " " + employee.getLastName();
-            emailService.sendActivationEmail(email, activationToken, recipientName);
-            log.info("Activation email sent for user: {}", email);
-        } catch (Exception e) {
-            log.error("Failed to send activation email for user: {}, error: {}", email, e.getMessage());
-        }
-
-        return savedUser;
+        userRepository.save(user);
+        emailService.sendActivationEmail(email, activationToken, employee.getFullName());
     }
 
     /**
      * Aktualizuje existující User účet zaměstnance.
      */
     @Transactional
-    public User updateUserForEmployee(Employee employee, String email, Boolean isAdmin) {
+    public void updateUserForEmployee(Employee employee, String email, Boolean isAdmin) {
         User user = employee.getUser();
 
         user.setEmail(email);
         user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
-    private User changeUserStatus(User user, Boolean active) {
+    private void changeUserStatus(User user, Boolean active) {
         user.setActive(active);
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     @Transactional
-    public User deactivateUserForEmployee(Employee employee) {
-        return changeUserStatus(employee.getUser(), false);
+    public void deactivateUserForEmployee(Employee employee) {
+        changeUserStatus(employee.getUser(), false);
     }
 
     @Transactional
-    public User activateUserForEmployee(Employee employee) {
-        return changeUserStatus(employee.getUser(), true);
+    public void activateUserForEmployee(Employee employee) {
+        changeUserStatus(employee.getUser(), true);
+    }
+
+    @Transactional
+    public void createUserForClient(Client client, String email) {
+        User user = new User();
+        user.setClient(client);
+        user.setEmail(email);
+        user.setRole(UserRole.CLIENT);
+        user.setActive(true);
+
+        String activationToken = UUID.randomUUID().toString();
+        user.setActivationToken(activationToken);
+        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+
+        userRepository.save(user);
+        emailService.sendActivationEmail(email, activationToken, client.getFullName());
+    }
+
+    @Transactional
+    public void deactivateUserForClient(Client client) {
+        User user = userRepository.findByClientId(client.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nemá v aplikaci účet"));
+        changeUserStatus(user, false);
+    }
+
+    @Transactional
+    public void activateUserForClient(Client client) {
+        User user = userRepository.findByClientId(client.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nemá v aplikaci účet"));
+        changeUserStatus(user, true);
     }
 
     /**

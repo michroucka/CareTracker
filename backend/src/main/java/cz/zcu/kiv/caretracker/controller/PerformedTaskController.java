@@ -32,16 +32,17 @@ public class PerformedTaskController {
     private ReceiptService receiptService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER', 'CLIENT')")
     public ResponseEntity<List<PerformedTaskSummaryDTO>> getPerformedTasks(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) List<Long> departmentIds,
             @RequestParam(required = false) List<Long> caregiverIds,
+            @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year
     ) {
         log.info("Fetching performed tasks" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<PerformedTaskSummaryDTO> performedTasks = performedTaskService.getPerformedTasks(organizationId, departmentIds, caregiverIds, month, year);
+        List<PerformedTaskSummaryDTO> performedTasks = performedTaskService.getPerformedTasks(organizationId, departmentIds, caregiverIds, clientId, month, year);
 
         return ResponseEntity.ok(performedTasks);
     }

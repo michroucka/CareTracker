@@ -39,10 +39,10 @@ import {
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
-import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import MonthYearPicker from "../components/MonthYearPicker.jsx";
 import {GenerateReceiptModal} from "../components/modals/performedTask/GenerateReceiptModal.jsx";
+import {DeleteConfirmationModal} from "../components/modals/DeleteConfirmationModal.jsx";
 
 function PerformedTasks() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -688,7 +688,7 @@ function PerformedTasks() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-between items-center">
-                    <span className="text-small">Celkem {filteredItems.length} úkonů</span>
+                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
 
                     <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
                         <Button
@@ -877,11 +877,13 @@ function PerformedTasks() {
                 tasks={tasks}
             />
 
-            <PerformedTaskDeleteModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={handleCloseDeleteModal}
                 onSubmit={handleDeletePerformedTask}
-                performedTaskId={selectedPerformedTask?.id}
+                itemId={selectedPerformedTask?.id}
+                title="Smazat vykonaný úkon"
+                message="Opravdu chcete smazat tento vykonaný úkon?"
             />
 
             <GenerateReceiptModal

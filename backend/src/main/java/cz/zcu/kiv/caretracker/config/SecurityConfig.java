@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.config;
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationFailureHandler;
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationSuccessHandler;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -59,7 +60,14 @@ public class SecurityConfig {
                             response.getWriter().write("{\"success\":true}");
                         })
                 )
-                .httpBasic(basic -> basic.disable());
+                .httpBasic(basic -> basic.disable())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                        })
+                );
         return http.build();
     }
 }

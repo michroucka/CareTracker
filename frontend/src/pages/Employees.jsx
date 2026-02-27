@@ -607,7 +607,7 @@ function Employees() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} zaměstnanců</span>
+                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "zaměstnanec" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "zaměstnanci" : "zaměstnanců"}</span>
                 </div>
             </div>
         );

@@ -11,12 +11,13 @@ interface User {
     employeeRole?: string;
     departmentId?: number;
     organizationId?: number;
+    clientId?: number;
 }
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => void;
+    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => void;
     logout: () => void;
     logoutSilent: () => Promise<void>;
     checkAuth: () => Promise<void>;
@@ -41,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     employeeId: data.employeeId,
                     employeeRole: data.employeeRole,
                     departmentId: data.departmentId,
-                    organizationId: data.organizationId
+                    organizationId: data.organizationId,
+                    clientId: data.clientId
                 });
             } else {
                 setUser(null);
@@ -54,14 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => {
+    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => {
         setUser({
             username,
             role,
             employeeId,
             employeeRole,
             departmentId,
-            organizationId
+            organizationId,
+            clientId
         });
     };
 
@@ -113,6 +116,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Kontrola session při načtení aplikace
     useEffect(() => {
         checkAuth();
+    }, []);
+
+    // Při 401 z API odhlásit uživatele a přesměrovat na login
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            setUser(null);
+            navigate("/login");
+        };
+        window.addEventListener("auth:unauthorized", handleUnauthorized);
+        return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
     }, []);
 
     return (

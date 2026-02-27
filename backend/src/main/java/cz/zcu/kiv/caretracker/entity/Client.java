@@ -99,6 +99,9 @@ public class Client {
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private Picture picture;
 
+    @OneToOne(mappedBy = "client")
+    private User user;
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "client_task",

@@ -105,6 +105,7 @@ function Activate() {
 
             showToast({
                 title: "Účet byl úspěšně aktivován",
+                description: "Nyní se můžete přihlásit",
                 color: "success",
                 icon: <UserRoundCheck />
             });

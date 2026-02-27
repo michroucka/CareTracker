@@ -16,7 +16,18 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {ChevronDown, FileText, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {
+    ChevronDown,
+    FileText,
+    Funnel,
+    MoreVertical,
+    Plus,
+    Search,
+    Send,
+    UserRound,
+    UserRoundCheck, UserRoundPlus,
+    UserRoundX
+} from "lucide-react";
 import {useClients} from "../hooks/useClients.jsx";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
@@ -32,6 +43,8 @@ import {sortByKey} from "../utils/sorting.js";
 import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.jsx";
 import {ClientTerminateModal} from "../components/modals/client/ClientTerminateModal.jsx";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
+import {ClientCreateAccountModal} from "../components/modals/client/ClientCreateAccountModal.jsx";
+import {ClientDeactivateAccountModal} from "../components/modals/client/ClientDeactivateAccountModal.jsx";
 
 function Clients() {
     const navigate = useNavigate();
@@ -80,7 +93,10 @@ function Clients() {
         createClient,
         updateClient,
         terminateClient,
-        activateClient
+        activateClient,
+        createClientAccount,
+        deactivateClientAccount,
+        activateClientAccount
     } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { organizations, fetchOrganizations } = useOrganizations();
@@ -93,6 +109,8 @@ function Clients() {
     const [ selectedClient, setSelectedClient ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
     const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
+    const [ isCreateAccountModalOpen, setIsCreateAccountModalOpen ] = React.useState(false);
+    const [ isDeactivateAccountModalOpen, setIsDeactivateAccountModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
@@ -558,6 +576,48 @@ function Clients() {
         }
     }
 
+    const handleOpenCreateAccountModal = async (clientId) => {
+        setIsCreateAccountModalOpen(true);
+
+        try {
+            await handleSelectClient(clientId);
+        } catch {
+            setIsCreateAccountModalOpen(false);
+        }
+    }
+
+    const handleCloseCreateAccountModal = () => {
+        setSelectedClient(null);
+        setIsCreateAccountModalOpen(false);
+    }
+
+    const handleCreateClientAccount = async (email) => {
+        await createClientAccount(selectedClient.id, email);
+    }
+
+    const handleOpenDeactivateAccountModal = async (clientId) => {
+        setIsDeactivateAccountModalOpen(true);
+
+        try {
+            await handleSelectClient(clientId);
+        } catch {
+            setIsDeactivateAccountModalOpen(false);
+        }
+    }
+
+    const handleCloseDeactivateAccountModal = () => {
+        setSelectedClient(null);
+        setIsDeactivateAccountModalOpen(false);
+    }
+
+    const handleDeactivateClientAccount = async (clientId) => {
+        await deactivateClientAccount(clientId);
+    }
+
+    const handleActivateClientAccount = async (clientId) => {
+        await activateClientAccount(clientId);
+    }
+
     const handleOpenFiltersModal = () => {
         setIsFiltersModalOpen(true);
     };
@@ -721,7 +781,7 @@ function Clients() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} klientů</span>
+                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "klient" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "klienti" : "klientů"}</span>
                 </div>
             </div>
         );
@@ -814,6 +874,33 @@ function Clients() {
 
                                 {canAlterClient ? (
                                     <DropdownSection>
+                                        {client.userAccountActive === null ? (
+                                            <DropdownItem key="create-account"
+                                                          startContent={<UserRoundPlus />}
+                                                          variant="light"
+                                                          onPress={() => handleOpenCreateAccountModal(client.id)}
+                                            >
+                                                Vytvořit účet
+                                            </DropdownItem>
+                                        ) : client.userAccountActive === true ? (
+                                            <DropdownItem key="deactivate-account"
+                                                          startContent={<UserRoundX />}
+                                                          variant="light"
+                                                          color="danger"
+                                                          onPress={() => handleOpenDeactivateAccountModal(client.id)}
+                                            >
+                                                Deaktivovat účet
+                                            </DropdownItem>
+                                        ) : (
+                                            <DropdownItem key="activate-account"
+                                                          startContent={<UserRoundCheck />}
+                                                          variant="light"
+                                                          color="success"
+                                                          onPress={() => handleActivateClientAccount(client.id)}
+                                            >
+                                                Aktivovat účet
+                                            </DropdownItem>
+                                        )}
                                         {client.active ? (
                                             <DropdownItem key="terminate"
                                                           startContent={<UserRoundX />}
@@ -926,6 +1013,22 @@ function Clients() {
                 isOpen={isTerminateModalOpen}
                 onClose={handleCloseTerminateModal}
                 onSubmit={handleTerminateClient}
+                clientId={selectedClient?.id}
+                clientName={selectedClient?.fullName}
+            />
+
+            <ClientCreateAccountModal
+                isOpen={isCreateAccountModalOpen}
+                onClose={handleCloseCreateAccountModal}
+                onSubmit={handleCreateClientAccount}
+                clientName={selectedClient?.fullName}
+                clientEmail={selectedClient?.email}
+            />
+
+            <ClientDeactivateAccountModal
+                isOpen={isDeactivateAccountModalOpen}
+                onClose={handleCloseDeactivateAccountModal}
+                onSubmit={handleDeactivateClientAccount}
                 clientId={selectedClient?.id}
                 clientName={selectedClient?.fullName}
             />

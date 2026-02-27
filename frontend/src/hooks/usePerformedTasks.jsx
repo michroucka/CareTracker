@@ -27,6 +27,10 @@ export function usePerformedTasks() {
 
             const params = new URLSearchParams();
 
+            if (filters.clientId) {
+                params.append("clientId", filters.clientId);
+            }
+
             if (filters.organizationId) {
                 params.append("organizationId", filters.organizationId);
             }

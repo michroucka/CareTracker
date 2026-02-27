@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
-import { getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage } from "../api/api.js";
+import React, { useState, useRef } from "react";
+import {getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage, post} from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import { CloudAlert, UserRoundCheck, UserRoundX } from "lucide-react";
+import {CloudAlert, MailCheck, MailX, UserRoundCheck, UserRoundX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
 
 export function useClients() {
@@ -102,7 +102,7 @@ export function useClients() {
                 }
             }
 
-            return client;
+            return mapClient(client);
         } catch (err) {
             console.error("Error fetching client:", err);
             showErrorToast(err, "Klient nenalezen", { icon: <UserRoundX /> });
@@ -243,6 +243,60 @@ export function useClients() {
         }
     };
 
+    const createClientAccount = async (clientId, email) => {
+        try {
+            const result = await postJSON(`/clients/${clientId}/account/create?email=${encodeURIComponent(email)}`);
+
+            fetchClients(filtersRef.current, { silent: true });
+
+            showToast({
+                title: result.message,
+                color: result.success ? "success" : "danger",
+                icon: result.success ? <MailCheck /> : <MailX />
+            });
+        } catch (err) {
+            console.error("Error creating client account:", err);
+            showErrorToast(err, "Chyba při vytváření účtu", { icon: <MailX /> });
+            throw err;
+        }
+    };
+
+    const deactivateClientAccount = async (clientId) => {
+        try {
+            await putJSON(`/clients/${clientId}/account/deactivate`);
+
+            fetchClients(filtersRef.current, { silent: true });
+
+            showToast({
+                title: "Účet klienta byl deaktivován",
+                color: "success",
+                icon: <UserRoundCheck />
+            });
+        } catch (err) {
+            console.error("Error deactivating client account:", err);
+            showErrorToast(err, "Chyba při deaktivaci účtu", { icon: <UserRoundX /> });
+            throw err;
+        }
+    };
+
+    const activateClientAccount = async (clientId) => {
+        try {
+            await putJSON(`/clients/${clientId}/account/activate`);
+
+            fetchClients(filtersRef.current, { silent: true });
+
+            showToast({
+                title: "Účet klienta byl aktivován",
+                color: "success",
+                icon: <UserRoundCheck />
+            });
+        } catch (err) {
+            console.error("Error activating client account:", err);
+            showErrorToast(err, "Chyba při aktivaci účtu", { icon: <UserRoundX /> });
+            throw err;
+        }
+    };
+
     const activateClient = async (id) => {
         try {
             const updated = await putJSON(`/clients/${id}/activate`);
@@ -272,7 +326,10 @@ export function useClients() {
         createClient,
         updateClient,
         terminateClient,
-        activateClient
+        activateClient,
+        createClientAccount,
+        deactivateClientAccount,
+        activateClientAccount
     };
 }
 

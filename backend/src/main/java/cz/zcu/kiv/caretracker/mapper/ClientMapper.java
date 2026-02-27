@@ -8,6 +8,7 @@ import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Task;
+import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
@@ -82,6 +83,8 @@ public class ClientMapper {
         dto.setStreet(client.getStreet());
         dto.setCity(client.getCity());
         dto.setActive(client.getActive());
+        User user = client.getUser();
+        dto.setUserAccountActive(user != null ? user.getActive() : null);
 
         if (client.getDepartment() != null) {
             dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));

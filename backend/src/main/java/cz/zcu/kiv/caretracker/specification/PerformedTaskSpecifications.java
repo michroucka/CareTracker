@@ -78,6 +78,7 @@ public class PerformedTaskSpecifications extends BaseSpecifications<PerformedTas
      * @param organizationId ID organizace (může být null)
      * @param departmentIds Seznam ID oddělení (může být null nebo prázdný)
      * @param caregiverIds Seznam ID caregiverů (může být null nebo prázdný)
+     * @param clientId ID klienta (může být null)
      * @param month Cislo mesice
      * @param year Rok
      * @return Kombinovaná specification se všemi filtry
@@ -86,12 +87,14 @@ public class PerformedTaskSpecifications extends BaseSpecifications<PerformedTas
             Long organizationId,
             List<Long> departmentIds,
             List<Long> caregiverIds,
+            Long clientId,
             Integer month,
             Integer year
     ) {
         return hasOrganization(organizationId)
                 .and(hasDepartments(departmentIds))
                 .and(hasCaregivers(caregiverIds))
+                .and(hasClient(clientId))
                 .and(hasDateInMonth(month, year));
     }
 }
