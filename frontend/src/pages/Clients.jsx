@@ -840,7 +840,7 @@ function Clients() {
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {cellValue ? `${cellValue.firstName} ${cellValue.lastName}` : "-"}
+                            {cellValue ? `${cellValue.fullName}` : "-"}
                         </p>
                     </div>
                 );

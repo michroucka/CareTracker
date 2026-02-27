@@ -313,7 +313,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
-            throw new SecurityException("Employee must have an associated organization");
+            throw new SecurityException("Zaměstnanec musí mít přiřazenou organizaci");
         }
 
         Long userOrgId = user.getEmployee().getOrganization().getId();
@@ -321,7 +321,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         // Kontrola, že uživatel je ze stejné organizace jako klient
         if (!userOrgId.equals(clientOrgId)) {
-            throw new SecurityException("Access denied: Client is from a different organization");
+            throw new SecurityException("Přístup odepřen: Klient je z jiné organizace");
         }
 
         // ADMIN má přístup ke všem klientům ve své organizaci
@@ -335,13 +335,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             Long currentEmployeeId = user.getEmployee().getId();
 
             if (!assignedCaregiverId.equals(currentEmployeeId)) {
-                throw new SecurityException("Employee can only modify individual plans for their assigned clients");
+                throw new SecurityException("Zaměstnanec smí upravovat individuální plán pouze svým klientům");
             }
             return;
         }
 
         // Jiné role nemají oprávnění upravovat individuální plány
-        throw new SecurityException("User does not have permission to modify individual plans");
+        throw new SecurityException("Uživatel nemá přístup k úpravě individuálního plánu");
     }
 
     /**

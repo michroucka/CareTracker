@@ -60,8 +60,7 @@ public class EmployeeMapper {
 
         EmployeeSummaryDTO dto = new EmployeeSummaryDTO();
         dto.setId(employee.getId());
-        dto.setFirstName(employee.getFirstName());
-        dto.setLastName(employee.getLastName());
+        dto.setFullName(employee.getFullName());
 
         return dto;
     }

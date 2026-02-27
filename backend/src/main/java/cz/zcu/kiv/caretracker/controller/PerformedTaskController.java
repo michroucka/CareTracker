@@ -32,7 +32,6 @@ public class PerformedTaskController {
     private ReceiptService receiptService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER', 'CLIENT')")
     public ResponseEntity<List<PerformedTaskSummaryDTO>> getPerformedTasks(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) List<Long> departmentIds,
@@ -48,7 +47,6 @@ public class PerformedTaskController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<PerformedTaskDTO> getPerformedTaskById(@PathVariable Long id) {
         log.info("Fetching performed task with id: {}", id);
         return performedTaskService.getPerformedTaskById(id)

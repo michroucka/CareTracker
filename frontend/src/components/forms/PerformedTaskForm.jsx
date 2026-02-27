@@ -223,7 +223,7 @@ export const PerformedTaskForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField
                         label="Klient"
-                        value={clients.find(c => c.id === clientId)?.fullName || '-'}
+                        value={initialData?.client?.fullName || '-'}
                     />
                 ) : (
                     <Autocomplete
@@ -258,7 +258,7 @@ export const PerformedTaskForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField
                         label="Úkon"
-                        value={tasks.find(t => t.id === taskId)?.name || '-'}
+                        value={initialData?.task?.name || '-'}
                     />
                 ) : (
                     <div className="flex items-center">
@@ -317,9 +317,10 @@ export const PerformedTaskForm = React.forwardRef(({
                 <div className="grid grid-cols-2 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField
-                            label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
+                            label="Počet"
                             value={unitCount}
                             type="number"
+                            endContent={unitTypeTranslations[initialData?.task?.unitType] || ''}
                         />
                     ) : (
                         <NumberInput
@@ -349,7 +350,7 @@ export const PerformedTaskForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Pečovatelé"
-                            value={caregiverIds.length > 0 ? caregiverIds.length > 1 ? `Celkem: ${caregiverIds.length}` : caregivers.find(c => c.id === caregiverIds[0])?.fullName : '-'}
+                            value={initialData?.caregivers?.length > 1 ? `Celkem: ${initialData.caregivers.length}` : initialData?.caregivers?.[0]?.fullName || '-'}
                         />
                     ) : (
                         <Select
@@ -378,7 +379,7 @@ export const PerformedTaskForm = React.forwardRef(({
                             }}
                         >
                             {caregivers.map((caregiver) => {
-                                const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                const caregiverName = caregiver.fullName;
                                 return (
                                     <SelectItem
                                         key={caregiver.id.toString()}
@@ -446,7 +447,7 @@ export const PerformedTaskForm = React.forwardRef(({
 
                     <ReadOnlyField
                         label="Cena"
-                        value={calculatePrice(tasks.find(t => t.id === taskId), unitCount)}
+                        value={calculatePrice(isReadOnly ? initialData?.task : tasks.find(t => t.id === taskId), unitCount)}
                         type="number"
                         endContent="Kč"
                         isDisabled={isDisabled}

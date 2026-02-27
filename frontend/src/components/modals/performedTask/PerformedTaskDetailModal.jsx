@@ -11,7 +11,7 @@ import {
 import { Save, X, Pencil } from "lucide-react";
 import { PerformedTaskForm } from "../../forms/PerformedTaskForm.jsx";
 
-export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading, performedTask, clients = [], caregivers = [], tasks = [] }) {
+export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading, performedTask, clients = [], caregivers = [], tasks = [], readOnly = false }) {
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [currentPerformedTaskData, setCurrentPerformedTaskData] = React.useState(null);
@@ -93,7 +93,7 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
                     )}
                 </ModalBody>
                 <ModalFooter className="justify-between">
-                    {isEditMode ? (
+                    {!readOnly && isEditMode ? (
                         <>
                             <Button
                                 variant="bordered"
@@ -118,13 +118,15 @@ export function PerformedTaskDetailModal({ isOpen, onClose, onSubmit, isLoading,
                             <Button variant="bordered" onPress={onClose}>
                                 Zavřít
                             </Button>
-                            <Button
-                                color="primary"
-                                startContent={<Pencil size={16} />}
-                                onPress={handleEnterEditMode}
-                            >
-                                Upravit
-                            </Button>
+                            {!readOnly && (
+                                <Button
+                                    color="primary"
+                                    startContent={<Pencil size={16} />}
+                                    onPress={handleEnterEditMode}
+                                >
+                                    Upravit
+                                </Button>
+                            )}
                         </>
                     )}
                 </ModalFooter>

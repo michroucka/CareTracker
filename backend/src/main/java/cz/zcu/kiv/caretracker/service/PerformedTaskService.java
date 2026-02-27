@@ -78,11 +78,26 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
     @Transactional(readOnly = true)
     public Optional<PerformedTaskDTO> getPerformedTaskById(Long id) {
+        Optional<PerformedTask> taskOpt = performedTaskRepository.findById(id);
+        if (taskOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        PerformedTask performedTask = taskOpt.get();
+        User user = getCurrentUser();
+
+        if (user.getRole() == UserRole.CLIENT) {
+            if (user.getClient() == null || !user.getClient().getId().equals(performedTask.getClient().getId())) {
+                throw new SecurityException("Nemáte oprávnění zobrazit tento úkol");
+            }
+            return Optional.of(performedTaskMapper.toDTO(performedTask));
+        }
+
         return getEntityByIdWithPermissionCheck(
                 id,
-                () -> performedTaskRepository.findById(id),
-                performedTask -> performedTask.getOrganization().getId(),
-                performedTask -> performedTask.getDepartment().getId(),
+                () -> taskOpt,
+                pt -> pt.getOrganization().getId(),
+                pt -> pt.getDepartment().getId(),
                 performedTaskMapper::toDTO
         );
     }

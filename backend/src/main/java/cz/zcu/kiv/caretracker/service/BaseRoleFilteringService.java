@@ -37,11 +37,11 @@ public abstract class BaseRoleFilteringService<T, D> {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
-            throw new SecurityException("User is not authenticated");
+            throw new SecurityException("Uživatel není přihlášen");
         }
 
         return userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Uživatel nebyl nalezen"));
     }
 
     /**
@@ -89,13 +89,13 @@ public abstract class BaseRoleFilteringService<T, D> {
 
         // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
-            throw new SecurityException("Employee must have an associated organization");
+            throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
         }
 
         Long userOrgId = user.getEmployee().getOrganization().getId();
 
         if (!userOrgId.equals(organizationId)) {
-            throw new SecurityException("Access denied: Entity is from a different organization");
+            throw new SecurityException("Přístup odepřen: entita patří do jiné organizace");
         }
     }
 
@@ -154,14 +154,14 @@ public abstract class BaseRoleFilteringService<T, D> {
 
         // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
-            throw new SecurityException("Employee must have an associated organization");
+            throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
         }
 
         Long userOrgId = user.getEmployee().getOrganization().getId();
 
         // Kontrola organizace
         if (!userOrgId.equals(organizationId)) {
-            throw new SecurityException("Access denied: Entity is from a different organization");
+            throw new SecurityException("Přístup odepřen: entita patří do jiné organizace");
         }
 
         // ADMIN má přístup ke všemu v rámci organizace
@@ -172,13 +172,13 @@ public abstract class BaseRoleFilteringService<T, D> {
         // COORDINATOR a CAREGIVER musí být ze stejného departmentu
         if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
             if (user.getEmployee().getDepartment() == null) {
-                throw new SecurityException("Employee must have an associated department");
+                throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
             }
 
             Long userDeptId = user.getEmployee().getDepartment().getId();
 
             if (departmentId == null || !userDeptId.equals(departmentId)) {
-                throw new SecurityException("Access denied: Entity is from a different department");
+                throw new SecurityException("Přístup odepřen: entita patří do jiného oddělení");
             }
         }
     }
@@ -233,18 +233,18 @@ public abstract class BaseRoleFilteringService<T, D> {
             // ADMIN, COORDINATOR i CAREGIVER vidí data z celé organizace
             if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Employee must have an associated organization");
+                    throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
                 }
                 Long organizationId = user.getEmployee().getOrganization().getId();
                 entities = organizationQuery.apply(organizationId);
             }
             else {
-                throw new SecurityException("Unauthorized employee role");
+                throw new SecurityException("Nepovolená role zaměstnance");
             }
         }
         // CLIENT role nemá přístup
         else {
-            throw new SecurityException("User does not have permission to view this data");
+            throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
 
         return mapper.apply(entities);
@@ -313,7 +313,7 @@ public abstract class BaseRoleFilteringService<T, D> {
             // ADMIN vidí data z celé organizace (ignoruje requestedOrganizationId)
             if (role == UserRole.ADMIN) {
                 if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Admin must have an associated organization");
+                    throw new SecurityException("Administrátor nemá přiřazenou organizaci");
                 }
                 Long organizationId = user.getEmployee().getOrganization().getId();
                 entities = organizationQuery.apply(organizationId);
@@ -321,18 +321,18 @@ public abstract class BaseRoleFilteringService<T, D> {
             // COORDINATOR a CAREGIVER vidí pouze data ze svého oddělení (ignoruje requestedOrganizationId)
             else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getDepartment() == null) {
-                    throw new SecurityException("Employee must have an associated department");
+                    throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
                 }
                 Long departmentId = user.getEmployee().getDepartment().getId();
                 entities = departmentQuery.apply(departmentId);
             }
             else {
-                throw new SecurityException("Unauthorized employee role");
+                throw new SecurityException("Nepovolená role zaměstnance");
             }
         }
         // CLIENT role nemá přístup
         else {
-            throw new SecurityException("User does not have permission to view this data");
+            throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
 
         return mapper.apply(entities);
@@ -375,7 +375,7 @@ public abstract class BaseRoleFilteringService<T, D> {
             // ADMIN, COORDINATOR i CAREGIVER mohou vidět entity z celé organizace
             if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Employee must have an associated organization");
+                    throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
                 }
 
                 Long userOrgId = user.getEmployee().getOrganization().getId();
@@ -384,12 +384,12 @@ public abstract class BaseRoleFilteringService<T, D> {
                 if (userOrgId.equals(entityOrgId)) {
                     return Optional.of(mapper.apply(entity));
                 } else {
-                    throw new SecurityException("Access denied: Entity is from a different organization");
+                    throw new SecurityException("Přístup odepřen: entita patří do jiné organizace");
                 }
             }
         }
 
-        throw new SecurityException("User does not have permission to view this entity");
+        throw new SecurityException("Nemáte oprávnění zobrazit tuto entitu");
     }
 
     /**
@@ -431,7 +431,7 @@ public abstract class BaseRoleFilteringService<T, D> {
             // ADMIN může vidět entity z celé organizace
             if (role == UserRole.ADMIN) {
                 if (user.getEmployee().getOrganization() == null) {
-                    throw new SecurityException("Admin must have an associated organization");
+                    throw new SecurityException("Administrátor nemá přiřazenou organizaci");
                 }
 
                 Long userOrgId = user.getEmployee().getOrganization().getId();
@@ -440,14 +440,14 @@ public abstract class BaseRoleFilteringService<T, D> {
                 if (userOrgId.equals(entityOrgId)) {
                     return Optional.of(mapper.apply(entity));
                 } else {
-                    throw new SecurityException("Access denied: Entity is from a different organization");
+                    throw new SecurityException("Přístup odepřen: entita patří do jiné organizace");
                 }
             }
 
             // COORDINATOR a CAREGIVER mohou vidět pouze entity ze svého oddělení
             if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getDepartment() == null) {
-                    throw new SecurityException("Employee must have an associated department");
+                    throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
                 }
 
                 Long userDeptId = user.getEmployee().getDepartment().getId();
@@ -456,12 +456,12 @@ public abstract class BaseRoleFilteringService<T, D> {
                 if (userDeptId.equals(entityDeptId)) {
                     return Optional.of(mapper.apply(entity));
                 } else {
-                    throw new SecurityException("Access denied: Entity is from a different department");
+                    throw new SecurityException("Přístup odepřen: entita patří do jiného oddělení");
                 }
             }
         }
 
-        throw new SecurityException("User does not have permission to view this entity");
+        throw new SecurityException("Nemáte oprávnění zobrazit tuto entitu");
     }
 
     /**
@@ -494,7 +494,7 @@ public abstract class BaseRoleFilteringService<T, D> {
         } else if (role == UserRole.ADMIN) {
             // ADMIN vidí jen svou organizaci
             if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
-                throw new SecurityException("Admin must have an associated organization");
+                throw new SecurityException("Administrátor nemá přiřazenou organizaci");
             }
             Long userOrgId = user.getEmployee().getOrganization().getId();
 
@@ -504,7 +504,7 @@ public abstract class BaseRoleFilteringService<T, D> {
         } else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
             // COORDINATOR/CAREGIVER vidí jen své oddělení
             if (user.getEmployee() == null || user.getEmployee().getDepartment() == null) {
-                throw new SecurityException("Employee must have an associated department");
+                throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
             }
 
             Long userOrgId = user.getEmployee().getOrganization().getId();
@@ -522,7 +522,7 @@ public abstract class BaseRoleFilteringService<T, D> {
             return new RoleBasedFilters(userOrgId, java.util.Collections.singletonList(userDeptId));
 
         } else {
-            throw new SecurityException("User does not have permission to view this data");
+            throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
     }
 
@@ -549,14 +549,14 @@ public abstract class BaseRoleFilteringService<T, D> {
         } else if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
             // Všichni zaměstnanci vidí jen svou organizaci
             if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
-                throw new SecurityException("Employee must have an associated organization");
+                throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
             }
             Long userOrgId = user.getEmployee().getOrganization().getId();
 
             return new RoleBasedFilters(userOrgId, null);
 
         } else {
-            throw new SecurityException("User does not have permission to view this data");
+            throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
     }
 }

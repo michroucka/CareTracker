@@ -406,9 +406,7 @@ export const ClientForm = React.forwardRef(({
                         <ReadOnlyField
                             label="Klíčový pracovník"
                             value={
-                                caregivers.find(c => c.id === caregiverId)
-                                    ? `${caregivers.find(c => c.id === caregiverId).firstName} ${caregivers.find(c => c.id === caregiverId).lastName}`
-                                    : '-'
+                                caregivers.find(c => c.id === caregiverId)?.fullName || '-'
                             }
                         />
                     ) : (
@@ -429,7 +427,7 @@ export const ClientForm = React.forwardRef(({
                             }}
                         >
                             {filteredCaregivers.map((caregiver) => {
-                                const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                const caregiverName = caregiver.fullName;
                                 return (
                                     <AutocompleteItem
                                         key={caregiver.id.toString()}
