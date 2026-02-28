@@ -17,7 +17,7 @@ import {
     DropdownSection,
     User,
 } from "@heroui/react";
-import logo from "../assets/ct_icon.png"
+import logo from "../assets/ct_icon.svg"
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
@@ -28,7 +28,7 @@ export const CareTrackerLogo = () => {
     return <img
         src={logo}
         alt="CareTracker Logo"
-        className="h-8 w-8 mr-1 select-none"
+        className="size-7 me-1.5 select-none"
         draggable={false}
         onContextMenu={(e) => e.preventDefault()}
     />;

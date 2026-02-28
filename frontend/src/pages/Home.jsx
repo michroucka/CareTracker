@@ -1,6 +1,6 @@
-import logo from "../assets/ct_icon.png"
+import logo from "../assets/ct_icon.svg"
 import {Divider, Card, CardHeader, CardBody, Button} from "@heroui/react"
-import {User, Edit, FileText, Calendar, Plus, Clock, Users, Activity, CalendarDays} from 'lucide-react'
+import {User, Edit, FileText, Plus, Clock, Users, Activity} from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
 import {getLocalTimeZone, today} from "@internationalized/date";
@@ -12,7 +12,7 @@ function LandingPageContent() {
             <img
                 src={logo}
                 alt="CareTracker Logo"
-                className="w-64 -mb-6 select-none"
+                className="size-64 select-none"
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
             />
