@@ -28,17 +28,15 @@ public class DepartmentMapper {
         DepartmentDTO dto = new DepartmentDTO();
         dto.setId(department.getId());
 
-        // Kombinuj adresu
         String address = String.format("%s, %s %s",
                 department.getStreet(),
                 department.getPostalCode(),
                 department.getCity());
         dto.setAddress(address);
 
-        // Použij město jako jméno oddělení (můžeš změnit podle potřeby)
         dto.setName(department.getCity());
+        dto.setDepartmentNumber(department.getDepartmentNumber());
 
-        // Mapuj organizaci
         if (department.getOrganization() != null) {
             dto.setOrganization(organizationMapper.toSummaryDTO(department.getOrganization()));
         }
@@ -63,6 +61,7 @@ public class DepartmentMapper {
         department.setStreet(dto.getStreet());
         department.setCity(dto.getCity());
         department.setPostalCode(dto.getPostalCode());
+        department.setDepartmentNumber(dto.getDepartmentNumber());
         department.setCoordinator(coordinator);
         department.setOrganization(organization);
     }

@@ -23,7 +23,6 @@ import {
     MoreVertical,
     Plus,
     Search,
-    Send,
     UserRound,
     UserRoundCheck, UserRoundPlus,
     UserRoundX

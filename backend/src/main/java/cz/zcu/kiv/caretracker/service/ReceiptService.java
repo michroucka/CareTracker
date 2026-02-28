@@ -1,22 +1,28 @@
 package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.entity.Organization;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.specification.PerformedTaskSpecifications;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -26,12 +32,17 @@ import java.util.stream.Collectors;
 
 @Service
 public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void>{
+    private static final Logger log = LoggerFactory.getLogger(ReceiptService.class);
+    private static final String PAYLIBO_URL = "https://api.paylibo.com/paylibo/generator/czech/image";
+
     @Autowired
     private PerformedTaskRepository performedTaskRepository;
     @Autowired
     private ClientRepository clientRepository;
     @Autowired
     private SpringTemplateEngine templateEngine;
+
+    private final RestClient restClient = RestClient.create();
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d.M.yyyy");
     private static final String[] MONTH_NAMES = {
@@ -68,6 +79,8 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
                 .mapToInt(PerformedTask::calculatePrice)
                 .sum();
 
+        String variableSymbol = String.format("%02d%02d%06d", year % 100, month, client.getPersonalNumber());
+
         Context context = new Context();
         context.setVariable("organizationName", client.getOrganization().getName());
         context.setVariable("clientName", client.getFullName());
@@ -77,6 +90,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         context.setVariable("monthYear", MONTH_NAMES[month - 1] + " " + year);
         context.setVariable("tasks", taskRows);
         context.setVariable("totalPrice", totalPrice);
+        context.setVariable("qrCode", fetchPaymentQrCode(client.getOrganization(), totalPrice, variableSymbol));
 
         String html = templateEngine.process("receipt/performed-task-receipt", context);
 
@@ -102,6 +116,48 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
             return os.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Chyba při generování PDF", e);
+        }
+    }
+
+    public byte[] generatePaymentQrCode(Long clientId, Integer month, Integer year) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
+
+        int totalPrice = performedTaskRepository.findAll(
+                PerformedTaskSpecifications.withFilters(client.getOrganization().getId(), null, null, clientId, month, year)
+        ).stream().mapToInt(PerformedTask::calculatePrice).sum();
+
+        String variableSymbol = String.format("%02d%02d%06d", year % 100, month, client.getPersonalNumber());
+        return fetchPaymentQrPng(client.getOrganization(), totalPrice, variableSymbol);
+    }
+
+    private String fetchPaymentQrCode(Organization org, double totalPrice, String variableSymbol) {
+        byte[] bytes = fetchPaymentQrPng(org, totalPrice, variableSymbol);
+        return bytes != null ? Base64.getEncoder().encodeToString(bytes) : null;
+    }
+
+    private byte[] fetchPaymentQrPng(Organization org, double totalPrice, String variableSymbol) {
+        if (org.getAccountNumber() == null || org.getBankCode() == null) {
+            return null;
+        }
+        try {
+            UriComponentsBuilder uri = UriComponentsBuilder.fromUriString(PAYLIBO_URL)
+                    .queryParam("accountNumber", org.getAccountNumber())
+                    .queryParam("bankCode", org.getBankCode())
+                    .queryParam("amount", totalPrice)
+                    .queryParam("currency", "CZK")
+                    .queryParam("vs", variableSymbol)
+                    .queryParam("size", 150);
+            if (org.getAccountPrefix() != null) {
+                uri.queryParam("accountPrefix", org.getAccountPrefix());
+            }
+            return restClient.get()
+                    .uri(uri.toUriString())
+                    .retrieve()
+                    .body(byte[].class);
+        } catch (Exception e) {
+            log.warn("Nepodařilo se vygenerovat QR kód platby: {}", e.getMessage());
+            return null;
         }
     }
 

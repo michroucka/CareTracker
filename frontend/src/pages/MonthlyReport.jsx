@@ -5,8 +5,13 @@ import { usePerformedTasks } from "../hooks/usePerformedTasks.jsx";
 import { minYear } from "../constants/globalConstants.js";
 import { unitTypeTranslations } from "../constants/performedTaskConstants.js";
 import { formatDateTime, formatNumber } from "../utils/formatters.js";
+import { fetchImage } from "../api/api.js";
 import {
     Button,
+    Image,
+    Modal,
+    ModalBody,
+    ModalContent,
     Spinner,
     Table,
     TableBody,
@@ -18,7 +23,7 @@ import {
 import MonthYearPicker from "../components/MonthYearPicker.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {sortByKey} from "../utils/sorting.js";
-import {Eye} from "lucide-react";
+import {Eye, QrCode} from "lucide-react";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
 
 const columns = [
@@ -34,6 +39,9 @@ function MonthlyReport() {
     const { user } = useAuth();
     const { performedTasks, loading, fetchPerformedTasks, fetchPerformedTask } = usePerformedTasks();
 
+    const [qrCodeUrl, setQrCodeUrl] = React.useState(null);
+    const [isQrModalOpen, setIsQrModalOpen] = React.useState(false);
+    const [isLoadingQr, setIsLoadingQr] = React.useState(false);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
@@ -87,6 +95,11 @@ function MonthlyReport() {
         });
     }, [monthYearFilter, user]);
 
+    // Reset QR kódu při změně filtru
+    React.useEffect(() => {
+        setQrCodeUrl(null);
+    }, [monthYearFilter]);
+
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
@@ -117,6 +130,22 @@ function MonthlyReport() {
 
         setIsLoadingDetail(false);
     }
+
+    const handleOpenQrModal = async () => {
+        setIsQrModalOpen(true);
+        if (qrCodeUrl) return;
+        setIsLoadingQr(true);
+        const month = monthYearFilter.month + 1;
+        const { year } = monthYearFilter;
+        try {
+            const url = await fetchImage(`/performed-tasks/payment-qr?clientId=${user.clientId}&month=${month}&year=${year}`);
+            setQrCodeUrl(url);
+        } catch {
+            setIsQrModalOpen(false);
+        } finally {
+            setIsLoadingQr(false);
+        }
+    };
 
     const handleCloseDetailModal = () => {
         setSelectedPerformedTask(null);
@@ -199,13 +228,24 @@ function MonthlyReport() {
                 </Table>
 
                 {!loading && performedTasks.length > 0 && (
-                    <span className="text-large font-semibold self-end">
-                        Celkem: {formatNumber(totalPrice)} Kč
-                    </span>
+                    <div className="flex justify-between items-end">
+                        <Button variant="ghost" startContent={<QrCode className="size-4.5" />} onPress={handleOpenQrModal}>
+                            QR Platba
+                        </Button>
+                        <span className="text-large font-semibold">
+                            Celkem: {formatNumber(totalPrice)} Kč
+                        </span>
+                    </div>
                 )}
-
-                {/* TODO: QR kód pro platbu */}
             </div>
+
+            <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} size="sm">
+                <ModalContent>
+                    <ModalBody className="flex items-center justify-center py-6">
+                        <Image src={qrCodeUrl} alt="QR platba" width={300} height={300} isLoading={isLoadingQr} />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
 
             <PerformedTaskDetailModal
                 isOpen={isDetailModalOpen}

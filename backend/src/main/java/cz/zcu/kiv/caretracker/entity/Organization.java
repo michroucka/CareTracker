@@ -22,7 +22,11 @@ public class Organization {
     private Boolean active = Boolean.TRUE;
 
     @Column
-    private String bankAccount;
+    private String accountPrefix;
+    @Column
+    private String accountNumber;
+    @Column
+    private String bankCode;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")

@@ -27,6 +27,9 @@ public class OrganizationMapper {
         dto.setId(organization.getId());
         dto.setName(organization.getName());
         dto.setActive(organization.getActive());
+        dto.setAccountPrefix(organization.getAccountPrefix());
+        dto.setAccountNumber(organization.getAccountNumber());
+        dto.setBankCode(organization.getBankCode());
 
         dto.setManager(employeeMapper.toSummaryDTO(organization.getManager()));
 
@@ -47,6 +50,9 @@ public class OrganizationMapper {
 
     public void requestToOrganization(Organization organization, OrganizationRequestDTO dto, Employee manager) {
         organization.setName(dto.getName());
+        organization.setAccountPrefix(dto.getAccountPrefix());
+        organization.setAccountNumber(dto.getAccountNumber());
+        organization.setBankCode(dto.getBankCode());
         organization.setManager(manager);
     }
 

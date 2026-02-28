@@ -1,4 +1,4 @@
-.PHONY: up down start stop restart build rebuild clean logs
+.PHONY: up down start stop restart build rebuild clean logs compile
 
 # Start všech služeb
 up:
@@ -38,3 +38,7 @@ clean:
 # Zobrazit logy
 logs:
 	docker-compose logs -f $(service)
+
+# Zkompilovat backend (DevTools automaticky restartuje aplikaci)
+compile:
+	docker exec caretracker-backend ./mvnw compile -q
