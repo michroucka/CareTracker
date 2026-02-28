@@ -10,6 +10,11 @@ import Clients from "../pages/Clients";
 import PerformedTasks from "../pages/PerformedTasks"
 import IndividualPlan from "../pages/IndividualPlan";
 import Employees from "../pages/Employees";
+import Activate from "../pages/Activate";
+import Tasks from "../pages/Tasks";
+import Account from "../pages/Account";
+import ResetPassword from "../pages/ResetPassword";
+import MonthlyReport from "../pages/MonthlyReport";
 
 export default function App() {
     return (
@@ -59,6 +64,49 @@ export default function App() {
                         element={
                             <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                 <Employees />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/tasks"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
+                                <Tasks />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/activate"
+                        element={
+                            <PublicOnlyRoute>
+                                <Activate />
+                            </PublicOnlyRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/reset-password"
+                        element={
+                            <ResetPassword />
+                        }
+                    />
+
+                    <Route
+                        path="/account"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER, ROLES.CLIENT]}>
+                                <Account />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/monthly-report"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                                <MonthlyReport />
                             </ProtectedRoute>
                         }
                     />

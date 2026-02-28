@@ -17,6 +17,11 @@ export function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading } = useAuth();
     const location = useLocation();
     const toastShownRef = useRef(false);
+    const wasAuthenticatedRef = useRef(false);
+
+    useEffect(() => {
+        if (user) wasAuthenticatedRef.current = true;
+    }, [user]);
 
     // Kontrola přihlášení a oprávnění
     const isNotAuthenticated = !loading && !user;
@@ -24,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
 
     useEffect(() => {
         if (!toastShownRef.current) {
-            if (isNotAuthenticated) {
+            if (isNotAuthenticated && !wasAuthenticatedRef.current) {
                 showToast({
                     title: "Přístup odepřen",
                     description: "Pro zobrazení této stránky se musíte přihlásit",
@@ -56,6 +61,10 @@ export function ProtectedRoute({ children, allowedRoles }) {
 
     // Přesměrování
     if (isNotAuthenticated) {
+        // Uživatel byl přihlášen → záměrné odhlášení, přesměruj na domovskou stránku
+        if (wasAuthenticatedRef.current) {
+            return <Navigate to="/" replace />;
+        }
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

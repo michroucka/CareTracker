@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
+import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.service.TaskService;
@@ -25,18 +26,12 @@ public class TaskController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<TaskDTO>> getAllTasks() {
-        log.info("Fetching all tasks");
-        List<TaskDTO> tasks = taskService.getAllTasks();
-
-        return ResponseEntity.ok(tasks);
-    }
-
-    @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<TaskDTO>> getAllActiveTasks() {
-        log.info("Fetching all active tasks");
-        List<TaskDTO> tasks = taskService.getAllActiveTasks();
+    public ResponseEntity<List<TaskDTO>> getTasks(
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam(required = false) Boolean status
+    ) {
+        log.info("Fetching tasks for organization: " + organizationId);
+        List<TaskDTO> tasks = taskService.getTasks(organizationId, status);
 
         return ResponseEntity.ok(tasks);
     }
@@ -52,7 +47,7 @@ public class TaskController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
-    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO dto) {
+    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskRequestDTO dto) {
         log.info("Creating new task");
         Task savedTask = taskService.createTask(dto);
         return ResponseEntity.ok(taskMapper.toDTO(savedTask));
@@ -61,7 +56,7 @@ public class TaskController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     public ResponseEntity<TaskDTO> updateTask(
-            @PathVariable Long id, @RequestBody TaskDTO dto
+            @PathVariable Long id, @RequestBody TaskRequestDTO dto
     ) {
         log.info("Updating task with id: {}", id);
         Task updated = taskService.updateTask(id, dto);
@@ -73,5 +68,12 @@ public class TaskController {
     public Task terminateTask(@PathVariable Long id) {
         log.info("Terminating task with id: {}", id);
         return taskService.terminateTask(id);
+    }
+
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public Task activateTask(@PathVariable Long id) {
+        log.info("Activating task with id: {}", id);
+        return taskService.activateTask(id);
     }
 }

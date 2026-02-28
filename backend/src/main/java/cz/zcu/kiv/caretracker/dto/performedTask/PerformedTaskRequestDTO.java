@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PerformedTaskRequestDTO {
     private LocalDateTime date;
-    private Integer unitCount;
+    private Double unitCount;
     private String notes;
     private Long clientId;
     private Long taskId;

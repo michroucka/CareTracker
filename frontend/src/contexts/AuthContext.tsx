@@ -11,13 +11,15 @@ interface User {
     employeeRole?: string;
     departmentId?: number;
     organizationId?: number;
+    clientId?: number;
 }
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => void;
+    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => void;
     logout: () => void;
+    logoutSilent: () => Promise<void>;
     checkAuth: () => Promise<void>;
 }
 
@@ -40,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     employeeId: data.employeeId,
                     employeeRole: data.employeeRole,
                     departmentId: data.departmentId,
-                    organizationId: data.organizationId
+                    organizationId: data.organizationId,
+                    clientId: data.clientId
                 });
             } else {
                 setUser(null);
@@ -53,15 +56,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number) => {
+    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => {
         setUser({
             username,
             role,
             employeeId,
             employeeRole,
             departmentId,
-            organizationId
+            organizationId,
+            clientId
         });
+    };
+
+    const logoutSilent = async () => {
+        try {
+            await post("/logout", {});
+        } catch (error) {
+            console.error("Silent logout error:", error);
+        } finally {
+            setUser(null);
+        }
     };
 
     const logout = async () => {
@@ -83,8 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // Redirect to home page after logout
                 navigate("/");
-            } else {
-                throw new Error("Odhlášení selhalo");
             }
         } catch (error) {
             console.error("Logout error:", error);
@@ -106,8 +118,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkAuth();
     }, []);
 
+    // Při 401 z API odhlásit uživatele a přesměrovat na login
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            setUser(null);
+            navigate("/login");
+        };
+        window.addEventListener("auth:unauthorized", handleUnauthorized);
+        return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, logoutSilent, checkAuth }}>
             {children}
         </AuthContext.Provider>
     );

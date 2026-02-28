@@ -26,9 +26,11 @@ public class DepartmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<DepartmentDTO>> getAllDepartments() {
-        log.info("Fetching all departments");
-        List<DepartmentDTO> departments = departmentService.getAllDepartments();
+    public ResponseEntity<List<DepartmentDTO>> getAllDepartments(
+            @RequestParam(required = false) Long organizationId
+    ) {
+        log.info("Fetching all departments" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<DepartmentDTO> departments = departmentService.getAllDepartments(organizationId);
 
         return ResponseEntity.ok(departments);
     }

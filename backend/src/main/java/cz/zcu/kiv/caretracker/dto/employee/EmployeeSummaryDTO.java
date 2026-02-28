@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EmployeeSummaryDTO {
     private Long id;
-    private String firstName;
-    private String lastName;
+    private String fullName;
 }

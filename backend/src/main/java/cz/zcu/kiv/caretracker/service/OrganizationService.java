@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.organization.OrganizationDTO;
 import cz.zcu.kiv.caretracker.dto.organization.OrganizationRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Organization;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.OrganizationMapper;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
@@ -67,8 +68,16 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
      */
     public Organization updateOrganization(Long id, OrganizationRequestDTO dto) {
         Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
         return saveOrganization(organization, dto);
+    }
+
+    private Organization setOrganizationStatus(Long id, boolean status) {
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
+
+        organization.setActive(status);
+        return organizationRepository.save(organization);
     }
 
     /**
@@ -76,11 +85,7 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
      * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
      */
     public Organization terminateOrganization(Long id) {
-        Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
-
-        organization.setActive(false);
-        return organizationRepository.save(organization);
+        return setOrganizationStatus(id, false);
     }
 
     /**
@@ -88,11 +93,7 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
      * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
      */
     public Organization activateOrganization(Long id) {
-        Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
-
-        organization.setActive(true);
-        return organizationRepository.save(organization);
+        return setOrganizationStatus(id, true);
     }
 
     private Organization saveOrganization(Organization organization, OrganizationRequestDTO dto) {
@@ -100,7 +101,7 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
 
         if (dto.getManagerId() != null) {
             cz.zcu.kiv.caretracker.entity.Employee manager = employeeRepository.findById(dto.getManagerId())
-                    .orElseThrow(() -> new RuntimeException("Manager not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Manažer nebyl nalezen"));
             organization.setManager(manager);
         }
 

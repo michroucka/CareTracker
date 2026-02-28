@@ -17,11 +17,6 @@ export const genderTranslations = {
     "FEMALE": "Žena",
 };
 
-export const activeOptions = [
-    {name: "Aktivní", key: "true"},
-    {name: "Neaktivní", key: "false"},
-];
-
 export const benefitsOptions = [
     {name: "Žádný", key: "NONE"},
     {name: "I. stupeň", key: "ONE"},

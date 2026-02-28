@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.controller;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
@@ -75,5 +76,13 @@ public class EmployeeController {
         log.info("Activating employee with id: {}", id);
         Employee updatedEmployee = employeeService.activateEmployee(id);
         return ResponseEntity.ok(employeeMapper.toDTO(updatedEmployee));
+    }
+
+    @PostMapping("/{id}/resend")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<MessageResponseDTO> resendActivationEmail(@PathVariable Long id) {
+        log.info("Resending activation email to employee with id : {}", id);
+        employeeService.resendActivationEmail(id);
+        return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
     }
 }

@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.controller;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientRequestDTO;
 import cz.zcu.kiv.caretracker.dto.client.ClientShortDTO;
@@ -12,9 +13,12 @@ import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO
 import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Picture;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
+import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.service.ClientService;
 import cz.zcu.kiv.caretracker.service.PictureService;
+import cz.zcu.kiv.caretracker.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +44,10 @@ public class ClientController {
     private ClientService clientService;
     @Autowired
     private PictureService pictureService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private ClientRepository clientRepository;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
@@ -122,6 +130,39 @@ public class ClientController {
         log.info("Activating client with id: {}", id);
         Client updatedClient = clientService.activateClient(id);
         return ResponseEntity.ok(clientMapper.toShortDTO(updatedClient));
+    }
+
+    @PostMapping("/{id}/account/create")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<MessageResponseDTO> createClientAccount(@PathVariable Long id, @RequestParam String email) {
+        log.info("Creating account for client with id: {}", id);
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
+        userService.createUserForClient(client, email);
+
+        return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
+    }
+
+    @PutMapping("/{id}/account/deactivate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<Void> deactivateClientAccount(@PathVariable Long id) {
+        log.info("Deactivating account for client with id: {}", id);
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
+        userService.deactivateUserForClient(client);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/account/activate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<Void> activateClientAccount(@PathVariable Long id) {
+        log.info("Activating account for client with id: {}", id);
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
+        userService.activateUserForClient(client);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/individual-plan")

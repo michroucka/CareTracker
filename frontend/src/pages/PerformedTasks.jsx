@@ -8,8 +8,9 @@ import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useTasks} from "../hooks/useTasks.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
-import {removeDiacritics, formatDateTime} from "../utils/formatters.js";
+import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
+import {minYear} from "../constants/globalConstants.js";
 import {
     Button,
     Dropdown,
@@ -24,20 +25,24 @@ import {
     TableCell,
     TableColumn,
     TableHeader,
-    TableRow
+    TableRow, Tooltip
 } from "@heroui/react";
 import {
     ChevronDown,
+    Funnel,
     MoreVertical,
     Plus,
     Search,
     Trash2,
-    Eye
+    Eye, Printer
 } from "lucide-react";
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
 import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
-import {PerformedTaskDeleteModal} from "../components/modals/performedTask/PerformedTaskDeleteModal.jsx";
+import {FiltersModal} from "../components/modals/FiltersModal.jsx";
+import MonthYearPicker from "../components/MonthYearPicker.jsx";
+import {GenerateReceiptModal} from "../components/modals/performedTask/GenerateReceiptModal.jsx";
+import {DeleteConfirmationModal} from "../components/modals/DeleteConfirmationModal.jsx";
 
 function PerformedTasks() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -74,6 +79,15 @@ function PerformedTasks() {
         if (!caregivers) return new Set(["all"]);
         return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
     };
+    const getInitialMonthYearFilter = () => {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        const monthParam = Number(searchParams.get("month"));
+        const yearParam = Number(searchParams.get("year"));
+        const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
+        const year = (yearParam >= minYear && yearParam <= currentYear) ? yearParam : currentYear;
+        return { month, year };
+    };
 
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
@@ -89,6 +103,9 @@ function PerformedTasks() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
+    const [isReceiptModalOpen, setIsReceiptModalOpen] = React.useState(false);
+    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
+    const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
 
     const hasLoadedMetadata = React.useRef(false);
 
@@ -98,7 +115,7 @@ function PerformedTasks() {
     // Filtrované sloupce pro mobile
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
-            return columns.filter(col => ["client", "task", "date", "actions"].includes(col.key));
+            return columns.filter(col => ["client", "task", "actions"].includes(col.key));
         }
         return columns;
     }, [isMobile]);
@@ -112,47 +129,20 @@ function PerformedTasks() {
         }));
     }, [organizations]);
 
-    // Filtrované departments podle vybrané organizace (pro superadminy)
-    const filteredDepartments = React.useMemo(() => {
-        if (user?.role !== "SUPERADMIN" || organizationFilter.size === 0) {
-            return departments;
-        }
-
-        // Pro superadmina s vybranou organizací - filtruj departments podle organizace
-        const selectedOrgName = Array.from(organizationFilter)[0];
-        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-        if (!selectedOrg) {
-            return [];
-        }
-
-        return departments.filter(dept => dept.organization?.id === selectedOrg.id);
-    }, [departments, organizations, organizationFilter, user]);
-
+    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
+    // Pro SUPERADMIN: načteno s filtrem organizationId z API
+    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
-        return filteredDepartments.map(dept => ({
+        return departments.map(dept => ({
             name: dept.name,
             key: dept.name
         }));
-    }, [filteredDepartments]);
+    }, [departments]);
 
-    // Filtrované employees podle organizace (pro superadminy) a podle departmentu
+    // Filtrované employees podle departmentu
+    // Pro SUPERADMIN: employees už jsou načtené s filtrem organizationId z API, takže filtrujeme jen podle departmentu
     const filteredEmployees = React.useMemo(() => {
         let filtered = [...employees];
-
-        // Pro superadmina - filtruj podle organizace
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-            if (selectedOrg) {
-                filtered = filtered.filter(employee =>
-                    employee.organization?.id === selectedOrg.id
-                );
-            } else {
-                return [];
-            }
-        }
 
         // Filtruj podle departmentu
         if (!departmentFilter.has("all")) {
@@ -162,7 +152,7 @@ function PerformedTasks() {
         }
 
         return filtered;
-    }, [employees, departmentFilter, organizationFilter, organizations, user]);
+    }, [employees, departmentFilter]);
 
     const caregiverOptions = React.useMemo(() => {
         return filteredEmployees.map(emp => {
@@ -194,26 +184,8 @@ function PerformedTasks() {
             );
         }
 
-        // Filtr podle oddělení
-        if (!departmentFilter.has("all")) {
-            filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) =>
-                departmentFilter.has(performedTask.department?.name),
-            );
-        }
-
-        // Filtr podle pečovatele (může být víc pečovatelů u jednoho úkonu)
-        if (!caregiverFilter.has("all")) {
-            filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) => {
-                // Zkontroluj, jestli alespoň jeden caregiver odpovídá filtru
-                return performedTask.caregivers?.some(caregiver => {
-                    const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
-                    return caregiverFilter.has(caregiverName);
-                });
-            });
-        }
-
         return filteredPerformedTasks;
-    }, [performedTasks, filterValue, hasSearchFilter, departmentFilter, caregiverFilter]);
+    }, [performedTasks, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -287,13 +259,17 @@ function PerformedTasks() {
 
         hasLoadedMetadata.current = true;
 
-        // Načíst metadata (departments, organizations, employees, tasks)
-        // Ukony načítáme až v dalším useEffectu s filtry
-        fetchClients();
-        fetchDepartments();
-        fetchOrganizations();
-        fetchEmployees();
-        fetchTasks();
+        // Pro SUPERADMIN načíst jen organizace, ostatní metadata až po výběru organizace
+        // Pro ostatní role načíst vše
+        if (user.role === "SUPERADMIN") {
+            fetchOrganizations();
+        } else {
+            fetchClients();
+            fetchDepartments();
+            fetchOrganizations();
+            fetchEmployees();
+            fetchTasks();
+        }
     }, [user]);
 
     // Validace filtrů podle role uživatele
@@ -347,8 +323,11 @@ function PerformedTasks() {
             params.set("organization", Array.from(organizationFilter)[0]);
         }
 
-        // Department filter - CAREGIVER a COORDINATOR nemůže měnit
-        if (allowedToFilterDepartment) {
+        // Pro SUPERADMIN: department a caregiver filtry jen když je vybraná organizace
+        const shouldSaveFilters = user.role !== "SUPERADMIN" || organizationFilter.size > 0;
+
+        // Department filter - CAREGIVER a COORDINATOR nemůže měnit (a jen když je vybraná organizace pro SUPERADMIN)
+        if (allowedToFilterDepartment && shouldSaveFilters) {
             if (!departmentFilter.has("all")) {
                 params.set("departments", Array.from(departmentFilter).join(","));
             } else {
@@ -357,43 +336,79 @@ function PerformedTasks() {
         }
         // Pro CAREGIVER a COORDINATOR neukladat departments do URL (vždy jen jejich oddělení)
 
-        // Caregiver filter
-        if (!caregiverFilter.has("all")) {
-            params.set("caregivers", Array.from(caregiverFilter).join(","));
-        } else {
-            params.set("caregivers", "all");
+        // Caregiver filter - jen když je vybraná organizace (pro SUPERADMIN)
+        if (shouldSaveFilters) {
+            if (!caregiverFilter.has("all")) {
+                params.set("caregivers", Array.from(caregiverFilter).join(","));
+            } else {
+                params.set("caregivers", "all");
+            }
         }
+
+        // Month/year filter
+        params.set("month", monthYearFilter.month + 1);
+        params.set("year", monthYearFilter.year);
 
         // Aktualizovat URL bez vytvoření nového záznamu v historii
         setSearchParams(params, { replace: true });
-    }, [filterValue, organizationFilter, departmentFilter, caregiverFilter, user]);
+    }, [filterValue, organizationFilter, departmentFilter, caregiverFilter, monthYearFilter, user]);
 
-    // Když se změní filtry, znovu načíst ukony s filtrem
+    // Pro SUPERADMIN načíst metadata když vybere organizaci
     React.useEffect(() => {
-        // Počkej, dokud se nenačtou metadata (departments, employees, organizations)
-        if (departments.length === 0 || employees.length === 0) {
+        if (user?.role !== "SUPERADMIN") return;
+        if (organizations.length === 0) return;
+        if (organizationFilter.size === 0) {
+            // Pokud není vybraná organizace, vyčisti data
+            setPerformedTasks([]);
             return;
         }
 
-        // Vypočítat filteredDepartments uvnitř useEffectu (aby to nebylo v dependencies)
-        let currentFilteredDepartments = departments;
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-            if (selectedOrg) {
-                currentFilteredDepartments = departments.filter(dept => dept.organization?.id === selectedOrg.id);
+        const selectedOrgName = Array.from(organizationFilter)[0];
+        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+        if (!selectedOrg) return;
+
+        // Načíst metadata s filtrem podle vybrané organizace
+        fetchClients({ organizationId: selectedOrg.id });
+        fetchDepartments({ organizationId: selectedOrg.id });
+        fetchEmployees({ organizationId: selectedOrg.id });
+        fetchTasks({ organizationId: selectedOrg.id });
+    }, [user, organizations, organizationFilter]);
+
+    // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
+    const prevOrganizationFilter = React.useRef(organizationFilter);
+    React.useEffect(() => {
+        if (user?.role !== "SUPERADMIN") return;
+
+        // Zkontroluj jestli se organizace změnila
+        if (prevOrganizationFilter.current.size > 0 || organizationFilter.size > 0) {
+            const prevOrg = Array.from(prevOrganizationFilter.current)[0];
+            const currentOrg = Array.from(organizationFilter)[0];
+
+            // Pokud se organizace změnila nebo byla odvolána, resetuj filtry
+            if (prevOrg !== currentOrg) {
+                setDepartmentFilter(new Set(["all"]));
+                setCaregiverFilter(new Set(["all"]));
             }
         }
 
-        // Vypočítat filteredEmployees uvnitř useEffectu
-        let currentFilteredEmployees = [...employees];
-        if (user?.role === "SUPERADMIN" && organizationFilter.size > 0) {
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-            if (selectedOrg) {
-                currentFilteredEmployees = currentFilteredEmployees.filter(emp => emp.organization?.id === selectedOrg.id);
-            }
+        prevOrganizationFilter.current = organizationFilter;
+    }, [user, organizationFilter]);
+
+    // Když se změní filtry, znovu načíst ukony s filtrem
+    React.useEffect(() => {
+        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
+        if (user?.role === "SUPERADMIN") {
+            if (organizations.length === 0 || organizationFilter.size === 0) return;
+            if (departments.length === 0 || employees.length === 0) return;
+        } else {
+            // Pro ostatní role: počkej na metadata
+            if (departments.length === 0 || employees.length === 0) return;
         }
+
+        // Departments jsou již filtrovány backendem podle organizationId
+        // Employees jsou již filtrovány backendem podle organizationId
+        // Filtrujeme pouze employees podle departmentu (pro UI účely)
+        let currentFilteredEmployees = [...employees];
         if (!departmentFilter.has("all")) {
             currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.name));
         }
@@ -414,21 +429,25 @@ function PerformedTasks() {
             // Sestavit filtry
             const filters = {
                 organizationId: selectedOrg.id,
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+                month: monthYearFilter.month,
+                year: monthYearFilter.year,
             };
 
             fetchPerformedTasks(filters);
         } else {
             // Ostatní role
             const filters = {
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, currentFilteredDepartments),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
                 caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+                month: monthYearFilter.month,
+                year: monthYearFilter.year,
             };
 
             fetchPerformedTasks(filters);
         }
-    }, [organizationFilter, departmentFilter, caregiverFilter, user, organizations, departments, employees]);
+    }, [organizationFilter, departmentFilter, caregiverFilter, monthYearFilter, user, organizations, departments, employees]);
 
     function getDepartmentIdsFromFilter(departmentFilter, departments) {
         if (departmentFilter.has("all")) {
@@ -528,6 +547,29 @@ function PerformedTasks() {
         }
     }
 
+    const handleOpenReceiptModal = () => {
+        setIsReceiptModalOpen(true);
+    }
+
+    const handleCloseReceiptModal = () => {
+        setIsReceiptModalOpen(false);
+    }
+
+    const handleOpenFiltersModal = () => {
+        setIsFiltersModalOpen(true);
+    };
+
+    const handleCloseFiltersModal = () => {
+        setIsFiltersModalOpen(false);
+    }
+
+    const handleFiltersChange = React.useCallback((filters) => {
+        setOrganizationFilter(filters.organizationFilter);
+        setDepartmentFilter(filters.departmentFilter);
+        setCaregiverFilter(filters.caregiverFilter);
+        setMonthYearFilter(filters.monthYearFilter);
+    }, []);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -542,6 +584,17 @@ function PerformedTasks() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            className="sm:hidden"
+                            onPress={handleOpenFiltersModal}
+                        >
+                            <Funnel className="size-4" />
+                        </Button>
+
+                        <MonthYearPicker onChange={setMonthYearFilter} className="hidden sm:flex"/>
+
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -634,8 +687,20 @@ function PerformedTasks() {
                         </Button>
                     </div>
                 </div>
-                <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} úkonů</span>
+                <div className="flex flex-row justify-between items-center">
+                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
+
+                    <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            className="rounded-full"
+                            onPress={handleOpenReceiptModal}
+                        >
+                            <Printer className="size-5" />
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
         );
@@ -654,6 +719,7 @@ function PerformedTasks() {
         handleOrganizationFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
+        handleOpenFiltersModal,
         user,
     ]);
 
@@ -685,11 +751,18 @@ function PerformedTasks() {
                 return (
                     <div className="flex flex-col">
                         <p className="text-small">
-                            {cellValue}x {unitTypeTranslations[performedTask.unitType].toLowerCase() || "-"}
+                            {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType] || "-"}
                         </p>
                     </div>
                 );
-                // TODO add price column
+            case "price":
+                return (
+                    <div className="flex flex-col">
+                        <p className="text-small">
+                            {formatNumber(cellValue)} Kč
+                        </p>
+                    </div>
+                );
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">
@@ -740,8 +813,10 @@ function PerformedTasks() {
         }
     }, [loading, departments.length, employees.length]);
 
+    // Pro SUPERADMIN bez vybrané organizace není loading
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
     const isLoadingMetadata = departments.length === 0 || employees.length === 0;
-    const isLoading = loading || isLoadingMetadata || !hasLoadedData.current;
+    const isLoading = !isSuperadminWithoutOrg && (loading || isLoadingMetadata || !hasLoadedData.current);
 
     return (
         <>
@@ -802,11 +877,34 @@ function PerformedTasks() {
                 tasks={tasks}
             />
 
-            <PerformedTaskDeleteModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={handleCloseDeleteModal}
                 onSubmit={handleDeletePerformedTask}
-                performedTaskId={selectedPerformedTask?.id}
+                itemId={selectedPerformedTask?.id}
+                title="Smazat vykonaný úkon"
+                message="Opravdu chcete smazat tento vykonaný úkon?"
+            />
+
+            <GenerateReceiptModal
+                isOpen={isReceiptModalOpen}
+                onClose={handleCloseReceiptModal}
+                clients={filteredClients}
+            />
+
+            <FiltersModal
+                isOpen={isFiltersModalOpen}
+                onClose={handleCloseFiltersModal}
+                onSubmit={handleFiltersChange}
+                user={user}
+                initialOrganizationFilter={organizationFilter}
+                initialDepartmentFilter={departmentFilter}
+                initialCaregiverFilter={caregiverFilter}
+                organizationOptions={organizationOptions}
+                departmentOptions={departmentOptions}
+                caregiverOptions={caregiverOptions}
+                showMonthYearFilter={true}
+                initialMonthYearFilter={monthYearFilter}
             />
         </>
     );

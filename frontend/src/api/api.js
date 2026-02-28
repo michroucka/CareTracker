@@ -1,5 +1,11 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+function handleUnauthorized(response) {
+    if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    }
+}
+
 export async function get(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "GET",
@@ -28,8 +34,10 @@ export async function getJSON(endpoint, options = {}) {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        signal: options.signal, // Podpora pro AbortController
+        signal: options.signal,
     });
+
+    handleUnauthorized(response);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -48,6 +56,8 @@ export async function postJSON(endpoint, data) {
         credentials: "include",
     });
 
+    handleUnauthorized(response);
+
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         const message = errorData?.message || `HTTP error! status: ${response.status}`;
@@ -65,12 +75,15 @@ export async function putJSON(endpoint, data) {
         credentials: "include",
     });
 
+    handleUnauthorized(response);
+
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         const message = errorData?.message || `HTTP error! status: ${response.status}`;
         throw new Error(message);
     }
 
+    if (response.status === 204) return null;
     return response.json();
 }
 
@@ -79,6 +92,8 @@ export async function deleteJSON(endpoint) {
         method: "DELETE",
         credentials: "include",
     });
+
+    handleUnauthorized(response);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);

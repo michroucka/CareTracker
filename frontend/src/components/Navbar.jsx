@@ -20,7 +20,7 @@ import {
 import logo from "../assets/ct_icon.png"
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
 import { getRoleLabel, ROLES, hasRole } from "../constants/roles.js";
 
@@ -47,6 +47,8 @@ export default function AppNavbar() {
         { name: "Klienti", path: "/clients", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Provedené úkony", path: "/performed-tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Zaměstnanci", path: "/employees", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Úkony", path: "/tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Měsíční přehled", path: "/monthly-report", allowedRoles: [ROLES.CLIENT] },
     ];
 
     // Filtrování menu položek podle role uživatele
@@ -144,14 +146,21 @@ export default function AppNavbar() {
                             </DropdownTrigger>
                             <DropdownMenu aria-label="Profile Actions" variant="flat">
                                 <DropdownSection showDivider>
-                                    <DropdownItem key="account">Můj účet</DropdownItem>
+                                    <DropdownItem
+                                        key="account"
+                                        href="/account"
+                                        startContent={<UserRound className="size-4" />}
+                                        className="text-foreground"
+                                    >
+                                        Můj účet
+                                    </DropdownItem>
                                 </DropdownSection>
                                 <DropdownSection>
                                     <DropdownItem
                                         key="logout"
                                         color="danger"
                                         onPress={logout}
-                                        startContent={<LogOut className="h-4 w-4" />}
+                                        startContent={<LogOut className="size-4" />}
                                         className="text-danger"
                                     >
                                         Odhlásit se

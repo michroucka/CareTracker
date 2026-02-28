@@ -1,4 +1,1 @@
-- pocitani a zobrazeni ceny provedeneho ukonu
-- odesilani aktivacniho mailu pri vytvoreni noveho employee
-- moznost resend aktivacniho mailu
 

@@ -17,6 +17,7 @@ import { formatPostalCode, formatPhoneNumber } from "../../utils/formatters.js";
 import { benefitsOptions, terminationReasonOptions } from "../../constants/clientConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
 import { ImageUpload } from "../ImageUpload.jsx";
+import {minYear} from "../../constants/globalConstants.js";
 
 /**
  * Reusable client form component used in both create and edit modals
@@ -355,7 +356,7 @@ export const ClientForm = React.forwardRef(({
                             showMonthAndYearPickers
                             selectorIcon={<CalendarDays size={18}/>}
                             placeholderValue={new CalendarDate(1960, 1, 1)}
-                            minValue={new CalendarDate(1900, 1, 1)}
+                            minValue={new CalendarDate(minYear, 1, 1)}
                             maxValue={today(getLocalTimeZone())}
                             isRequired
                             classNames={{
@@ -405,9 +406,7 @@ export const ClientForm = React.forwardRef(({
                         <ReadOnlyField
                             label="Klíčový pracovník"
                             value={
-                                caregivers.find(c => c.id === caregiverId)
-                                    ? `${caregivers.find(c => c.id === caregiverId).firstName} ${caregivers.find(c => c.id === caregiverId).lastName}`
-                                    : '-'
+                                caregivers.find(c => c.id === caregiverId)?.fullName || '-'
                             }
                         />
                     ) : (
@@ -428,7 +427,7 @@ export const ClientForm = React.forwardRef(({
                             }}
                         >
                             {filteredCaregivers.map((caregiver) => {
-                                const caregiverName = `${caregiver.firstName} ${caregiver.lastName}`;
+                                const caregiverName = caregiver.fullName;
                                 return (
                                     <AutocompleteItem
                                         key={caregiver.id.toString()}
@@ -721,7 +720,7 @@ export const ClientForm = React.forwardRef(({
                                 }}
                                 showMonthAndYearPickers
                                 selectorIcon={<CalendarDays size={18} />}
-                                minValue={new CalendarDate(1900, 1, 1)}
+                                minValue={new CalendarDate(minYear, 1, 1)}
                                 maxValue={today(getLocalTimeZone())}
                                 isRequired
                                 isDisabled={isLoading}

@@ -50,4 +50,8 @@ public class Employee {
     @OneToOne(mappedBy = "employee")
     @JsonIgnore
     private User user;
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

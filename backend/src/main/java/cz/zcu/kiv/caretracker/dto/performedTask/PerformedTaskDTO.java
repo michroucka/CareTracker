@@ -17,7 +17,7 @@ import java.util.List;
 public class PerformedTaskDTO {
     private Long id;
     private LocalDateTime date;
-    private Integer unitCount;
+    private Double unitCount;
     private String notes;
 
     private ClientSummaryDTO client;

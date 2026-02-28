@@ -2,6 +2,8 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Picture;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.PictureRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +40,7 @@ public class PictureService {
 
         // Kontrola existence klienta
         Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Klient nenalezen"));
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nenalezen"));
 
         // Zkus najít existující obrázek
         Picture picture = pictureRepository.findByClientId(clientId)
@@ -69,29 +71,29 @@ public class PictureService {
     @Transactional(readOnly = true)
     public Picture getPicture(Long clientId) {
         return pictureRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("Obrázek nenalezen"));
+                .orElseThrow(() -> new ResourceNotFoundException("Obrázek nenalezen"));
     }
 
     @Transactional
     public void deletePicture(Long clientId) {
         if (!pictureRepository.existsByClientId(clientId)) {
-            throw new RuntimeException("Obrázek nenalezen");
+            throw new ResourceNotFoundException("Obrázek nenalezen");
         }
         pictureRepository.deleteByClientId(clientId);
     }
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Soubor je prázdný");
+            throw new ValidationException("Soubor je prázdný");
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Soubor je příliš velký. Maximální velikost je 5 MB");
+            throw new ValidationException("Soubor je příliš velký. Maximální velikost je 5 MB");
         }
 
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException("Nepovolený formát souboru. Povolené formáty: JPEG, PNG, GIF, WEBP");
+            throw new ValidationException("Nepovolený formát souboru. Povolené formáty: JPEG, PNG, GIF, WEBP");
         }
     }
 }

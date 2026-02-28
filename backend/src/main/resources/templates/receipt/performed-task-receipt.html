@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <style>
+            body { font-family: Nunito, ui-sans-serif, system-ui, sans-serif; font-size: 12px; padding: 0 16px 0 16px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+            h1 { margin: 12px 0 0 0; }
+            h2, h3, h4 { margin: 8px 0 8px 0; }
+            .top-content { width: 100%; border-collapse: collapse; border: none; margin-bottom: 4px; }
+            .top-content td { border: none; padding: 0; vertical-align: bottom; }
+            .clearfix::after { content: ""; display: table; clear: both; }
+            .mt-4 { margin-top: 12px; }
+            .client-table { margin-bottom: 0; border: none; table-layout: auto; }
+            .client-table td { border: none; padding: 3px; }
+            .client-name { font-size: 15px; font-weight: bold; }
+            .client-meta { font-size: 11px; color: #555; }
+            .signature-table { margin-top: 32px; border: none; }
+            .signature-table td { border: none; width: 33%; padding: 0; }
+            .signature-dots { font-size: 14px; letter-spacing: 2px; text-align: center; }
+            .signature-label { font-size: 11px; margin-top: 2px; text-align: center; }
+            .right { text-align: right; padding-right: 3px; }
+        </style>
+    </head>
+    <body>
+        <table class="top-content">
+            <tr>
+                <td><h1 th:text="${organizationName}">Nazev organizace</h1></td>
+                <td style="text-align: right; white-space: nowrap;"><h3 style="margin-bottom: 0;" th:text="${monthYear}">Leden 2026</h3></td>
+            </tr>
+        </table>
+        <hr/>
+        <table class="client-table">
+            <tr>
+                <td style="padding-left: 0;"><span class="client-name" th:text="${clientName}">Jmeno Prijmeni</span></td>
+                <td style="text-align: center;"><span class="client-meta">Nar.: </span><span class="client-meta" th:text="${clientDateOfBirth}">1.1.1970</span></td>
+                <td style="text-align: right; padding-right: 0;"><span class="client-meta">Adresa: </span><span class="client-meta" th:text="${clientAddress}">Ulice, PSC, Mesto</span></td>
+            </tr>
+        </table>
+        <h4>Provedené úkony</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 70%">Název úkonu</th>
+                    <th style="width: 15%">Počet</th>
+                    <th style="width: 15%">Cena</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="task : ${tasks}">
+                    <td th:text="${task.taskName}">nazev</td>
+                    <td th:text="${task.unitCount + ' ' + task.unitType}">pocet</td>
+                    <td th:text="${task.price + ' Kč'}">cena</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3 class="mt-4 right">Celkem: <span th:text="${totalPrice}">0</span> Kč</h3>
+        <table class="signature-table">
+            <tr>
+                <td><div class="signature-dots">....................................</div><div class="signature-label">Datum</div></td>
+                <td><div class="signature-dots">....................................</div><div class="signature-label">Převzal</div></td>
+                <td><div class="signature-dots">....................................</div><div class="signature-label">Podpis</div></td>
+            </tr>
+        </table>
+    </body>
+</html>

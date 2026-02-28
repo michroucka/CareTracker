@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
+import cz.zcu.kiv.caretracker.security.MyUserDetails;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +33,21 @@ public class AuthController {
     public Map<String, Object> authStatus(Authentication auth) {
         try {
             if (auth != null && auth.isAuthenticated()) {
-                User user = userRepository.findByUsername(auth.getName())
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                User user;
+                if (auth.getPrincipal() instanceof MyUserDetails myUserDetails) {
+                    user = userRepository.findById(myUserDetails.getUserId())
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                } else {
+                    user = userRepository.findByUsername(auth.getName())
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                }
 
-                log.debug("Authentication status check - authenticated user '{}'", auth.getName());
+                log.debug("Authentication status check - authenticated user '{}'", user.getUsername());
 
                 // Základní odpověď
                 Map<String, Object> response = new java.util.HashMap<>();
                 response.put("isLoggedIn", true);
-                response.put("username", auth.getName());
+                response.put("username", user.getUsername());
                 response.put("role", user.getRole().toString());
 
                 // Přidání organizačního kontextu pro zaměstnance
@@ -60,8 +67,17 @@ public class AuthController {
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("Error loading employee context for user '{}': {}", auth.getName(), e.getMessage());
+                    log.warn("Error loading employee context for user '{}': {}", user.getUsername(), e.getMessage());
                     // Continue with basic auth info without employee context
+                }
+
+                // Přidání klientského kontextu pro CLIENT roli
+                try {
+                    if (user.getClient() != null) {
+                        response.put("clientId", user.getClient().getId());
+                    }
+                } catch (Exception e) {
+                    log.warn("Error loading client context for user '{}': {}", user.getUsername(), e.getMessage());
                 }
 
                 return response;

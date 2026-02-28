@@ -12,6 +12,7 @@ import {
 } from "@heroui/react";
 import {CalendarDate, getLocalTimeZone, parseDate, today} from "@internationalized/date";
 import {CalendarDays, UserRoundX} from "lucide-react";
+import {minYear} from "../../../constants/globalConstants.js";
 
 export function ClientTerminateModal({ isOpen, onClose, onSubmit, clientId, clientName }) {
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -100,7 +101,7 @@ export function ClientTerminateModal({ isOpen, onClose, onSubmit, clientId, clie
                                 }}
                                 showMonthAndYearPickers
                                 selectorIcon={<CalendarDays size={18} />}
-                                minValue={new CalendarDate(1900, 1, 1)}
+                                minValue={new CalendarDate(minYear, 1, 1)}
                                 maxValue={today(getLocalTimeZone())}
                                 isRequired
                                 classNames={{

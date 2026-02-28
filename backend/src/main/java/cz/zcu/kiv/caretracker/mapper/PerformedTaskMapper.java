@@ -7,6 +7,7 @@ import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.Task;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,6 +57,7 @@ public class PerformedTaskMapper {
         dto.setClientName(performedTask.getClient().getFullName());
         dto.setTaskName(performedTask.getTask().getName());
         dto.setUnitType(performedTask.getTask().getUnitType().toString());
+        dto.setPrice(performedTask.calculatePrice());
 
         dto.setDepartment(departmentMapper.toSummaryDTO(performedTask.getDepartment()));
         dto.setCaregivers(employeeMapper.toSummaryDTOList(performedTask.getCaregivers()));

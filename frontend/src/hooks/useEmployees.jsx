@@ -1,7 +1,7 @@
 import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
+import {CloudAlert, UserRoundCheck, UserRoundX, MailCheck, MailX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
 import {showToast} from "../components/MyToast.jsx";
 
@@ -9,6 +9,7 @@ export function useEmployees() {
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const abortControllerRef = useRef(null);
+    const filtersRef = useRef({});
 
     function mapEmployee(employee) {
         return ({
@@ -21,7 +22,7 @@ export function useEmployees() {
         return employees.map((employee) => mapEmployee(employee));
     }
 
-    const fetchEmployees = async (filters = {}) => {
+    const fetchEmployees = async (filters = {}, { silent = false } = {}) => {
         // Zruš předchozí request pokud stále běží
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -32,8 +33,11 @@ export function useEmployees() {
         abortControllerRef.current = controller;
 
         try {
-            setEmployees([])
-            setLoading(true);
+            filtersRef.current = filters;
+            if (!silent) {
+                setEmployees([]);
+                setLoading(true);
+            }
 
             const params = new URLSearchParams();
 
@@ -60,7 +64,7 @@ export function useEmployees() {
             const sorted = sortByKey(mappedEmployees, 'fullName', 'ascending');
             setEmployees(sorted);
 
-            setLoading(false);
+            if (!silent) setLoading(false);
         } catch (err) {
             if (err.name === 'AbortError') {
                 console.log("Request was cancelled");
@@ -69,7 +73,7 @@ export function useEmployees() {
 
             console.error("Error fetching employees:", err);
             showErrorToast(err, "Chyba při načítání zaměstnanců", { icon: <CloudAlert /> });
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -109,12 +113,8 @@ export function useEmployees() {
     const updateEmployee = async (id, updatedData) => {
         try {
             const updated = await putJSON(`/employees/${id}`, updatedData);
-            const mapped = mapEmployee(updated);
 
-            setEmployees(prev => sortByKey(
-                prev.map(employee => employee.id === id ? mapped : employee),
-                'fullName', 'ascending'
-            ));
+            fetchEmployees(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Zaměstnanec úspěšně aktualizován",
@@ -134,13 +134,7 @@ export function useEmployees() {
         try {
             const updated = await putJSON(`/employees/${id}/terminate`);
 
-            const mappedEmployee = mapEmployee(updated);
-
-            setEmployees(prev => sortByKey(
-                prev.map(employee => employee.id === id ? mappedEmployee : employee),
-                'fullName',
-                'ascending'
-            ));
+            fetchEmployees(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Zaměstnanec úspěšně deaktivován",
@@ -160,13 +154,7 @@ export function useEmployees() {
         try {
             const updated = await putJSON(`/employees/${id}/activate`);
 
-            const mappedEmployee = mapEmployee(updated);
-
-            setEmployees(prev => sortByKey(
-                prev.map(employee => employee.id === id ? mappedEmployee : employee),
-                'fullName',
-                'ascending'
-            ));
+            fetchEmployees(filtersRef.current, { silent: true });
 
             showToast({
                 title: "Zaměstnanec úspěšně aktivován",
@@ -182,6 +170,30 @@ export function useEmployees() {
         }
     };
 
+    const resendActivationEmail = async (id) => {
+        try {
+            const response = await postJSON(`/employees/${id}/resend`);
+
+            if (response.success) {
+                showToast({
+                    title: response.message,
+                    color: "success",
+                    icon: <MailCheck />
+                })
+            } else {
+                showToast({
+                    title: response.message,
+                    color: "danger",
+                    icon: <MailX />
+                })
+            }
+        } catch (err) {
+            console.error("Error resending activation email:", err);
+            showErrorToast(err, "Chyba při odesílání aktivačního emailu", { icon: <MailX /> });
+            throw err;
+        }
+    }
+
     return {
         employees,
         setEmployees,
@@ -192,5 +204,6 @@ export function useEmployees() {
         updateEmployee,
         terminateEmployee,
         activateEmployee,
+        resendActivationEmail
     };
 }

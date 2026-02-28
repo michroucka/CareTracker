@@ -14,12 +14,13 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {ChevronDown, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
+import {ChevronDown, Funnel, Mail, MoreVertical, Plus, Search, Send, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useOrganizations} from "../hooks/useOrganizations.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
-import {columns, activeOptions} from '../constants/employeeConstants.js';
+import {columns} from '../constants/employeeConstants.js';
+import {activeOptions} from "../constants/globalConstants.js";
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {removeDiacritics} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
@@ -27,6 +28,7 @@ import {ROLE_LABELS} from "../constants/roles.js";
 import {EmployeeCreateModal} from "../components/modals/employee/EmployeeCreateModal.jsx";
 import {EmployeeDetailModal} from "../components/modals/employee/EmployeeDetailModal.jsx";
 import {EmployeeTerminateModal} from "../components/modals/employee/EmployeeTerminateModal.jsx";
+import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import {useSearchParams} from "react-router-dom";
 
 function Employees() {
@@ -70,14 +72,17 @@ function Employees() {
         updateEmployee,
         terminateEmployee,
         activateEmployee,
+        resendActivationEmail
     } = useEmployees();
     const { departments, fetchDepartments } = useDepartments();
     const { organizations, fetchOrganizations } = useOrganizations();
+    const hasLoadedMetadata = React.useRef(false);
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedEmployee, setSelectedEmployee ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
+    const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
@@ -108,29 +113,15 @@ function Employees() {
         }));
     }, [organizations]);
 
-    // Filtrované departments podle vybrané organizace (pro superadminy)
-    const filteredDepartments = React.useMemo(() => {
-        if (user?.role !== "SUPERADMIN" || organizationFilter.size === 0) {
-            return departments;
-        }
-
-        // Pro superadmina s vybranou organizací - filtruj departments podle organizace
-        const selectedOrgName = Array.from(organizationFilter)[0];
-        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-        if (!selectedOrg) {
-            return [];
-        }
-
-        return departments.filter(dept => dept.organization?.id === selectedOrg.id);
-    }, [departments, organizations, organizationFilter, user]);
-
+    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
+    // Pro SUPERADMIN: načteno s filtrem organizationId z API
+    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
-        return filteredDepartments.map(dept => ({
+        return departments.map(dept => ({
             name: dept.name,
             key: dept.name
         }));
-    }, [filteredDepartments]);
+    }, [departments]);
 
     const filteredItems = React.useMemo(() => {
         let filteredEmployees = [...employees];
@@ -143,22 +134,8 @@ function Employees() {
             );
         }
 
-        // Filtr podle aktivity (filtruj jen když nejsou vybrané obě možnosti)
-        if (activeFilter.size < 2) {
-            filteredEmployees = filteredEmployees.filter((employee) =>
-                activeFilter.has(employee?.active?.toString()),
-            );
-        }
-
-        // Filtr podle oddělení
-        if (!departmentFilter.has("all")) {
-            filteredEmployees = filteredEmployees.filter((employee) =>
-                departmentFilter.has(employee.department?.name),
-            );
-        }
-
         return filteredEmployees;
-    }, [employees, filterValue, hasSearchFilter, activeFilter, departmentFilter]);
+    }, [employees, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -206,12 +183,21 @@ function Employees() {
     }, [isMobile]);
 
     React.useEffect(() => {
-        // Pro superadmina nenačítáme zaměstnance, dokud nevybere organizaci
-        if (user?.role !== "SUPERADMIN") {
-            fetchEmployees();
+        // Načíst metadata pouze jednou (při prvním render s user)
+        if (!user || hasLoadedMetadata.current) {
+            return;
         }
-        fetchDepartments();
-        fetchOrganizations();
+
+        hasLoadedMetadata.current = true;
+
+        // Pro SUPERADMIN načíst jen organizace, departments až po výběru organizace
+        // Pro ostatní role načíst vše
+        if (user.role === "SUPERADMIN") {
+            fetchOrganizations();
+        } else {
+            fetchDepartments();
+            fetchOrganizations();
+        }
     }, [user]);
 
     // Validace filtrů podle role uživatele
@@ -278,8 +264,11 @@ function Employees() {
             params.set("organization", Array.from(organizationFilter)[0]);
         }
 
-        // Department filter - pouze pro SUPERADMIN a ADMIN
-        if (allowedToFilterDepartment) {
+        // Pro SUPERADMIN: department filtr jen když je vybraná organizace
+        const shouldSaveFilters = user.role !== "SUPERADMIN" || organizationFilter.size > 0;
+
+        // Department filter - pouze pro SUPERADMIN a ADMIN (a jen když je vybraná organizace pro SUPERADMIN)
+        if (allowedToFilterDepartment && shouldSaveFilters) {
             if (!departmentFilter.has("all")) {
                 params.set("departments", Array.from(departmentFilter).join(","));
             } else {
@@ -292,21 +281,107 @@ function Employees() {
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, organizationFilter, departmentFilter, user]);
 
-    // Když superadmin změní organizaci, znovu načíst zaměstnance s filtrem
+    // Pro SUPERADMIN načíst departments když vybere organizaci
     React.useEffect(() => {
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size > 0 && organizations.length > 0) {
-                const selectedOrgName = Array.from(organizationFilter)[0];
-                const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-                if (selectedOrg) {
-                    fetchEmployees(selectedOrg.id);
-                }
-            } else {
-                // Pokud není vybraná organizace, smaž data
-                setEmployees([]);
+        if (user?.role !== "SUPERADMIN") return;
+        if (organizations.length === 0) return;
+        if (organizationFilter.size === 0) {
+            // Pokud není vybraná organizace, vyčisti data
+            setEmployees([]);
+            return;
+        }
+
+        const selectedOrgName = Array.from(organizationFilter)[0];
+        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+        if (!selectedOrg) return;
+
+        // Načíst departments s filtrem podle vybrané organizace
+        fetchDepartments({ organizationId: selectedOrg.id });
+    }, [user, organizations, organizationFilter]);
+
+    // Pro SUPERADMIN resetovat department filtr při změně organizace
+    const prevOrganizationFilter = React.useRef(organizationFilter);
+    React.useEffect(() => {
+        if (user?.role !== "SUPERADMIN") return;
+
+        // Zkontroluj jestli se organizace změnila
+        if (prevOrganizationFilter.current.size > 0 || organizationFilter.size > 0) {
+            const prevOrg = Array.from(prevOrganizationFilter.current)[0];
+            const currentOrg = Array.from(organizationFilter)[0];
+
+            // Pokud se organizace změnila nebo byla odvolána, resetuj filtr
+            if (prevOrg !== currentOrg) {
+                setDepartmentFilter(new Set(["all"]));
             }
         }
-    }, [organizationFilter, user, organizations]);
+
+        prevOrganizationFilter.current = organizationFilter;
+    }, [user, organizationFilter]);
+
+    // Když se změní filtry, znovu načíst zaměstnance s filtrem
+    React.useEffect(() => {
+        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
+        if (user?.role === "SUPERADMIN") {
+            if (organizations.length === 0 || organizationFilter.size === 0) return;
+            if (departments.length === 0) return;
+        } else {
+            // Pro ostatní role: počkej na metadata
+            if (departments.length === 0) return;
+        }
+
+        // Departments jsou již filtrovány backendem podle organizationId
+
+        if (user?.role === "SUPERADMIN") {
+            // Superadmin musi vybrat organization
+            if (organizationFilter.size === 0) {
+                // Pokud není vybraná organizace, smaž data
+                setEmployees([]);
+                return;
+            }
+
+            const selectedOrgName = Array.from(organizationFilter)[0];
+            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
+
+            if (!selectedOrg) return;
+
+            // Sestavit filtry
+            const filters = {
+                organizationId: selectedOrg.id,
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments)
+            };
+
+            fetchEmployees(filters);
+        } else {
+            // Ostatní role
+            const filters = {
+                status: getStatusFromFilter(activeFilter),
+                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments)
+            };
+
+            fetchEmployees(filters);
+        }
+    }, [organizationFilter, activeFilter, departmentFilter, user, organizations, departments]);
+
+    // Helper funkce pro převod filtrů z Set na parametry
+    function getStatusFromFilter(activeFilter) {
+        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
+        if (activeFilter.size === 0 || activeFilter.size === 2) {
+            return undefined;
+        }
+        // Jinak vrať true nebo false
+        return activeFilter.has("true");
+    }
+
+    function getDepartmentIdsFromFilter(departmentFilter, departments) {
+        if (departmentFilter.has("all")) {
+            return undefined;
+        }
+        // Převést názvy oddělení na ID
+        return departments
+            .filter(dept => departmentFilter.has(dept.name))
+            .map(dept => dept.id);
+    }
 
     async function handleSelectEmployee(employeeId) {
         try {
@@ -399,6 +474,20 @@ function Employees() {
         }
     }
 
+    const handleOpenFiltersModal = () => {
+        setIsFiltersModalOpen(true);
+    };
+
+    const handleCloseFiltersModal = () => {
+        setIsFiltersModalOpen(false);
+    }
+
+    const handleFiltersChange = React.useCallback((filters) => {
+        setActiveFilter(filters.activeFilter);
+        setOrganizationFilter(filters.organizationFilter);
+        setDepartmentFilter(filters.departmentFilter);
+    }, []);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
@@ -413,6 +502,14 @@ function Employees() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            className="sm:hidden"
+                            onPress={handleOpenFiltersModal}
+                        >
+                            <Funnel className="size-4" />
+                        </Button>
                         {user?.role === "SUPERADMIN" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -440,7 +537,13 @@ function Employees() {
                         {canAlterEmployee && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
+                                    <Button
+                                        endContent={<ChevronDown
+                                            className="size-4" />}
+                                        variant="flat"
+                                        className="text-foreground"
+                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                    >
                                         Status
                                     </Button>
                                 </DropdownTrigger>
@@ -504,7 +607,7 @@ function Employees() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} zaměstnanců</span>
+                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "zaměstnanec" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "zaměstnanci" : "zaměstnanců"}</span>
                 </div>
             </div>
         );
@@ -522,6 +625,7 @@ function Employees() {
         departmentOptions,
         handleOrganizationFilterChange,
         handleDepartmentFilterChange,
+        handleOpenFiltersModal,
         canAlterEmployee,
         user,
     ]);
@@ -571,11 +675,21 @@ function Employees() {
 
                                 {canAlterEmployee ? (
                                     <DropdownSection>
+                                        {!employee.isActivated && employee.email ? (
+                                            <DropdownItem key="resend"
+                                                          startContent={<Mail />}
+                                                          variant="light"
+                                                          onPress={() => resendActivationEmail(employee.id)}
+                                            >
+                                                Poslat aktivační email
+                                            </DropdownItem>
+                                        ) : null }
                                         {employee.active ? (
                                             <DropdownItem key="terminate"
                                                           startContent={<UserRoundX />}
                                                           variant="light"
                                                           color="danger"
+                                                          isDisabled={employee.id === user?.employeeId}
                                                           onPress={() => handleOpenTerminateModal(employee.id)}
                                             >
                                                 Deaktivovat
@@ -601,13 +715,9 @@ function Employees() {
         }
     }, [canAlterEmployee]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner size="lg" variant="gradient" label="Načítání zaměstnanců..." />
-            </div>
-        );
-    }
+    // Pro SUPERADMIN bez vybrané organizace není loading
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
+    const shouldShowLoading = !isSuperadminWithoutOrg && loading;
 
     return (
         <>
@@ -633,6 +743,8 @@ function Employees() {
                     )}
                 </TableHeader>
                 <TableBody
+                    isLoading={shouldShowLoading}
+                    loadingContent={<Spinner label="Načítání zaměstnanců..." />}
                     emptyContent={
                         (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
                             ? "Vyberte prosím organizaci" : "Žádní zaměstnanci nenalezeni"
@@ -672,6 +784,20 @@ function Employees() {
                 onSubmit={handleTerminateEmployee}
                 employeeId={selectedEmployee?.id}
                 employeeName={`${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`}
+            />
+
+            <FiltersModal
+                isOpen={isFiltersModalOpen}
+                onClose={handleCloseFiltersModal}
+                onSubmit={handleFiltersChange}
+                user={user}
+                showStatusFilter={canAlterEmployee}
+                initialActiveFilter={activeFilter}
+                initialOrganizationFilter={organizationFilter}
+                initialDepartmentFilter={departmentFilter}
+                activeOptions={activeOptions}
+                organizationOptions={organizationOptions}
+                departmentOptions={departmentOptions}
             />
         </>
     );

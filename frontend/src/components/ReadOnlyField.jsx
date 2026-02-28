@@ -1,8 +1,13 @@
+import {formatNumber} from "../utils/formatters.js";
 
-export function ReadOnlyField({ label, value, className = "", labelPlacement = "inside", multiline = false }) {
+export function ReadOnlyField({ label, value, className = "", labelPlacement = "inside", multiline = false, type = "string", endContent = null, isDisabled = false }) {
+    if (type === "number") {
+        value = formatNumber(value)
+    }
+
     if (labelPlacement === "outside") {
         return (
-            <div className={`group flex flex-col w-full -mt-0.5 ${className}`} data-slot="base" data-has-label="true" data-has-value="true">
+            <div className={`group flex flex-col w-full -mt-0.5 ${isDisabled ? 'opacity-50' : ''} ${className}`} data-slot="base" data-has-label="true" data-has-value="true">
                 {label ? (
                     <label
                         data-slot="label"
@@ -20,7 +25,7 @@ export function ReadOnlyField({ label, value, className = "", labelPlacement = "
                             data-slot="input"
                             className={`w-full font-normal bg-transparent outline-none text-small text-default-foreground ${multiline ? 'whitespace-pre-wrap' : ''}`}
                         >
-                            {value || '-'}
+                            {value || '-'} {endContent}
                         </div>
                     </div>
                 </div>
@@ -30,7 +35,7 @@ export function ReadOnlyField({ label, value, className = "", labelPlacement = "
 
     // Default: inside label placement
     return (
-        <div className={`group flex flex-col w-full ${className}`} data-slot="base" data-filled="true" data-filled-within="true" data-has-label="true" data-has-value="true">
+        <div className={`group flex flex-col w-full ${isDisabled ? 'opacity-50' : ''} ${className}`} data-slot="base" data-filled="true" data-filled-within="true" data-has-label="true" data-has-value="true">
             <div
                 data-slot="input-wrapper"
                 className={`relative w-full flex px-3 flex-col items-start justify-center gap-0 py-2 is-filled ${multiline ? 'min-h-20 h-auto' : 'min-h-10 h-14'}`}
@@ -46,7 +51,7 @@ export function ReadOnlyField({ label, value, className = "", labelPlacement = "
                         data-slot="input"
                         className={`w-full font-normal bg-transparent outline-none text-small text-default-foreground is-filled ${multiline ? 'whitespace-pre-wrap' : ''}`}
                     >
-                        {value || '-'}
+                        {value || '-'} {endContent}
                     </div>
                 </div>
             </div>

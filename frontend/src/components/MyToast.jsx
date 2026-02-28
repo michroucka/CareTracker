@@ -35,7 +35,7 @@ export const showToast = ({
         timeout,
         classNames: {
             closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2 size-9 sm:size-7",
-            title: "text-lg sm:text-base",
+            title: "text-lg sm:text-base pr-2",
             description: "opacity-75 text-base sm:text-sm",
             icon: "size-8 sm:size-7 fill-none",
             ...classNames,

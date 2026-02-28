@@ -1,9 +1,10 @@
 import {useRef, useState} from "react";
-import {getJSON, postJSON, putJSON, deleteJSON} from "../api/api.js";
-import { sortByKey } from "../utils/sorting.js";
-import { showErrorToast } from "../utils/errorHandler.jsx";
-import {ClipboardCheck, ClipboardX, CloudAlert, CircleCheck, Trash2} from "lucide-react";
+import {deleteJSON, get, getJSON, postJSON, putJSON} from "../api/api.js";
+import {sortByKey} from "../utils/sorting.js";
+import {showErrorToast} from "../utils/errorHandler.jsx";
+import {CircleCheck, ClipboardCheck, ClipboardX, CloudAlert, Trash2} from "lucide-react";
 import {showToast} from "../components/MyToast.jsx";
+import {calculatePrice} from "../constants/performedTaskConstants.js";
 
 export function usePerformedTasks() {
     const [performedTasks, setPerformedTasks] = useState([]);
@@ -26,6 +27,10 @@ export function usePerformedTasks() {
 
             const params = new URLSearchParams();
 
+            if (filters.clientId) {
+                params.append("clientId", filters.clientId);
+            }
+
             if (filters.organizationId) {
                 params.append("organizationId", filters.organizationId);
             }
@@ -40,6 +45,14 @@ export function usePerformedTasks() {
                 filters.caregiverIds.forEach((caregiverId) => {
                     params.append("caregiverIds", caregiverId);
                 })
+            }
+
+            if (filters.month !== undefined) {
+                params.append("month", filters.month + 1); // getMonth() je 0-based, backend čeká 1-12
+            }
+
+            if (filters.year !== undefined) {
+                params.append("year", filters.year);
             }
 
             const queryString = params.toString();
@@ -107,6 +120,7 @@ export function usePerformedTasks() {
                 clientName: updated.client?.fullName,
                 taskName: updated.task?.name,
                 unitType: updated.task?.unitType,
+                price: calculatePrice(updated.task, updated.unitCount),
                 department: updated.department,
                 caregivers: updated.caregivers
             };
@@ -150,6 +164,39 @@ export function usePerformedTasks() {
         }
     }
 
+    const fetchReceipt = async (clientId, month, year) => {
+        try {
+            const params = new URLSearchParams();
+
+            if (clientId) {
+                params.append("clientId", clientId);
+            }
+
+            if (month !== undefined) {
+                params.append("month", month + 1);
+            }
+
+            if (year !== undefined) {
+                params.append("year", year);
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/performed-tasks/receipt?${queryString}` : "/performed-tasks/receipt";
+            const response = await get(url);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || "Chyba při generování stvrzenky");
+            }
+
+            return await response.blob();
+        } catch (error) {
+            console.error("Error fetching receipt: ", error);
+            showErrorToast(error, "Chyba při generování stvrzenky", { icon: <CloudAlert/>})
+            throw error;
+        }
+    }
+
     return {
         performedTasks,
         setPerformedTasks,
@@ -158,6 +205,7 @@ export function usePerformedTasks() {
         fetchPerformedTask,
         createPerformedTask,
         updatePerformedTask,
-        deletePerformedTask
+        deletePerformedTask,
+        fetchReceipt
     };
 }
