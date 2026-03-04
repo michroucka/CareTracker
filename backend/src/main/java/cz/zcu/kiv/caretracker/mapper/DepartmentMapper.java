@@ -36,6 +36,7 @@ public class DepartmentMapper {
 
         dto.setName(department.getCity());
         dto.setDepartmentNumber(department.getDepartmentNumber());
+        dto.setActive(department.getActive());
 
         if (department.getOrganization() != null) {
             dto.setOrganization(organizationMapper.toSummaryDTO(department.getOrganization()));
@@ -62,6 +63,7 @@ public class DepartmentMapper {
         department.setCity(dto.getCity());
         department.setPostalCode(dto.getPostalCode());
         department.setDepartmentNumber(dto.getDepartmentNumber());
+        department.setActive(dto.getActive());
         department.setCoordinator(coordinator);
         department.setOrganization(organization);
     }

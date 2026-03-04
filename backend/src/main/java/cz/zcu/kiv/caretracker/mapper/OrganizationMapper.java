@@ -50,6 +50,7 @@ public class OrganizationMapper {
 
     public void requestToOrganization(Organization organization, OrganizationRequestDTO dto, Employee manager) {
         organization.setName(dto.getName());
+        organization.setActive(dto.getActive());
         organization.setAccountPrefix(dto.getAccountPrefix());
         organization.setAccountNumber(dto.getAccountNumber());
         organization.setBankCode(dto.getBankCode());

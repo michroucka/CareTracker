@@ -12,5 +12,6 @@ public class DepartmentRequestDTO {
     private String city;
     private String postalCode;
     private Integer departmentNumber;
+    private Boolean active;
     private Long coordinatorId;
 }

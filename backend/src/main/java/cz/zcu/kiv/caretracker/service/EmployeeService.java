@@ -31,10 +31,6 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     @Autowired
     private DepartmentRepository departmentRepository;
     @Autowired
-    private TaskRepository taskRepository;
-    @Autowired
-    private ClientRepository clientRepository;
-    @Autowired
     private UserService userService;
     @Autowired
     private EntityManager entityManager;

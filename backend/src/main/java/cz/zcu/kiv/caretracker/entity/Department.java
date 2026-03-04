@@ -27,6 +27,9 @@ public class Department {
     @Column
     private Integer departmentNumber;
 
+    @Column(nullable = false)
+    private Boolean active = Boolean.TRUE;
+
     @OneToMany(mappedBy = "department")
     @JsonIgnore
     private List<Employee> employees;

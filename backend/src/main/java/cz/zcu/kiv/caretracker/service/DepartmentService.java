@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.service;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
@@ -24,7 +25,7 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     private EmployeeRepository employeeRepository;
 
     @Transactional(readOnly = true)
-    public List<DepartmentDTO> getAllDepartments(Long organizationId) {
+    public List<DepartmentDTO> getDepartments(Long organizationId, Boolean status) {
         // Calculate filters based on user role
         RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, null);
 
@@ -34,18 +35,14 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         }
 
         // Fetch departments based on computed organizationId
+        Long orgId = roleFilters.getOrganizationId();
         List<Department> departments;
-        if (roleFilters.getOrganizationId() != null) {
-            departments = departmentRepository.findByOrganizationId(roleFilters.getOrganizationId());
-        } else if (roleFilters.getDepartmentIds() != null && !roleFilters.getDepartmentIds().isEmpty()) {
-            // COORDINATOR or CAREGIVER - return their department
-            Long deptId = roleFilters.getDepartmentIds().get(0);
-            departments = departmentRepository.findById(deptId)
-                    .map(List::of)
-                    .orElse(List.of());
+        if (status == null) {
+            departments = departmentRepository.findByOrganizationId(orgId);
+        } else if (status) {
+            departments = departmentRepository.findByActiveTrueAndOrganizationId(orgId);
         } else {
-            // SUPERADMIN without organizationId filter - return all
-            departments = departmentRepository.findAll();
+            departments = departmentRepository.findByActiveFalseAndOrganizationId(orgId);
         }
 
         return departmentMapper.toDTOList(departments);
@@ -88,9 +85,30 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
 
-        // Validace oprávnění
         validateOrganizationAccess(department, d -> d.getOrganization().getId());
 
         return saveDepartment(department, dto);
+    }
+
+    private Department setDepartmentStatus(Long id, boolean status) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
+
+        validateUpdateAccess(
+                department,
+                dep -> dep.getOrganization().getId(),
+                null
+        );
+
+        department.setActive(status);
+        return departmentRepository.save(department);
+    }
+
+    public Department terminateDepartment(Long id) {
+        return setDepartmentStatus(id, false);
+    }
+
+    public Department activateDepartment(Long id) {
+        return setDepartmentStatus(id, true);
     }
 }

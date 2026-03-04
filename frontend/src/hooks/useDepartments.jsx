@@ -18,6 +18,9 @@ export function useDepartments() {
             if (filters.organizationId) {
                 params.append("organizationId", filters.organizationId);
             }
+            if (filters.status !== undefined && filters.status !== null) {
+                params.append("status", filters.status);
+            }
 
             const queryString = params.toString();
             const url = queryString ? `/departments?${queryString}` : "/departments";

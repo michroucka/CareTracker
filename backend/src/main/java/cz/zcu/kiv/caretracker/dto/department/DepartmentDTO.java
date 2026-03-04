@@ -13,6 +13,7 @@ public class DepartmentDTO {
     private String name;
     private String address;
     private Integer departmentNumber;
+    private Boolean active;
 
     private OrganizationSummaryDTO organization;
 }
