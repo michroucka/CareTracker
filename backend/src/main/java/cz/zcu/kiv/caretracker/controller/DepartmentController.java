@@ -75,6 +75,6 @@ public class DepartmentController {
     public ResponseEntity<DepartmentDTO> activateDepartment(@PathVariable Long id) {
         log.info("Activating department with id: {}", id);
         Department updatedDepartment = departmentService.activateDepartment(id);
-        return ResponseEntity.ok(departmentMapper.toDTO(updatedDepartment));   
+        return ResponseEntity.ok(departmentMapper.toDTO(updatedDepartment));
     }
 }

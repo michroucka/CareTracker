@@ -93,6 +93,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     @Transactional
     public void updateUserForEmployee(Employee employee, String email, Boolean isAdmin) {
         User user = employee.getUser();
+        if (user == null) {
+            throw new ResourceNotFoundException("Zaměstnanec nemá uživatelský účet");
+        }
 
         user.setEmail(email);
         user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
@@ -101,6 +104,10 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     }
 
     private void changeUserStatus(User user, Boolean active) {
+        if (user == null) {
+            throw new ResourceNotFoundException("Zaměstnanec nemá uživatelský účet");
+        }
+
         user.setActive(active);
 
         userRepository.save(user);
@@ -151,19 +158,20 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional
     public void resendActivationEmail(User user) {
-        // Kontrola, zda už není účet aktivován
+        if (user == null) {
+            throw new ResourceNotFoundException("Uživatel neexistuje");
+        }
+
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
             throw new ValidationException("Účet je již aktivován");
         }
 
-        // Vygeneruj nový aktivační token
         String activationToken = UUID.randomUUID().toString();
         user.setActivationToken(activationToken);
         user.setTokenExpiry(LocalDateTime.now().plusDays(7));
 
         userRepository.save(user);
 
-        // Odeslání aktivačního emailu
         try {
             String recipientName = user.getEmployee() != null
                     ? user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName()

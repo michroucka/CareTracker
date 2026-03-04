@@ -122,12 +122,9 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      */
     private void handleUserAccount(Employee employee, EmployeeRequestDTO dto) {
         if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
-            // Uživatel chce vytvořit/aktualizovat účet
             if (employee.getUser() == null) {
-                // Vytvoř nový User účet
                 userService.createUserForEmployee(employee, dto.getEmail(), dto.getIsAdmin());
             } else {
-                // Aktualizuj existující User účet
                 userService.updateUserForEmployee(employee, dto.getEmail(), dto.getIsAdmin());
             }
         }
@@ -144,7 +141,6 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
-        // Validace, že má uživatel oprávnění upravit tohoto zaměstnance
         validateUpdateAccess(
                 employee,
                 emp -> emp.getOrganization().getId(),
@@ -165,10 +161,13 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
         );
 
         employee.setActive(status);
-        if (status) {
-            userService.activateUserForEmployee(employee);
-        } else {
-            userService.deactivateUserForEmployee(employee);
+
+        if (employee.getUser() != null) {
+            if (status) {
+                userService.activateUserForEmployee(employee);
+            } else {
+                userService.deactivateUserForEmployee(employee);
+            }
         }
 
         return employeeRepository.save(employee);

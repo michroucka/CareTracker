@@ -193,10 +193,10 @@ function Employees() {
         // Pro SUPERADMIN načíst jen organizace, departments až po výběru organizace
         // Pro ostatní role načíst vše
         if (user.role === "SUPERADMIN") {
-            fetchOrganizations();
+            fetchOrganizations({ status: "true" });
         } else {
-            fetchDepartments();
-            fetchOrganizations();
+            fetchDepartments({ status: "true" });
+            fetchOrganizations({ status: "true" });
         }
     }, [user]);
 
@@ -296,7 +296,7 @@ function Employees() {
         if (!selectedOrg) return;
 
         // Načíst departments s filtrem podle vybrané organizace
-        fetchDepartments({ organizationId: selectedOrg.id });
+        fetchDepartments({ organizationId: selectedOrg.id, status: "true" });
     }, [user, organizations, organizationFilter]);
 
     // Pro SUPERADMIN resetovat department filtr při změně organizace

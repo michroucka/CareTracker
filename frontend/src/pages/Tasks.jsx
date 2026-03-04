@@ -150,7 +150,7 @@ function Employees() {
         }
 
         hasLoadedMetadata.current = true;
-        fetchOrganizations();
+        fetchOrganizations({ status: "true" });
     }, [user]);
 
     // Validace filtrů podle role uživatele

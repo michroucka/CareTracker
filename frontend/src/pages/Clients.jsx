@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-    Button, DatePicker,
+    Button,
     Dropdown,
     DropdownItem,
     DropdownMenu,
@@ -261,12 +261,12 @@ function Clients() {
         // Pro SUPERADMIN načíst jen organizace, ostatní metadata až po výběru organizace
         // Pro ostatní role načíst vše
         if (user.role === "SUPERADMIN") {
-            fetchOrganizations();
+            fetchOrganizations({ status: "true" });
         } else {
-            fetchDepartments();
-            fetchOrganizations();
-            fetchEmployees();
-            fetchTasks();
+            fetchDepartments({ status: "true" });
+            fetchOrganizations( { status: "true" });
+            fetchEmployees({ status: "true" });
+            fetchTasks({ status: "true" });
         }
     }, [user]);
 
@@ -375,9 +375,9 @@ function Clients() {
         if (!selectedOrg) return;
 
         // Načíst metadata s filtrem podle vybrané organizace
-        fetchDepartments({ organizationId: selectedOrg.id });
-        fetchEmployees({ organizationId: selectedOrg.id });
-        fetchTasks({ organizationId: selectedOrg.id });
+        fetchDepartments({ organizationId: selectedOrg.id, status: "true" });
+        fetchEmployees({ organizationId: selectedOrg.id, status: "true" });
+        fetchTasks({ organizationId: selectedOrg.id, status: "true" });
     }, [user, organizations, organizationFilter]);
 
     // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
