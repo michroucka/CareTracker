@@ -20,9 +20,10 @@ import {
 import logo from "../assets/ct_icon.svg"
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { ChevronDown, LogOut, UserRound } from "lucide-react";
+import { Building2, ChevronDown, LogOut, UserRound } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
 import { getRoleLabel, ROLES, hasRole } from "../constants/roles.js";
+import { useOrganizations } from "../hooks/useOrganizations.jsx";
 
 export const CareTrackerLogo = () => {
     return <img
@@ -37,7 +38,8 @@ export const CareTrackerLogo = () => {
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-    const { user, loading, logout } = useAuth();
+    const { user, loading, logout, superadminOrg, setSuperadminOrg } = useAuth();
+    const { organizations, fetchOrganizations } = useOrganizations();
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -48,28 +50,66 @@ export default function AppNavbar() {
         { name: "Provedené úkony", path: "/performed-tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Zaměstnanci", path: "/employees", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Úkony", path: "/tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+        { name: "Střediska", path: "/departments", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN] },
         { name: "Měsíční přehled", path: "/monthly-report", allowedRoles: [ROLES.CLIENT] },
     ];
 
-    // Filtrování menu položek podle role uživatele
     const filteredMenuItems = React.useMemo(() => {
         return menuItems.filter((item) => {
-            // Pokud položka nemá definované allowedRoles, je veřejná
             if (!item.allowedRoles) {
                 return true;
             }
-            // Pokud není přihlášený uživatel, skryj chráněné položky
             if (!user) {
                 return false;
             }
-            // Zkontroluj, zda má uživatel potřebnou roli
             return hasRole(user.role, item.allowedRoles);
         });
     }, [user]);
 
     React.useEffect(() => {
+        if (user?.role === "SUPERADMIN") {
+            fetchOrganizations({ status: "true" });
+        }
+    }, [user]);
+
+    React.useEffect(() => {
         setIsMenuOpen(false);
     }, [location.pathname]);
+
+    const handleOrgChange = React.useCallback((keys) => {
+        const id = Number(Array.from(keys)[0]);
+        const org = organizations.find(o => o.id === id);
+        if (org) setSuperadminOrg({ id: org.id, name: org.name });
+    }, [organizations, setSuperadminOrg]);
+
+    const orgSwitcherDesktop = user?.role === "SUPERADMIN" && (
+        <NavbarItem>
+            <Dropdown>
+                <DropdownTrigger>
+                    <Button
+                        startContent={<Building2 className="size-5 me-2" />}
+                        endContent={<ChevronDown className="size-4" />}
+                        variant="flat"
+                        className="px-2 w-full"
+                        isIconOnly
+                    />
+                </DropdownTrigger>
+                <DropdownMenu
+                    aria-label="Výběr organizace"
+                    selectionMode="single"
+                    selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
+                    onSelectionChange={handleOrgChange}
+                    className="max-h-72 overflow-y-auto"
+                >
+                    {organizations.map(org => (
+                        <DropdownItem key={String(org.id)}>
+                            {org.name}
+                        </DropdownItem>
+                    ))}
+                </DropdownMenu>
+            </Dropdown>
+        </NavbarItem>
+    );
 
     return (
         <Navbar
@@ -112,6 +152,7 @@ export default function AppNavbar() {
                 ))}
             </NavbarContent>
             <NavbarContent className="hidden sm:flex" justify="end">
+                {orgSwitcherDesktop}
                 {loading ? (
                     <NavbarItem>
                         <div className="w-24 h-10" />
@@ -196,7 +237,42 @@ export default function AppNavbar() {
                     </NavbarMenuItem>
                 ))}
 
-                <Divider className="mt-auto" />
+                {user?.role === "SUPERADMIN" && (
+                    <NavbarMenuItem className="mt-auto">
+                        <Dropdown className="w-full">
+                            <DropdownTrigger>
+                                <Button
+                                    startContent={<Building2 className="size-5 opacity-60" />}
+                                    endContent={<ChevronDown className="size-5 opacity-60" />}
+                                    variant="flat"
+                                    className="text-foreground w-full justify-between text-base"
+                                >
+                                    <span className="truncate">
+                                        {superadminOrg?.name ?? "Vyberte organizaci"}
+                                    </span>
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                aria-label="Výběr organizace"
+                                selectionMode="single"
+                                selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
+                                onSelectionChange={(keys) => {
+                                    handleOrgChange(keys);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="max-h-72 overflow-y-auto"
+                            >
+                                {organizations.map(org => (
+                                    <DropdownItem key={String(org.id)}>
+                                        {org.name}
+                                    </DropdownItem>
+                                ))}
+                            </DropdownMenu>
+                        </Dropdown>
+                    </NavbarMenuItem>
+                )}
+
+                <Divider />
 
                 {loading ? (
                     <div className="h-10" />

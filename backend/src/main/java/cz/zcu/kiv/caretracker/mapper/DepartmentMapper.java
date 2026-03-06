@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 public class DepartmentMapper {
     @Autowired
     OrganizationMapper organizationMapper;
+    @Autowired
+    EmployeeMapper employeeMapper;
 
     /**
      * Převede Department entitu na DepartmentDTO
@@ -27,16 +29,15 @@ public class DepartmentMapper {
 
         DepartmentDTO dto = new DepartmentDTO();
         dto.setId(department.getId());
-
-        String address = String.format("%s, %s %s",
-                department.getStreet(),
-                department.getPostalCode(),
-                department.getCity());
-        dto.setAddress(address);
-
-        dto.setName(department.getCity());
+        dto.setStreet(department.getStreet());
+        dto.setPostalCode(department.getPostalCode());
+        dto.setCity(department.getCity());
         dto.setDepartmentNumber(department.getDepartmentNumber());
         dto.setActive(department.getActive());
+
+        if (department.getCoordinator() != null) {
+            dto.setCoordinator(employeeMapper.toSummaryDTO(department.getCoordinator()));
+        }
 
         if (department.getOrganization() != null) {
             dto.setOrganization(organizationMapper.toSummaryDTO(department.getOrganization()));
@@ -52,7 +53,7 @@ public class DepartmentMapper {
 
         DepartmentSummaryDTO dto = new DepartmentSummaryDTO();
         dto.setId(department.getId());
-        dto.setName(department.getCity());
+        dto.setCity(department.getCity());
         dto.setOrganizationId(department.getOrganization().getId());
 
         return dto;
@@ -63,7 +64,7 @@ public class DepartmentMapper {
         department.setCity(dto.getCity());
         department.setPostalCode(dto.getPostalCode());
         department.setDepartmentNumber(dto.getDepartmentNumber());
-        department.setActive(dto.getActive());
+        department.setActive(dto.getActive() != null ? dto.getActive() : true);
         department.setCoordinator(coordinator);
         department.setOrganization(organization);
     }

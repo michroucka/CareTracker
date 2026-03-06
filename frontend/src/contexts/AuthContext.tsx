@@ -14,21 +14,40 @@ interface User {
     clientId?: number;
 }
 
+interface SuperadminOrg {
+    id: number;
+    name: string;
+}
+
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+    superadminOrg: SuperadminOrg | null;
+    setSuperadminOrg: (org: SuperadminOrg | null) => void;
     login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => void;
     logout: () => void;
     logoutSilent: () => Promise<void>;
     checkAuth: () => Promise<void>;
 }
 
+const SUPERADMIN_ORG_KEY = "superadmin_org";
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [superadminOrg, setSuperadminOrgState] = useState<SuperadminOrg | null>(null);
     const navigate = useNavigate();
+
+    const setSuperadminOrg = (org: SuperadminOrg | null) => {
+        setSuperadminOrgState(org);
+        if (org) {
+            localStorage.setItem(SUPERADMIN_ORG_KEY, JSON.stringify(org));
+        } else {
+            localStorage.removeItem(SUPERADMIN_ORG_KEY);
+        }
+    };
 
     const checkAuth = async () => {
         try {
@@ -45,12 +64,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     organizationId: data.organizationId,
                     clientId: data.clientId
                 });
+
+                if (data.role === "SUPERADMIN") {
+                    const stored = localStorage.getItem(SUPERADMIN_ORG_KEY);
+                    if (stored) {
+                        try {
+                            setSuperadminOrgState(JSON.parse(stored));
+                        } catch {
+                            localStorage.removeItem(SUPERADMIN_ORG_KEY);
+                        }
+                    }
+                }
             } else {
                 setUser(null);
+                setSuperadminOrgState(null);
             }
         } catch (error) {
             console.error("Auth check failed:", error);
             setUser(null);
+            setSuperadminOrgState(null);
         } finally {
             setLoading(false);
         }
@@ -75,6 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error("Silent logout error:", error);
         } finally {
             setUser(null);
+            setSuperadminOrgState(null);
+            localStorage.removeItem(SUPERADMIN_ORG_KEY);
         }
     };
 
@@ -84,6 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (response.ok) {
                 setUser(null);
+                setSuperadminOrgState(null);
+                localStorage.removeItem(SUPERADMIN_ORG_KEY);
                 addToast({
                     title: "Odhlášení úspěšné",
                     description: "Byli jste úspěšně odhlášeni",
@@ -95,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     },
                 });
 
-                // Redirect to home page after logout
                 navigate("/");
             }
         } catch (error) {
@@ -113,15 +148,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // Kontrola session při načtení aplikace
     useEffect(() => {
         checkAuth();
     }, []);
 
-    // Při 401 z API odhlásit uživatele a přesměrovat na login
     useEffect(() => {
         const handleUnauthorized = () => {
             setUser(null);
+            setSuperadminOrgState(null);
             navigate("/login");
         };
         window.addEventListener("auth:unauthorized", handleUnauthorized);
@@ -129,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, logoutSilent, checkAuth }}>
+        <AuthContext.Provider value={{ user, loading, superadminOrg, setSuperadminOrg, login, logout, logoutSilent, checkAuth }}>
             {children}
         </AuthContext.Provider>
     );

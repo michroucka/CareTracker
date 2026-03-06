@@ -417,7 +417,7 @@ function IndividualPlan() {
                     <ReadOnlyField labelPlacement="outside" label="Od kdy využívá službu" value={client ? formatDate(client.created) : "-"} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Středisko" value={client ? client.department?.name : "-"} />
+                    <ReadOnlyField labelPlacement="outside" label="Středisko" value={client ? client.department?.city : "-"} />
                     <ReadOnlyField labelPlacement="outside" label="Klíčový pracovník" value={client?.caregiver?.fullName || "-"} />
                 </div>
                 <div className="flex flex-row gap-2 w-full items-center mt-2">

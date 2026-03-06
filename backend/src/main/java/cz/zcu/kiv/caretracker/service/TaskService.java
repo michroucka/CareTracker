@@ -5,6 +5,7 @@ import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
+import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
     TaskRepository taskRepository;
     @Autowired
     TaskMapper taskMapper;
+    @Autowired
+    OrganizationRepository organizationRepository;
 
     @Transactional(readOnly = true)
     public List<TaskDTO> getTasks(Long organizationId, Boolean status) {
@@ -57,13 +60,24 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
 
     private Task saveTask(Task task, TaskRequestDTO dto) {
         User user = getCurrentUser();
-        Employee employee = user.getEmployee();
 
-        if (employee == null) {
-            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat úkony");
+        Organization organization;
+        if (user.getRole() == cz.zcu.kiv.caretracker.enums.UserRole.SUPERADMIN) {
+            if (task.getOrganization() != null) {
+                organization = task.getOrganization();
+            } else if (dto.getOrganizationId() != null) {
+                organization = organizationRepository.findById(dto.getOrganizationId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
+            } else {
+                throw new cz.zcu.kiv.caretracker.exception.ValidationException("Pro vytvoření úkonu musí SUPERADMIN zvolit organizaci");
+            }
+        } else {
+            Employee employee = user.getEmployee();
+            if (employee == null) {
+                throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat úkony");
+            }
+            organization = employee.getOrganization();
         }
-
-        Organization organization = employee.getOrganization();
 
         taskMapper.requestToTask(task, dto, organization);
 

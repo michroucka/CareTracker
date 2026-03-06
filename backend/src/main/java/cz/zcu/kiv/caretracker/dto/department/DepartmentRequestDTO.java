@@ -14,4 +14,5 @@ public class DepartmentRequestDTO {
     private Integer departmentNumber;
     private Boolean active;
     private Long coordinatorId;
+    private Long organizationId;
 }

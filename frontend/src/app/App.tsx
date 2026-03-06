@@ -15,6 +15,7 @@ import Tasks from "../pages/Tasks";
 import Account from "../pages/Account";
 import ResetPassword from "../pages/ResetPassword";
 import MonthlyReport from "../pages/MonthlyReport";
+import Departments from "../pages/Departments";
 
 export default function App() {
     return (
@@ -73,6 +74,15 @@ export default function App() {
                         element={
                             <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                 <Tasks />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/departments"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN]}>
+                                <Departments />
                             </ProtectedRoute>
                         }
                     />

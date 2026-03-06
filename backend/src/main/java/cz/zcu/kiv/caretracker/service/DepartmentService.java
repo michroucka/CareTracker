@@ -8,6 +8,7 @@ import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.DepartmentMapper;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
+import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,8 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     private DepartmentMapper departmentMapper;
     @Autowired
     private EmployeeRepository employeeRepository;
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Transactional(readOnly = true)
     public List<DepartmentDTO> getDepartments(Long organizationId, Boolean status) {
@@ -60,16 +63,29 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
 
     private Department saveDepartment(Department department, DepartmentRequestDTO dto) {
         User user = getCurrentUser();
-        Employee employee = user.getEmployee();
 
-        if (employee == null) {
-            throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat oddělení");
+        Organization organization;
+        if (user.getRole() == cz.zcu.kiv.caretracker.enums.UserRole.SUPERADMIN) {
+            if (department.getOrganization() != null) {
+                organization = department.getOrganization();
+            } else if (dto.getOrganizationId() != null) {
+                organization = organizationRepository.findById(dto.getOrganizationId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
+            } else {
+                throw new cz.zcu.kiv.caretracker.exception.ValidationException("Pro vytvoření střediska musí SUPERADMIN zvolit organizaci");
+            }
+        } else {
+            Employee employee = user.getEmployee();
+            if (employee == null) {
+                throw new SecurityException("Pouze zaměstnanci mohou vytvářet nebo upravovat střediska");
+            }
+            organization = employee.getOrganization();
         }
 
-        Organization organization = employee.getOrganization();
-
-        Employee coordinator = employeeRepository.findById(dto.getCoordinatorId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
+        Employee coordinator = dto.getCoordinatorId() != null
+                ? employeeRepository.findById(dto.getCoordinatorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"))
+                : null;
 
         departmentMapper.requestToDepartment(department, dto, coordinator, organization);
 
@@ -94,16 +110,12 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
 
-        validateUpdateAccess(
-                department,
-                dep -> dep.getOrganization().getId(),
-                null
-        );
+        validateOrganizationAccess(department, dep -> dep.getOrganization().getId());
 
         department.setActive(status);
         return departmentRepository.save(department);
     }
-
+    // TODO zajistit moznost deaktivovat pouze pokud nema prirazene zavisle entity
     public Department terminateDepartment(Long id) {
         return setDepartmentStatus(id, false);
     }

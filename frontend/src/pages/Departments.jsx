@@ -3,7 +3,8 @@ import {
     Button,
     Dropdown,
     DropdownItem,
-    DropdownMenu, DropdownSection,
+    DropdownMenu,
+    DropdownSection,
     DropdownTrigger,
     Input,
     Spinner,
@@ -14,27 +15,33 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {Check, ChevronDown, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX, X} from "lucide-react";
-import {useOrganizations} from "../hooks/useOrganizations.jsx";
-import {useIsMobile} from "../hooks/useMediaQuery.js";
-import {activeOptions} from '../constants/globalConstants.js';
-import {columns, unitTypeLabels} from '../constants/taskConstants.js';
-import {useAuth} from "../contexts/AuthContext.tsx";
-import {removeDiacritics} from "../utils/formatters.js";
-import {sortByKey} from "../utils/sorting.js";
-import {FiltersModal} from "../components/modals/FiltersModal.jsx";
-import {useSearchParams} from "react-router-dom";
-import {useTasks} from "../hooks/useTasks.jsx";
-import {TaskCreateModal} from "../components/modals/task/TaskCreateModal.jsx";
-import {TaskDetailModal} from "../components/modals/task/TaskDetailModal.jsx";
-import {TaskTerminateModal} from "../components/modals/task/TaskTerminateModal.jsx";
-import {useDepartments} from "../hooks/useDepartments.jsx";
+import { ChevronDown, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX } from "lucide-react";
+import { useIsMobile } from "../hooks/useMediaQuery.js";
+import { activeOptions } from '../constants/globalConstants.js';
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { removeDiacritics } from "../utils/formatters.js";
+import { sortByKey } from "../utils/sorting.js";
+import { FiltersModal } from "../components/modals/FiltersModal.jsx";
+import { useSearchParams } from "react-router-dom";
+import { useDepartments } from "../hooks/useDepartments.jsx";
+import { useEmployees } from "../hooks/useEmployees.jsx";
+import { DepartmentCreateModal } from "../components/modals/department/DepartmentCreateModal.jsx";
+import { DepartmentDetailModal } from "../components/modals/department/DepartmentDetailModal.jsx";
+import { DepartmentTerminateModal } from "../components/modals/department/DepartmentTerminateModal.jsx";
+
+const columns = [
+    { name: "MĚSTO", key: "city", sortable: true },
+    { name: "ULICE", key: "street" },
+    { name: "PSČ", key: "postalCode" },
+    { name: "ČÍSLO", key: "departmentNumber" },
+    { name: "KOORDINÁTOR", key: "coordinator" },
+    { name: "AKCE", key: "actions" },
+];
 
 function Departments() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { user } = useAuth();
+    const { user, superadminOrg } = useAuth();
 
-    // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialActiveFilter = () => {
         const status = searchParams.get("status");
@@ -42,429 +49,188 @@ function Departments() {
         if (status === "all") return new Set(["true", "false"]);
         return new Set([status]);
     };
-    const getInitialOrganizationFilter = () => {
-        const org = searchParams.get("organization");
-        return org ? new Set([org]) : new Set();
-    };
 
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
-    const [sortDescriptor, setSortDescriptor] = React.useState({
-        column: "name",
-        direction: "ascending",
-    });
+    const [sortDescriptor, setSortDescriptor] = React.useState({ column: "city", direction: "ascending" });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
+    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
+    const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
+    const [selectedDepartment, setSelectedDepartment] = React.useState(null);
+    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
+    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
+
     const {
         departments,
         setDepartments,
         loading,
         fetchDepartments,
+        fetchDepartment,
+        createDepartment,
+        updateDepartment,
+        terminateDepartment,
+        activateDepartment,
     } = useDepartments();
-    const { organizations, fetchOrganizations } = useOrganizations();
-    const hasLoadedMetadata = React.useRef(false);
-    const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
-    const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
-    const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
-    const [ selectedDepartment, setSelectedDepartment ] = React.useState(null);
-    const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
-    const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
-    // Detekce mobilního zobrazení
+    const { employees, fetchEmployees } = useEmployees();
+
     const isMobile = useIsMobile();
+    const canAlterDepartment = user?.role === "SUPERADMIN" || user?.role === "ADMIN";
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
-        if (isMobile) {
-            return columns.filter(col => col.key === "name" || col.key === "actions");
-        }
+        if (isMobile) return columns.filter(col => col.key === "city" || col.key === "actions");
         return columns;
     }, [isMobile]);
 
-    const hasSearchFilter = Boolean(filterValue);
-
-    // Options pro filtry z API endpointů (již seřazené v hooks)
-    const organizationOptions = React.useMemo(() => {
-        return organizations.map(org => ({
-            name: org.name,
-            key: org.name
-        }));
-    }, [organizations]);
-
     const filteredItems = React.useMemo(() => {
-        let filteredDepartments = [...departments];
-
-        // Filtr podle jména (s podporou diakritiky)
-        if (hasSearchFilter) {
-            const normalizedSearchValue = removeDiacritics(filterValue);
-            filteredDepartments = filteredDepartments.filter((employee) =>
-                removeDiacritics(employee.fullName).includes(normalizedSearchValue),
-            );
-        }
-
-        return filteredDepartments;
-    }, [departments, filterValue, hasSearchFilter]);
+        if (!filterValue) return [...departments];
+        const normalized = removeDiacritics(filterValue);
+        return departments.filter(d => removeDiacritics(d.city).includes(normalized));
+    }, [departments, filterValue]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
     }, [sortDescriptor, filteredItems]);
 
-    const onSearchChange = React.useCallback((value) => {
-        if (value) {
-            setFilterValue(value);
-        } else {
-            setFilterValue("");
-        }
-    }, []);
+    const onSearchChange = React.useCallback((value) => setFilterValue(value || ""), []);
+    const onClear = React.useCallback(() => setFilterValue(""), []);
 
-    const onClear = React.useCallback(() => {
-        setFilterValue("");
-    }, []);
-
-    // Handler pro změnu organization filtru (single select)
-    const handleOrganizationFilterChange = React.useCallback((keys) => {
-        setOrganizationFilter(new Set(keys));
-    }, []);
-
-    // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
 
     React.useEffect(() => {
-        // Načíst metadata pouze jednou (při prvním render s user)
-        if (!user || hasLoadedMetadata.current) {
+        if (!user) return;
+        const params = new URLSearchParams();
+        if (filterValue) params.set("search", filterValue);
+        if (activeFilter.size === 2) params.set("status", "all");
+        else if (activeFilter.has("true")) params.set("status", "true");
+        else if (activeFilter.has("false")) params.set("status", "false");
+        setSearchParams(params, { replace: true });
+    }, [filterValue, activeFilter, user]);
+
+    React.useEffect(() => {
+        if (user?.role === "SUPERADMIN" && !superadminOrg) {
+            setDepartments([]);
             return;
         }
-
-        hasLoadedMetadata.current = true;
-        fetchOrganizations({ status: "true" });
-    }, [user]);
-
-    // Validace filtrů podle role uživatele
-    React.useEffect(() => {
-        if (!user) return;
-
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
-
-        // Pouze SUPERADMIN může vybírat organizaci
-        if (!allowedToSelectOrg && organizationFilter.size > 0) {
-            setOrganizationFilter(new Set());
+        const orgId = superadminOrg?.id;
+        fetchDepartments({ organizationId: orgId, status: getStatusFromFilter(activeFilter) });
+        if (canAlterDepartment) {
+            fetchEmployees({ organizationId: orgId, status: true });
         }
-    }, [user]);
+    }, [superadminOrg, activeFilter, user]);
 
-    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
-    React.useEffect(() => {
-        if (!user) return; // Počkat na načtení user
-
-        const params = new URLSearchParams();
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
-
-        // Search filter
-        if (filterValue) {
-            params.set("search", filterValue);
-        }
-
-        if (activeFilter.size === 2) {
-            params.set("status", "all");
-        } else if (activeFilter.has("true")) {
-            params.set("status", "true");
-        } else if (activeFilter.has("false")) {
-            params.set("status", "false");
-        }
-
-        // Organization filter - pouze pro SUPERADMIN
-        if (allowedToSelectOrg && organizationFilter.size > 0) {
-            params.set("organization", Array.from(organizationFilter)[0]);
-        }
-
-        // Aktualizovat URL bez vytvoření nového záznamu v historii
-        setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, organizationFilter, user]);
-
-    // Když se změní filtry, znovu načíst ukony s filtrem
-    React.useEffect(() => {
-        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size === 0) {
-                setDepartments([]);
-                return;
-            }
-
-            if (organizations.length === 0) return;
-
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-            if (!selectedOrg) return;
-
-            // Sestavit filtry
-            const filters = {
-                organizationId: selectedOrg.id,
-                status: getStatusFromFilter(activeFilter)
-            };
-
-            fetchDepartments(filters);
-        } else {
-            // Ostatní role
-            const filters = {
-                status: getStatusFromFilter(activeFilter),
-            };
-
-            fetchDepartments(filters);
-        }
-
-    }, [organizationFilter, activeFilter, user, organizations]);
-
-    // Helper funkce pro převod filtrů z Set na parametry
-    function getStatusFromFilter(activeFilter) {
-        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
-        if (activeFilter.size === 0 || activeFilter.size === 2) {
-            return undefined;
-        }
-        // Jinak vrať true nebo false
-        return activeFilter.has("true");
+    function getStatusFromFilter(filter) {
+        if (filter.size === 0 || filter.size === 2) return undefined;
+        return filter.has("true");
     }
 
-    async function handleSelectDepartment(departmentId) {
-        try {
-            const departmentData = await fetchDepartment(departmentId);
-            setSelectedDepartment(departmentData);
-        } catch (error) {
-            console.error("Failed to load department:", error);
-            throw error;
-        }
+    async function handleSelectDepartment(id) {
+        const data = await fetchDepartment(id);
+        setSelectedDepartment(data);
     }
 
-    const handleOpenCreateModal = () => {
-        setIsCreateModalOpen(true);
-    };
-
-    const handleCloseCreateModal = () => {
-        setIsCreateModalOpen(false);
-    }
-
-    const handleCreateTask = async (taskData) => {
-        try {
-            await createTask(taskData);
-            handleCloseCreateModal();
-        } catch (error) {
-            console.error("Failed to create task: ", error);
-            throw error;
-        }
-    }
-
-    const handleUpdateTask = async (taskId, taskData) => {
-        try {
-            return await updateTask(taskId, taskData);
-        } catch (error) {
-            console.error("Failed to update task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenDetailModal = async (taskId) => {
+    const handleOpenDetailModal = async (id) => {
         setIsLoadingDetail(true);
         setIsDetailModalOpen(true);
-
         try {
-            await handleSelectDepartment(taskId);
+            await handleSelectDepartment(id);
         } catch {
             setIsDetailModalOpen(false);
         }
-
         setIsLoadingDetail(false);
-    }
+    };
 
     const handleCloseDetailModal = () => {
         setSelectedDepartment(null);
         setIsDetailModalOpen(false);
-    }
+    };
 
-    const handleOpenTerminateModal = async (taskId) => {
+    const handleOpenTerminateModal = async (id) => {
         setIsTerminateModalOpen(true);
-
         try {
-            await handleSelectDepartment(taskId);
+            await handleSelectDepartment(id);
         } catch {
             setIsTerminateModalOpen(false);
         }
-    }
+    };
 
     const handleCloseTerminateModal = () => {
         setSelectedDepartment(null);
         setIsTerminateModalOpen(false);
-    }
-
-    const handleTerminateTask = async (taskId) => {
-        try {
-            await terminateTask(taskId);
-        } catch (error) {
-            console.error("Failed to terminate task:", error);
-            throw error;
-        }
-    }
-
-    const handleActivateTask = async (taskId) => {
-        try {
-            await activateTask(taskId);
-        } catch (error) {
-            console.error("Failed to activate task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenFiltersModal = () => {
-        setIsFiltersModalOpen(true);
     };
 
-    const handleCloseFiltersModal = () => {
-        setIsFiltersModalOpen(false);
-    }
+    const handleCreate = async (data) => {
+        await createDepartment(data);
+        setIsCreateModalOpen(false);
+    };
 
-    const handleFiltersChange = React.useCallback((filters) => {
-        setActiveFilter(filters.activeFilter);
-        setOrganizationFilter(filters.organizationFilter);
-    }, []);
-
-    const topContent = React.useMemo(() => {
-        return (
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
-                        className="w-full sm:max-w-[44%]"
-                        placeholder="Hledat podle názvu..."
-                        startContent={<Search className="size-5" />}
-                        value={filterValue}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                    />
-                    <div className="flex gap-3">
-                        {canAlterDepartment && (
-                            <Button
-                                isIconOnly
-                                variant="flat"
-                                className="sm:hidden"
-                                onPress={handleOpenFiltersModal}
-                            >
-                                <Funnel className="size-4" />
-                            </Button>
-                        )}
-                        {user?.role === "SUPERADMIN" && (
-                            <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                        Organizace
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    aria-label="Organization Filter"
-                                    closeOnSelect={true}
-                                    selectedKeys={organizationFilter}
-                                    selectionMode="single"
-                                    onSelectionChange={handleOrganizationFilterChange}
-                                    className="max-h-60 overflow-y-auto"
+    const topContent = React.useMemo(() => (
+        <div className="flex flex-col gap-4">
+            <div className="flex justify-between gap-3 items-end">
+                <Input
+                    isClearable
+                    className="w-full sm:max-w-[44%]"
+                    placeholder="Hledat podle názvu..."
+                    startContent={<Search className="size-5" />}
+                    value={filterValue}
+                    onClear={onClear}
+                    onValueChange={onSearchChange}
+                />
+                <div className="flex gap-3">
+                    {canAlterDepartment && (
+                        <Button isIconOnly variant="flat" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
+                            <Funnel className="size-4" />
+                        </Button>
+                    )}
+                    {canAlterDepartment && (
+                        <Dropdown>
+                            <DropdownTrigger className="hidden sm:flex">
+                                <Button
+                                    endContent={<ChevronDown className="size-4" />}
+                                    variant="flat"
+                                    className="text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                                 >
-                                    {organizationOptions.map((org) => (
-                                        <DropdownItem key={org.key}>
-                                            {org.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {canAlterDepartment && (
-                            <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown
-                                            className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
-                                    >
-                                        Status
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Active Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={activeFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={setActiveFilter}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {activeOptions.map((active) => (
-                                        <DropdownItem key={active.key}>
-                                            {active.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {canAlterDepartment && (
-                            <Button color="primary"
-                                    endContent={<Plus className="size-4" />}
-                                    onPress={handleOpenCreateModal}
+                                    Status
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                disallowEmptySelection
+                                aria-label="Active Filter"
+                                closeOnSelect={false}
+                                selectedKeys={activeFilter}
+                                selectionMode="multiple"
+                                onSelectionChange={setActiveFilter}
+                                className="max-h-60 overflow-y-auto"
                             >
-                                Přidat
-                            </Button>
-                        )}
-                    </div>
-                </div>
-                <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
+                                {activeOptions.map((active) => (
+                                    <DropdownItem key={active.key}>{active.name}</DropdownItem>
+                                ))}
+                            </DropdownMenu>
+                        </Dropdown>
+                    )}
+                    {canAlterDepartment && (
+                        <Button color="primary" endContent={<Plus className="size-4" />} onPress={() => setIsCreateModalOpen(true)}>
+                            Přidat
+                        </Button>
+                    )}
                 </div>
             </div>
-        );
-    }, [
-        filterValue,
-        activeFilter,
-        organizationFilter,
-        filteredItems.length,
-        tasks.length,
-        onSearchChange,
-        onClear,
-        activeOptions,
-        organizationOptions,
-        handleOrganizationFilterChange,
-        handleOpenFiltersModal,
-        canAlterDepartment,
-        user,
-    ]);
+            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
+        </div>
+    ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear, canAlterDepartment, user, superadminOrg]);
 
-    const renderCell = React.useCallback((task, columnKey) => {
-        const cellValue = task[columnKey];
+    const renderCell = React.useCallback((department, columnKey) => {
+        const cellValue = department[columnKey];
 
         switch (columnKey) {
             case "name":
-                return (
-                    <div className="flex flex-col">
-                        <p className="font-bold text-small">{cellValue}</p>
-                    </div>
-                );
-            case "unitPrice":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{cellValue} Kč</p>
-                    </div>
-                );
-            case "unitType":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{unitTypeLabels[cellValue]}</p>
-                    </div>
-                )
-            case "doubleMeeting":
-                return (
-                    <div className="flex flex-col items-center">
-                        {cellValue === true ? <Check className="size-5" /> : <X className="size-5" />}
-                    </div>
-                );
+                return <p className="font-bold text-small">{cellValue}</p>;
+            case "coordinator":
+                return <p className="text-small">{cellValue?.fullName || "-"}</p>;
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">
@@ -476,33 +242,35 @@ function Departments() {
                             </DropdownTrigger>
                             <DropdownMenu>
                                 <DropdownSection showDivider={canAlterDepartment}>
-                                    <DropdownItem key="view"
-                                                  startContent={<UserRound />}
-                                                  variant="light"
-                                                  isLoading={isLoadingDetail}
-                                                  onPress={() => handleOpenDetailModal(task.id)}
+                                    <DropdownItem
+                                        key="view"
+                                        startContent={<UserRound />}
+                                        variant="light"
+                                        isLoading={isLoadingDetail}
+                                        onPress={() => handleOpenDetailModal(department.id)}
                                     >
                                         {isLoadingDetail ? "Načítání..." : "Detail"}
                                     </DropdownItem>
                                 </DropdownSection>
-
                                 {canAlterDepartment ? (
                                     <DropdownSection>
-                                        {task.active ? (
-                                            <DropdownItem key="terminate"
-                                                          startContent={<UserRoundX />}
-                                                          variant="light"
-                                                          color="danger"
-                                                          onPress={() => handleOpenTerminateModal(task.id)}
+                                        {department.active ? (
+                                            <DropdownItem
+                                                key="terminate"
+                                                startContent={<UserRoundX />}
+                                                variant="light"
+                                                color="danger"
+                                                onPress={() => handleOpenTerminateModal(department.id)}
                                             >
                                                 Deaktivovat
                                             </DropdownItem>
                                         ) : (
-                                            <DropdownItem key="activate"
-                                                          startContent={<UserRoundCheck />}
-                                                          variant="light"
-                                                          color="success"
-                                                          onPress={() => handleActivateTask(task.id)}
+                                            <DropdownItem
+                                                key="activate"
+                                                startContent={<UserRoundCheck />}
+                                                variant="light"
+                                                color="success"
+                                                onPress={() => activateDepartment(department.id)}
                                             >
                                                 Aktivovat
                                             </DropdownItem>
@@ -514,12 +282,11 @@ function Departments() {
                     </div>
                 );
             default:
-                return cellValue || "-";
+                return cellValue ?? "-";
         }
-    }, [canAlterDepartment]);
+    }, [canAlterDepartment, isLoadingDetail]);
 
-    // Pro SUPERADMIN bez vybrané organizace není loading
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
     const shouldShowLoading = !isSuperadminWithoutOrg && loading;
 
     return (
@@ -527,7 +294,7 @@ function Departments() {
             <Table
                 isVirtualized
                 isHeaderSticky
-                aria-label="Tasks table"
+                aria-label="Departments table"
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
@@ -539,9 +306,9 @@ function Departments() {
                         <TableColumn
                             key={column.key}
                             align={column.key === "actions" ?
-                                "end" : column.key === "doubleMeeting" ?
-                                    "center" : "start"
-                            }
+                                "end" :
+                                column.key === "departmentNumber" ?
+                                    "center" : "start"}
                             allowsSorting={column.sortable}
                         >
                             {column.name}
@@ -550,12 +317,10 @@ function Departments() {
                 </TableHeader>
                 <TableBody
                     isLoading={shouldShowLoading}
-                    loadingContent={<Spinner label="Načítání úkonů..." />}
-                    emptyContent={
-                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
-                            ? "Vyberte prosím organizaci" : "Žádné úkony nenalezeny"
-                    }
-                    items={sortedItems}>
+                    loadingContent={<Spinner label="Načítání středisek..." />}
+                    emptyContent={isSuperadminWithoutOrg ? "Vyberte prosím organizaci v navigační liště" : "Žádná střediska nenalezena"}
+                    items={sortedItems}
+                >
                     {(item) => (
                         <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
@@ -564,43 +329,44 @@ function Departments() {
                 </TableBody>
             </Table>
 
-            <TaskCreateModal
+            <DepartmentCreateModal
                 isOpen={isCreateModalOpen}
-                onClose={handleCloseCreateModal}
-                onSubmit={handleCreateTask}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreate}
+                employees={employees}
+                organizationId={superadminOrg?.id}
             />
 
-            <TaskDetailModal
+            <DepartmentDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
-                onSubmit={handleUpdateTask}
-                canEdit={canAlterDepartment}
-                task={selectedDepartment}
+                onSubmit={updateDepartment}
+                department={selectedDepartment}
                 isLoading={isLoadingDetail}
+                employees={employees}
+                organizationId={superadminOrg?.id}
             />
 
-            <TaskTerminateModal
+            <DepartmentTerminateModal
                 isOpen={isTerminateModalOpen}
                 onClose={handleCloseTerminateModal}
-                onSubmit={handleTerminateTask}
-                taskId={selectedDepartment?.id}
-                taskName={`${selectedDepartment?.name}`}
+                onSubmit={terminateDepartment}
+                departmentId={selectedDepartment?.id}
+                departmentName={selectedDepartment?.city}
             />
 
             <FiltersModal
                 isOpen={isFiltersModalOpen}
-                onClose={handleCloseFiltersModal}
-                onSubmit={handleFiltersChange}
+                onClose={() => setIsFiltersModalOpen(false)}
+                onSubmit={({ activeFilter: f }) => setActiveFilter(f)}
                 user={user}
+                superadminOrgSelected={!!superadminOrg}
                 showStatusFilter={canAlterDepartment}
                 initialActiveFilter={activeFilter}
-                initialOrganizationFilter={organizationFilter}
                 activeOptions={activeOptions}
-                organizationOptions={organizationOptions}
             />
         </>
     );
 }
 
 export default Departments;
-

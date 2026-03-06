@@ -10,7 +10,7 @@ import {
 import { CalendarDays } from "lucide-react";
 import {minYear, monthsShort} from "../constants/globalConstants.js";
 
-export default function MonthYearPicker({ className = "", onChange, defaultValue }) {
+export default function MonthYearPicker({ className = "", onChange, defaultValue, isDisabled = false }) {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
 
@@ -27,6 +27,7 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                     variant="flat"
                     endContent={<CalendarDays className="size-4 ms-2" />}
                     className={`justify-between ${className}`}
+                    isDisabled={isDisabled}
                 >
                     {monthsShort[selectedMonth]} {selectedYear}
                 </Button>

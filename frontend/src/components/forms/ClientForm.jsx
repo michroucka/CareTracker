@@ -129,7 +129,7 @@ export const ClientForm = React.forwardRef(({
         if (!lastName.trim()) newErrors.lastName = "Prosím zadejte příjmení";
         if (!gender) newErrors.gender = "Prosím vyberte pohlaví";
         if (!dateOfBirth) newErrors.dateOfBirth = "Prosím zadejte datum narození";
-        if (!departmentId) newErrors.departmentId = "Prosím vyberte oddělení";
+        if (!departmentId) newErrors.departmentId = "Prosím vyberte středisko";
         if (!caregiverId) newErrors.caregiverId = "Prosím vyberte pečovatele";
         if (!street) newErrors.street = "Prosím zadejte ulici a číslo popisné";
         if (!city) newErrors.city = "Prosím zadejte město";
@@ -370,7 +370,7 @@ export const ClientForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Středisko"
-                            value={departments.find(d => d.id === departmentId)?.name || '-'}
+                            value={departments.find(d => d.id === departmentId)?.city || '-'}
                         />
                     ) : (
                         <Select
@@ -394,9 +394,9 @@ export const ClientForm = React.forwardRef(({
                                 <SelectItem
                                     key={dept.id.toString()}
                                     value={dept.id.toString()}
-                                    textValue={dept.name}
+                                    textValue={dept.city}
                                 >
-                                    {dept.name}
+                                    {dept.city}
                                 </SelectItem>
                             ))}
                         </Select>

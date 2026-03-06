@@ -19,11 +19,10 @@ export function FiltersModal({
                                  onClose,
                                  onSubmit,
                                  user,
+                                 superadminOrgSelected = true,
                                  showStatusFilter = false,
                                  initialActiveFilter,
                                  activeOptions,
-                                 initialOrganizationFilter,
-                                 organizationOptions,
                                  initialDepartmentFilter,
                                  departmentOptions,
                                  initialCaregiverFilter,
@@ -34,28 +33,19 @@ export function FiltersModal({
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const [activeFilter, setActiveFilter] = React.useState(initialActiveFilter || new Set());
-    const [organizationFilter, setOrganizationFilter] = React.useState(initialOrganizationFilter || new Set());
     const [departmentFilter, setDepartmentFilter] = React.useState(initialDepartmentFilter || new Set(["all"]));
     const [caregiverFilter, setCaregiverFilter] = React.useState(initialCaregiverFilter || new Set(["all"]));
     const [monthYearFilter, setMonthYearFilter] = React.useState(initialMonthYearFilter);
 
-    // Reset local state when modal opens with new initial values
     React.useEffect(() => {
         if (isOpen) {
             if (initialActiveFilter !== undefined) setActiveFilter(initialActiveFilter);
-            if (initialOrganizationFilter !== undefined) setOrganizationFilter(initialOrganizationFilter);
             if (initialDepartmentFilter !== undefined) setDepartmentFilter(initialDepartmentFilter);
             if (initialCaregiverFilter !== undefined) setCaregiverFilter(initialCaregiverFilter);
             if (initialMonthYearFilter !== undefined) setMonthYearFilter(initialMonthYearFilter);
         }
-    }, [isOpen, initialActiveFilter, initialOrganizationFilter, initialDepartmentFilter, initialCaregiverFilter]);
+    }, [isOpen, initialActiveFilter, initialDepartmentFilter, initialCaregiverFilter]);
 
-    // Handler pro změnu organization filtru (single select)
-    const handleOrganizationFilterChange = React.useCallback((keys) => {
-        setOrganizationFilter(new Set(keys));
-    }, []);
-
-    // Handler pro změnu department filtru
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -74,7 +64,6 @@ export function FiltersModal({
         }
     }, [departmentFilter]);
 
-    // Handler pro změnu caregiver filtru
     const handleCaregiverFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -102,7 +91,6 @@ export function FiltersModal({
             if (onSubmit) {
                 await onSubmit({
                     activeFilter,
-                    organizationFilter,
                     departmentFilter,
                     caregiverFilter,
                     monthYearFilter,
@@ -116,6 +104,8 @@ export function FiltersModal({
         }
     }
 
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrgSelected;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="sm" scrollBehavior="outside">
             <ModalContent>
@@ -127,34 +117,10 @@ export function FiltersModal({
                                 className="w-full"
                                 defaultValue={monthYearFilter}
                                 onChange={setMonthYearFilter}
+                                isDisabled={isSuperadminWithoutOrg}
                             />
                         )}
 
-                        {user?.role === "SUPERADMIN" && organizationOptions && organizationOptions.length > 0 && (
-                            <Dropdown>
-                                <DropdownTrigger>
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground w-full justify-between">
-                                        Organizace
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    aria-label="Organization Filter"
-                                    closeOnSelect={true}
-                                    selectedKeys={organizationFilter}
-                                    selectionMode="single"
-                                    onSelectionChange={handleOrganizationFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {organizationOptions.map((org) => (
-                                        <DropdownItem key={org.key}>
-                                            {org.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {/* Status filter - only if showStatusFilter is true */}
                         {showStatusFilter && activeOptions && activeOptions.length > 0 && (
                             <Dropdown>
                                 <DropdownTrigger>
@@ -162,7 +128,7 @@ export function FiltersModal({
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
                                         className="text-foreground w-full justify-between"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={isSuperadminWithoutOrg}
                                     >
                                         Status
                                     </Button>
@@ -185,7 +151,6 @@ export function FiltersModal({
                             </Dropdown>
                         )}
 
-                        {/* Department filter - not for CAREGIVER/COORDINATOR */}
                         {!['CAREGIVER', 'COORDINATOR'].includes(user?.role) && departmentOptions && departmentOptions.length > 0 && (
                             <Dropdown>
                                 <DropdownTrigger>
@@ -193,9 +158,9 @@ export function FiltersModal({
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
                                         className="text-foreground w-full justify-between"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={isSuperadminWithoutOrg}
                                     >
-                                        Oddělení
+                                        Středisko
                                     </Button>
                                 </DropdownTrigger>
                                 <DropdownMenu
@@ -210,14 +175,13 @@ export function FiltersModal({
                                     <DropdownItem key="all">Všechny</DropdownItem>
                                     {departmentOptions.map((dept) => (
                                         <DropdownItem key={dept.key}>
-                                            {dept.name}
+                                            {dept.city}
                                         </DropdownItem>
                                     ))}
                                 </DropdownMenu>
                             </Dropdown>
                         )}
 
-                        {/* Caregiver filter - only if caregiverOptions provided */}
                         {caregiverOptions && caregiverOptions.length > 0 && (
                             <Dropdown>
                                 <DropdownTrigger>
@@ -225,7 +189,7 @@ export function FiltersModal({
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
                                         className="text-foreground w-full justify-between"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={isSuperadminWithoutOrg}
                                     >
                                         Pečovatel
                                     </Button>
