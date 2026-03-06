@@ -38,6 +38,7 @@ export function useDepartments() {
 
     return {
         departments,
+        setDepartments,
         loading,
         fetchDepartments,
     };

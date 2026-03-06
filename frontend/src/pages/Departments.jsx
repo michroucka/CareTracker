@@ -28,8 +28,9 @@ import {useTasks} from "../hooks/useTasks.jsx";
 import {TaskCreateModal} from "../components/modals/task/TaskCreateModal.jsx";
 import {TaskDetailModal} from "../components/modals/task/TaskDetailModal.jsx";
 import {TaskTerminateModal} from "../components/modals/task/TaskTerminateModal.jsx";
+import {useDepartments} from "../hooks/useDepartments.jsx";
 
-function Tasks() {
+function Departments() {
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
 
@@ -55,35 +56,22 @@ function Tasks() {
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const {
-        tasks,
-        setTasks,
+        departments,
+        setDepartments,
         loading,
-        fetchTasks,
-        fetchTask,
-        createTask,
-        updateTask,
-        terminateTask,
-        activateTask
-    } = useTasks();
+        fetchDepartments,
+    } = useDepartments();
     const { organizations, fetchOrganizations } = useOrganizations();
     const hasLoadedMetadata = React.useRef(false);
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
-    const [ selectedTask, setSelectedTask ] = React.useState(null);
+    const [ selectedDepartment, setSelectedDepartment ] = React.useState(null);
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
     const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
     // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
-
-    // Kontrola oprávnění
-    const canAlterTask = React.useMemo(() => {
-        if (!user) return false;
-        const allowedRoles = ["SUPERADMIN", "ADMIN"];
-
-        return allowedRoles.includes(user.role);
-    }, [user]);
 
     // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
@@ -104,18 +92,18 @@ function Tasks() {
     }, [organizations]);
 
     const filteredItems = React.useMemo(() => {
-        let filteredTasks = [...tasks];
+        let filteredDepartments = [...departments];
 
         // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
-            filteredTasks = filteredTasks.filter((employee) =>
+            filteredDepartments = filteredDepartments.filter((employee) =>
                 removeDiacritics(employee.fullName).includes(normalizedSearchValue),
             );
         }
 
-        return filteredTasks;
-    }, [tasks, filterValue, hasSearchFilter]);
+        return filteredDepartments;
+    }, [departments, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -157,15 +145,7 @@ function Tasks() {
     React.useEffect(() => {
         if (!user) return;
 
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN"].includes(user.role);
         const allowedToSelectOrg = user.role === "SUPERADMIN";
-
-        if (!allowedToSeeInactive && !activeFilter.has("true")) {
-            setActiveFilter(new Set(["true"]));
-        }
-        if (!allowedToSeeInactive && activeFilter.size === 2) {
-            setActiveFilter(new Set(["true"]));
-        }
 
         // Pouze SUPERADMIN může vybírat organizaci
         if (!allowedToSelectOrg && organizationFilter.size > 0) {
@@ -178,7 +158,6 @@ function Tasks() {
         if (!user) return; // Počkat na načtení user
 
         const params = new URLSearchParams();
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN"].includes(user.role);
         const allowedToSelectOrg = user.role === "SUPERADMIN";
 
         // Search filter
@@ -186,15 +165,12 @@ function Tasks() {
             params.set("search", filterValue);
         }
 
-        // Status filter - pouze pro oprávněné role
-        if (allowedToSeeInactive) {
-            if (activeFilter.size === 2) {
-                params.set("status", "all");
-            } else if (activeFilter.has("true")) {
-                params.set("status", "true");
-            } else if (activeFilter.has("false")) {
-                params.set("status", "false");
-            }
+        if (activeFilter.size === 2) {
+            params.set("status", "all");
+        } else if (activeFilter.has("true")) {
+            params.set("status", "true");
+        } else if (activeFilter.has("false")) {
+            params.set("status", "false");
         }
 
         // Organization filter - pouze pro SUPERADMIN
@@ -211,7 +187,7 @@ function Tasks() {
         // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
         if (user?.role === "SUPERADMIN") {
             if (organizationFilter.size === 0) {
-                setTasks([]);
+                setDepartments([]);
                 return;
             }
 
@@ -228,14 +204,14 @@ function Tasks() {
                 status: getStatusFromFilter(activeFilter)
             };
 
-            fetchTasks(filters);
+            fetchDepartments(filters);
         } else {
             // Ostatní role
             const filters = {
                 status: getStatusFromFilter(activeFilter),
             };
 
-            fetchTasks(filters);
+            fetchDepartments(filters);
         }
 
     }, [organizationFilter, activeFilter, user, organizations]);
@@ -250,12 +226,12 @@ function Tasks() {
         return activeFilter.has("true");
     }
 
-    async function handleSelectTask(taskId) {
+    async function handleSelectDepartment(departmentId) {
         try {
-            const taskData = await fetchTask(taskId);
-            setSelectedTask(taskData);
+            const departmentData = await fetchDepartment(departmentId);
+            setSelectedDepartment(departmentData);
         } catch (error) {
-            console.error("Failed to load task:", error);
+            console.error("Failed to load department:", error);
             throw error;
         }
     }
@@ -292,7 +268,7 @@ function Tasks() {
         setIsDetailModalOpen(true);
 
         try {
-            await handleSelectTask(taskId);
+            await handleSelectDepartment(taskId);
         } catch {
             setIsDetailModalOpen(false);
         }
@@ -301,7 +277,7 @@ function Tasks() {
     }
 
     const handleCloseDetailModal = () => {
-        setSelectedTask(null);
+        setSelectedDepartment(null);
         setIsDetailModalOpen(false);
     }
 
@@ -309,14 +285,14 @@ function Tasks() {
         setIsTerminateModalOpen(true);
 
         try {
-            await handleSelectTask(taskId);
+            await handleSelectDepartment(taskId);
         } catch {
             setIsTerminateModalOpen(false);
         }
     }
 
     const handleCloseTerminateModal = () => {
-        setSelectedTask(null);
+        setSelectedDepartment(null);
         setIsTerminateModalOpen(false);
     }
 
@@ -365,7 +341,7 @@ function Tasks() {
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
-                        {canAlterTask && (
+                        {canAlterDepartment && (
                             <Button
                                 isIconOnly
                                 variant="flat"
@@ -399,7 +375,7 @@ function Tasks() {
                             </Dropdown>
                         )}
 
-                        {canAlterTask && (
+                        {canAlterDepartment && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
                                     <Button
@@ -430,7 +406,7 @@ function Tasks() {
                             </Dropdown>
                         )}
 
-                        {canAlterTask && (
+                        {canAlterDepartment && (
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
@@ -457,7 +433,7 @@ function Tasks() {
         organizationOptions,
         handleOrganizationFilterChange,
         handleOpenFiltersModal,
-        canAlterTask,
+        canAlterDepartment,
         user,
     ]);
 
@@ -499,7 +475,7 @@ function Tasks() {
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
-                                <DropdownSection showDivider={canAlterTask}>
+                                <DropdownSection showDivider={canAlterDepartment}>
                                     <DropdownItem key="view"
                                                   startContent={<UserRound />}
                                                   variant="light"
@@ -510,7 +486,7 @@ function Tasks() {
                                     </DropdownItem>
                                 </DropdownSection>
 
-                                {canAlterTask ? (
+                                {canAlterDepartment ? (
                                     <DropdownSection>
                                         {task.active ? (
                                             <DropdownItem key="terminate"
@@ -540,7 +516,7 @@ function Tasks() {
             default:
                 return cellValue || "-";
         }
-    }, [canAlterTask]);
+    }, [canAlterDepartment]);
 
     // Pro SUPERADMIN bez vybrané organizace není loading
     const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
@@ -598,8 +574,8 @@ function Tasks() {
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
                 onSubmit={handleUpdateTask}
-                canEdit={canAlterTask}
-                task={selectedTask}
+                canEdit={canAlterDepartment}
+                task={selectedDepartment}
                 isLoading={isLoadingDetail}
             />
 
@@ -607,8 +583,8 @@ function Tasks() {
                 isOpen={isTerminateModalOpen}
                 onClose={handleCloseTerminateModal}
                 onSubmit={handleTerminateTask}
-                taskId={selectedTask?.id}
-                taskName={`${selectedTask?.name}`}
+                taskId={selectedDepartment?.id}
+                taskName={`${selectedDepartment?.name}`}
             />
 
             <FiltersModal
@@ -616,7 +592,7 @@ function Tasks() {
                 onClose={handleCloseFiltersModal}
                 onSubmit={handleFiltersChange}
                 user={user}
-                showStatusFilter={canAlterTask}
+                showStatusFilter={canAlterDepartment}
                 initialActiveFilter={activeFilter}
                 initialOrganizationFilter={organizationFilter}
                 activeOptions={activeOptions}
@@ -626,5 +602,5 @@ function Tasks() {
     );
 }
 
-export default Tasks;
+export default Departments;
 
