@@ -8,6 +8,7 @@ import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.DepartmentMapper;
+import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
@@ -31,6 +32,8 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     private OrganizationRepository organizationRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ClientRepository clientRepository;
 
     @Transactional(readOnly = true)
     public List<DepartmentDTO> getDepartments(Long organizationId, Boolean status) {
@@ -155,9 +158,26 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         department.setActive(status);
         return departmentRepository.save(department);
     }
-    // TODO zajistit moznost deaktivovat pouze pokud nema prirazene zavisle entity
+    @Transactional
     public Department terminateDepartment(Long id) {
-        return setDepartmentStatus(id, false);
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
+
+        validateOrganizationAccess(department, dep -> dep.getOrganization().getId());
+
+        if (clientRepository.existsByDepartmentIdAndActiveTrue(id)) {
+            throw new cz.zcu.kiv.caretracker.exception.ValidationException("Středisko má aktivní klienty. Deaktivujte je nebo přesuňte do jiného střediska.");
+        }
+        if (employeeRepository.existsByDepartmentIdAndActiveTrue(id)) {
+            throw new cz.zcu.kiv.caretracker.exception.ValidationException("Středisko má aktivní zaměstnance. Deaktivujte je nebo přesuňte do jiného střediska.");
+        }
+
+        Employee oldCoordinator = department.getCoordinator();
+        department.setCoordinator(null);
+        department.setActive(false);
+        Department saved = departmentRepository.save(department);
+        updateCoordinatorRoles(oldCoordinator, null);
+        return saved;
     }
 
     public Department activateDepartment(Long id) {

@@ -42,7 +42,7 @@ import { DepartmentTerminateModal } from "../components/modals/department/Depart
 
 const columns = [
     { name: "MĚSTO", key: "city", sortable: true },
-    { name: "ULICE", key: "street" },
+    { name: "ADRESA", key: "street" },
     { name: "PSČ", key: "postalCode" },
     { name: "ČÍSLO", key: "departmentNumber" },
     { name: "KOORDINÁTOR", key: "coordinator" },

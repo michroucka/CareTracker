@@ -12,4 +12,5 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
     List<Department> findByActiveTrueAndOrganizationId(Long organizationId);
     List<Department> findByActiveFalseAndOrganizationId(Long organizationId);
     boolean existsByCoordinatorId(Long coordinatorId);
+    boolean existsByOrganizationIdAndActiveTrue(Long organizationId);
 }

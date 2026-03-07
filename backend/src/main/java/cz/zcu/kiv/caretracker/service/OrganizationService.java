@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -98,11 +99,22 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Deaktivuje organizaci.
+     * Deaktivuje organizaci a všechny její uživatelské účty.
      * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
      */
+    @Transactional
     public Organization terminateOrganization(Long id) {
-        return setOrganizationStatus(id, false);
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
+
+        List<User> users = new ArrayList<>();
+        users.addAll(userRepository.findByEmployee_OrganizationId(id));
+        users.addAll(userRepository.findByClient_OrganizationId(id));
+        users.forEach(u -> u.setActive(false));
+        userRepository.saveAll(users);
+
+        organization.setActive(false);
+        return organizationRepository.save(organization);
     }
 
     /**
