@@ -9,7 +9,7 @@ import {
 } from "@heroui/react";
 import {Ban} from "lucide-react";
 
-export function DepartmentTerminateModal({ isOpen, onClose, onSubmit, departmentId, departmentName }) {
+export function OrganizationTerminateModal({ isOpen, onClose, onSubmit, organizationId, organizationName }) {
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     async function handleSubmit(e) {
@@ -18,8 +18,8 @@ export function DepartmentTerminateModal({ isOpen, onClose, onSubmit, department
         setIsSubmitting(true);
 
         try {
-            if (onSubmit && departmentId) {
-                await onSubmit(departmentId);
+            if (onSubmit && organizationId) {
+                await onSubmit(organizationId);
             }
             onClose();
         } catch (error) {
@@ -37,10 +37,10 @@ export function DepartmentTerminateModal({ isOpen, onClose, onSubmit, department
         >
             <ModalContent>
                 <ModalHeader className="flex justify-between items-center pb-0">
-                    Deaktivovat středisko
+                    Deaktivovat organizaci
                 </ModalHeader>
                 <ModalBody className="text-foreground/50 text-sm gap-1">
-                    <p>Opravdu chcete deaktivovat středisko {departmentName}?</p>
+                    <p>Opravdu chcete deaktivovat organizaci {organizationName}?</p>
                 </ModalBody>
                 <ModalFooter className="justify-between">
                     <Button variant="bordered" onPress={onClose}>

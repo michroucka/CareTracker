@@ -51,6 +51,7 @@ export default function AppNavbar() {
         { name: "Zaměstnanci", path: "/employees", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Úkony", path: "/tasks", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
         { name: "Střediska", path: "/departments", allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN] },
+        { name: "Organizace", path: "/organizations", allowedRoles: [ROLES.SUPERADMIN]},
         { name: "Měsíční přehled", path: "/monthly-report", allowedRoles: [ROLES.CLIENT] },
     ];
 

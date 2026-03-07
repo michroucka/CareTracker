@@ -33,7 +33,7 @@ import {
     Plus,
     Search,
     Trash2,
-    Eye, Printer
+    Eye, Printer, ClipboardList
 } from "lucide-react";
 import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
 import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
@@ -657,7 +657,7 @@ function PerformedTasks() {
                             <DropdownMenu>
                                 <DropdownSection showDivider>
                                     <DropdownItem key="view"
-                                                  startContent={<Eye />}
+                                                  startContent={<ClipboardList />}
                                                   variant="light"
                                                   onPress={() => handleOpenDetailModal(performedTask.id)}
                                                   isLoading={isLoadingDetail}

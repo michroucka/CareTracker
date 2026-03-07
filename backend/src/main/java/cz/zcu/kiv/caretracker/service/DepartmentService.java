@@ -4,11 +4,14 @@ import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.EmployeeRole;
+import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.DepartmentMapper;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
+import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,8 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     private EmployeeRepository employeeRepository;
     @Autowired
     private OrganizationRepository organizationRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<DepartmentDTO> getDepartments(Long organizationId, Boolean status) {
@@ -61,6 +66,36 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         );
     }
 
+    private void updateCoordinatorRoles(Employee oldCoordinator, Employee newCoordinator) {
+        Long oldId = oldCoordinator != null ? oldCoordinator.getId() : null;
+        Long newId = newCoordinator != null ? newCoordinator.getId() : null;
+        if (oldId != null && oldId.equals(newId)) return;
+
+        if (oldCoordinator != null) {
+            if (oldCoordinator.getRole() != EmployeeRole.MANAGER) {
+                oldCoordinator.setRole(EmployeeRole.CAREGIVER);
+                employeeRepository.save(oldCoordinator);
+            }
+            User user = oldCoordinator.getUser();
+            if (user != null && user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SUPERADMIN) {
+                user.setRole(UserRole.CAREGIVER);
+                userRepository.save(user);
+            }
+        }
+
+        if (newCoordinator != null) {
+            if (newCoordinator.getRole() != EmployeeRole.MANAGER) {
+                newCoordinator.setRole(EmployeeRole.COORDINATOR);
+                employeeRepository.save(newCoordinator);
+            }
+            User user = newCoordinator.getUser();
+            if (user != null && user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SUPERADMIN) {
+                user.setRole(UserRole.COORDINATOR);
+                userRepository.save(user);
+            }
+        }
+    }
+
     private Department saveDepartment(Department department, DepartmentRequestDTO dto) {
         User user = getCurrentUser();
 
@@ -82,14 +117,19 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
             organization = employee.getOrganization();
         }
 
+        Employee oldCoordinator = department.getCoordinator();
+
         Employee coordinator = dto.getCoordinatorId() != null
                 ? employeeRepository.findById(dto.getCoordinatorId())
                         .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"))
                 : null;
 
         departmentMapper.requestToDepartment(department, dto, coordinator, organization);
+        Department saved = departmentRepository.save(department);
 
-        return departmentRepository.save(department);
+        updateCoordinatorRoles(oldCoordinator, coordinator);
+
+        return saved;
     }
 
     public Department createDepartment(DepartmentRequestDTO dto) {

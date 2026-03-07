@@ -16,7 +16,8 @@ import {
     TableRow,
 } from "@heroui/react";
 import {
-    Ban, Building2, Check,
+    Ban,
+    Building2, Check,
     ChevronDown,
     Eye,
     Funnel,
@@ -34,24 +35,24 @@ import { removeDiacritics } from "../utils/formatters.js";
 import { sortByKey } from "../utils/sorting.js";
 import { FiltersModal } from "../components/modals/FiltersModal.jsx";
 import { useSearchParams } from "react-router-dom";
-import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { DepartmentCreateModal } from "../components/modals/department/DepartmentCreateModal.jsx";
 import { DepartmentDetailModal } from "../components/modals/department/DepartmentDetailModal.jsx";
 import { DepartmentTerminateModal } from "../components/modals/department/DepartmentTerminateModal.jsx";
+import {useOrganizations} from "../hooks/useOrganizations.jsx";
+import {OrganizationCreateModal} from "../components/modals/organization/OrganizationCreateModal.jsx";
+import {OrganizationDetailModal} from "../components/modals/organization/OrganizationDetailModal.jsx";
+import {OrganizationTerminateModal} from "../components/modals/organization/OrganizationTerminateModal.jsx";
 
 const columns = [
-    { name: "MĚSTO", key: "city", sortable: true },
-    { name: "ULICE", key: "street" },
-    { name: "PSČ", key: "postalCode" },
-    { name: "ČÍSLO", key: "departmentNumber" },
-    { name: "KOORDINÁTOR", key: "coordinator" },
+    { name: "NÁZEV", key: "name", sortable: true },
+    { name: "VEDOUCÍ", key: "manager" },
     { name: "AKCE", key: "actions" },
 ];
 
-function Departments() {
+function Organizations() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { user, superadminOrg } = useAuth();
+    const { user } = useAuth();
 
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialActiveFilter = () => {
@@ -63,50 +64,40 @@ function Departments() {
 
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [sortDescriptor, setSortDescriptor] = React.useState({ column: "city", direction: "ascending" });
+    const [sortDescriptor, setSortDescriptor] = React.useState({ column: "name", direction: "ascending" });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
-    const [selectedDepartment, setSelectedDepartment] = React.useState(null);
+    const [selectedOrganization, setSelectedOrganization] = React.useState(null);
     const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
     const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
 
     const {
-        departments,
-        setDepartments,
+        organizations,
         loading,
-        fetchDepartments,
-        fetchDepartment,
-        createDepartment,
-        updateDepartment,
-        terminateDepartment,
-        activateDepartment,
-    } = useDepartments();
+        fetchOrganizations,
+        fetchOrganization,
+        createOrganization,
+        updateOrganization,
+        terminateOrganization,
+        activateOrganization,
+    } = useOrganizations();
 
     const { employees, fetchEmployees } = useEmployees();
-
-    const availableCoordinators = React.useMemo(() => {
-        return employees.filter(e => e.role !== "COORDINATOR");
-    }, [employees]);
-
-    const availableCoordinatorsForEdit = React.useMemo(() => {
-        const currentCoordinatorId = selectedDepartment?.coordinator?.id;
-        return employees.filter(e => e.role !== "COORDINATOR" || e.id === currentCoordinatorId);
-    }, [employees, selectedDepartment]);
 
     const isMobile = useIsMobile();
 
     const visibleColumns = React.useMemo(() => {
-        if (isMobile) return columns.filter(col => col.key === "city" || col.key === "actions");
+        if (isMobile) return columns.filter(col => col.key === "name" || col.key === "actions");
         return columns;
     }, [isMobile]);
 
     const filteredItems = React.useMemo(() => {
-        if (!filterValue) return [...departments];
+        if (!filterValue) return [...organizations];
         const normalized = removeDiacritics(filterValue);
-        return departments.filter(d => removeDiacritics(d.city).includes(normalized));
-    }, [departments, filterValue]);
+        return organizations.filter(o => removeDiacritics(o.name).includes(normalized));
+    }, [organizations, filterValue]);
 
     const sortedItems = React.useMemo(() => {
         return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
@@ -130,30 +121,25 @@ function Departments() {
     }, [filterValue, activeFilter, user]);
 
     React.useEffect(() => {
-        if (user?.role === "SUPERADMIN" && !superadminOrg) {
-            setDepartments([]);
-            return;
-        }
-        const orgId = superadminOrg?.id;
-        fetchDepartments({ organizationId: orgId, status: getStatusFromFilter(activeFilter) });
-        fetchEmployees({ organizationId: orgId, status: true });
-    }, [superadminOrg, activeFilter, user]);
+        fetchOrganizations({ status: getStatusFromFilter(activeFilter) });
+    }, [activeFilter]);
 
     function getStatusFromFilter(filter) {
         if (filter.size === 0 || filter.size === 2) return undefined;
         return filter.has("true");
     }
 
-    async function handleSelectDepartment(id) {
-        const data = await fetchDepartment(id);
-        setSelectedDepartment(data);
+    async function handleSelectOrganization(id) {
+        const data = await fetchOrganization(id);
+        fetchEmployees({ orgId: id });
+        setSelectedOrganization(data);
     }
 
     const handleOpenDetailModal = async (id) => {
         setIsLoadingDetail(true);
         setIsDetailModalOpen(true);
         try {
-            await handleSelectDepartment(id);
+            await handleSelectOrganization(id);
         } catch {
             setIsDetailModalOpen(false);
         }
@@ -161,26 +147,26 @@ function Departments() {
     };
 
     const handleCloseDetailModal = () => {
-        setSelectedDepartment(null);
+        setSelectedOrganization(null);
         setIsDetailModalOpen(false);
     };
 
     const handleOpenTerminateModal = async (id) => {
         setIsTerminateModalOpen(true);
         try {
-            await handleSelectDepartment(id);
+            await handleSelectOrganization(id);
         } catch {
             setIsTerminateModalOpen(false);
         }
     };
 
     const handleCloseTerminateModal = () => {
-        setSelectedDepartment(null);
+        setSelectedOrganization(null);
         setIsTerminateModalOpen(false);
     };
 
     const handleCreate = async (data) => {
-        await createDepartment(data);
+        await createOrganization(data);
         setIsCreateModalOpen(false);
     };
 
@@ -206,7 +192,6 @@ function Departments() {
                                 endContent={<ChevronDown className="size-4" />}
                                 variant="flat"
                                 className="text-foreground"
-                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                             >
                                 Status
                             </Button>
@@ -230,17 +215,17 @@ function Departments() {
                     </Button>
                 </div>
             </div>
-            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
+            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
         </div>
-    ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear, user, superadminOrg]);
+    ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear]);
 
-    const renderCell = React.useCallback((department, columnKey) => {
-        const cellValue = department[columnKey];
+    const renderCell = React.useCallback((organization, columnKey) => {
+        const cellValue = organization[columnKey];
 
         switch (columnKey) {
             case "name":
                 return <p className="font-bold text-small">{cellValue}</p>;
-            case "coordinator":
+            case "manager":
                 return <p className="text-small">{cellValue?.fullName || "-"}</p>;
             case "actions":
                 return (
@@ -258,19 +243,19 @@ function Departments() {
                                         startContent={<Building2 />}
                                         variant="light"
                                         isLoading={isLoadingDetail}
-                                        onPress={() => handleOpenDetailModal(department.id)}
+                                        onPress={() => handleOpenDetailModal(organization.id)}
                                     >
                                         {isLoadingDetail ? "Načítání..." : "Detail"}
                                     </DropdownItem>
                                 </DropdownSection>
                                 <DropdownSection>
-                                    {department.active ? (
+                                    {organization.active ? (
                                         <DropdownItem
                                             key="terminate"
                                             startContent={<Ban />}
                                             variant="light"
                                             color="danger"
-                                            onPress={() => handleOpenTerminateModal(department.id)}
+                                            onPress={() => handleOpenTerminateModal(organization.id)}
                                         >
                                             Deaktivovat
                                         </DropdownItem>
@@ -280,7 +265,7 @@ function Departments() {
                                             startContent={<Check />}
                                             variant="light"
                                             color="success"
-                                            onPress={() => activateDepartment(department.id)}
+                                            onPress={() => activateOrganization(organization.id)}
                                         >
                                             Aktivovat
                                         </DropdownItem>
@@ -295,15 +280,12 @@ function Departments() {
         }
     }, [isLoadingDetail]);
 
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
-    const shouldShowLoading = !isSuperadminWithoutOrg && loading;
-
     return (
         <>
             <Table
                 isVirtualized
                 isHeaderSticky
-                aria-label="Departments table"
+                aria-label="Organizations table"
                 maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
@@ -315,9 +297,7 @@ function Departments() {
                         <TableColumn
                             key={column.key}
                             align={column.key === "actions" ?
-                                "end" :
-                                column.key === "departmentNumber" ?
-                                    "center" : "start"}
+                                "end" : "start"}
                             allowsSorting={column.sortable}
                         >
                             {column.name}
@@ -325,9 +305,9 @@ function Departments() {
                     )}
                 </TableHeader>
                 <TableBody
-                    isLoading={shouldShowLoading}
-                    loadingContent={<Spinner label="Načítání středisek..." />}
-                    emptyContent={isSuperadminWithoutOrg ? "Vyberte prosím organizaci v navigační liště" : "Žádná střediska nenalezena"}
+                    isLoading={loading}
+                    loadingContent={<Spinner label="Načítání organizace..." />}
+                    emptyContent="Žádná organizace nenalezena"
                     items={sortedItems}
                 >
                     {(item) => (
@@ -338,30 +318,28 @@ function Departments() {
                 </TableBody>
             </Table>
 
-            <DepartmentCreateModal
+            <OrganizationCreateModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSubmit={handleCreate}
-                employees={availableCoordinators}
-                organizationId={superadminOrg?.id}
+                employees={employees}
             />
-
-            <DepartmentDetailModal
+            
+            <OrganizationDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
-                onSubmit={updateDepartment}
-                department={selectedDepartment}
+                onSubmit={updateOrganization}
+                organization={selectedOrganization}
                 isLoading={isLoadingDetail}
-                employees={availableCoordinatorsForEdit}
-                organizationId={superadminOrg?.id}
+                employees={employees}
             />
-
-            <DepartmentTerminateModal
+            
+            <OrganizationTerminateModal
                 isOpen={isTerminateModalOpen}
                 onClose={handleCloseTerminateModal}
-                onSubmit={terminateDepartment}
-                departmentId={selectedDepartment?.id}
-                departmentName={selectedDepartment?.city}
+                onSubmit={terminateOrganization}
+                organizationId={selectedOrganization?.id}
+                organizationName={selectedOrganization?.name}
             />
 
             <FiltersModal
@@ -369,7 +347,6 @@ function Departments() {
                 onClose={() => setIsFiltersModalOpen(false)}
                 onSubmit={({ activeFilter: f }) => setActiveFilter(f)}
                 user={user}
-                superadminOrgSelected={!!superadminOrg}
                 showStatusFilter
                 initialActiveFilter={activeFilter}
                 activeOptions={activeOptions}
@@ -378,4 +355,4 @@ function Departments() {
     );
 }
 
-export default Departments;
+export default Organizations;

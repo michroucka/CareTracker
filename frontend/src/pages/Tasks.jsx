@@ -14,7 +14,19 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {Check, ChevronDown, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX, X} from "lucide-react";
+import {
+    Check,
+    ChevronDown, Clipboard, ClipboardCheck, ClipboardList, ClipboardX,
+    Eye,
+    Funnel,
+    MoreVertical,
+    Plus,
+    Search,
+    UserRound,
+    UserRoundCheck,
+    UserRoundX,
+    X
+} from "lucide-react";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {activeOptions} from '../constants/globalConstants.js';
 import {columns, unitTypeLabels} from '../constants/taskConstants.js';
@@ -409,7 +421,7 @@ function Tasks() {
                             <DropdownMenu>
                                 <DropdownSection showDivider={canAlterTask}>
                                     <DropdownItem key="view"
-                                                  startContent={<UserRound />}
+                                                  startContent={<ClipboardList />}
                                                   variant="light"
                                                   isLoading={isLoadingDetail}
                                                   onPress={() => handleOpenDetailModal(task.id)}
@@ -422,7 +434,7 @@ function Tasks() {
                                     <DropdownSection>
                                         {task.active ? (
                                             <DropdownItem key="terminate"
-                                                          startContent={<UserRoundX />}
+                                                          startContent={<ClipboardX />}
                                                           variant="light"
                                                           color="danger"
                                                           onPress={() => handleOpenTerminateModal(task.id)}
@@ -431,7 +443,7 @@ function Tasks() {
                                             </DropdownItem>
                                         ) : (
                                             <DropdownItem key="activate"
-                                                          startContent={<UserRoundCheck />}
+                                                          startContent={<ClipboardCheck />}
                                                           variant="light"
                                                           color="success"
                                                           onPress={() => handleActivateTask(task.id)}
