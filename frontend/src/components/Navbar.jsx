@@ -273,7 +273,7 @@ export default function AppNavbar() {
                     </NavbarMenuItem>
                 )}
 
-                <Divider />
+                <Divider className={user?.role !== "SUPERADMIN" ? "mt-auto" : null} />
 
                 {loading ? (
                     <div className="h-10" />

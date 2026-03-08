@@ -140,11 +140,11 @@ export const DepartmentForm = React.forwardRef(({
 
                 <div className="grid grid-cols-3 gap-4">
                     {isReadOnly ? (
-                        <ReadOnlyField label="Číslo střediska" value={departmentNumber} />
+                        <ReadOnlyField label="Číslo" value={departmentNumber} />
                     ) : (
                         <NumberInput
                             isDisabled={isLoading}
-                            label="Číslo střediska"
+                            label="Číslo"
                             labelPlacement="inside"
                             name="departmentNumber"
                             value={departmentNumber}

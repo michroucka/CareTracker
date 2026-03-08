@@ -140,12 +140,13 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
 
-        // Validace oprávnění
         validateUpdateAccess(
                 task,
                 pt -> pt.getOrganization().getId(),
                 pt -> pt.getDepartment() != null ? pt.getDepartment().getId() : null
         );
+
+        validateCaregiverAssignment(task);
 
         return savePerformedTask(task, dto);
     }
@@ -154,13 +155,26 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
 
-        // Validace oprávnění
         validateUpdateAccess(
                 task,
                 pt -> pt.getOrganization().getId(),
                 pt -> pt.getDepartment() != null ? pt.getDepartment().getId() : null
         );
 
+        validateCaregiverAssignment(task);
+
         performedTaskRepository.delete(task);
+    }
+
+    private void validateCaregiverAssignment(PerformedTask task) {
+        User currentUser = getCurrentUser();
+        if (currentUser.getRole() != UserRole.CAREGIVER) return;
+
+        Long employeeId = currentUser.getEmployee().getId();
+        boolean isAssigned = task.getCaregivers().stream()
+                .anyMatch(c -> c.getId().equals(employeeId));
+        if (!isAssigned) {
+            throw new SecurityException("Nemáte oprávnění upravovat tento úkon");
+        }
     }
 }

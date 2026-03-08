@@ -645,7 +645,9 @@ function PerformedTasks() {
                         </p>
                     </div>
                 );
-            case "actions":
+            case "actions": {
+                const canEdit = user?.role !== 'CAREGIVER' ||
+                    performedTask.caregivers?.some(c => c.id === user.employeeId);
                 return (
                     <div className="relative flex justify-end items-center gap-2">
                         <Dropdown>
@@ -655,7 +657,7 @@ function PerformedTasks() {
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu>
-                                <DropdownSection showDivider>
+                                <DropdownSection showDivider={canEdit}>
                                     <DropdownItem key="view"
                                                   startContent={<ClipboardList />}
                                                   variant="light"
@@ -665,24 +667,27 @@ function PerformedTasks() {
                                         {isLoadingDetail ? "Načítání..." : "Detail"}
                                     </DropdownItem>
                                 </DropdownSection>
-                                <DropdownSection>
-                                    <DropdownItem key="delete"
-                                                  startContent={<Trash2 />}
-                                                  variant="light"
-                                                  color="danger"
-                                                  onPress={() => handleOpenDeleteModal(performedTask.id)}
-                                    >
-                                        Smazat
-                                    </DropdownItem>
-                                </DropdownSection>
+                                {canEdit && (
+                                    <DropdownSection>
+                                        <DropdownItem key="delete"
+                                                      startContent={<Trash2 />}
+                                                      variant="light"
+                                                      color="danger"
+                                                      onPress={() => handleOpenDeleteModal(performedTask.id)}
+                                        >
+                                            Smazat
+                                        </DropdownItem>
+                                    </DropdownSection>
+                                )}
                             </DropdownMenu>
                         </Dropdown>
                     </div>
                 );
+            }
             default:
                 return cellValue || "-";
         }
-    }, []);
+    }, [user, isLoadingDetail]);
 
     // Kontrola jestli se načítají metadata nebo data
     // hasLoadedData sleduje, jestli už proběhlo první načtení
@@ -756,6 +761,7 @@ function PerformedTasks() {
                 clients={filteredClients}
                 caregivers={filteredEmployees}
                 tasks={tasks}
+                readOnly={user?.role === 'CAREGIVER' && !selectedPerformedTask?.caregivers?.some(c => c.id === user.employeeId)}
             />
 
             <DeleteConfirmationModal
