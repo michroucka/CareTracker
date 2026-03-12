@@ -7,6 +7,7 @@ import {useNavigate} from "react-router-dom";
 interface User {
     username: string;
     role: string;
+    fullName?: string;
     employeeId?: number;
     employeeRole?: string;
     departmentId?: number;
@@ -24,7 +25,7 @@ interface AuthContextType {
     loading: boolean;
     superadminOrg: SuperadminOrg | null;
     setSuperadminOrg: (org: SuperadminOrg | null) => void;
-    login: (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => void;
+    login: (username: string, role: string, fullName?: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => void;
     logout: () => void;
     logoutSilent: () => Promise<void>;
     checkAuth: () => Promise<void>;
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser({
                     username: data.username,
                     role: data.role,
+                    fullName: data.fullName,
                     employeeId: data.employeeId,
                     employeeRole: data.employeeRole,
                     departmentId: data.departmentId,
@@ -88,10 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const login = (username: string, role: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => {
+    const login = (username: string, role: string, fullName?: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => {
         setUser({
             username,
             role,
+            fullName,
             employeeId,
             employeeRole,
             departmentId,

@@ -17,7 +17,7 @@ import { formatPostalCode, formatPhoneNumber } from "../../utils/formatters.js";
 import { benefitsOptions, terminationReasonOptions } from "../../constants/clientConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
 import { ImageUpload } from "../ImageUpload.jsx";
-import {minYear} from "../../constants/globalConstants.js";
+import {MIN_YEAR} from "../../constants/globalConstants.js";
 
 /**
  * Reusable client form component used in both create and edit modals
@@ -356,7 +356,7 @@ export const ClientForm = React.forwardRef(({
                             showMonthAndYearPickers
                             selectorIcon={<CalendarDays size={18}/>}
                             placeholderValue={new CalendarDate(1960, 1, 1)}
-                            minValue={new CalendarDate(minYear, 1, 1)}
+                            minValue={new CalendarDate(MIN_YEAR, 1, 1)}
                             maxValue={today(getLocalTimeZone())}
                             isRequired
                             classNames={{
@@ -720,7 +720,7 @@ export const ClientForm = React.forwardRef(({
                                 }}
                                 showMonthAndYearPickers
                                 selectorIcon={<CalendarDays size={18} />}
-                                minValue={new CalendarDate(minYear, 1, 1)}
+                                minValue={new CalendarDate(MIN_YEAR, 1, 1)}
                                 maxValue={today(getLocalTimeZone())}
                                 isRequired
                                 isDisabled={isLoading}

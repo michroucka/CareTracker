@@ -55,6 +55,7 @@ public class AuthController {
                     if (user.getEmployee() != null) {
                         response.put("employeeId", user.getEmployee().getId());
                         response.put("employeeRole", user.getEmployee().getRole().toString());
+                        response.put("fullName", user.getEmployee().getFullName());
 
                         // Přidání department ID pro CAREGIVER, COORDINATOR a ADMIN
                         if (user.getEmployee().getDepartment() != null) {
@@ -75,6 +76,7 @@ public class AuthController {
                 try {
                     if (user.getClient() != null) {
                         response.put("clientId", user.getClient().getId());
+                        response.put("fullName", user.getClient().getFullName());
                     }
                 } catch (Exception e) {
                     log.warn("Error loading client context for user '{}': {}", user.getUsername(), e.getMessage());

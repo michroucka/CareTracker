@@ -2,7 +2,7 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { usePerformedTasks } from "../hooks/usePerformedTasks.jsx";
-import { minYear } from "../constants/globalConstants.js";
+import { MIN_YEAR } from "../constants/globalConstants.js";
 import { unitTypeTranslations } from "../constants/performedTaskConstants.js";
 import { formatDateTime, formatNumber } from "../utils/formatters.js";
 import { fetchImage } from "../api/api.js";
@@ -59,7 +59,7 @@ function MonthlyReport() {
         const monthParam = Number(searchParams.get("month"));
         const yearParam = Number(searchParams.get("year"));
         const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
-        const year = (yearParam >= minYear && yearParam <= currentYear) ? yearParam : currentYear;
+        const year = (yearParam >= MIN_YEAR && yearParam <= currentYear) ? yearParam : currentYear;
         return { month, year };
     };
 

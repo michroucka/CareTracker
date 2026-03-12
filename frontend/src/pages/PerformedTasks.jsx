@@ -9,7 +9,7 @@ import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
 import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
-import {minYear} from "../constants/globalConstants.js";
+import {MIN_YEAR} from "../constants/globalConstants.js";
 import {
     Button,
     Dropdown,
@@ -79,7 +79,7 @@ function PerformedTasks() {
         const monthParam = Number(searchParams.get("month"));
         const yearParam = Number(searchParams.get("year"));
         const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
-        const year = (yearParam >= minYear && yearParam <= currentYear) ? yearParam : currentYear;
+        const year = (yearParam >= MIN_YEAR && yearParam <= currentYear) ? yearParam : currentYear;
         return { month, year };
     };
 
