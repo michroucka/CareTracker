@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.dashboard.DashboardDTO;
+import cz.zcu.kiv.caretracker.dto.dashboard.DepartmentPerformedTasksDTO;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.UnitType;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +43,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
 
     private DashboardDTO buildCaregiverDashboard(User user) {
         Long caregiverId = user.getEmployee().getId();
+        Long deptId = user.getEmployee().getDepartment().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime monthEnd = monthStart.plusMonths(1);
         LocalDateTime sixMonthsStart = YearMonth.now().minusMonths(5).atDay(1).atStartOfDay();
@@ -56,10 +59,10 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         dto.setTotalMonthMinutes(calculateTotalMinutes(monthTasks));
         dto.setTasksPerformedCountHistory(buildCountHistory(historyTasks));
         dto.setRecentPerformedTasks(performedTaskMapper.toSummaryDTOList(
-                performedTaskRepository.findTop5ByCaregivers_IdOrderByDateDesc(caregiverId)));
+                performedTaskRepository.findTop5ByDepartmentIdOrderByDateDesc(deptId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByCaregiver(
-                        caregiverId, LocalDate.now(), LocalDate.now().plusDays(30))));
+                        caregiverId, LocalDate.now().plusDays(30))));
         return dto;
     }
 
@@ -83,7 +86,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 performedTaskRepository.findTop5ByDepartmentIdOrderByDateDesc(deptId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByDepartment(
-                        deptId, LocalDate.now(), LocalDate.now().plusDays(30))));
+                        deptId, LocalDate.now().plusDays(30))));
         return dto;
     }
 
@@ -141,13 +144,16 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return history;
     }
 
-    private List<Integer> buildDepartmentTaskCounts(List<PerformedTask> tasks) {
-        return new ArrayList<>(tasks.stream()
-                .collect(Collectors.groupingBy(
-                        t -> t.getDepartment().getId(),
-                        java.util.TreeMap::new,
-                        Collectors.summingInt(t -> 1)
-                ))
-                .values());
+    private List<DepartmentPerformedTasksDTO> buildDepartmentTaskCounts(List<PerformedTask> tasks) {
+        Map<Long, String> deptNames = new java.util.LinkedHashMap<>();
+        Map<Long, Integer> deptCounts = new java.util.TreeMap<>();
+        for (PerformedTask t : tasks) {
+            Long id = t.getDepartment().getId();
+            deptNames.put(id, t.getDepartment().getCity());
+            deptCounts.merge(id, 1, Integer::sum);
+        }
+        return deptCounts.entrySet().stream()
+                .map(e -> new DepartmentPerformedTasksDTO(deptNames.get(e.getKey()), e.getValue()))
+                .collect(Collectors.toList());
     }
 }

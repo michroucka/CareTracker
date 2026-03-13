@@ -251,19 +251,6 @@ function Clients() {
         fetchTasks({ organizationId: superadminOrg.id, status: "true" });
     }, [user, superadminOrg]);
 
-    // Validace filtrů podle role uživatele
-    React.useEffect(() => {
-        if (!user) return;
-
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
-
-        if (!allowedToSeeInactive && !activeFilter.has("true")) {
-            setActiveFilter(new Set(["true"]));
-        }
-        if (!allowedToSeeInactive && activeFilter.size === 2) {
-            setActiveFilter(new Set(["true"]));
-        }
-    }, [user]);
 
     React.useEffect(() => {
         // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
@@ -282,21 +269,18 @@ function Clients() {
         if (!user) return;
 
         const params = new URLSearchParams();
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
         const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
 
         if (filterValue) {
             params.set("search", filterValue);
         }
 
-        if (allowedToSeeInactive) {
-            if (activeFilter.size === 2) {
-                params.set("status", "all");
-            } else if (activeFilter.has("true")) {
-                params.set("status", "true");
-            } else if (activeFilter.has("false")) {
-                params.set("status", "false");
-            }
+        if (activeFilter.size === 2) {
+            params.set("status", "all");
+        } else if (activeFilter.has("true")) {
+            params.set("status", "true");
+        } else if (activeFilter.has("false")) {
+            params.set("status", "false");
         }
 
         const shouldSaveFilters = user.role !== "SUPERADMIN" || !!superadminOrg;
@@ -557,7 +541,7 @@ function Clients() {
                         >
                             <Funnel className="size-4" />
                         </Button>
-                        {canAlterClient && (
+                        {user?.role !== "CLIENT" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
                                     <Button

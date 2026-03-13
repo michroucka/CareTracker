@@ -16,9 +16,9 @@ public interface IndividualPlanRepository extends JpaRepository<IndividualPlan, 
 
     Optional<IndividualPlan> findByClientIdAndOrganizationId(Long clientId, Long organizationId);
 
-    @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.department.id = :departmentId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate BETWEEN :start AND :end")
-    List<IndividualPlan> findUpcomingUpdatesByDepartment(@Param("departmentId") Long departmentId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+    @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.department.id = :departmentId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate <= :end")
+    List<IndividualPlan> findUpcomingUpdatesByDepartment(@Param("departmentId") Long departmentId, @Param("end") LocalDate end);
 
-    @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.caregiver.id = :caregiverId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate BETWEEN :start AND :end")
-    List<IndividualPlan> findUpcomingUpdatesByCaregiver(@Param("caregiverId") Long caregiverId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+    @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.caregiver.id = :caregiverId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate <= :end")
+    List<IndividualPlan> findUpcomingUpdatesByCaregiver(@Param("caregiverId") Long caregiverId, @Param("end") LocalDate end);
 }

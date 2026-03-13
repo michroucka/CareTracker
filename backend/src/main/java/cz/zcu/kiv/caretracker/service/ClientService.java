@@ -73,12 +73,6 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             return Collections.emptyList();
         }
 
-        // Validace status parametru podle role
-        // CAREGIVER nemá přístup k neaktivním klientům
-        if (getCurrentUser().getRole() == UserRole.CAREGIVER) {
-            status = true; // Vynucený filtr jen na aktivní klienty
-        }
-
         // Sestavit specification s filtry
         Specification<Client> spec = ClientSpecifications.withFilters(
                 roleFilters.getOrganizationId(),

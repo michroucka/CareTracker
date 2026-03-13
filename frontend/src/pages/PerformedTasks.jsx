@@ -91,7 +91,7 @@ function PerformedTasks() {
         direction: "descending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
-    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(() => searchParams.get("openCreate") === "true");
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);

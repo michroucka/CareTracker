@@ -27,7 +27,7 @@ public class DashboardDTO {
 
     // ADMIN only
     private Integer employeeCount;
-    private List<Integer> tasksPerformedByDepartment;
+    private List<DepartmentPerformedTasksDTO> tasksPerformedByDepartment;
 
     // all roles
     private List<PerformedTaskSummaryDTO> recentPerformedTasks;
