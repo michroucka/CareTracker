@@ -574,17 +574,19 @@ function PerformedTasks() {
                 <div className="flex flex-row justify-between items-center">
                     <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
 
-                    <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
-                        <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            className="rounded-full"
-                            onPress={handleOpenReceiptModal}
-                        >
-                            <Printer className="size-5" />
-                        </Button>
-                    </Tooltip>
+                    {user.role !== 'CAREGIVER' && (
+                        <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
+                            <Button
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                                className="rounded-full"
+                                onPress={handleOpenReceiptModal}
+                            >
+                                <Printer className="size-5" />
+                            </Button>
+                        </Tooltip>
+                    )}
                 </div>
             </div>
         );

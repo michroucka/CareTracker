@@ -3,7 +3,7 @@ import logo from "../assets/ct_icon.svg"
 import {Divider, Card, CardHeader, CardBody, Button, Spinner} from "@heroui/react"
 import {
     User, Edit, FileText, Plus, Clock, Users, Activity, CloudAlert, TrendingUp, Briefcase, CalendarClock,
-    ClipboardPenLine, Smile, ArrowRight
+    ClipboardPenLine, Smile, ArrowRight, Construction
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
@@ -127,9 +127,10 @@ function DashboardContent() {
     const isCoordinator = role === ROLES.COORDINATOR;
     const isAdmin = role === ROLES.ADMIN;
     const isSuperadmin = role === ROLES.SUPERADMIN;
+    const isClient = role === ROLES.CLIENT;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 flex flex-col">
             <div className="flex justify-between items-end">
                 <div>
                     <h1>Nástěnka</h1>
@@ -146,12 +147,10 @@ function DashboardContent() {
                 <div className="flex justify-center items-center py-32">
                     <Spinner size="lg" label="Načítání nástěnky..." />
                 </div>
-            ) : isSuperadmin ? (
-                <Card>
-                    <CardBody className="py-10 text-center text-default-400">
-                        Nástěnka pro superadministrátora zatím není k dispozici.
-                    </CardBody>
-                </Card>
+            ) : isClient || isSuperadmin ? (
+                <div className="flex flex-col justify-center items-center text-center cursor-default flex-1">
+                    <p className="text-warning-100 text-2xl font-bold flex items-center justify-center gap-4"><Construction className="size-8" /> Zatím tady nic není <Construction className="size-8" /></p>
+                </div>
             ) : (
                 <>
                     {/* Statistiky */}
