@@ -97,7 +97,7 @@ public class PerformedTaskController {
     }
 
     @GetMapping("/receipt")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
     public ResponseEntity<byte[]> getReceipt(
             @RequestParam Long clientId,
             @RequestParam Integer month,
