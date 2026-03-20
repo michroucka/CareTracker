@@ -109,6 +109,10 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         dto.setRecentPerformedTasks(performedTaskMapper.toSummaryDTOList(
                 performedTaskRepository.findTop5ByOrganizationIdOrderByDateDesc(orgId)));
         dto.setTasksPerformedByDepartment(buildDepartmentTaskCounts(monthTasks));
+        Long deptId = user.getEmployee().getDepartment().getId();
+        dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
+                individualPlanRepository.findUpcomingUpdatesByDepartment(
+                        deptId, LocalDate.now().plusDays(30))));
         return dto;
     }
 

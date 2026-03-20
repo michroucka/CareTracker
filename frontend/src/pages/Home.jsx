@@ -6,7 +6,7 @@ import {
     ClipboardPenLine, Smile, ArrowRight, Construction
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, Navigate} from "react-router-dom";
 import {getLocalTimeZone, today} from "@internationalized/date";
 import {formatDate, formatTime} from "../utils/formatters.js";
 import {getJSON} from "../api/api.js";
@@ -127,7 +127,6 @@ function DashboardContent() {
     const isCoordinator = role === ROLES.COORDINATOR;
     const isAdmin = role === ROLES.ADMIN;
     const isSuperadmin = role === ROLES.SUPERADMIN;
-    const isClient = role === ROLES.CLIENT;
 
     return (
         <div className="space-y-6 flex-1 flex flex-col">
@@ -147,7 +146,7 @@ function DashboardContent() {
                 <div className="flex justify-center items-center py-32">
                     <Spinner size="lg" label="Načítání nástěnky..." />
                 </div>
-            ) : isClient || isSuperadmin ? (
+            ) : isSuperadmin ? (
                 <div className="flex flex-col justify-center items-center text-center cursor-default flex-1">
                     <p className="text-warning-100 text-2xl font-bold flex items-center justify-center gap-4"><Construction className="size-8" /> Zatím tady nic není <Construction className="size-8" /></p>
                 </div>
@@ -278,11 +277,11 @@ function DashboardContent() {
                         <Divider />
                         <CardBody>
                             <div className="flex flex-wrap gap-3">
+                                <Button color="primary" startContent={<Plus className="w-4 h-4" />} onPress={() => navigate("/performed-tasks?openCreate=true")}>
+                                    Zaznamenat péči
+                                </Button>
                                 {isCaregiver && (
                                     <>
-                                        <Button color="primary" startContent={<Plus className="w-4 h-4" />} onPress={() => navigate("/performed-tasks?openCreate=true")}>
-                                            Zaznamenat péči
-                                        </Button>
                                         <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate(`/clients?caregivers=${encodeURIComponent(user.fullName)}`)}>
                                             Moji klienti
                                         </Button>
@@ -290,7 +289,7 @@ function DashboardContent() {
                                 )}
                                 {isCoordinator && (
                                     <>
-                                        <Button color="primary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
+                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
                                             Záznamy péče
                                         </Button>
                                         <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>
@@ -300,7 +299,7 @@ function DashboardContent() {
                                 )}
                                 {isAdmin && (
                                     <>
-                                        <Button color="primary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
+                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
                                             Záznamy péče
                                         </Button>
                                         <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>
@@ -370,7 +369,7 @@ function DashboardContent() {
                     )}
 
                     {/* Spodní sekce */}
-                    <div className={`grid gap-6 ${(isCaregiver || isCoordinator) ? "lg:grid-cols-2" : ""}`}>
+                    <div className={`grid gap-6 ${(isCaregiver || isCoordinator || isAdmin) ? "lg:grid-cols-2" : ""}`}>
                         {/* Nedávné záznamy */}
                         <Card>
                             <CardHeader className="flex items-center gap-2">
@@ -401,8 +400,8 @@ function DashboardContent() {
                             </CardBody>
                         </Card>
 
-                        {/* Aktualizace individuálních plánů (CAREGIVER + COORDINATOR) */}
-                        {(isCaregiver || isCoordinator) && (
+                        {/* Aktualizace individuálních plánů (CAREGIVER + COORDINATOR + ADMIN) */}
+                        {(isCaregiver || isCoordinator || isAdmin) && (
                             <Card>
                                 <CardHeader className="flex items-center gap-2">
                                     <CalendarClock className="size-7" />
@@ -448,6 +447,7 @@ function DashboardContent() {
 
 function Home() {
     const { user } = useAuth();
+    if (user?.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
     return user ? <DashboardContent /> : <LandingPageContent />;
 }
 
