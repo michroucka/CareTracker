@@ -61,7 +61,7 @@ export function useEmployees() {
 
             // Add fullName field
             const mappedEmployees = mapEmployees(employees);
-            const sorted = sortByKey(mappedEmployees, 'fullName', 'ascending');
+            const sorted = sortByKey(mappedEmployees, 'lastName', 'ascending');
             setEmployees(sorted);
 
             if (!silent) setLoading(false);
@@ -93,7 +93,7 @@ export function useEmployees() {
             const mappedEmployee = mapEmployee(newEmployee);
 
             setEmployees(prev =>
-                sortByKey([...prev, mappedEmployee], 'fullName', 'ascending')
+                sortByKey([...prev, mappedEmployee], 'lastName', 'ascending')
             );
 
             showToast({

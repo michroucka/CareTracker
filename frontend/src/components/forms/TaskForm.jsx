@@ -23,7 +23,8 @@ export const TaskForm = React.forwardRef(({
                                                   initialData = null,
                                                   onSubmit,
                                                   isLoading = false,
-                                                  isReadOnly = false
+                                                  isReadOnly = false,
+                                                  organizationId = null,
                                               }, formRef) => {
     const [name, setName] = React.useState("");
     const [unitPrice, setUnitPrice] = React.useState(null);
@@ -71,7 +72,8 @@ export const TaskForm = React.forwardRef(({
             name: name,
             unitPrice: unitPrice,
             unitType: unitType,
-            doubleMeeting: doubleMeeting
+            doubleMeeting: doubleMeeting,
+            organizationId: organizationId || null,
         };
 
         if (onSubmit) {

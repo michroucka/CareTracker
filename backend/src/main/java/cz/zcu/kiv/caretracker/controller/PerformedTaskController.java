@@ -79,6 +79,23 @@ public class PerformedTaskController {
         performedTaskService.deletePerformedTask(id);
     }
 
+    @GetMapping("/payment-qr")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<byte[]> getPaymentQrCode(
+            @RequestParam Long clientId,
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
+        log.info("Fetching payment QR code for client: {}, month: {}, year: {}", clientId, month, year);
+        byte[] png = receiptService.generatePaymentQrCode(clientId, month, year);
+        if (png == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE)
+                .body(png);
+    }
+
     @GetMapping("/receipt")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
     public ResponseEntity<byte[]> getReceipt(

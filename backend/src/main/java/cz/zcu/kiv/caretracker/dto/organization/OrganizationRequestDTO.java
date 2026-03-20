@@ -9,5 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrganizationRequestDTO {
     private String name;
+    private Boolean active;
+    private String accountPrefix;
+    private String accountNumber;
+    private String bankCode;
     private Long managerId;
 }

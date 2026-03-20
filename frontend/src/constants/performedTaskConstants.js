@@ -19,5 +19,5 @@ export const calculatePrice = (task, unitCount) => {
         return Math.round(unitCount * task?.unitPrice / 60);
     }
 
-    return task ? unitCount * task?.unitPrice : 0;
+    return task ? Math.round(unitCount * task?.unitPrice) : 0;
 }

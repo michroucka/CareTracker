@@ -24,4 +24,8 @@ public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecif
 
     // Globální kontrola existence personalNumber (pro fallback)
     boolean existsByPersonalNumber(Long personalNumber);
+    boolean existsByDepartmentIdAndActiveTrue(Long departmentId);
+    long countByActiveTrueAndCaregiverId(Long caregiverId);
+    long countByActiveTrueAndDepartmentId(Long departmentId);
+    long countByActiveTrueAndOrganizationId(Long organizationId);
 }

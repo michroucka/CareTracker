@@ -12,5 +12,8 @@ public class OrganizationDTO {
     private Long id;
     private String name;
     private Boolean active;
+    private String accountPrefix;
+    private String accountNumber;
+    private String bankCode;
     private EmployeeSummaryDTO manager;
 }

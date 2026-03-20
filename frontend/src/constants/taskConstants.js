@@ -6,13 +6,6 @@ export const columns = [
     {name: "AKCE", key: "actions"},
 ];
 
-export const unitTypeTranslations = {
-    "HOUR": "hod",
-    "OCCURRENCE": "úkon",
-    "KM": "km",
-    "KG": "kg",
-}
-
 export const unitTypeLabels = {
     "HOUR": "Hodina",
     "OCCURRENCE": "Úkon",

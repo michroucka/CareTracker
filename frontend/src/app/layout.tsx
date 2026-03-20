@@ -4,7 +4,7 @@ import {Providers} from "./providers";
 export default function Layout({children}: {children: React.ReactNode}) {
     return (
         <Providers>
-            <div className="text-foreground bg-background">
+            <div className="min-h-screen flex flex-col text-foreground bg-background">
                 {children}
             </div>
         </Providers>

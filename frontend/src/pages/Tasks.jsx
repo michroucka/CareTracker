@@ -14,8 +14,19 @@ import {
     TableHeader,
     TableRow,
 } from "@heroui/react";
-import {Check, ChevronDown, Funnel, MoreVertical, Plus, Search, UserRound, UserRoundCheck, UserRoundX, X} from "lucide-react";
-import {useOrganizations} from "../hooks/useOrganizations.jsx";
+import {
+    Check,
+    ChevronDown, Clipboard, ClipboardCheck, ClipboardList, ClipboardX,
+    Eye,
+    Funnel,
+    MoreVertical,
+    Plus,
+    Search,
+    UserRound,
+    UserRoundCheck,
+    UserRoundX,
+    X
+} from "lucide-react";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {activeOptions} from '../constants/globalConstants.js';
 import {columns, unitTypeLabels} from '../constants/taskConstants.js';
@@ -29,9 +40,9 @@ import {TaskCreateModal} from "../components/modals/task/TaskCreateModal.jsx";
 import {TaskDetailModal} from "../components/modals/task/TaskDetailModal.jsx";
 import {TaskTerminateModal} from "../components/modals/task/TaskTerminateModal.jsx";
 
-function Employees() {
+function Tasks() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { user } = useAuth();
+    const { user, superadminOrg } = useAuth();
 
     // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
@@ -41,14 +52,8 @@ function Employees() {
         if (status === "all") return new Set(["true", "false"]);
         return new Set([status]);
     };
-    const getInitialOrganizationFilter = () => {
-        const org = searchParams.get("organization");
-        return org ? new Set([org]) : new Set();
-    };
-
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({
         column: "name",
         direction: "ascending",
@@ -65,7 +70,6 @@ function Employees() {
         terminateTask,
         activateTask
     } = useTasks();
-    const { organizations, fetchOrganizations } = useOrganizations();
     const hasLoadedMetadata = React.useRef(false);
     const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
     const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
@@ -94,14 +98,6 @@ function Employees() {
     }, [isMobile]);
 
     const hasSearchFilter = Boolean(filterValue);
-
-    // Options pro filtry z API endpointů (již seřazené v hooks)
-    const organizationOptions = React.useMemo(() => {
-        return organizations.map(org => ({
-            name: org.name,
-            key: org.name
-        }));
-    }, [organizations]);
 
     const filteredItems = React.useMemo(() => {
         let filteredTasks = [...tasks];
@@ -133,32 +129,16 @@ function Employees() {
         setFilterValue("");
     }, []);
 
-    // Handler pro změnu organization filtru (single select)
-    const handleOrganizationFilterChange = React.useCallback((keys) => {
-        setOrganizationFilter(new Set(keys));
-    }, []);
-
     // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
-
-    React.useEffect(() => {
-        // Načíst metadata pouze jednou (při prvním render s user)
-        if (!user || hasLoadedMetadata.current) {
-            return;
-        }
-
-        hasLoadedMetadata.current = true;
-        fetchOrganizations();
-    }, [user]);
 
     // Validace filtrů podle role uživatele
     React.useEffect(() => {
         if (!user) return;
 
         const allowedToSeeInactive = ["SUPERADMIN", "ADMIN"].includes(user.role);
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
 
         if (!allowedToSeeInactive && !activeFilter.has("true")) {
             setActiveFilter(new Set(["true"]));
@@ -166,27 +146,19 @@ function Employees() {
         if (!allowedToSeeInactive && activeFilter.size === 2) {
             setActiveFilter(new Set(["true"]));
         }
-
-        // Pouze SUPERADMIN může vybírat organizaci
-        if (!allowedToSelectOrg && organizationFilter.size > 0) {
-            setOrganizationFilter(new Set());
-        }
     }, [user]);
 
     // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
-        if (!user) return; // Počkat na načtení user
+        if (!user) return;
 
         const params = new URLSearchParams();
         const allowedToSeeInactive = ["SUPERADMIN", "ADMIN"].includes(user.role);
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
 
-        // Search filter
         if (filterValue) {
             params.set("search", filterValue);
         }
 
-        // Status filter - pouze pro oprávněné role
         if (allowedToSeeInactive) {
             if (activeFilter.size === 2) {
                 params.set("status", "all");
@@ -197,48 +169,23 @@ function Employees() {
             }
         }
 
-        // Organization filter - pouze pro SUPERADMIN
-        if (allowedToSelectOrg && organizationFilter.size > 0) {
-            params.set("organization", Array.from(organizationFilter)[0]);
-        }
-
-        // Aktualizovat URL bez vytvoření nového záznamu v historii
         setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, organizationFilter, user]);
+    }, [filterValue, activeFilter, user]);
 
     // Když se změní filtry, znovu načíst ukony s filtrem
     React.useEffect(() => {
-        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
-        if (user?.role === "SUPERADMIN") {
-            if (organizationFilter.size === 0) {
-                setTasks([]);
-                return;
-            }
-
-            if (organizations.length === 0) return;
-
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-            if (!selectedOrg) return;
-
-            // Sestavit filtry
-            const filters = {
-                organizationId: selectedOrg.id,
-                status: getStatusFromFilter(activeFilter)
-            };
-
-            fetchTasks(filters);
-        } else {
-            // Ostatní role
-            const filters = {
-                status: getStatusFromFilter(activeFilter),
-            };
-
-            fetchTasks(filters);
+        if (user?.role === "SUPERADMIN" && !superadminOrg) {
+            setTasks([]);
+            return;
         }
 
-    }, [organizationFilter, activeFilter, user, organizations]);
+        const filters = {
+            organizationId: superadminOrg?.id,
+            status: getStatusFromFilter(activeFilter)
+        };
+
+        fetchTasks(filters);
+    }, [superadminOrg, activeFilter, user]);
 
     // Helper funkce pro převod filtrů z Set na parametry
     function getStatusFromFilter(activeFilter) {
@@ -348,7 +295,6 @@ function Employees() {
 
     const handleFiltersChange = React.useCallback((filters) => {
         setActiveFilter(filters.activeFilter);
-        setOrganizationFilter(filters.organizationFilter);
     }, []);
 
     const topContent = React.useMemo(() => {
@@ -375,30 +321,6 @@ function Employees() {
                                 <Funnel className="size-4" />
                             </Button>
                         )}
-                        {user?.role === "SUPERADMIN" && (
-                            <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                        Organizace
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    aria-label="Organization Filter"
-                                    closeOnSelect={true}
-                                    selectedKeys={organizationFilter}
-                                    selectionMode="single"
-                                    onSelectionChange={handleOrganizationFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {organizationOptions.map((org) => (
-                                        <DropdownItem key={org.key}>
-                                            {org.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
                         {canAlterTask && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
@@ -407,7 +329,7 @@ function Employees() {
                                             className="size-4" />}
                                         variant="flat"
                                         className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                                     >
                                         Status
                                     </Button>
@@ -448,17 +370,15 @@ function Employees() {
     }, [
         filterValue,
         activeFilter,
-        organizationFilter,
         filteredItems.length,
         tasks.length,
         onSearchChange,
         onClear,
         activeOptions,
-        organizationOptions,
-        handleOrganizationFilterChange,
         handleOpenFiltersModal,
         canAlterTask,
         user,
+        superadminOrg,
     ]);
 
     const renderCell = React.useCallback((task, columnKey) => {
@@ -501,7 +421,7 @@ function Employees() {
                             <DropdownMenu>
                                 <DropdownSection showDivider={canAlterTask}>
                                     <DropdownItem key="view"
-                                                  startContent={<UserRound />}
+                                                  startContent={<ClipboardList />}
                                                   variant="light"
                                                   isLoading={isLoadingDetail}
                                                   onPress={() => handleOpenDetailModal(task.id)}
@@ -514,7 +434,7 @@ function Employees() {
                                     <DropdownSection>
                                         {task.active ? (
                                             <DropdownItem key="terminate"
-                                                          startContent={<UserRoundX />}
+                                                          startContent={<ClipboardX />}
                                                           variant="light"
                                                           color="danger"
                                                           onPress={() => handleOpenTerminateModal(task.id)}
@@ -523,7 +443,7 @@ function Employees() {
                                             </DropdownItem>
                                         ) : (
                                             <DropdownItem key="activate"
-                                                          startContent={<UserRoundCheck />}
+                                                          startContent={<ClipboardCheck />}
                                                           variant="light"
                                                           color="success"
                                                           onPress={() => handleActivateTask(task.id)}
@@ -542,8 +462,7 @@ function Employees() {
         }
     }, [canAlterTask]);
 
-    // Pro SUPERADMIN bez vybrané organizace není loading
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
     const shouldShowLoading = !isSuperadminWithoutOrg && loading;
 
     return (
@@ -576,8 +495,8 @@ function Employees() {
                     isLoading={shouldShowLoading}
                     loadingContent={<Spinner label="Načítání úkonů..." />}
                     emptyContent={
-                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
-                            ? "Vyberte prosím organizaci" : "Žádné úkony nenalezeny"
+                        isSuperadminWithoutOrg
+                            ? "Vyberte prosím organizaci v navigační liště" : "Žádné úkony nenalezeny"
                     }
                     items={sortedItems}>
                     {(item) => (
@@ -592,6 +511,7 @@ function Employees() {
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSubmit={handleCreateTask}
+                organizationId={superadminOrg?.id}
             />
 
             <TaskDetailModal
@@ -616,15 +536,14 @@ function Employees() {
                 onClose={handleCloseFiltersModal}
                 onSubmit={handleFiltersChange}
                 user={user}
+                superadminOrgSelected={!!superadminOrg}
                 showStatusFilter={canAlterTask}
                 initialActiveFilter={activeFilter}
-                initialOrganizationFilter={organizationFilter}
                 activeOptions={activeOptions}
-                organizationOptions={organizationOptions}
             />
         </>
     );
 }
 
-export default Employees;
+export default Tasks;
 

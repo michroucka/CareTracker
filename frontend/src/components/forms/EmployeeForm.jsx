@@ -85,7 +85,7 @@ export const EmployeeForm = React.forwardRef(({
         if (!firstName.trim()) newErrors.firstName = "Prosím zadejte jméno";
         if (!lastName.trim()) newErrors.lastName = "Prosím zadejte příjmení";
         if (!role.trim()) newErrors.role = "Prosím zadejte roli";
-        if (!departmentId) newErrors.departmentId = "Prosím vyberte oddělení";
+        if (!departmentId) newErrors.departmentId = "Prosím vyberte středisko";
 
         if (!doNotCreateAccount) {
             if (!email.trim()) newErrors.email = "Prosím zadejte email";
@@ -240,7 +240,7 @@ export const EmployeeForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Středisko"
-                            value={departments.find(d => d.id === departmentId)?.name || '-'}
+                            value={departments.find(d => d.id === departmentId)?.city || '-'}
                         />
                     ) : (
                         <Select
@@ -264,9 +264,9 @@ export const EmployeeForm = React.forwardRef(({
                                 <SelectItem
                                     key={dept.id.toString()}
                                     value={dept.id.toString()}
-                                    textValue={dept.name}
+                                    textValue={dept.city}
                                 >
-                                    {dept.name}
+                                    {dept.city}
                                 </SelectItem>
                             ))}
                         </Select>

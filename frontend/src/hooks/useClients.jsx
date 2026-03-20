@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import {getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage, post} from "../api/api.js";
+import {getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage} from "../api/api.js";
 import { showToast } from "../components/MyToast.jsx";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {CloudAlert, MailCheck, MailX, UserRoundCheck, UserRoundX} from "lucide-react";

@@ -15,7 +15,7 @@ import React from "react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
 import {calculatePrice, unitTypeTranslations} from "../../constants/performedTaskConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
-import {minYear} from "../../constants/globalConstants.js";
+import {MIN_YEAR} from "../../constants/globalConstants.js";
 
 /**
  * Reusable performed task form component used in both create and edit modals
@@ -425,7 +425,7 @@ export const PerformedTaskForm = React.forwardRef(({
                             }}
                             showMonthAndYearPickers
                             selectorIcon={<CalendarDays size={18} />}
-                            minValue={new CalendarDateTime(minYear, 1, 1, 0, 0)}
+                            minValue={new CalendarDateTime(MIN_YEAR, 1, 1, 0, 0)}
                             maxValue={(() => {
                                 const zonedNow = now(getLocalTimeZone());
                                 return new CalendarDateTime(

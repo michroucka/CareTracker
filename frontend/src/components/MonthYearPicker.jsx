@@ -8,9 +8,9 @@ import {
     SelectItem
 } from "@heroui/react";
 import { CalendarDays } from "lucide-react";
-import {minYear, monthsShort} from "../constants/globalConstants.js";
+import {MIN_YEAR, MONTHS_SHORT} from "../constants/globalConstants.js";
 
-export default function MonthYearPicker({ className = "", onChange, defaultValue }) {
+export default function MonthYearPicker({ className = "", onChange, defaultValue, isDisabled = false }) {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
 
@@ -18,7 +18,7 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
     const [selectedYear, setSelectedYear] = useState(defaultValue?.year ?? currentYear);
     const [isOpen, setIsOpen] = useState(false);
 
-    const years = Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i);
+    const years = Array.from({ length: currentYear - MIN_YEAR + 1 }, (_, i) => currentYear - i);
 
     return (
         <Popover isOpen={isOpen} onOpenChange={setIsOpen} placement="bottom">
@@ -27,8 +27,9 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                     variant="flat"
                     endContent={<CalendarDays className="size-4 ms-2" />}
                     className={`justify-between ${className}`}
+                    isDisabled={isDisabled}
                 >
-                    {monthsShort[selectedMonth]} {selectedYear}
+                    {MONTHS_SHORT[selectedMonth]} {selectedYear}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="p-3 w-[175px]">
@@ -54,7 +55,7 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                     </Select>
 
                     <div className="grid grid-cols-3 gap-2">
-                        {monthsShort.map((month, index) => (
+                        {MONTHS_SHORT.map((month, index) => (
                             <Button
                                 key={month}
                                 size="sm"

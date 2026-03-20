@@ -2,7 +2,7 @@ export const columns = [
     {name: "JMÉNO", key: "fullName", sortable: true},
     {name: "POHLAVÍ", key: "gender"},
     {name: "ADRESA", key: "address"},
-    {name: "ODDĚLENÍ", key: "department"},
+    {name: "STŘEDISKO", key: "department"},
     {name: "PEČOVATEL", key: "caregiver"},
     {name: "AKCE", key: "actions"},
 ];

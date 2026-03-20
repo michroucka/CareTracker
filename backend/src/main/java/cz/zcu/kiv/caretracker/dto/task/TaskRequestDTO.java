@@ -12,4 +12,5 @@ public class TaskRequestDTO {
     private Integer unitPrice;
     private String unitType;
     private Boolean doubleMeeting;
+    private Long organizationId;
 }

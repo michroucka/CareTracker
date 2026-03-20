@@ -24,6 +24,12 @@ public class Department {
     @Column(name = "postal_code", nullable = false, length = 6)
     private String postalCode;
 
+    @Column
+    private Integer departmentNumber;
+
+    @Column(nullable = false)
+    private Boolean active = Boolean.TRUE;
+
     @OneToMany(mappedBy = "department")
     @JsonIgnore
     private List<Employee> employees;

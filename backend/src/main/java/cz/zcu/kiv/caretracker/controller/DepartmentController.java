@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.controller;
 
+import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Department;
@@ -26,11 +27,12 @@ public class DepartmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<DepartmentDTO>> getAllDepartments(
-            @RequestParam(required = false) Long organizationId
+    public ResponseEntity<List<DepartmentDTO>> getDepartments(
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam(required = false) Boolean status
     ) {
-        log.info("Fetching all departments" + (organizationId != null ? " for organization: " + organizationId : ""));
-        List<DepartmentDTO> departments = departmentService.getAllDepartments(organizationId);
+        log.info("Fetching departments" + (organizationId != null ? " for organization: " + organizationId : ""));
+        List<DepartmentDTO> departments = departmentService.getDepartments(organizationId, status);
 
         return ResponseEntity.ok(departments);
     }
@@ -57,6 +59,22 @@ public class DepartmentController {
     public ResponseEntity<DepartmentDTO> updateDepartment(@PathVariable Long id, @RequestBody DepartmentRequestDTO dto) {
         log.info("Updating department with id: {}", id);
         Department updatedDepartment = departmentService.updateDepartment(id, dto);
+        return ResponseEntity.ok(departmentMapper.toDTO(updatedDepartment));
+    }
+
+    @PutMapping("/{id}/terminate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public ResponseEntity<DepartmentDTO> terminateDepartment(@PathVariable Long id) {
+        log.info("Terminating department with id: {}", id);
+        Department updatedDepartment = departmentService.terminateDepartment(id);
+        return ResponseEntity.ok(departmentMapper.toDTO(updatedDepartment));
+    }
+
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public ResponseEntity<DepartmentDTO> activateDepartment(@PathVariable Long id) {
+        log.info("Activating department with id: {}", id);
+        Department updatedDepartment = departmentService.activateDepartment(id);
         return ResponseEntity.ok(departmentMapper.toDTO(updatedDepartment));
     }
 }

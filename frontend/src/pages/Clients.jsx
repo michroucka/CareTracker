@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-    Button, DatePicker,
+    Button,
     Dropdown,
     DropdownItem,
     DropdownMenu,
@@ -23,7 +23,6 @@ import {
     MoreVertical,
     Plus,
     Search,
-    Send,
     UserRound,
     UserRoundCheck, UserRoundPlus,
     UserRoundX
@@ -32,7 +31,6 @@ import {useClients} from "../hooks/useClients.jsx";
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useTasks} from "../hooks/useTasks.jsx";
-import {useOrganizations} from "../hooks/useOrganizations.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, genderOptions, genderTranslations} from "../constants/clientConstants.js";
 import {activeOptions} from "../constants/globalConstants.js";
@@ -58,10 +56,6 @@ function Clients() {
         if (status === "all") return new Set(["true", "false"]);
         return new Set([status]);
     };
-    const getInitialOrganizationFilter = () => {
-        const org = searchParams.get("organization");
-        return org ? new Set([org]) : new Set();
-    };
     const getInitialDepartmentFilter = () => {
         const depts = searchParams.get("departments");
         if (!depts) return new Set(["all"]);
@@ -75,7 +69,6 @@ function Clients() {
 
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [organizationFilter, setOrganizationFilter] = React.useState(getInitialOrganizationFilter);
     const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
     const [caregiverFilter, setCaregiverFilter] = React.useState(getInitialCaregiverFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({
@@ -83,7 +76,7 @@ function Clients() {
         direction: "ascending",
     });
     const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
-    const { user } = useAuth();
+    const { user, superadminOrg } = useAuth();
     const {
         clients,
         setClients,
@@ -99,7 +92,6 @@ function Clients() {
         activateClientAccount
     } = useClients();
     const { departments, fetchDepartments } = useDepartments();
-    const { organizations, fetchOrganizations } = useOrganizations();
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
     const hasLoadedMetadata = React.useRef(false);
@@ -133,21 +125,13 @@ function Clients() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Options pro filtry z API endpointů (již seřazené v hooks)
-    const organizationOptions = React.useMemo(() => {
-        return organizations.map(org => ({
-            name: org.name,
-            key: org.name
-        }));
-    }, [organizations]);
-
     // Departments jsou již filtrovány backendem podle role uživatele a organizationId
     // Pro SUPERADMIN: načteno s filtrem organizationId z API
     // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
-            name: dept.name,
-            key: dept.name
+            city: dept.city,
+            key: dept.city
         }));
     }, [departments]);
 
@@ -159,7 +143,7 @@ function Clients() {
         // Filtruj podle departmentu
         if (!departmentFilter.has("all")) {
             filtered = filtered.filter(employee =>
-                departmentFilter.has(employee.department?.name)
+                departmentFilter.has(employee.department?.city)
             );
         }
 
@@ -201,11 +185,6 @@ function Clients() {
 
     const onClear = React.useCallback(() => {
         setFilterValue("");
-    }, []);
-
-    // Handler pro změnu organization filtru (single select)
-    const handleOrganizationFilterChange = React.useCallback((keys) => {
-        setOrganizationFilter(new Set(keys));
     }, []);
 
     // Handler pro změnu department filtru
@@ -252,45 +231,26 @@ function Clients() {
     }, [isMobile]);
 
     React.useEffect(() => {
-        // Načíst metadata pouze jednou (při prvním render s user)
-        if (!user || hasLoadedMetadata.current) {
-            return;
-        }
+        if (!user || hasLoadedMetadata.current) return;
+        if (user.role === "SUPERADMIN") return;
 
         hasLoadedMetadata.current = true;
-
-        // Pro SUPERADMIN načíst jen organizace, ostatní metadata až po výběru organizace
-        // Pro ostatní role načíst vše
-        if (user.role === "SUPERADMIN") {
-            fetchOrganizations();
-        } else {
-            fetchDepartments();
-            fetchOrganizations();
-            fetchEmployees();
-            fetchTasks();
-        }
+        fetchDepartments({ status: "true" });
+        fetchEmployees({ status: "true" });
+        fetchTasks({ status: "true" });
     }, [user]);
 
-    // Validace filtrů podle role uživatele
     React.useEffect(() => {
-        if (!user) return;
-
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
-
-        // CAREGIVER nemá přístup k active filtru - resetovat na "true" (jen aktivní)
-        if (!allowedToSeeInactive && !activeFilter.has("true")) {
-            setActiveFilter(new Set(["true"]));
+        if (user?.role !== "SUPERADMIN") return;
+        if (!superadminOrg) {
+            setClients([]);
+            return;
         }
-        if (!allowedToSeeInactive && activeFilter.size === 2) {
-            setActiveFilter(new Set(["true"]));
-        }
+        fetchDepartments({ organizationId: superadminOrg.id, status: "true" });
+        fetchEmployees({ organizationId: superadminOrg.id, status: "true" });
+        fetchTasks({ organizationId: superadminOrg.id, status: "true" });
+    }, [user, superadminOrg]);
 
-        // Pouze SUPERADMIN může vybírat organizaci
-        if (!allowedToSelectOrg && organizationFilter.size > 0) {
-            setOrganizationFilter(new Set());
-        }
-    }, [user]);
 
     React.useEffect(() => {
         // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
@@ -299,46 +259,32 @@ function Clients() {
         if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
             if (userDepartment) {
-                setDepartmentFilter(new Set([userDepartment.name]));
+                setDepartmentFilter(new Set([userDepartment.city]));
             }
         }
     }, [user, departments]);
 
     // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
-        if (!user) return; // Počkat na načtení user
+        if (!user) return;
 
         const params = new URLSearchParams();
-        const allowedToSeeInactive = ["SUPERADMIN", "ADMIN", "COORDINATOR"].includes(user.role);
-        const allowedToSelectOrg = user.role === "SUPERADMIN";
+        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
 
-        // Search filter
         if (filterValue) {
             params.set("search", filterValue);
         }
 
-        // Status filter - pouze pro oprávněné role
-        if (allowedToSeeInactive) {
-            if (activeFilter.size === 2) {
-                params.set("status", "all");
-            } else if (activeFilter.has("true")) {
-                params.set("status", "true");
-            } else if (activeFilter.has("false")) {
-                params.set("status", "false");
-            }
-        }
-        // Pro CAREGIVER neukladat status do URL (vždy jen aktivní)
-
-        // Organization filter - pouze pro SUPERADMIN
-        if (allowedToSelectOrg && organizationFilter.size > 0) {
-            params.set("organization", Array.from(organizationFilter)[0]);
+        if (activeFilter.size === 2) {
+            params.set("status", "all");
+        } else if (activeFilter.has("true")) {
+            params.set("status", "true");
+        } else if (activeFilter.has("false")) {
+            params.set("status", "false");
         }
 
-        // Pro SUPERADMIN: department a caregiver filtry jen když je vybraná organizace
-        const shouldSaveFilters = user.role !== "SUPERADMIN" || organizationFilter.size > 0;
+        const shouldSaveFilters = user.role !== "SUPERADMIN" || !!superadminOrg;
 
-        // Department filter - pouze pro SUPERADMIN a ADMIN (a jen když je vybraná organizace pro SUPERADMIN)
-        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
         if (allowedToFilterDepartment && shouldSaveFilters) {
             if (!departmentFilter.has("all")) {
                 params.set("departments", Array.from(departmentFilter).join(","));
@@ -346,9 +292,7 @@ function Clients() {
                 params.set("departments", "all");
             }
         }
-        // Pro CAREGIVER a COORDINATOR neukladat departments do URL (vždy jen jejich oddělení)
 
-        // Caregiver filter - jen když je vybraná organizace (pro SUPERADMIN)
         if (shouldSaveFilters) {
             if (!caregiverFilter.has("all")) {
                 params.set("caregivers", Array.from(caregiverFilter).join(","));
@@ -357,102 +301,45 @@ function Clients() {
             }
         }
 
-        // Aktualizovat URL bez vytvoření nového záznamu v historii
         setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, organizationFilter, departmentFilter, caregiverFilter, user]);
-
-    // Pro SUPERADMIN načíst metadata když vybere organizaci
-    React.useEffect(() => {
-        if (user?.role !== "SUPERADMIN") return;
-        if (organizations.length === 0) return;
-        if (organizationFilter.size === 0) {
-            // Pokud není vybraná organizace, vyčisti jen clients (ne metadata)
-            setClients([]);
-            return;
-        }
-
-        const selectedOrgName = Array.from(organizationFilter)[0];
-        const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-        if (!selectedOrg) return;
-
-        // Načíst metadata s filtrem podle vybrané organizace
-        fetchDepartments({ organizationId: selectedOrg.id });
-        fetchEmployees({ organizationId: selectedOrg.id });
-        fetchTasks({ organizationId: selectedOrg.id });
-    }, [user, organizations, organizationFilter]);
+    }, [filterValue, activeFilter, departmentFilter, caregiverFilter, user, superadminOrg]);
 
     // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
-    const prevOrganizationFilter = React.useRef(organizationFilter);
+    const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
         if (user?.role !== "SUPERADMIN") return;
 
-        // Zkontroluj jestli se organizace změnila (ne jen při prvním renderu)
-        if (prevOrganizationFilter.current.size > 0 || organizationFilter.size > 0) {
-            const prevOrg = Array.from(prevOrganizationFilter.current)[0];
-            const currentOrg = Array.from(organizationFilter)[0];
-
-            // Pokud se organizace změnila nebo byla odvolána, resetuj filtry
-            if (prevOrg !== currentOrg) {
-                setDepartmentFilter(new Set(["all"]));
-                setCaregiverFilter(new Set(["all"]));
-            }
+        if (prevSuperadminOrgId.current !== superadminOrg?.id) {
+            setDepartmentFilter(new Set(["all"]));
+            setCaregiverFilter(new Set(["all"]));
         }
 
-        prevOrganizationFilter.current = organizationFilter;
-    }, [user, organizationFilter]);
+        prevSuperadminOrgId.current = superadminOrg?.id;
+    }, [user, superadminOrg]);
 
     // Když se změní filtry, znovu načíst klienty s filtrem
     React.useEffect(() => {
-        // Pro SUPERADMIN: počkej na metadata a vybranou organizaci
         if (user?.role === "SUPERADMIN") {
-            if (organizations.length === 0 || organizationFilter.size === 0) return;
+            if (!superadminOrg) return;
             if (departments.length === 0 || employees.length === 0) return;
         } else {
-            // Pro ostatní role: počkej na metadata
             if (departments.length === 0 || employees.length === 0) return;
         }
 
-        // Departments jsou již filtrovány backendem podle organizationId
-        // Employees jsou již filtrovány backendem podle organizationId
-        // Filtrujeme pouze employees podle departmentu (pro UI účely)
         let currentFilteredEmployees = [...employees];
         if (!departmentFilter.has("all")) {
-            currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.name));
+            currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.city));
         }
 
-        if (user?.role === "SUPERADMIN") {
-            // Superadmin musi vybrat organization
-            if (organizationFilter.size === 0) {
-                // Pokud není vybraná organizace, smaž data
-                setClients([]);
-                return;
-            }
+        const filters = {
+            organizationId: superadminOrg?.id,
+            status: getStatusFromFilter(activeFilter),
+            departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
+            caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
+        };
 
-            const selectedOrgName = Array.from(organizationFilter)[0];
-            const selectedOrg = organizations.find(org => org.name === selectedOrgName);
-
-            if (!selectedOrg) return;
-
-            // Sestavit filtry
-            const filters = {
-                organizationId: selectedOrg.id,
-                status: getStatusFromFilter(activeFilter),
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
-                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
-            };
-
-            fetchClients(filters);
-        } else {
-            // Ostatní role
-            const filters = {
-                status: getStatusFromFilter(activeFilter),
-                departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
-                caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
-            };
-
-            fetchClients(filters);
-        }
-    }, [organizationFilter, activeFilter, departmentFilter, caregiverFilter, user, organizations, departments, employees]);
+        fetchClients(filters);
+    }, [superadminOrg, activeFilter, departmentFilter, caregiverFilter, user, departments, employees]);
 
     // Helper funkce pro převod filtrů z Set na parametry
     function getStatusFromFilter(activeFilter) {
@@ -468,9 +355,9 @@ function Clients() {
         if (departmentFilter.has("all")) {
             return undefined;
         }
-        // Převést názvy oddělení na ID
+        // Převést názvy středisek na ID
         return departments
-            .filter(dept => departmentFilter.has(dept.name))
+            .filter(dept => departmentFilter.has(dept.city))
             .map(dept => dept.id);
     }
 
@@ -628,7 +515,6 @@ function Clients() {
 
     const handleFiltersChange = React.useCallback((filters) => {
         setActiveFilter(filters.activeFilter);
-        setOrganizationFilter(filters.organizationFilter);
         setDepartmentFilter(filters.departmentFilter);
         setCaregiverFilter(filters.caregiverFilter);
     }, []);
@@ -655,31 +541,7 @@ function Clients() {
                         >
                             <Funnel className="size-4" />
                         </Button>
-                        {user?.role === "SUPERADMIN" && (
-                            <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button endContent={<ChevronDown className="size-4" />} variant="flat" className="text-foreground">
-                                        Organizace
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    aria-label="Organization Filter"
-                                    closeOnSelect={true}
-                                    selectedKeys={organizationFilter}
-                                    selectionMode="single"
-                                    onSelectionChange={handleOrganizationFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {organizationOptions.map((org) => (
-                                        <DropdownItem key={org.key}>
-                                            {org.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {canAlterClient && (
+                        {user?.role !== "CLIENT" && (
                             <Dropdown>
                                 <DropdownTrigger className="hidden sm:flex">
                                     <Button
@@ -687,7 +549,7 @@ function Clients() {
                                             className="size-4" />}
                                         variant="flat"
                                         className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                                     >
                                         Status
                                     </Button>
@@ -717,9 +579,9 @@ function Clients() {
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
                                         className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                                     >
-                                        Oddělení
+                                        Středisko
                                     </Button>
                                 </DropdownTrigger>
                                 <DropdownMenu
@@ -734,7 +596,7 @@ function Clients() {
                                     <DropdownItem key="all">Všechny</DropdownItem>
                                     {departmentOptions.map((dept) => (
                                         <DropdownItem key={dept.key}>
-                                            {dept.name}
+                                            {dept.city}
                                         </DropdownItem>
                                     ))}
                                 </DropdownMenu>
@@ -747,7 +609,7 @@ function Clients() {
                                     endContent={<ChevronDown className="size-4" />}
                                     variant="flat"
                                     className="text-foreground"
-                                    isDisabled={user?.role === "SUPERADMIN" && organizationFilter.size === 0}
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                                 >
                                     Pečovatel
                                 </Button>
@@ -788,7 +650,6 @@ function Clients() {
     }, [
         filterValue,
         activeFilter,
-        organizationFilter,
         departmentFilter,
         caregiverFilter,
         filteredItems.length,
@@ -797,15 +658,14 @@ function Clients() {
         onClear,
         genderOptions,
         activeOptions,
-        organizationOptions,
         departmentOptions,
         caregiverOptions,
-        handleOrganizationFilterChange,
         handleDepartmentFilterChange,
         handleCaregiverFilterChange,
         handleOpenFiltersModal,
         canAlterClient,
         user,
+        superadminOrg,
     ]);
 
     const renderCell = React.useCallback((client, columnKey) => {
@@ -833,7 +693,7 @@ function Clients() {
             case "department":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue?.name || "-"}</p>
+                        <p className="text-small">{cellValue?.city || "-"}</p>
                     </div>
                 );
             case "caregiver":
@@ -942,8 +802,7 @@ function Clients() {
         }
     }, [loading, departments.length, employees.length]);
 
-    // Pro SUPERADMIN bez vybrané organizace není loading (zobrazí se "Vyberte prosím organizaci")
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && organizationFilter.size === 0;
+    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
     const isLoadingMetadata = departments.length === 0 || employees.length === 0;
     const isLoading = !isSuperadminWithoutOrg && (loading || isLoadingMetadata || !hasLoadedData.current);
 
@@ -974,8 +833,8 @@ function Clients() {
                     isLoading={isLoading}
                     loadingContent={<Spinner label="Načítání klientů..." />}
                     emptyContent={
-                        (user?.role === "SUPERADMIN" && organizationFilter.size === 0)
-                            ? "Vyberte prosím organizaci" : "Žádní klienti nenalezeni"
+                        isSuperadminWithoutOrg
+                            ? "Vyberte prosím organizaci v navigační liště" : "Žádní klienti nenalezeni"
                     }
                     items={sortedItems}
                 >
@@ -1038,14 +897,12 @@ function Clients() {
                 onClose={handleCloseFiltersModal}
                 onSubmit={handleFiltersChange}
                 user={user}
-                showMonthYearFilter
+                superadminOrgSelected={!!superadminOrg}
                 showStatusFilter={canAlterClient}
                 initialActiveFilter={activeFilter}
-                initialOrganizationFilter={organizationFilter}
                 initialDepartmentFilter={departmentFilter}
                 initialCaregiverFilter={caregiverFilter}
                 activeOptions={activeOptions}
-                organizationOptions={organizationOptions}
                 departmentOptions={departmentOptions}
                 caregiverOptions={caregiverOptions}
             />

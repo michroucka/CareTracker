@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DepartmentSummaryDTO {
     private Long id;
-    private String name;
+    private String city;
     private Long organizationId;
 }

@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import React from "react";
 import {TaskForm} from "../../forms/TaskForm.jsx";
 
-export function TaskCreateModal({ isOpen, onClose, onSubmit}) {
+export function TaskCreateModal({ isOpen, onClose, onSubmit, organizationId = null }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const formRef = React.useRef();
 
@@ -48,6 +48,7 @@ export function TaskCreateModal({ isOpen, onClose, onSubmit}) {
                         ref={formRef}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
+                        organizationId={organizationId}
                     />
                 </ModalBody>
                 <ModalFooter className="justify-between">

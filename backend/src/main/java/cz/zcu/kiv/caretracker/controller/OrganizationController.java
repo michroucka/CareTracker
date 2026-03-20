@@ -26,9 +26,9 @@ public class OrganizationController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<List<OrganizationDTO>> getAllOrganizations() {
-        log.info("Fetching all organizations");
-        List<OrganizationDTO> organizations = organizationService.getAllOrganizations();
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@RequestParam(required = false) Boolean status) {
+        log.info("Fetching organizations");
+        List<OrganizationDTO> organizations = organizationService.getOrganizations(status);
 
         return ResponseEntity.ok(organizations);
     }
