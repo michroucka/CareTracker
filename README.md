@@ -34,8 +34,12 @@
 ### Databáze
 - [PostgreSQL](https://www.postgresql.org/) – relační databáze  
 - [Flyway](https://flywaydb.org/) – správa a verzování databázových migrací
-### Testování a build
-- TBD
+### Testování
+- [JUnit 5](https://junit.org/junit5/) – unit testy pro backend (entity, service vrstva)
+- [Mockito](https://site.mockito.org/) – mockování závislostí v service testech
+- [Spring Boot Test](https://docs.spring.io/spring-boot/docs/current/reference/html/test-auto-configuration.html) – integrační testy controlleru (`@WebMvcTest`)
+- [Spring Security Test](https://docs.spring.io/spring-security/reference/servlet/test/index.html) – testování autorizace (`@WithMockUser`)
+- [Vitest](https://vitest.dev/) – unit testy frontendových utility funkcí
 
 ### Nasazení
 - [Docker](https://www.docker.com/) – kontejnerizace backendu, frontendu a databáze  
