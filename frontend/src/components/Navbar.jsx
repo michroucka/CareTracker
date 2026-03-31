@@ -118,7 +118,7 @@ export default function AppNavbar() {
             shouldHideOnScroll
             onMenuOpenChange={setIsMenuOpen}
             maxWidth="full"
-            className="px-0 lg:px-20 xl:px-32 2xl:px-48 shadow-md"
+            className="px-0 2xl:px-48 shadow-md"
         >
             <NavbarContent>
                 <NavbarBrand className="cursor-pointer"
