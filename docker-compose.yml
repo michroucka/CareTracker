@@ -48,22 +48,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  # DB administration interface
-  pgadmin:
-    container_name: caretracker-pgadmin
-    image: dpage/pgadmin4
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-      - ./pgadmin_servers.json:/pgadmin4/servers.json
-    depends_on:
-      - db
-
 volumes:
   node_modules_cache:
   pgdata:
-  pgadmin_data:
