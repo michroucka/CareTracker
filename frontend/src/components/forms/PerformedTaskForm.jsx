@@ -4,7 +4,7 @@ import {
     Textarea,
     DatePicker,
     Form,
-    NumberInput,
+    Input,
     Tooltip,
     Autocomplete,
     AutocompleteItem,
@@ -323,7 +323,7 @@ export const PerformedTaskForm = React.forwardRef(({
                             endContent={unitTypeTranslations[initialData?.task?.unitType] || ''}
                         />
                     ) : (
-                        <NumberInput
+                        <Input
                             isRequired
                             isDisabled={isDisabled}
                             isInvalid={!!errors.unitCount}
@@ -332,18 +332,13 @@ export const PerformedTaskForm = React.forwardRef(({
                             labelPlacement="inside"
                             name="unitCount"
                             type="number"
-                            value={unitCount}
-                            onValueChange={setUnitCount}
-                            minValue={allowDecimals ? 0.01 : 1}
+                            value={unitCount ?? ""}
+                            min={allowDecimals ? 0.01 : 1}
                             step={allowDecimals ? 0.01 : 1}
-                            formatOptions={allowDecimals ? {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 2
-                            } : {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
+                            onChange={(e) => {
+                                const val = allowDecimals ? parseFloat(e.target.value) : parseInt(e.target.value);
+                                setUnitCount(isNaN(val) ? null : val);
                             }}
-                            isWheelDisabled
                         />
                     )}
 
