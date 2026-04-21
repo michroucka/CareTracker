@@ -22,7 +22,6 @@ public class DailyRecord {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 

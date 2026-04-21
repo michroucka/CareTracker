@@ -153,11 +153,11 @@ function DashboardContent() {
             ) : (
                 <>
                     {/* Statistiky */}
-                    <div className="grid lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-4">
                         {isCaregiver && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Activity className="w-6 h-6 text-primary" />
                                         </div>
@@ -168,7 +168,7 @@ function DashboardContent() {
                                     </CardBody>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -178,8 +178,8 @@ function DashboardContent() {
                                         </div>
                                     </CardBody>
                                 </Card>
-                                <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                <Card className="col-span-2 lg:col-span-1">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <Clock className="w-6 h-6 text-secondary" />
                                         </div>
@@ -196,7 +196,7 @@ function DashboardContent() {
                         {isCoordinator && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Activity className="w-6 h-6 text-primary" />
                                         </div>
@@ -207,7 +207,7 @@ function DashboardContent() {
                                     </CardBody>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -217,8 +217,8 @@ function DashboardContent() {
                                         </div>
                                     </CardBody>
                                 </Card>
-                                <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                <Card className="col-span-2 lg:col-span-1">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>
@@ -233,7 +233,7 @@ function DashboardContent() {
                         {isAdmin && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -244,7 +244,7 @@ function DashboardContent() {
                                     </CardBody>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Briefcase className="w-6 h-6 text-primary" />
                                         </div>
@@ -254,8 +254,8 @@ function DashboardContent() {
                                         </div>
                                     </CardBody>
                                 </Card>
-                                <Card>
-                                    <CardBody className="flex flex-row items-center gap-4 p-4">
+                                <Card className="col-span-2 lg:col-span-1">
+                                    <CardBody className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>

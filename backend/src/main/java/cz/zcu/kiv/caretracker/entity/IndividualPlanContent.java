@@ -35,63 +35,48 @@ public class IndividualPlanContent {
     @Column(name = "planned_update_date", nullable = false)
     private LocalDate plannedUpdateDate;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String likes;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String dislikes;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String strengths;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String aspirations;
 
-    @Lob
     @Column(name = "life_path", columnDefinition = "TEXT")
     private String lifePath;
 
-    @Lob
     @Column(name = "additional_info", columnDefinition = "TEXT")
     private String additionalInfo;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String hygiene;
 
-    @Lob
     @Column(name = "self_care", columnDefinition = "TEXT")
     private String selfCare;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String mobility;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String diet;
 
-    @Lob
     @Column(name = "home_care", columnDefinition = "TEXT")
     private String homeCare;
 
-    @Lob
     @Column(name = "social_contact", columnDefinition = "TEXT")
     private String socialContact;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String activities;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String health;
 
-    @Lob
     @Column(name = "exercising_rights", columnDefinition = "TEXT")
     private String exercisingRights;
 }

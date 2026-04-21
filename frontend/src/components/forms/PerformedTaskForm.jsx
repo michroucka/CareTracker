@@ -390,9 +390,10 @@ export const PerformedTaskForm = React.forwardRef(({
                 </div>
 
                 {/* Date Picker and Price*/}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-5 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField
+                            className="col-span-3"
                             label="Datum"
                             value={date ? new Date(date).toLocaleString('cs-CZ', {
                                 year: 'numeric',
@@ -436,6 +437,7 @@ export const PerformedTaskForm = React.forwardRef(({
                             classNames={{
                                 segment: "text-default-500"
                             }}
+                            className="col-span-3"
                         />
                     )}
 
@@ -446,6 +448,7 @@ export const PerformedTaskForm = React.forwardRef(({
                         type="number"
                         endContent="Kč"
                         isDisabled={isDisabled}
+                        className="col-span-2"
                     />
                 </div>
 
