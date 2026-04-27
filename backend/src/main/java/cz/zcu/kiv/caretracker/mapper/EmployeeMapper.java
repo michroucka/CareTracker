@@ -23,7 +23,7 @@ public class EmployeeMapper {
     @Autowired
     OrganizationMapper organizationMapper;
     /**
-     * Převede Employee entitu na EmployeeDTO
+     * Maps an {@link Employee} entity to an {@link EmployeeDTO}, including user account info if present.
      */
     public EmployeeDTO toDTO(Employee employee) {
         if (employee == null) {
@@ -37,7 +37,6 @@ public class EmployeeMapper {
         dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
         dto.setActive(employee.getActive());
 
-        // Mapuj user info z připojeného User účtu
         if (employee.getUser() != null) {
             User user = employee.getUser();
             dto.setEmail(user.getEmail());
@@ -50,9 +49,7 @@ public class EmployeeMapper {
         return dto;
     }
 
-    /**
-     * Převede Employee entitu na EmployeeSummaryDTO (pouze základní informace)
-     */
+    /** Maps an {@link Employee} entity to a minimal {@link EmployeeSummaryDTO} (ID and full name only). */
     public EmployeeSummaryDTO toSummaryDTO(Employee employee) {
         if (employee == null) {
             return null;

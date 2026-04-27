@@ -11,8 +11,8 @@ export function useIndividualPlan() {
     const [loading, setLoading] = useState(false);
 
     /**
-     * Načte historii verzí individuálního plánu
-     * Vrací prázdné pole, pokud klient nemá žádný IP
+     * Fetches the version history for a client's individual plan.
+     * Returns an empty array when the client has no plan (not an error).
      */
     const fetchVersions = async (clientId) => {
         try {
@@ -21,15 +21,15 @@ export function useIndividualPlan() {
             return response;
         } catch (error) {
             console.error("Error fetching individual plan history:", error);
-            // Pokud IP neexistuje, není to chyba - jen prázdná historie
+            // No plan yet is a valid state, not an error
             setVersions([]);
             return [];
         }
     };
 
     /**
-     * Načte aktuální individuální plán klienta
-     * Vrací null pokud klient nemá IP (status 404)
+     * Fetches the current individual plan for a client.
+     * Returns null when the client has no plan (404 is treated as a normal "no plan" state).
      */
     const fetchIndividualPlan = async (clientId) => {
         try {
@@ -39,7 +39,7 @@ export function useIndividualPlan() {
             setCurrentContent(response?.currentContent || null);
             return response;
         } catch (error) {
-            // 404 = klient nemá IP, není to chyba
+            // 404 means the client has no plan — treat as empty, not as an error
             if (error.message && (error.message.includes('404') || error.message.toLowerCase().includes('not found'))) {
                 setIndividualPlan(null);
                 setCurrentContent(null);
@@ -54,7 +54,9 @@ export function useIndividualPlan() {
     };
 
     /**
-     * Načte konkrétní verzi individuálního plánu
+     * Fetches a specific version of a client's individual plan.
+     * @param {number} clientId
+     * @param {number} versionNumber
      */
     const fetchIndividualPlanByVersion = async (clientId, versionNumber) => {
         try {
@@ -72,9 +74,9 @@ export function useIndividualPlan() {
     };
 
     /**
-     * Vytvoří první verzi individuálního plánu pro klienta
-     * @param {number} clientId - ID klienta
-     * @param {object} data - IndividualPlanContentRequestDTO
+     * Creates the first version of an individual plan for a client.
+     * @param {number} clientId
+     * @param {Object} data IndividualPlanContentRequestDTO
      */
     const createIndividualPlan = async (clientId, data) => {
         try {
@@ -84,7 +86,6 @@ export function useIndividualPlan() {
             setCurrentContent(response?.currentContent || null);
             showToast({ title: "Individuální plán byl úspěšně vytvořen", icon: <FilePlus />, color: "success" });
 
-            // Refresh historie verzí
             await fetchVersions(clientId);
 
             return response;
@@ -98,10 +99,10 @@ export function useIndividualPlan() {
     };
 
     /**
-     * Vytvoří novou verzi individuálního plánu
-     * Backend automaticky vytvoří novou verzi s incrementovaným číslem
-     * @param {number} clientId - ID klienta
-     * @param {object} data - IndividualPlanContentRequestDTO
+     * Creates a new version of an existing individual plan.
+     * The backend auto-increments the version number.
+     * @param {number} clientId
+     * @param {Object} data IndividualPlanContentRequestDTO
      */
     const updateIndividualPlan = async (clientId, data) => {
         try {
@@ -111,7 +112,6 @@ export function useIndividualPlan() {
             setCurrentContent(response?.currentContent || null);
             showToast({ title: "Nová verze individuálního plánu byla úspěšně vytvořena", icon: <FileEdit />, color: "success" });
 
-            // Refresh historie verzí
             await fetchVersions(clientId);
 
             return response;
@@ -125,9 +125,9 @@ export function useIndividualPlan() {
     };
 
     /**
-     * Přidá denní záznam k individuálnímu plánu
-     * @param {number} clientId - ID klienta
-     * @param {object} data - DailyRecordRequestDTO { date, content }
+     * Adds a daily record to a client's individual plan.
+     * @param {number} clientId
+     * @param {Object} data DailyRecordRequestDTO { date, content }
      */
     const addDailyRecord = async (clientId, data) => {
         try {
@@ -147,14 +147,14 @@ export function useIndividualPlan() {
     };
 
     /**
-     * Odstraní denní záznam z individuálního plánu
-     * @param {number} clientId - ID klienta
-     * @param {number} dailyRecordId - ID denního záznamu
+     * Removes a daily record from a client's individual plan.
+     * The backend returns the updated IndividualPlanDTO as the response body.
+     * @param {number} clientId
+     * @param {number} dailyRecordId
      */
     const removeDailyRecord = async (clientId, dailyRecordId) => {
         try {
             setLoading(true);
-            // Backend vrací updatovaný IndividualPlanDTO
             const response = await deleteJSON(`/clients/${clientId}/individual-plan/daily-records/${dailyRecordId}`);
             const updatedPlan = await response.json();
 
@@ -172,9 +172,7 @@ export function useIndividualPlan() {
         }
     };
 
-    /**
-     * Resetuje stav hooku (užitečné při změně klienta)
-     */
+    /** Resets all hook state, e.g. when the selected client changes. */
     const reset = () => {
         setVersions([]);
         setIndividualPlan(null);
@@ -183,13 +181,10 @@ export function useIndividualPlan() {
     };
 
     return {
-        // State
         versions,
         individualPlan,
         currentContent,
         loading,
-
-        // Methods
         fetchVersions,
         fetchIndividualPlan,
         fetchIndividualPlanByVersion,

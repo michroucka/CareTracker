@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for billable service catalog management.
+ */
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {

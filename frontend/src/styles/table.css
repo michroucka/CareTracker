@@ -1,6 +1,6 @@
 /* HeroUI Table custom styles */
 
-/* Zakázat všechny defaultní HeroUI hover/transition efekty */
+/* Disable all default HeroUI hover/transition effects on table rows */
 table tbody tr,
 table tbody tr td,
 table tbody tr td:hover {
@@ -8,18 +8,18 @@ table tbody tr td:hover {
     transition: none !important;
 }
 
-/* Nastavit výchozí průhledné pozadí pro ::before */
+/* Default transparent background for ::before pseudo-element */
 table tbody tr td::before {
     background-color: transparent !important;
     transition: background-color 150ms ease;
 }
 
-/* Hover stav - když není selected */
+/* Hover state — only when row is not selected */
 table tbody tr[data-hover="true"]:not([aria-selected="true"]) td::before {
     background-color: hsl(var(--heroui-content2)) !important;
 }
 
-/* Selected stav */
+/* Selected state */
 table tbody tr[aria-selected="true"] td::before {
     background-color: hsl(var(--heroui-content3)) !important;
 }
@@ -27,4 +27,3 @@ table tbody tr[aria-selected="true"] td::before {
 tr:first-of-type {
     box-shadow: none !important;
 }
-

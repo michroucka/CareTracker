@@ -3,9 +3,8 @@ package cz.zcu.kiv.caretracker.dto.individualPlan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
-import java.util.List;
+
 
 @Data
 @NoArgsConstructor
@@ -14,7 +13,6 @@ public class IndividualPlanContentRequestDTO {
     private LocalDate processedDate;
     private LocalDate plannedUpdateDate;
 
-    // Osobní údaje
     private String likes;
     private String dislikes;
     private String strengths;
@@ -22,7 +20,6 @@ public class IndividualPlanContentRequestDTO {
     private String lifePath;
     private String additionalInfo;
 
-    // Oblasti péče
     private String hygiene;
     private String selfCare;
     private String mobility;

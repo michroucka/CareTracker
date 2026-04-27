@@ -8,18 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Abstraktní service třída poskytující společnou funkcionalitu pro filtrování dat podle role uživatele.
- * Eliminuje duplikaci kódu napříč service vrstvou.
+ * Abstract service base class providing shared role-based data filtering logic.
+ * Eliminates duplication across the service layer by centralizing permission checks
+ * and role-aware query delegation.
  *
- * @param <T> Typ entity
- * @param <D> Typ DTO
+ * @param <T> entity type
+ * @param <D> DTO type
  */
 public abstract class BaseRoleFilteringService<T, D> {
 
@@ -27,11 +27,11 @@ public abstract class BaseRoleFilteringService<T, D> {
     protected UserRepository userRepository;
 
     /**
-     * Vrací aktuálně přihlášeného uživatele.
+     * Returns the currently authenticated user.
      *
-     * @return Přihlášený uživatel
-     * @throws SecurityException Pokud uživatel není autentizován
-     * @throws UsernameNotFoundException Pokud uživatel nebyl nalezen v databázi
+     * @return the authenticated user
+     * @throws SecurityException if no authenticated user is present
+     * @throws UsernameNotFoundException if the user is not found in the database
      */
     protected User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -45,13 +45,12 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Validuje, že uživatel má přístup k entitě na základě organizace.
-     * - SUPERADMIN: Má přístup ke všemu
-     * - ADMIN/COORDINATOR/CAREGIVER: Musí být ze stejné organizace
+     * Validates that the current user has access to the given entity based on organization membership.
+     * SUPERADMIN has unrestricted access; all other roles must belong to the same organization.
      *
-     * @param entity Entity k validaci
-     * @param organizationIdGetter Funkce pro získání organizationId z entity
-     * @throws SecurityException Pokud uživatel nemá přístup k entitě
+     * @param entity the entity to validate access for
+     * @param organizationIdGetter extracts the entity's organization ID
+     * @throws SecurityException if the user does not have access
      */
     protected <E> void validateOrganizationAccess(E entity, Function<E, Long> organizationIdGetter) {
         if (entity == null) {
@@ -67,12 +66,11 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Validuje, že uživatel má přístup k organizaci podle ID.
-     * - SUPERADMIN: Má přístup ke všemu
-     * - ADMIN/COORDINATOR/CAREGIVER: Musí být ze stejné organizace
+     * Validates that the current user has access to the given organization.
+     * SUPERADMIN has unrestricted access; all other roles must belong to the same organization.
      *
-     * @param organizationId ID organizace k validaci
-     * @throws SecurityException Pokud uživatel nemá přístup k této organizaci
+     * @param organizationId the organization ID to validate
+     * @throws SecurityException if the user does not belong to this organization
      */
     protected void validateOrganizationId(Long organizationId) {
         if (organizationId == null) {
@@ -82,12 +80,10 @@ public abstract class BaseRoleFilteringService<T, D> {
         User user = getCurrentUser();
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             return;
         }
 
-        // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
             throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
         }
@@ -100,15 +96,14 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Validuje, že uživatel má přístup k entitě na základě organizace a departmentu.
-     * - SUPERADMIN: Má přístup ke všemu
-     * - ADMIN: Musí být ze stejné organizace
-     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     * Validates that the current user has access to the given entity based on organization and department.
+     * SUPERADMIN has unrestricted access; ADMIN must belong to the same organization;
+     * COORDINATOR and CAREGIVER must belong to the same department.
      *
-     * @param entity Entity k validaci
-     * @param organizationIdGetter Funkce pro získání organizationId z entity
-     * @param departmentIdGetter Funkce pro získání departmentId z entity
-     * @throws SecurityException Pokud uživatel nemá přístup k entitě
+     * @param entity the entity to validate access for
+     * @param organizationIdGetter extracts the entity's organization ID
+     * @param departmentIdGetter extracts the entity's department ID
+     * @throws SecurityException if the user does not have access
      */
     protected <E> void validateDepartmentAccess(
             E entity,
@@ -130,14 +125,13 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Validuje, že uživatel má přístup k departmentu podle ID.
-     * - SUPERADMIN: Má přístup ke všemu
-     * - ADMIN: Musí být ze stejné organizace
-     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     * Validates that the current user has access to the given department.
+     * SUPERADMIN has unrestricted access; ADMIN must belong to the same organization;
+     * COORDINATOR and CAREGIVER must belong to the same department.
      *
-     * @param departmentId ID departmentu k validaci (může být null)
-     * @param organizationId ID organizace departmentu
-     * @throws SecurityException Pokud uživatel nemá přístup k tomuto departmentu
+     * @param departmentId the department ID to validate (may be null)
+     * @param organizationId the organization the department belongs to
+     * @throws SecurityException if the user does not have access
      */
     protected void validateDepartmentId(Long departmentId, Long organizationId) {
         if (organizationId == null) {
@@ -147,29 +141,24 @@ public abstract class BaseRoleFilteringService<T, D> {
         User user = getCurrentUser();
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             return;
         }
 
-        // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
             throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
         }
 
         Long userOrgId = user.getEmployee().getOrganization().getId();
 
-        // Kontrola organizace
         if (!userOrgId.equals(organizationId)) {
             throw new SecurityException("Přístup odepřen: entita patří do jiné organizace");
         }
 
-        // ADMIN má přístup ke všemu v rámci organizace
         if (role == UserRole.ADMIN) {
             return;
         }
 
-        // COORDINATOR a CAREGIVER musí být ze stejného departmentu
         if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
             if (user.getEmployee().getDepartment() == null) {
                 throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
@@ -184,16 +173,13 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Validuje, že uživatel má oprávnění upravovat danou entitu.
-     * Používá stejnou logiku jako getEntityByIdWithPermissionCheck.
-     * - SUPERADMIN: Má přístup ke všemu
-     * - ADMIN: Musí být ze stejné organizace
-     * - COORDINATOR/CAREGIVER: Musí být ze stejného departmentu
+     * Validates that the current user is allowed to mutate the given entity.
+     * Uses the same department-level access logic as {@link #validateDepartmentAccess}.
      *
-     * @param entity Entity k validaci
-     * @param organizationIdGetter Funkce pro získání organizationId z entity
-     * @param departmentIdGetter Funkce pro získání departmentId z entity
-     * @throws SecurityException Pokud uživatel nemá oprávnění upravovat tuto entitu
+     * @param entity the entity to check write access for
+     * @param organizationIdGetter extracts the entity's organization ID
+     * @param departmentIdGetter extracts the entity's department ID
+     * @throws SecurityException if the user does not have write access
      */
     protected <E> void validateUpdateAccess(
             E entity,
@@ -204,16 +190,14 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
-     * Všichni zaměstnanci (ADMIN, COORDINATOR, CAREGIVER) mají přístup k datům celé organizace.
-     * - SUPERADMIN: Vidí vše (superAdminQuery)
-     * - ADMIN/COORDINATOR/CAREGIVER: Vidí data z celé organizace (organizationQuery)
+     * Fetches and maps entities scoped to the current user's role, using organization-level isolation.
+     * SUPERADMIN sees all entities; ADMIN, COORDINATOR, and CAREGIVER see only their organization.
      *
-     * @param superAdminQuery Query pro SUPERADMIN (např. repository::findAll)
-     * @param organizationQuery Query pro zaměstnance s organizationId (např. repository::findByOrganizationId)
-     * @param mapper Funkce pro převod List<T> na List<D> (např. mapper::toDTOList)
-     * @return Seznam DTO filtrovaných podle role
-     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace
+     * @param superAdminQuery supplies all entities (e.g. {@code repository::findAll})
+     * @param organizationQuery fetches entities by organization ID
+     * @param mapper converts the entity list to a DTO list
+     * @return role-filtered list of DTOs
+     * @throws SecurityException if the user lacks permission or has no assigned organization
      */
     protected List<D> filterEntitiesByRole(
             Supplier<List<T>> superAdminQuery,
@@ -224,26 +208,19 @@ public abstract class BaseRoleFilteringService<T, D> {
         List<T> entities;
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             entities = superAdminQuery.get();
-        }
-        // Zaměstnanci - filtrování podle organizace
-        else if (user.getEmployee() != null) {
-            // ADMIN, COORDINATOR i CAREGIVER vidí data z celé organizace
+        } else if (user.getEmployee() != null) {
             if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
                 }
                 Long organizationId = user.getEmployee().getOrganization().getId();
                 entities = organizationQuery.apply(organizationId);
-            }
-            else {
+            } else {
                 throw new SecurityException("Nepovolená role zaměstnance");
             }
-        }
-        // CLIENT role nemá přístup
-        else {
+        } else {
             throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
 
@@ -251,17 +228,16 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
-     * - SUPERADMIN: Vidí vše (superAdminQuery)
-     * - ADMIN: Vidí data z celé organizace (organizationQuery)
-     * - COORDINATOR/CAREGIVER: Vidí data z oddělení (departmentQuery)
+     * Fetches and maps entities scoped to the current user's role with department-level isolation.
+     * SUPERADMIN sees all; ADMIN sees their organization; COORDINATOR and CAREGIVER see only their department.
+     * Delegates to the five-parameter overload with {@code requestedOrganizationId = null}.
      *
-     * @param superAdminQuery Query pro SUPERADMIN (např. repository::findAll)
-     * @param organizationQuery Query pro ADMIN s organizationId (např. repository::findByOrganizationId)
-     * @param departmentQuery Query pro COORDINATOR/CAREGIVER s departmentId (např. repository::findByDepartmentId)
-     * @param mapper Funkce pro převod List<T> na List<D> (např. mapper::toDTOList)
-     * @return Seznam DTO filtrovaných podle role
-     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace/oddělení
+     * @param superAdminQuery supplies all entities
+     * @param organizationQuery fetches entities by organization ID
+     * @param departmentQuery fetches entities by department ID
+     * @param mapper converts the entity list to a DTO list
+     * @return role-filtered list of DTOs
+     * @throws SecurityException if the user lacks permission or has no assigned organization/department
      */
     protected List<D> filterEntitiesByRole(
             Supplier<List<T>> superAdminQuery,
@@ -273,19 +249,17 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Filtruje entity podle role přihlášeného uživatele a vrací je jako DTO.
-     * Podporuje volitelné filtrování podle organizationId pro SUPERADMIN.
-     * - SUPERADMIN: Pokud je zadán requestedOrganizationId, filtruje podle něj. Jinak vidí všechna data.
-     * - ADMIN: Vidí data z celé své organizace (ignoruje requestedOrganizationId)
-     * - COORDINATOR/CAREGIVER: Vidí data ze svého oddělení (ignoruje requestedOrganizationId)
+     * Fetches and maps entities scoped to the current user's role, optionally filtered by organization.
+     * SUPERADMIN may pass {@code requestedOrganizationId} to narrow results; ADMIN is always scoped to their
+     * organization; COORDINATOR and CAREGIVER are always scoped to their department.
      *
-     * @param superAdminQuery Query pro SUPERADMIN bez filtru (např. repository::findAll)
-     * @param organizationQuery Query s organizationId filtrem (např. repository::findByOrganizationId)
-     * @param departmentQuery Query s departmentId filtrem (např. repository::findByDepartmentId)
-     * @param mapper Funkce pro převod List<T> na List<D> (např. mapper::toDTOList)
-     * @param requestedOrganizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     * @return Seznam DTO filtrovaných podle role a případně organizationId
-     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace/oddělení
+     * @param superAdminQuery supplies all entities when no organization filter is applied
+     * @param organizationQuery fetches entities by organization ID
+     * @param departmentQuery fetches entities by department ID
+     * @param mapper converts the entity list to a DTO list
+     * @param requestedOrganizationId optional organization filter, honoured only for SUPERADMIN
+     * @return role-filtered list of DTOs
+     * @throws SecurityException if the user lacks permission or has no assigned organization/department
      */
     protected List<D> filterEntitiesByRole(
             Supplier<List<T>> superAdminQuery,
@@ -298,39 +272,27 @@ public abstract class BaseRoleFilteringService<T, D> {
         List<T> entities;
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
-            if (requestedOrganizationId != null) {
-                // Filtrovat podle zadané organizace
-                entities = organizationQuery.apply(requestedOrganizationId);
-            } else {
-                // Vrátit všechna data
-                entities = superAdminQuery.get();
-            }
-        }
-        // Zaměstnanci - filtrování podle organizace/oddělení
-        else if (user.getEmployee() != null) {
-            // ADMIN vidí data z celé organizace (ignoruje requestedOrganizationId)
+            entities = requestedOrganizationId != null
+                    ? organizationQuery.apply(requestedOrganizationId)
+                    : superAdminQuery.get();
+        } else if (user.getEmployee() != null) {
             if (role == UserRole.ADMIN) {
                 if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Administrátor nemá přiřazenou organizaci");
                 }
                 Long organizationId = user.getEmployee().getOrganization().getId();
                 entities = organizationQuery.apply(organizationId);
-            }
-            // COORDINATOR a CAREGIVER vidí pouze data ze svého oddělení (ignoruje requestedOrganizationId)
-            else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+            } else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getDepartment() == null) {
                     throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
                 }
                 Long departmentId = user.getEmployee().getDepartment().getId();
                 entities = departmentQuery.apply(departmentId);
-            }
-            else {
+            } else {
                 throw new SecurityException("Nepovolená role zaměstnance");
             }
         }
-        // CLIENT role nemá přístup
         else {
             throw new SecurityException("Nemáte oprávnění zobrazit tato data");
         }
@@ -339,15 +301,15 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Vrací jednotlivou entitu podle ID s kontrolou oprávnění.
-     * Všichni zaměstnanci (ADMIN, COORDINATOR, CAREGIVER) mají přístup k datům celé organizace.
+     * Fetches a single entity by ID and applies organization-level permission check.
+     * All employee roles (ADMIN, COORDINATOR, CAREGIVER) may access entities within their organization.
      *
-     * @param id ID entity
-     * @param entityFinder Funkce pro nalezení entity (např. () -> repository.findById(id))
-     * @param organizationIdGetter Funkce pro získání organizationId z entity (např. entity -> entity.getOrganization().getId())
-     * @param mapper Funkce pro převod entity na DTO (např. mapper::toDTO)
-     * @return Optional s DTO entity, pokud má uživatel oprávnění a entita existuje
-     * @throws SecurityException Pokud uživatel nemá oprávnění k této entitě
+     * @param id the entity ID (unused beyond acting as a type anchor)
+     * @param entityFinder supplies the entity lookup (e.g. {@code () -> repository.findById(id)})
+     * @param organizationIdGetter extracts the organization ID from the entity
+     * @param mapper converts the entity to a DTO
+     * @return the DTO wrapped in an Optional, or empty if the entity does not exist
+     * @throws SecurityException if the user does not have access to the entity's organization
      */
     protected Optional<D> getEntityByIdWithPermissionCheck(
             Long id,
@@ -365,14 +327,11 @@ public abstract class BaseRoleFilteringService<T, D> {
         T entity = entityOpt.get();
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             return Optional.of(mapper.apply(entity));
         }
 
-        // Zaměstnanci - kontrola přístupu podle organizace
         if (user.getEmployee() != null) {
-            // ADMIN, COORDINATOR i CAREGIVER mohou vidět entity z celé organizace
             if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
@@ -393,16 +352,17 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Vrací jednotlivou entitu podle ID s kontrolou oprávnění.
-     * Kontroluje, zda má uživatel přístup k této konkrétní entitě podle své role a organizace/oddělení.
+     * Fetches a single entity by ID and applies department-level permission check.
+     * ADMIN may access any entity within their organization; COORDINATOR and CAREGIVER
+     * are restricted to entities within their own department.
      *
-     * @param id ID entity
-     * @param entityFinder Funkce pro nalezení entity (např. () -> repository.findById(id))
-     * @param organizationIdGetter Funkce pro získání organizationId z entity (např. entity -> entity.getOrganization().getId())
-     * @param departmentIdGetter Funkce pro získání departmentId z entity (např. entity -> entity.getDepartment().getId())
-     * @param mapper Funkce pro převod entity na DTO (např. mapper::toDTO)
-     * @return Optional s DTO entity, pokud má uživatel oprávnění a entita existuje
-     * @throws SecurityException Pokud uživatel nemá oprávnění k této entitě
+     * @param id the entity ID (unused beyond acting as a type anchor)
+     * @param entityFinder supplies the entity lookup (e.g. {@code () -> repository.findById(id)})
+     * @param organizationIdGetter extracts the organization ID from the entity
+     * @param departmentIdGetter extracts the department ID from the entity
+     * @param mapper converts the entity to a DTO
+     * @return the DTO wrapped in an Optional, or empty if the entity does not exist
+     * @throws SecurityException if the user does not have access to the entity
      */
     protected Optional<D> getEntityByIdWithPermissionCheck(
             Long id,
@@ -421,14 +381,11 @@ public abstract class BaseRoleFilteringService<T, D> {
         T entity = entityOpt.get();
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             return Optional.of(mapper.apply(entity));
         }
 
-        // Zaměstnanci - kontrola přístupu podle organizace/oddělení
         if (user.getEmployee() != null) {
-            // ADMIN může vidět entity z celé organizace
             if (role == UserRole.ADMIN) {
                 if (user.getEmployee().getOrganization() == null) {
                     throw new SecurityException("Administrátor nemá přiřazenou organizaci");
@@ -444,7 +401,6 @@ public abstract class BaseRoleFilteringService<T, D> {
                 }
             }
 
-            // COORDINATOR a CAREGIVER mohou vidět pouze entity ze svého oddělení
             if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
                 if (user.getEmployee().getDepartment() == null) {
                     throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
@@ -465,20 +421,18 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Vypočítá filtry pro organizaci a oddělení podle role přihlášeného uživatele.
-     * Slouží pro použití s JPA Specifications nebo vlastními queries.
+     * Computes organization and department filter values based on the current user's role.
+     * Intended for use with JPA Specifications or custom repository queries.
+     * <p>
+     * SUPERADMIN: uses {@code requestedOrganizationId} and {@code requestedDepartmentIds} as-is.<br>
+     * ADMIN: always scoped to their own organization; may filter by {@code requestedDepartmentIds}.<br>
+     * COORDINATOR/CAREGIVER: always scoped to their own department; if {@code requestedDepartmentIds}
+     * is provided and does not include their department, {@link RoleBasedFilters#noAccess()} is returned.
      *
-     * Role-based logika:
-     * - SUPERADMIN: Může použít requestedOrganizationId (nebo null pro všechny organizace)
-     *               a requestedDepartmentIds jak jsou zadány
-     * - ADMIN: Vidí jen svou organizaci, může filtrovat podle requestedDepartmentIds
-     * - COORDINATOR/CAREGIVER: Vidí jen své oddělení, requestedDepartmentIds se ignorují
-     *                          (nebo se zkontroluje, že obsahují pouze jejich oddělení)
-     *
-     * @param requestedOrganizationId ID organizace z request parametru (může být null)
-     * @param requestedDepartmentIds Seznam ID oddělení z request parametru (může být null nebo prázdný)
-     * @return RoleBasedFilters s vypočítanými hodnotami podle role
-     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace/oddělení
+     * @param requestedOrganizationId optional organization ID from the request (may be null)
+     * @param requestedDepartmentIds optional department IDs from the request (may be null or empty)
+     * @return computed role-based filters
+     * @throws SecurityException if the user lacks permission or has no assigned organization/department
      */
     protected RoleBasedFilters calculateRoleBasedFilters(
             Long requestedOrganizationId,
@@ -488,21 +442,16 @@ public abstract class BaseRoleFilteringService<T, D> {
         UserRole role = user.getRole();
 
         if (role == UserRole.SUPERADMIN) {
-            // SUPERADMIN může používat parametry jak jsou
             return new RoleBasedFilters(requestedOrganizationId, requestedDepartmentIds);
 
         } else if (role == UserRole.ADMIN) {
-            // ADMIN vidí jen svou organizaci
             if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
                 throw new SecurityException("Administrátor nemá přiřazenou organizaci");
             }
             Long userOrgId = user.getEmployee().getOrganization().getId();
-
-            // Může filtrovat podle departmentIds v rámci své organizace
             return new RoleBasedFilters(userOrgId, requestedDepartmentIds);
 
         } else if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
-            // COORDINATOR/CAREGIVER vidí jen své oddělení
             if (user.getEmployee() == null || user.getEmployee().getDepartment() == null) {
                 throw new SecurityException("Zaměstnanec nemá přiřazené oddělení");
             }
@@ -510,15 +459,12 @@ public abstract class BaseRoleFilteringService<T, D> {
             Long userOrgId = user.getEmployee().getOrganization().getId();
             Long userDeptId = user.getEmployee().getDepartment().getId();
 
-            // Pokud uživatel zadal departmentIds, zkontroluj přístup
             if (requestedDepartmentIds != null && !requestedDepartmentIds.isEmpty()) {
-                // Pokud požaduje oddělení, ke kterým nemá přístup, vrať noAccess
                 if (!requestedDepartmentIds.contains(userDeptId)) {
                     return RoleBasedFilters.noAccess();
                 }
             }
 
-            // Vždy filtruj podle jeho oddělení
             return new RoleBasedFilters(userOrgId, java.util.Collections.singletonList(userDeptId));
 
         } else {
@@ -527,27 +473,22 @@ public abstract class BaseRoleFilteringService<T, D> {
     }
 
     /**
-     * Vypočítá filtry pro organizaci podle role přihlášeného uživatele.
-     * Verze bez filtrování podle oddělení.
+     * Computes an organization-only filter based on the current user's role.
+     * Department filtering is not applied.
+     * SUPERADMIN may use any {@code requestedOrganizationId}; all employee roles are scoped to their own organization.
      *
-     * Role-based logika:
-     * - SUPERADMIN: Může použít requestedOrganizationId (nebo null pro všechny organizace)
-     * - ADMIN/COORDINATOR/CAREGIVER: Vidí jen svou organizaci
-     *
-     * @param requestedOrganizationId ID organizace z request parametru (může být null)
-     * @return RoleBasedFilters s vypočítanou hodnotou organizationId podle role
-     * @throws SecurityException Pokud uživatel nemá oprávnění nebo chybí employee/organizace
+     * @param requestedOrganizationId optional organization ID from the request (may be null)
+     * @return computed role-based filters containing only the organization ID
+     * @throws SecurityException if the user lacks permission or has no assigned organization
      */
     protected RoleBasedFilters calculateRoleBasedFiltersOrganizationOnly(Long requestedOrganizationId) {
         User user = getCurrentUser();
         UserRole role = user.getRole();
 
         if (role == UserRole.SUPERADMIN) {
-            // SUPERADMIN může používat parametr jak je
             return new RoleBasedFilters(requestedOrganizationId, null);
 
         } else if (role == UserRole.ADMIN || role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
-            // Všichni zaměstnanci vidí jen svou organizaci
             if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
                 throw new SecurityException("Zaměstnanec nemá přiřazenou organizaci");
             }

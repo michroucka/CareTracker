@@ -2,29 +2,24 @@ package cz.zcu.kiv.caretracker.service;
 
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.List;
 
 /**
- * DTO pro držení filtrů vypočítaných podle role uživatele.
- * Používá se pro předání filtrů do Specifications nebo repository queries.
+ * Value object holding the organization and department filter IDs computed from the current user's role.
+ * Passed to JPA Specifications or repository queries by service methods.
  */
 @Getter
 @Setter
 public class RoleBasedFilters {
-    /**
-     * ID organizace pro filtrování (null = žádný filtr)
-     */
+    /** Organization ID to filter by, or {@code null} for no organization filter. */
     private Long organizationId;
 
-    /**
-     * Seznam ID oddělení pro filtrování (null nebo empty = žádný filtr)
-     */
+    /** Department IDs to filter by, or {@code null}/empty for no department filter. */
     private List<Long> departmentIds;
 
     /**
-     * Indikuje, zda uživatel nemá přístup k žádným datům.
-     * Pokud je true, service by měla vrátit prázdný seznam bez dotazu do DB.
+     * When {@code true}, the user has no access to any data for the requested filters.
+     * Services should return an empty list immediately without issuing a database query.
      */
     private boolean noAccess;
 
@@ -41,8 +36,9 @@ public class RoleBasedFilters {
     }
 
     /**
-     * Factory metoda pro vytvoření instance s noAccess = true.
-     * Použij když uživatel požaduje data, ke kterým nemá přístup.
+     * Factory method for the no-access sentinel.
+     * Use when the user requests data outside their allowed scope (e.g. a COORDINATOR requesting a
+     * different department's data). Services should return an empty list without querying the database.
      */
     public static RoleBasedFilters noAccess() {
         return new RoleBasedFilters(null, null, true);

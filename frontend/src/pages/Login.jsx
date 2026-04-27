@@ -25,7 +25,6 @@ function Login() {
     const submitLogin = async (e) => {
         e.preventDefault();
 
-        // Validace před odesláním
         const newErrors = {};
         if (!username.trim()) {
             newErrors.username = "Prosím zadejte uživatelské jméno";
@@ -58,8 +57,8 @@ function Login() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                // Úspěšné přihlášení - načti kompletní user context včetně department/organization
-                await checkAuth(); // Tím získáme employeeId, departmentId, organizationId
+                // Fetch the full auth context (employeeId, departmentId, organizationId) after login
+                await checkAuth();
 
                 showToast({
                     title: result.message,
@@ -68,11 +67,9 @@ function Login() {
                     icon: <UserRoundCheck />
                 })
 
-                // Přesměruj zpět na původní stránku nebo na home
                 const from = location.state?.from?.pathname || "/";
                 navigate(from, { replace: true });
             } else {
-                // Neúspěšné přihlášení - zobrazíme konkrétní chybovou zprávu z backendu
                 const errorMessage = result.message || "Neplatné přihlašovací údaje";
 
                 showToast({
@@ -88,7 +85,6 @@ function Login() {
             }
 
         } catch (error) {
-            // Chyba při komunikaci se serverem
             console.error("Login error:", error);
             showToast({
                 title: error.message || "Server není dostupný",

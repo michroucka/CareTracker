@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for organization management. All mutating endpoints are restricted to SUPERADMIN.
+ */
 @RestController
 @RequestMapping("/api/organizations")
 public class OrganizationController {

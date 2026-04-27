@@ -10,10 +10,12 @@ import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Manages billable service catalog entries scoped to an organization.
+ */
 @Service
 public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
     @Autowired
@@ -23,6 +25,13 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
     @Autowired
     OrganizationRepository organizationRepository;
 
+    /**
+     * Returns tasks filtered by the current user's role and optional status filter.
+     *
+     * @param organizationId optional organization filter (SUPERADMIN only)
+     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all
+     * @return role-filtered list of task DTOs
+     */
     @Transactional(readOnly = true)
     public List<TaskDTO> getTasks(Long organizationId, Boolean status) {
         // Calculate filters based on user role
@@ -48,6 +57,12 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         return taskMapper.toDTOList(tasks);
     }
 
+    /**
+     * Returns a single task by ID with organization-level access control.
+     *
+     * @param id the task ID
+     * @return the task DTO, or empty if not found or inaccessible
+     */
     @Transactional(readOnly = true)
     public Optional<TaskDTO> getTaskById(Long id) {
         return getEntityByIdWithPermissionCheck(
@@ -58,6 +73,10 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         );
     }
 
+    /**
+     * Persists a task from the supplied DTO, resolving the owning organization.
+     * SUPERADMIN must supply an explicit organizationId; other roles use their own organization.
+     */
     private Task saveTask(Task task, TaskRequestDTO dto) {
         User user = getCurrentUser();
 
@@ -84,11 +103,24 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         return taskRepository.save(task);
     }
 
+    /**
+     * Creates a new task.
+     *
+     * @param dto the task creation data
+     * @return the persisted task entity
+     */
     public Task createTask(TaskRequestDTO dto) {
         Task task = new Task();
         return saveTask(task, dto);
     }
 
+    /**
+     * Updates an existing task.
+     *
+     * @param id the task ID
+     * @param dto updated task data
+     * @return the updated task entity
+     */
     public Task updateTask(Long id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Úkon nebyl nalezen"));
@@ -98,6 +130,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         return saveTask(task, dto);
     }
 
+    /** Sets the active flag on a task with organization-level access validation. */
     private Task setTaskStatus(Long id, boolean status) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Úkon nebyl nalezen"));
@@ -109,10 +142,22 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         return taskRepository.save(task);
     }
 
+    /**
+     * Deactivates a task (soft delete).
+     *
+     * @param id the task ID
+     * @return the updated task entity
+     */
     public Task terminateTask(Long id) {
         return setTaskStatus(id, false);
     }
 
+    /**
+     * Re-activates a previously deactivated task.
+     *
+     * @param id the task ID
+     * @return the updated task entity
+     */
     public Task activateTask(Long id) {
         return setTaskStatus(id, true);
     }

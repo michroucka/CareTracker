@@ -23,12 +23,10 @@ export function useEmployees() {
     }
 
     const fetchEmployees = async (filters = {}, { silent = false } = {}) => {
-        // Zruš předchozí request pokud stále běží
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
 
-        // Vytvoř nový AbortController pro tento request
         const controller = new AbortController();
         abortControllerRef.current = controller;
 

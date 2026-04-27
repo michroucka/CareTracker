@@ -31,16 +31,27 @@ interface AuthContextType {
     checkAuth: () => Promise<void>;
 }
 
+/** localStorage key used to persist the SUPERADMIN's selected organization across page reloads. */
 const SUPERADMIN_ORG_KEY = "superadmin_org";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Provides global authentication state and actions.
+ * On mount, calls /api/auth-status to restore session state from the server.
+ * Listens for the "auth:unauthorized" custom event (dispatched by api.js on 401 responses)
+ * to trigger an automatic logout without user interaction.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [superadminOrg, setSuperadminOrgState] = useState<SuperadminOrg | null>(null);
     const navigate = useNavigate();
 
+    /**
+     * Sets the SUPERADMIN's selected organization and persists the choice to localStorage
+     * so it survives page reloads.
+     */
     const setSuperadminOrg = (org: SuperadminOrg | null) => {
         setSuperadminOrgState(org);
         if (org) {
@@ -50,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    /** Calls /api/auth-status and updates auth state accordingly. Called on mount and can be called manually. */
     const checkAuth = async () => {
         try {
             const response = await get("/auth-status");
@@ -90,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    /** Populates the user state directly after a successful login response without re-fetching /auth-status. */
     const login = (username: string, role: string, fullName?: string, employeeId?: number, employeeRole?: string, departmentId?: number, organizationId?: number, clientId?: number) => {
         setUser({
             username,
@@ -103,6 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
     };
 
+    /**
+     * Clears auth state and calls /logout without showing a success toast.
+     * Used when a 401 triggers automatic session expiry rather than an explicit user action.
+     */
     const logoutSilent = async () => {
         try {
             await post("/logout", {});
@@ -172,6 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
+/**
+ * Returns the auth context. Must be used inside an {@link AuthProvider}.
+ * @throws if called outside an AuthProvider
+ */
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {

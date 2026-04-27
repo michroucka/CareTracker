@@ -23,16 +23,12 @@ public class IndividualPlanContentMapper {
         dto.setVersionNumber(content.getVersionNumber());
         dto.setProcessedDate(content.getProcessedDate());
         dto.setPlannedUpdateDate(content.getPlannedUpdateDate());
-
-        // Osobní údaje
         dto.setLikes(content.getLikes());
         dto.setDislikes(content.getDislikes());
         dto.setStrengths(content.getStrengths());
         dto.setAspirations(content.getAspirations());
         dto.setLifePath(content.getLifePath());
         dto.setAdditionalInfo(content.getAdditionalInfo());
-
-        // Oblasti péče
         dto.setHygiene(content.getHygiene());
         dto.setSelfCare(content.getSelfCare());
         dto.setMobility(content.getMobility());
@@ -54,16 +50,12 @@ public class IndividualPlanContentMapper {
         content.setIndividualPlan(individualPlan);
         content.setProcessedDate(dto.getProcessedDate());
         content.setPlannedUpdateDate(dto.getPlannedUpdateDate());
-
-        // Osobní údaje
         content.setLikes(dto.getLikes());
         content.setDislikes(dto.getDislikes());
         content.setStrengths(dto.getStrengths());
         content.setAspirations(dto.getAspirations());
         content.setLifePath(dto.getLifePath());
         content.setAdditionalInfo(dto.getAdditionalInfo());
-
-        // Oblasti péče
         content.setHygiene(dto.getHygiene());
         content.setSelfCare(dto.getSelfCare());
         content.setMobility(dto.getMobility());
@@ -86,8 +78,8 @@ public class IndividualPlanContentMapper {
     }
 
     /**
-     * Převede IndividualPlanContent na lightweight summary DTO (bez velkého textového contentu).
-     * Použij pro seznam verzí.
+     * Maps an {@link IndividualPlanContent} to a lightweight summary DTO (version number and dates only).
+     * Use for version history lists where the full text content is not needed.
      */
     public IndividualPlanVersionSummaryDTO toVersionSummary(IndividualPlanContent content) {
         if (content == null) {

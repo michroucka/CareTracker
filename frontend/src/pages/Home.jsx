@@ -269,7 +269,6 @@ function DashboardContent() {
                         )}
                     </div>
 
-                    {/* Rychlé akce */}
                     <Card>
                         <CardHeader>
                             <h2 className="text-xl font-semibold">Rychlé akce</h2>
@@ -368,9 +367,7 @@ function DashboardContent() {
                         </div>
                     )}
 
-                    {/* Spodní sekce */}
                     <div className={`grid gap-6 ${(isCaregiver || isCoordinator || isAdmin) ? "lg:grid-cols-2" : ""}`}>
-                        {/* Nedávné záznamy */}
                         <Card>
                             <CardHeader className="flex items-center gap-2">
                                 <ClipboardPenLine className="size-7" />
@@ -400,7 +397,6 @@ function DashboardContent() {
                             </CardBody>
                         </Card>
 
-                        {/* Aktualizace individuálních plánů (CAREGIVER + COORDINATOR + ADMIN) */}
                         {(isCaregiver || isCoordinator || isAdmin) && (
                             <Card>
                                 <CardHeader className="flex items-center gap-2">

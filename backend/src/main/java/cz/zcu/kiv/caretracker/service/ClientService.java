@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,31 +48,28 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private DailyRecordRepository dailyRecordRepository;
 
     /**
-     * Vrací klienty filtrované podle role, organizačního kontextu a dalších kritérií.
-     * Používá JPA Specifications pro flexibilní a efektivní filtrování na úrovni databáze.
+     * Returns clients filtered by the current user's role and the supplied optional criteria.
+     * Uses JPA Specifications for efficient database-level filtering.
+     * <p>
+     * SUPERADMIN: may filter by {@code organizationId}, {@code status}, {@code departmentIds}, {@code caregiverIds}.<br>
+     * ADMIN: scoped to own organization; may filter by {@code status}, {@code departmentIds}, {@code caregiverIds}.<br>
+     * COORDINATOR: scoped to own department; may filter by {@code status} and {@code caregiverIds}.<br>
+     * CAREGIVER: scoped to own department, active clients only; may filter by {@code caregiverIds}.
      *
-     * - SUPERADMIN: Může filtrovat podle organizationId (nebo vidět vše), status, departmentIds, caregiverIds
-     * - ADMIN: Vidí pouze svou organizaci, může filtrovat podle status, departmentIds, caregiverIds
-     * - COORDINATOR: Vidí pouze své oddělení, může filtrovat podle status, caregiverIds
-     * - CAREGIVER: Vidí pouze své oddělení a pouze aktivní klienty, může filtrovat podle caregiverIds
-     *
-     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     * @param status Volitelný status klienta (true = aktivní, false = neaktivní, null = všichni) - pro CAREGIVER vždy vynuceno na true
-     * @param departmentIds Volitelný seznam ID oddělení pro filtrování
-     * @param caregiverIds Volitelný seznam ID caregiverů pro filtrování
-     * @return Seznam ClientSummaryDTO filtrovaných podle kritérií
+     * @param organizationId optional organization filter (SUPERADMIN only)
+     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all (CAREGIVER always sees active)
+     * @param departmentIds optional department filter
+     * @param caregiverIds optional caregiver filter
+     * @return role-filtered list of client short DTOs
      */
     @Transactional(readOnly = true)
     public List<ClientShortDTO> getClients(Long organizationId, Boolean status, List<Long> departmentIds, List<Long> caregiverIds) {
-        // Vypočítat filtry podle role uživatele
         RoleBasedFilters roleFilters = calculateRoleBasedFilters(organizationId, departmentIds);
 
-        // Pokud uživatel nemá přístup, vrať prázdný seznam
         if (roleFilters.isNoAccess()) {
             return Collections.emptyList();
         }
 
-        // Sestavit specification s filtry
         Specification<Client> spec = ClientSpecifications.withFilters(
                 roleFilters.getOrganizationId(),
                 status,
@@ -81,14 +77,15 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 caregiverIds
         );
 
-        // Provést dotaz a převést na DTO
         List<Client> clients = clientRepository.findAll(spec);
         return clientMapper.toShortDTOList(clients);
     }
 
     /**
-     * Vrací klienta podle ID s kontrolou oprávnění.
-     * Uživatel může vidět pouze klienty, ke kterým má přístup podle své role.
+     * Returns a single client by ID, applying role-based department-level access control.
+     *
+     * @param id the client ID
+     * @return the client DTO, or empty if not found or the user lacks access
      */
     @Transactional(readOnly = true)
     public Optional<ClientDTO> getClientById(Long id) {
@@ -102,66 +99,52 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Vrací individuální plán klienta s AKTUÁLNÍ verzí contentu jako DTO.
-     * Validuje, že má uživatel přístup ke klientovi.
+     * Returns the individual care plan for a client, including the current content version.
      *
-     * @param clientId ID klienta
-     * @return IndividualPlanDTO s aktuální verzí, pokud existuje
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebyl nalezen
+     * @param clientId the client ID
+     * @return the plan DTO, or empty if no plan exists
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ResourceNotFoundException if the client is not found
      */
     @Transactional(readOnly = true)
     public Optional<IndividualPlanDTO> getClientIndividualPlan(Long clientId) {
-        // Validace přístupu
         validateClientAccess(clientId);
-
-        // Vrátit plán s aktuální verzí
         return individualPlanRepository.findByClientId(clientId)
                 .map(individualPlanMapper::toDTO);
     }
 
     /**
-     * Vrací seznam verzí individuálního plánu klienta (pouze metadata, bez velkého contentu).
-     * Použij pro zobrazení seznamu verzí v UI.
+     * Returns version summary metadata for a client's individual plan, ordered newest first.
+     * Does not include the full content of each version.
      *
-     * @param clientId ID klienta
-     * @return Seznam verzí s metadaty (od nejnovější)
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
+     * @param clientId the client ID
+     * @return list of version summaries
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ResourceNotFoundException if the client or plan is not found
      */
     @Transactional(readOnly = true)
     public List<IndividualPlanVersionSummaryDTO> getClientIndividualPlanHistory(Long clientId) {
-        // Validace přístupu
         validateClientAccess(clientId);
-
-        // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
-
-        // Vrátit jen metadata verzí (už jsou seřazené @OrderBy("versionNumber DESC"))
+        // ordered by @OrderBy("versionNumber DESC") on the collection mapping
         return individualPlanContentMapper.toVersionSummaryList(plan.getContentVersions());
     }
 
     /**
-     * Vrací KONKRÉTNÍ verzi contentu individuálního plánu klienta (s plným contentem).
-     * Použij pro zobrazení detailu konkrétní verze.
+     * Returns a specific version of a client's individual plan, including full content.
      *
-     * @param clientId ID klienta
-     * @param versionNumber Číslo verze (1, 2, 3...)
-     * @return Konkrétní verze s plným contentem
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient, plán nebo verze nebyla nalezena
+     * @param clientId the client ID
+     * @param versionNumber the version number (1-based)
+     * @return the plan content DTO for the requested version
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ResourceNotFoundException if the client, plan, or version is not found
      */
     @Transactional(readOnly = true)
     public IndividualPlanContentDTO getClientIndividualPlanVersion(Long clientId, Integer versionNumber) {
-        // Validace přístupu
         validateClientAccess(clientId);
-
-        // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
-
-        // Najít konkrétní verzi s plným contentem
         return plan.getContentVersions().stream()
                 .filter(content -> content.getVersionNumber().equals(versionNumber))
                 .findFirst()
@@ -170,8 +153,10 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Helper metoda pro validaci přístupu ke klientovi.
-     * Vyhodí SecurityException, pokud uživatel nemá přístup.
+     * Verifies that the current user has access to the given client.
+     *
+     * @throws ResourceNotFoundException if the client does not exist
+     * @throws SecurityException if the user does not have access to this client's department
      */
     private void validateClientAccess(Long clientId) {
         Client client = clientRepository.findById(clientId)
@@ -184,6 +169,12 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         );
     }
 
+    /**
+     * Persists a client entity from the supplied DTO, resolving all related entities and validating
+     * that they belong to the current user's organization/department.
+     * When no personalNumber is provided, the entity is saved first so the generated ID is available,
+     * then incremented until a unique number within the organization is found.
+     */
     private Client saveClient(Client client, ClientRequestDTO dto) {
         Department department = departmentRepository.findById(dto.getDepartmentId())
                         .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
@@ -193,11 +184,9 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         for (Long taskId : dto.getTaskIds()) {
             Task task = taskRepository.findById(taskId)
                     .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
-
             tasks.add(task);
         }
 
-        // Validace, že všechny entity patří do správné organizace/departmentu
         validateDepartmentAccess(
                 department,
                 dept -> dept.getOrganization().getId(),
@@ -210,20 +199,16 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         clientMapper.requestToClient(client, dto, department, caregiver, tasks);
 
-        // Set personalNumber if provided, otherwise use ID after save
         if (dto.getPersonalNumber() != null) {
             client.setPersonalNumber(dto.getPersonalNumber());
-        } else if (client.getPersonalNumber() == null){
-            // Save first to generate ID, then set personalNumber to ID
+        } else if (client.getPersonalNumber() == null) {
+            // Save first to get the generated ID, then find the next free personal number starting from it.
             Client savedClient = clientRepository.save(client);
             Long organizationId = savedClient.getOrganization().getId();
             Long personalNumber = savedClient.getId();
-
-            // Kontrola jestli personalNumber už neexistuje v rámci organizace (pouze u aktivních klientů)
             while (clientRepository.existsByPersonalNumberAndOrganizationIdAndActiveTrue(personalNumber, organizationId)) {
                 personalNumber++;
             }
-
             savedClient.setPersonalNumber(personalNumber);
             return clientRepository.save(savedClient);
         }
@@ -231,36 +216,52 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         return clientRepository.save(client);
     }
 
+    /**
+     * Creates a new client from the supplied request DTO.
+     *
+     * @param dto the client creation data
+     * @return the persisted client entity
+     */
     public Client createClient(ClientRequestDTO dto) {
         Client client = new Client();
         return saveClient(client, dto);
     }
 
+    /**
+     * Updates an existing client, applying role-based write access validation.
+     *
+     * @param id the client ID
+     * @param dto updated client data
+     * @return the updated client entity
+     * @throws ResourceNotFoundException if the client does not exist
+     * @throws SecurityException if the user does not have write access
+     */
     public Client updateClient(Long id, ClientRequestDTO dto) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-
-        // Validace oprávnění
         validateUpdateAccess(
                 client,
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
-
         return saveClient(client, dto);
     }
 
+    /**
+     * Deactivates a client and records the termination reason and date.
+     *
+     * @param id the client ID
+     * @param dto termination details
+     * @return the updated client entity
+     */
     public Client terminateClient(Long id, ClientTerminateDTO dto) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-
-        // Validace oprávnění
         validateUpdateAccess(
                 client,
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
-
         client.setActive(false);
         client.setTerminationDate(dto.getTerminationDate());
         client.setTerminationReason(TerminationReason.valueOf(dto.getTerminationReason()));
@@ -268,11 +269,15 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         return clientRepository.save(client);
     }
 
+    /**
+     * Re-activates a previously terminated client, clearing the termination fields.
+     *
+     * @param id the client ID
+     * @return the updated client entity
+     */
     public Client activateClient(Long id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-
-        // Validace oprávnění
         validateUpdateAccess(
                 client,
                 c -> c.getOrganization().getId(),
@@ -287,25 +292,21 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Validuje, že uživatel má oprávnění upravovat individuální plán klienta.
-     * Oprávnění má:
-     * - SUPERADMIN (vždy)
-     * - ADMIN ze stejné organizace
-     * - CAREGIVER přiřazený ke klientovi
+     * Validates that the current user may modify a client's individual plan.
+     * SUPERADMIN and ADMIN (same organization) have full access;
+     * COORDINATOR and CAREGIVER may only edit plans for clients directly assigned to them.
      *
-     * @param client Klient, jehož individuální plán se má upravovat
-     * @throws SecurityException Pokud uživatel nemá oprávnění
+     * @param client the client whose plan is being modified
+     * @throws SecurityException if the user does not have write access to this plan
      */
     private void validateIndividualPlanUpdateAccess(Client client) {
         User user = getCurrentUser();
         UserRole role = user.getRole();
 
-        // SUPERADMIN má přístup ke všemu
         if (role == UserRole.SUPERADMIN) {
             return;
         }
 
-        // Zaměstnanci musí mít přiřazenou organizaci
         if (user.getEmployee() == null || user.getEmployee().getOrganization() == null) {
             throw new SecurityException("Zaměstnanec musí mít přiřazenou organizaci");
         }
@@ -313,48 +314,40 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         Long userOrgId = user.getEmployee().getOrganization().getId();
         Long clientOrgId = client.getOrganization().getId();
 
-        // Kontrola, že uživatel je ze stejné organizace jako klient
         if (!userOrgId.equals(clientOrgId)) {
             throw new SecurityException("Přístup odepřen: Klient je z jiné organizace");
         }
 
-        // ADMIN má přístup ke všem klientům ve své organizaci
         if (role == UserRole.ADMIN) {
             return;
         }
 
-        // CAREGIVER a COORDINATOR mohou upravovat pouze individuální plány klientů, ke kterým jsou přiřazeni
+        // CAREGIVER and COORDINATOR may only edit plans for their directly assigned clients
         if (role == UserRole.CAREGIVER || role == UserRole.COORDINATOR) {
             Long assignedCaregiverId = client.getCaregiver().getId();
             Long currentEmployeeId = user.getEmployee().getId();
-
             if (!assignedCaregiverId.equals(currentEmployeeId)) {
                 throw new SecurityException("Zaměstnanec smí upravovat individuální plán pouze svým klientům");
             }
             return;
         }
 
-        // Jiné role nemají oprávnění upravovat individuální plány
         throw new SecurityException("Uživatel nemá přístup k úpravě individuálního plánu");
     }
 
     /**
-     * Helper metoda pro mapování dat z DTO do IndividualPlanContent entity.
-     * Používá se jak při vytváření první verze, tak při vytváření nových verzí.
+     * Maps all content fields from the request DTO onto an {@link IndividualPlanContent} entity.
+     * Used for both initial creation and subsequent version updates.
      */
     private void mapContentFields(IndividualPlanContent content, IndividualPlanContentRequestDTO dto) {
         content.setProcessedDate(dto.getProcessedDate());
         content.setPlannedUpdateDate(dto.getPlannedUpdateDate());
-
-        // Osobní údaje
         content.setLikes(dto.getLikes());
         content.setDislikes(dto.getDislikes());
         content.setStrengths(dto.getStrengths());
         content.setAspirations(dto.getAspirations());
         content.setLifePath(dto.getLifePath());
         content.setAdditionalInfo(dto.getAdditionalInfo());
-
-        // Oblasti péče
         content.setHygiene(dto.getHygiene());
         content.setSelfCare(dto.getSelfCare());
         content.setMobility(dto.getMobility());
@@ -367,186 +360,154 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Vytvoří PRVNÍ individuální plán pro klienta.
-     * Pokud klient už plán má, vyhodí výjimku.
+     * Creates the first individual care plan for a client.
+     * Throws if the client already has a plan.
      *
-     * @param clientId ID klienta
-     * @param contentDTO Data pro první verzi plánu
-     * @return Vytvořený plán jako DTO
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebyl nalezen nebo už má plán
+     * @param clientId the client ID
+     * @param contentDTO content for the initial plan version
+     * @return the created plan DTO
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ValidationException if the client already has an individual plan
+     * @throws ResourceNotFoundException if the client is not found
      */
     @Transactional
     public IndividualPlanDTO createIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
-        // Validace přístupu
         validateClientAccess(clientId);
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
-        // Kontrola, že klient ještě nemá plán
         if (individualPlanRepository.findByClientId(clientId).isPresent()) {
             throw new ValidationException("Individuální plán pro tohoto klienta již existuje");
         }
 
-        // Validace oprávnění pro úpravu individuálního plánu
         validateIndividualPlanUpdateAccess(client);
 
-        // Vytvořit hlavní IndividualPlan
         IndividualPlan plan = new IndividualPlan();
         plan.setClient(client);
         plan.setOrganization(client.getOrganization());
 
-        // Vytvořit PRVNÍ verzi contentu
         IndividualPlanContent firstVersion = new IndividualPlanContent();
         firstVersion.setIndividualPlan(plan);
         firstVersion.setVersionNumber(1);
         mapContentFields(firstVersion, contentDTO);
 
-        // Nastavit první verzi jako aktuální
         plan.setCurrentContent(firstVersion);
         plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
 
-        // Uložit vše
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
-
         return individualPlanMapper.toDTO(savedPlan);
     }
 
     /**
-     * Vytvoří NOVOU verzi individuálního plánu pro klienta.
-     * Původní verze zůstávají zachované jako historie.
+     * Appends a new version to a client's individual care plan.
+     * Previous versions are retained as history and remain accessible by version number.
      *
-     * @param clientId ID klienta
-     * @param contentDTO Data pro novou verzi plánu
-     * @return Aktualizovaný plán jako DTO
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
+     * @param clientId the client ID
+     * @param contentDTO content for the new plan version
+     * @return the updated plan DTO (reflecting the new current version)
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ResourceNotFoundException if the client or plan is not found
      */
     @Transactional
     public IndividualPlanDTO updateIndividualPlan(Long clientId, IndividualPlanContentRequestDTO contentDTO) {
-        // Validace přístupu
         validateClientAccess(clientId);
 
-        // Najít existující plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
-        // Validace oprávnění pro úpravu individuálního plánu
         validateIndividualPlanUpdateAccess(plan.getClient());
 
-        // Získat nejvyšší číslo verze
         Integer maxVersion = plan.getContentVersions().stream()
                 .map(IndividualPlanContent::getVersionNumber)
                 .max(Integer::compareTo)
                 .orElse(0);
 
-        // Vytvořit NOVOU verzi contentu
         IndividualPlanContent newVersion = new IndividualPlanContent();
         newVersion.setIndividualPlan(plan);
         newVersion.setVersionNumber(maxVersion + 1);
         mapContentFields(newVersion, contentDTO);
 
-        // Aktualizovat currentContent na novou verzi
         plan.setCurrentContent(newVersion);
         plan.getContentVersions().add(newVersion);
 
-        // Uložit změny
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
-
         return individualPlanMapper.toDTO(savedPlan);
     }
 
     /**
-     * Vytvoří a přidá nový daily record k individuálnímu plánu klienta.
-     * Neovlivňuje verzování - daily records jsou globální pro celý plán.
+     * Adds a daily record to a client's individual care plan.
+     * Daily records are not versioned — they are shared across all plan versions.
      *
-     * @param clientId ID klienta
-     * @param dailyRecordDTO Data pro vytvoření daily record
-     * @return Aktualizovaný plán jako DTO
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
+     * @param clientId the client ID
+     * @param dailyRecordDTO the daily record data
+     * @return the updated plan DTO
+     * @throws SecurityException if the user does not have access or is not an employee
+     * @throws ResourceNotFoundException if the client or plan is not found
      */
     @Transactional
     public IndividualPlanDTO addDailyRecordToIndividualPlan(Long clientId, DailyRecordRequestDTO dailyRecordDTO) {
-        // Validace přístupu
         validateClientAccess(clientId);
 
-        // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
-        // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(
                 plan.getClient(),
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
 
-        // Kontrola, že uživatel má přiřazený Employee objekt
         Employee currentEmployee = getCurrentUser().getEmployee();
         if (currentEmployee == null) {
             throw new SecurityException("Pouze zaměstnanci mohou vytvářet záznamy do individuálního plánu");
         }
 
-        // Vytvořit nový daily record
         DailyRecord dailyRecord = new DailyRecord();
         dailyRecord.setDate(dailyRecordDTO.getDate());
         dailyRecord.setContent(dailyRecordDTO.getContent());
         dailyRecord.setCreatedBy(currentEmployee);
         dailyRecord.setIndividualPlan(plan);
 
-        // Uložit daily record
         DailyRecord savedDailyRecord = dailyRecordRepository.save(dailyRecord);
 
-        // Inicializovat seznam, pokud je null
         if (plan.getDailyRecords() == null) {
             plan.setDailyRecords(new ArrayList<>());
         }
-
-        // Přidat daily record
         plan.getDailyRecords().add(savedDailyRecord);
 
-        // Uložit změny
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
-
         return individualPlanMapper.toDTO(savedPlan);
     }
 
     /**
-     * Odebere daily record z individuálního plánu klienta.
-     * Neovlivňuje verzování - daily records jsou globální pro celý plán.
+     * Removes a daily record from a client's individual care plan.
+     * Daily records are not versioned — the removal affects all plan versions.
      *
-     * @param clientId ID klienta
-     * @param dailyRecordId ID daily record k odebrání
-     * @return Aktualizovaný plán jako DTO
-     * @throws SecurityException Pokud uživatel nemá přístup ke klientovi
-     * @throws ResourceNotFoundException Pokud klient nebo plán nebyl nalezen
+     * @param clientId the client ID
+     * @param dailyRecordId the ID of the daily record to remove
+     * @return the updated plan DTO
+     * @throws SecurityException if the user does not have access to this client
+     * @throws ResourceNotFoundException if the client or plan is not found
      */
     @Transactional
     public IndividualPlanDTO removeDailyRecordFromIndividualPlan(Long clientId, Long dailyRecordId) {
-        // Validace přístupu
         validateClientAccess(clientId);
 
-        // Najít plán
         IndividualPlan plan = individualPlanRepository.findByClientId(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
-        // Validace oprávnění pro update (ADMIN v organizaci, COORDINATOR/CAREGIVER v departmentu)
         validateUpdateAccess(
                 plan.getClient(),
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
 
-        // Odebrat daily record
         if (plan.getDailyRecords() != null) {
             plan.getDailyRecords().removeIf(dr -> dr.getId().equals(dailyRecordId));
         }
 
-        // Uložit změny
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
-
         return individualPlanMapper.toDTO(savedPlan);
     }
 }

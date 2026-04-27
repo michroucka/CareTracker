@@ -2,12 +2,13 @@ package cz.zcu.kiv.caretracker.security;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
-import java.util.List;
 
+/**
+ * Custom Spring Security {@link UserDetails} implementation that carries additional fields
+ * ({@code userId}, {@code organizationId}) needed for role-based access control in service layer checks.
+ */
 @Getter
 public class MyUserDetails implements UserDetails {
     private final Long userId;

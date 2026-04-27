@@ -1,6 +1,5 @@
 package cz.zcu.kiv.caretracker.controller;
 
-import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.Department;
@@ -15,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for department management.
+ */
 @RestController
 @RequestMapping("/api/departments")
 public class DepartmentController {

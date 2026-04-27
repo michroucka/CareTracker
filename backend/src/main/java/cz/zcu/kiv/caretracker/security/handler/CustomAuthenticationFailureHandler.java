@@ -10,11 +10,14 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Returns a JSON error response on failed login with a machine-readable {@code errorType} field,
+ * allowing the React frontend to display context-appropriate error messages.
+ */
 @Component
 public class CustomAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
@@ -32,7 +35,6 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
         Map<String, Object> data = new HashMap<>();
         data.put("success", false);
 
-        // Rozlišení typu chyby
         String message;
         String errorType;
         String username = request.getParameter("username");

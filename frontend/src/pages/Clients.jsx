@@ -48,7 +48,6 @@ function Clients() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialActiveFilter = () => {
         const status = searchParams.get("status");
@@ -104,10 +103,8 @@ function Clients() {
     const [ isCreateAccountModalOpen, setIsCreateAccountModalOpen ] = React.useState(false);
     const [ isDeactivateAccountModalOpen, setIsDeactivateAccountModalOpen ] = React.useState(false);
 
-    // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Kontrola oprávnění
     const canAlterClient = React.useMemo(() => {
         if (!user) return false;
         const allowedRoles = ["SUPERADMIN", "ADMIN", "COORDINATOR"];
@@ -115,7 +112,6 @@ function Clients() {
         return allowedRoles.includes(user.role);
     }, [user]);
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => col.key === "fullName" || col.key === "actions");
@@ -125,9 +121,6 @@ function Clients() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
-    // Pro SUPERADMIN: načteno s filtrem organizationId z API
-    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
             city: dept.city,
@@ -135,8 +128,6 @@ function Clients() {
         }));
     }, [departments]);
 
-    // Filtrované employees podle departmentu
-    // Pro SUPERADMIN: employees už jsou načtené s filtrem organizationId z API, takže filtrujeme jen podle departmentu
     const filteredEmployees = React.useMemo(() => {
         let filtered = [...employees];
 
@@ -160,7 +151,6 @@ function Clients() {
     const filteredItems = React.useMemo(() => {
         let filteredClients = [...clients];
 
-        // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredClients = filteredClients.filter((client) =>
@@ -187,7 +177,6 @@ function Clients() {
         setFilterValue("");
     }, []);
 
-    // Handler pro změnu department filtru
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -206,7 +195,6 @@ function Clients() {
         }
     }, [departmentFilter]);
 
-    // Handler pro změnu caregiver filtru
     const handleCaregiverFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -225,7 +213,6 @@ function Clients() {
         }
     }, [caregiverFilter]);
 
-    // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
@@ -253,8 +240,8 @@ function Clients() {
 
 
     React.useEffect(() => {
-        // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
-        // Ale pouze pokud v URL není žádný specifický department filter (aby se nepřepisoval uložený stav)
+        // Set default department filter for COORDINATOR/CAREGIVER only once, and only when the URL
+        // does not already contain a specific department selection (to preserve bookmarked state)
         const urlDepartments = searchParams.get("departments");
         if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
@@ -264,7 +251,6 @@ function Clients() {
         }
     }, [user, departments]);
 
-    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
         if (!user) return;
 
@@ -304,7 +290,6 @@ function Clients() {
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, departmentFilter, caregiverFilter, user, superadminOrg]);
 
-    // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
     const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
         if (user?.role !== "SUPERADMIN") return;
@@ -317,7 +302,6 @@ function Clients() {
         prevSuperadminOrgId.current = superadminOrg?.id;
     }, [user, superadminOrg]);
 
-    // Když se změní filtry, znovu načíst klienty s filtrem
     React.useEffect(() => {
         if (user?.role === "SUPERADMIN") {
             if (!superadminOrg) return;
@@ -341,13 +325,10 @@ function Clients() {
         fetchClients(filters);
     }, [superadminOrg, activeFilter, departmentFilter, caregiverFilter, user, departments, employees]);
 
-    // Helper funkce pro převod filtrů z Set na parametry
     function getStatusFromFilter(activeFilter) {
-        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
         if (activeFilter.size === 0 || activeFilter.size === 2) {
             return undefined;
         }
-        // Jinak vrať true nebo false
         return activeFilter.has("true");
     }
 
@@ -355,7 +336,6 @@ function Clients() {
         if (departmentFilter.has("all")) {
             return undefined;
         }
-        // Převést názvy středisek na ID
         return departments
             .filter(dept => departmentFilter.has(dept.city))
             .map(dept => dept.id);
@@ -365,7 +345,6 @@ function Clients() {
         if (caregiverFilter.has("all")) {
             return undefined;
         }
-        // Převést jména pečovatelů na ID
         return employees
             .filter(emp => caregiverFilter.has(emp.fullName))
             .map(emp => emp.id);
@@ -392,13 +371,9 @@ function Clients() {
     const handleCreateClient = async (clientData) => {
         try {
             await createClient(clientData);
-            // Zavři modal JEN pokud bylo vytvoření úspěšné
             handleCloseCreateModal();
         } catch (error) {
-            // Pokud je error, modal zůstane otevřený
-            // Error toast se zobrazí automaticky v useClients hook
             console.error("Failed to create client: ", error);
-            // Znovu vyhoď chybu aby modal věděl, že došlo k chybě
             throw error;
         }
     }
@@ -791,12 +766,9 @@ function Clients() {
         }
     }, [canAlterClient]);
 
-    // Kontrola jestli se načítají metadata nebo data
-    // hasLoadedData sleduje, jestli už proběhlo první načtení
     const hasLoadedData = React.useRef(false);
 
     React.useEffect(() => {
-        // Označit jako načteno, jakmile se dokončí první načtení
         if (!loading && departments.length > 0 && employees.length > 0) {
             hasLoadedData.current = true;
         }

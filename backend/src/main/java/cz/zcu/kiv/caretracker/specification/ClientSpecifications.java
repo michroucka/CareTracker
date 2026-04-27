@@ -2,65 +2,62 @@ package cz.zcu.kiv.caretracker.specification;
 
 import cz.zcu.kiv.caretracker.entity.Client;
 import org.springframework.data.jpa.domain.Specification;
-
 import java.util.List;
 
 /**
- * Třída poskytující JPA Specifications pro dynamické filtrování Client entit.
- * Používá se pro sestavení flexibilních dotazů s různými kombinacemi filtrů.
- * Dědí z BaseSpecifications pro sdílení společné logiky.
+ * JPA Specifications for dynamic filtering of {@link Client} entities.
+ * Combines individual filter methods via AND for flexible query composition.
  */
 public class ClientSpecifications extends BaseSpecifications<Client> {
 
     /**
-     * Vytvoří specification pro filtrování podle organizace.
+     * Filters clients by organization ID.
      *
-     * @param organizationId ID organizace (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle organizace
+     * @param organizationId the organization ID; {@code null} means no filter
+     * @return the specification
      */
     public static Specification<Client> hasOrganization(Long organizationId) {
         return filterByOrganization("organization", organizationId);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle statusu (aktivní/neaktivní).
+     * Filters clients by active/inactive status.
      *
-     * @param active Status klienta (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle statusu
+     * @param active the desired status; {@code null} means no filter
+     * @return the specification
      */
     public static Specification<Client> hasStatus(Boolean active) {
         return filterByStatus("active", active);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu oddělení.
+     * Filters clients by department IDs.
      *
-     * @param departmentIds Seznam ID oddělení (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle oddělení
+     * @param departmentIds the department IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     public static Specification<Client> hasDepartments(List<Long> departmentIds) {
         return filterByDepartments("department", departmentIds);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu caregiverů.
+     * Filters clients by caregiver IDs.
      *
-     * @param caregiverIds Seznam ID caregiverů (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle caregiverů
+     * @param caregiverIds the caregiver IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     public static Specification<Client> hasCaregivers(List<Long> caregiverIds) {
         return filterByCaregivers("caregiver", caregiverIds);
     }
 
     /**
-     * Kombinuje všechny filtry do jedné specification pomocí AND.
-     * Umožňuje jednoduché přidávání nových filtrů v budoucnu.
+     * Combines all individual filters into a single AND-composed specification.
      *
-     * @param organizationId ID organizace (může být null)
-     * @param active Status klienta (může být null)
-     * @param departmentIds Seznam ID oddělení (může být null nebo prázdný)
-     * @param caregiverIds Seznam ID caregiverů (může být null nebo prázdný)
-     * @return Kombinovaná specification se všemi filtry
+     * @param organizationId optional organization filter
+     * @param active optional status filter
+     * @param departmentIds optional department filter
+     * @param caregiverIds optional caregiver filter
+     * @return the combined specification
      */
     public static Specification<Client> withFilters(
             Long organizationId,

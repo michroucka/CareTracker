@@ -1,40 +1,38 @@
 package cz.zcu.kiv.caretracker.specification;
 
 import org.springframework.data.jpa.domain.Specification;
-
 import java.util.List;
 
 /**
- * Abstraktní base třída poskytující generické protected metody pro JPA Specifications.
- * Konkrétní specification třídy dědí z této třídy a vystavují pouze ty metody,
- * které pro danou entitu dávají smysl.
+ * Abstract base class providing generic JPA Specification factory methods shared by all domain-specific
+ * specification classes. Each concrete class exposes only the methods relevant to its entity type.
  *
- * @param <T> Typ entity
+ * @param <T> entity type
  */
 public abstract class BaseSpecifications<T> {
 
     /**
-     * Vytvoří specification pro filtrování podle organizace.
+     * Creates a specification that filters by organization ID.
      *
-     * @param fieldName Název pole odkazujícího na organizaci (např. "organization")
-     * @param organizationId ID organizace (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle organizace
+     * @param fieldName the entity field referencing the organization (e.g. {@code "organization"})
+     * @param organizationId the organization ID; {@code null} means no filter (always true)
+     * @return the specification
      */
     protected static <T> Specification<T> filterByOrganization(String fieldName, Long organizationId) {
         return (root, query, criteriaBuilder) -> {
             if (organizationId == null) {
-                return criteriaBuilder.conjunction(); // Vždy pravda (nefiltruje)
+                return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get(fieldName).get("id"), organizationId);
         };
     }
 
     /**
-     * Vytvoří specification pro filtrování podle jednoho oddělení.
+     * Creates a specification that filters by a single department ID.
      *
-     * @param fieldName Název pole odkazujícího na department (např. "department")
-     * @param departmentId ID oddělení (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle oddělení
+     * @param fieldName the entity field referencing the department (e.g. {@code "department"})
+     * @param departmentId the department ID; {@code null} means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByDepartment(String fieldName, Long departmentId) {
         return (root, query, criteriaBuilder) -> {
@@ -46,11 +44,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu oddělení.
+     * Creates a specification that filters by a list of department IDs (IN clause).
      *
-     * @param fieldName Název pole odkazujícího na department (např. "department")
-     * @param departmentIds Seznam ID oddělení (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle oddělení
+     * @param fieldName the entity field referencing the department
+     * @param departmentIds the department IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByDepartments(String fieldName, List<Long> departmentIds) {
         return (root, query, criteriaBuilder) -> {
@@ -62,11 +60,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle statusu (aktivní/neaktivní).
+     * Creates a specification that filters by active/inactive status.
      *
-     * @param fieldName Název pole obsahujícího status (např. "active")
-     * @param active Status (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle statusu
+     * @param fieldName the boolean field name (e.g. {@code "active"})
+     * @param active the desired value; {@code null} means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByStatus(String fieldName, Boolean active) {
         return (root, query, criteriaBuilder) -> {
@@ -78,11 +76,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle jednoho caregiver.
+     * Creates a specification that filters by a single caregiver ID.
      *
-     * @param fieldName Název pole odkazujícího na caregiver (např. "caregiver")
-     * @param caregiverId ID caregiver (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle caregiver
+     * @param fieldName the entity field referencing the caregiver
+     * @param caregiverId the caregiver ID; {@code null} means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByCaregiver(String fieldName, Long caregiverId) {
         return (root, query, criteriaBuilder) -> {
@@ -94,11 +92,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu caregiverů.
+     * Creates a specification that filters by a list of caregiver IDs (IN clause).
      *
-     * @param fieldName Název pole odkazujícího na caregiver (např. "caregiver")
-     * @param caregiverIds Seznam ID caregiverů (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle caregiverů
+     * @param fieldName the entity field referencing the caregiver
+     * @param caregiverIds the caregiver IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByCaregivers(String fieldName, List<Long> caregiverIds) {
         return (root, query, criteriaBuilder) -> {
@@ -110,11 +108,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle jednoho klienta.
+     * Creates a specification that filters by a single client ID.
      *
-     * @param fieldName Název pole odkazujícího na klienta (např. "client")
-     * @param clientId ID klienta (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle klienta
+     * @param fieldName the entity field referencing the client
+     * @param clientId the client ID; {@code null} means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByClient(String fieldName, Long clientId) {
         return (root, query, criteriaBuilder) -> {
@@ -126,11 +124,11 @@ public abstract class BaseSpecifications<T> {
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu klientů.
+     * Creates a specification that filters by a list of client IDs (IN clause).
      *
-     * @param fieldName Název pole odkazujícího na klienta (např. "client")
-     * @param clientIds Seznam ID klientů (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle klientů
+     * @param fieldName the entity field referencing the client
+     * @param clientIds the client IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     protected static <T> Specification<T> filterByClients(String fieldName, List<Long> clientIds) {
         return (root, query, criteriaBuilder) -> {

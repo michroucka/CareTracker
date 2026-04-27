@@ -19,7 +19,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.xhtmlrenderer.pdf.ITextRenderer;
-
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -30,6 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Generates PDF billing receipts and payment QR codes for a client's performed tasks in a given month.
+ * PDF rendering uses Flying Saucer (ITextRenderer) with Thymeleaf HTML templates.
+ * QR codes are fetched from the external Paylibo API and embedded in the PDF as Base64.
+ */
 @Service
 public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void>{
     private static final Logger log = LoggerFactory.getLogger(ReceiptService.class);
@@ -50,6 +54,18 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
             "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
     };
 
+    /**
+     * Generates a PDF receipt listing all performed tasks for a client in the given month.
+     * Includes a payment QR code if the organization has bank account details configured.
+     *
+     * @param clientId the client ID
+     * @param month the billing month (1–12)
+     * @param year the billing year
+     * @return the rendered PDF as a byte array
+     * @throws ValidationException if the month value is out of range
+     * @throws ResourceNotFoundException if the client is not found
+     * @throws SecurityException if the user does not have access to this client
+     */
     @Transactional(readOnly = true)
     public byte[] generateReceipt(Long clientId, Integer month, Integer year) {
         if (month < 1 || month > 12) {
@@ -119,6 +135,15 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         }
     }
 
+    /**
+     * Generates a standalone payment QR code PNG for a client's monthly billing total.
+     * Returns {@code null} if the organization has no bank account configured.
+     *
+     * @param clientId the client ID
+     * @param month the billing month (1–12)
+     * @param year the billing year
+     * @return PNG bytes, or {@code null} if no bank account is configured
+     */
     public byte[] generatePaymentQrCode(Long clientId, Integer month, Integer year) {
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
@@ -131,11 +156,16 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         return fetchPaymentQrPng(client.getOrganization(), totalPrice, variableSymbol);
     }
 
+    /** Fetches the QR code PNG and returns it as a Base64 string for embedding in the PDF template. */
     private String fetchPaymentQrCode(Organization org, double totalPrice, String variableSymbol) {
         byte[] bytes = fetchPaymentQrPng(org, totalPrice, variableSymbol);
         return bytes != null ? Base64.getEncoder().encodeToString(bytes) : null;
     }
 
+    /**
+     * Calls the Paylibo API to generate a Czech payment QR code image.
+     * Returns {@code null} if bank details are missing or the request fails.
+     */
     private byte[] fetchPaymentQrPng(Organization org, double totalPrice, String variableSymbol) {
         if (org.getAccountNumber() == null || org.getBankCode() == null) {
             return null;
@@ -161,6 +191,10 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         }
     }
 
+    /**
+     * Groups performed tasks by task type and aggregates unit counts and prices per group
+     * for use as rows in the receipt template.
+     */
     private List<Map<String, String>> groupByTask(List<PerformedTask> tasks) {
         return tasks.stream()
                 .collect(Collectors.groupingBy(

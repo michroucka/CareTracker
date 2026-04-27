@@ -20,7 +20,7 @@ public class DepartmentMapper {
     EmployeeMapper employeeMapper;
 
     /**
-     * Převede Department entitu na DepartmentDTO
+     * Maps a {@link Department} entity to a {@link DepartmentDTO} including coordinator and organization.
      */
     public DepartmentDTO toDTO(Department department) {
         if (department == null) {

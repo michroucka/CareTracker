@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for dashboard data, providing role-specific statistics and recent activity.
+ */
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {

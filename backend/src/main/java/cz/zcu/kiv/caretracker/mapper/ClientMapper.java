@@ -28,7 +28,7 @@ public class ClientMapper {
     TaskMapper taskMapper;
 
     /**
-     * Převede Client entitu na ClientDTO
+     * Maps a {@link Client} entity to a full {@link ClientDTO} including nested department, caregiver, and tasks.
      */
     public ClientDTO toDTO(Client client) {
         if (client == null) {
@@ -58,7 +58,6 @@ public class ClientMapper {
         dto.setActive(client.getActive());
         dto.setHasPicture(client.getPicture() != null);
 
-        // Mapování vnořených objektů
         dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));
         dto.setCaregiver(employeeMapper.toSummaryDTO(client.getCaregiver()));
         dto.setTasks(taskMapper.toDTOList(client.getTasks()));
@@ -67,8 +66,8 @@ public class ClientMapper {
     }
 
     /**
-     * Převede Client entitu na ClientSummaryDTO (lightweight, flat struktura).
-     * Nepoužívá vnořené objekty - jen ID a názvy pro minimalizaci duplicity dat.
+     * Maps a {@link Client} entity to a lightweight flat {@link ClientShortDTO}.
+     * Uses only IDs and names; no deeply nested objects.
      */
     public ClientShortDTO toShortDTO(Client client) {
         if (client == null) {
@@ -126,7 +125,8 @@ public class ClientMapper {
     }
 
     /**
-     * Převede ClientRequest DTO na Client entitu
+     * Applies fields from a {@link ClientRequestDTO} onto a {@link Client} entity,
+     * resolving the department, organization, caregiver, and task associations.
      */
     public void requestToClient(Client client,
                                 ClientRequestDTO dto,
@@ -159,9 +159,7 @@ public class ClientMapper {
         );
     }
 
-    /**
-     * Převede seznam Client entit na seznam ClientDTO
-     */
+    /** Maps a list of {@link Client} entities to a list of {@link ClientDTO}s. */
     public List<ClientDTO> toDTOList(List<Client> clients) {
         if (clients == null) {
             return null;
@@ -172,9 +170,7 @@ public class ClientMapper {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Převede seznam Client entit na seznam ClientSummaryDTO
-     */
+    /** Maps a list of {@link Client} entities to a list of {@link ClientShortDTO}s. */
     public List<ClientShortDTO> toShortDTOList(List<Client> clients) {
         if (clients == null) {
             return null;

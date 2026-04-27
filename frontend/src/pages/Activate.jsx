@@ -6,15 +6,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { showToast } from "../components/MyToast";
 
 function Activate() {
-    // Získání tokenu z URL (?token=xyz)
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
 
-    // Stavy pro validaci tokenu
     const [isValidatingToken, setIsValidatingToken] = React.useState(true);
     const [isTokenValid, setIsTokenValid] = React.useState(false);
 
-    // Stavy pro formulář
     const [username, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [passwordConfirm, setPasswordConfirm] = React.useState("");
@@ -24,7 +21,6 @@ function Activate() {
 
     const navigate = useNavigate();
 
-    // Validace tokenu při načtení stránky
     React.useEffect(() => {
         const validateToken = async () => {
             if (!token) {
@@ -70,7 +66,6 @@ function Activate() {
         const trimmedPassword = password.trim();
         const trimmedPasswordConfirm = passwordConfirm.trim();
 
-        // Validace trimnutých hodnot
         const newErrors = {};
         if (!trimmedUsername) {
             newErrors.username = "Prosím zadejte uživatelské jméno";
@@ -96,7 +91,6 @@ function Activate() {
         setIsSubmitting(true);
 
         try {
-            // postJSON automaticky hází chyby při !response.ok
             const result = await postJSON("/activation/complete", {
                 token: token,
                 username: trimmedUsername,
@@ -112,7 +106,6 @@ function Activate() {
 
             navigate("/login", { replace: true });
         } catch (error) {
-            // postJSON vytáhne message z ErrorResponse nebo použije default
             console.error("Activation error:", error);
             showToast({
                 title: error.message || "Server není dostupný",
@@ -153,7 +146,6 @@ function Activate() {
         );
     }
 
-    // Validní token - zobraz formulář
     return (
         <Form
             className="w-full justify-center items-center space-y-4"

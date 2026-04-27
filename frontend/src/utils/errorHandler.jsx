@@ -2,10 +2,10 @@ import { showToast } from "../components/MyToast.jsx";
 import { CloudAlert } from "lucide-react";
 
 /**
- * Zobrazí error toast s chybovou zprávou
- * @param {Error} error - Error objekt
- * @param {string} defaultTitle - Výchozí titulek pokud není specifikován
- * @param {Object} options - Další možnosti pro toast (icon, timeout, atd.)
+ * Displays an error toast with the message from the error object.
+ * @param {Error} error
+ * @param {string} [defaultTitle="Chyba"] toast title
+ * @param {Object} [options] additional toast options (icon, timeout, etc.)
  */
 export function showErrorToast(error, defaultTitle = "Chyba", options = {}) {
     const message = error?.message || "Nastala neočekávaná chyba";
@@ -21,11 +21,12 @@ export function showErrorToast(error, defaultTitle = "Chyba", options = {}) {
 }
 
 /**
- * Wrapper pro async funkce s automatickým error handlingem
- * @param {Function} asyncFn - Async funkce k zavolání
- * @param {string} errorTitle - Titulek error toastu
- * @param {Object} toastOptions - Možnosti pro toast
- * @returns {Promise} - Výsledek async funkce
+ * Calls an async function and automatically shows an error toast on failure.
+ * Re-throws the error so the caller can react if needed.
+ * @param {Function} asyncFn the async function to call
+ * @param {string} errorTitle title for the error toast
+ * @param {Object} [toastOptions] additional toast options
+ * @returns {Promise}
  */
 export async function handleAsyncError(asyncFn, errorTitle, toastOptions = {}) {
     try {

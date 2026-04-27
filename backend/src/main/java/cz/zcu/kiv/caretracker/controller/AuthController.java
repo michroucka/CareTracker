@@ -3,7 +3,6 @@ package cz.zcu.kiv.caretracker.controller;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.security.MyUserDetails;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,11 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 
 import java.util.Map;
 
+/**
+ * REST controller for authentication status and logout.
+ * The {@code /api/auth-status} endpoint is polled by the React frontend on every page load
+ * to hydrate the global auth context without requiring a separate login request.
+ */
 @RestController
 @RequestMapping("/api")
 public class AuthController {
@@ -28,6 +32,11 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Returns the current authentication state including role, organizational context,
+     * and employee/client IDs needed by the frontend auth context.
+     * Always returns 200 OK — the {@code isLoggedIn} field indicates whether a session is active.
+     */
     @GetMapping("/auth-status")
     @Transactional(readOnly = true)
     public Map<String, Object> authStatus(Authentication auth) {
@@ -44,25 +53,21 @@ public class AuthController {
 
                 log.debug("Authentication status check - authenticated user '{}'", user.getUsername());
 
-                // Základní odpověď
                 Map<String, Object> response = new java.util.HashMap<>();
                 response.put("isLoggedIn", true);
                 response.put("username", user.getUsername());
                 response.put("role", user.getRole().toString());
 
-                // Přidání organizačního kontextu pro zaměstnance
                 try {
                     if (user.getEmployee() != null) {
                         response.put("employeeId", user.getEmployee().getId());
                         response.put("employeeRole", user.getEmployee().getRole().toString());
                         response.put("fullName", user.getEmployee().getFullName());
 
-                        // Přidání department ID pro CAREGIVER, COORDINATOR a ADMIN
                         if (user.getEmployee().getDepartment() != null) {
                             response.put("departmentId", user.getEmployee().getDepartment().getId());
                         }
 
-                        // Přidání organization ID
                         if (user.getEmployee().getOrganization() != null) {
                             response.put("organizationId", user.getEmployee().getOrganization().getId());
                         }
@@ -72,7 +77,6 @@ public class AuthController {
                     // Continue with basic auth info without employee context
                 }
 
-                // Přidání klientského kontextu pro CLIENT roli
                 try {
                     if (user.getClient() != null) {
                         response.put("clientId", user.getClient().getId());
@@ -92,6 +96,10 @@ public class AuthController {
         }
     }
 
+    /**
+     * Invalidates the current session and deletes session cookies.
+     * Returns {@code {"success": true}} on success, {@code {"success": false}} if no session was active.
+     */
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

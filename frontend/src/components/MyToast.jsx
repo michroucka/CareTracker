@@ -3,18 +3,18 @@ import {X} from "lucide-react";
 import React from "react";
 
 /**
- * Wrapper pro addToast s přednastavenými defaultními hodnotami
+ * Wrapper around {@link addToast} with sensible defaults and consistent close button positioning.
  *
- * @param {Object} options - Nastavení toastu
- * @param {string} options.title - Titulek toastu
- * @param {string} [options.description] - Popisek toastu
- * @param {string} [options.color="default"] - Barva: default, primary, secondary, success, warning, danger
- * @param {ReactNode} [options.icon] - Custom ikona (vlevo)
- * @param {ReactNode} [options.closeIcon=<X />] - Ikona pro zavření
- * @param {number} [options.timeout=5000] - Doba zobrazení v ms
- * @param {Object} [options.classNames] - Custom CSS třídy pro části toastu
- * @param {...any} otherProps - Další props pro addToast
- * @returns {string} ID toastu
+ * @param {Object} options
+ * @param {string} options.title toast title
+ * @param {string} [options.description] toast body text
+ * @param {string} [options.color="default"] color variant: default, primary, secondary, success, warning, danger
+ * @param {ReactNode} [options.icon] custom left icon
+ * @param {ReactNode} [options.closeIcon=<X />] close button icon
+ * @param {number} [options.timeout=5000] auto-dismiss delay in ms
+ * @param {Object} [options.classNames] CSS class overrides for toast parts
+ * @param {...any} otherProps additional props forwarded to addToast
+ * @returns {string} the toast ID
  */
 export const showToast = ({
     title,

@@ -13,7 +13,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 
 @Service
@@ -31,21 +30,26 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     private EmployeeRepository employeeRepository;
 
     /**
-     * Vrací všechny provedené úkony filtrované podle role a organizačního kontextu přihlášeného uživatele.
-     * - SUPERADMIN: Vidí všechny úkony, nebo úkony z konkrétní organizace pokud je zadán organizationId
-     * - ADMIN: Vidí pouze úkony z jeho organizace
-     * - COORDINATOR: Vidí pouze úkony z jeho oddělení
-     * - CAREGIVER: Vidí pouze úkony z jeho oddělení
-     * - CLIENT: Vidí pouze svoje úkony (clientId z session, parametr clientId je ignorován)
+     * Returns performed tasks filtered by the current user's role and the supplied optional criteria.
+     * <p>
+     * SUPERADMIN: may filter by {@code organizationId}, {@code departmentIds}, {@code caregiverIds}, {@code clientId}.<br>
+     * ADMIN: scoped to own organization.<br>
+     * COORDINATOR/CAREGIVER: scoped to own department.<br>
+     * CLIENT: always sees only their own tasks; {@code clientId} parameter is ignored.
      *
-     * @param organizationId Volitelné ID organizace pro filtrování (pouze pro SUPERADMIN)
-     * @param clientId       Volitelné ID klienta pro filtrování; pro CLIENT roli vždy přepsáno vlastním ID
+     * @param organizationId optional organization filter (SUPERADMIN only)
+     * @param departmentIds optional department filter
+     * @param caregiverIds optional caregiver filter
+     * @param clientId optional client filter (ignored for CLIENT role)
+     * @param month optional month filter (1–12)
+     * @param year optional year filter
+     * @return role-filtered list of performed task summary DTOs
      */
     @Transactional(readOnly = true)
     public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds, Long clientId, Integer month, Integer year) {
         User currentUser = getCurrentUser();
 
-        // CLIENT vidí pouze svoje úkony – role-based org filtry se přeskočí
+        // CLIENT role bypasses org/dept filters — always scoped to the client's own records
         if (currentUser.getRole() == UserRole.CLIENT) {
             if (currentUser.getClient() == null) {
                 return Collections.emptyList();
@@ -76,6 +80,13 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         return performedTaskMapper.toSummaryDTOList(performedTasks);
     }
 
+    /**
+     * Returns a single performed task by ID, applying role-based access control.
+     * CLIENT role may only access tasks belonging to their own client record.
+     *
+     * @param id the performed task ID
+     * @return the task DTO, or empty if not found or the user lacks access
+     */
     @Transactional(readOnly = true)
     public Optional<PerformedTaskDTO> getPerformedTaskById(Long id) {
         Optional<PerformedTask> taskOpt = performedTaskRepository.findById(id);
@@ -102,6 +113,10 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         );
     }
 
+    /**
+     * Persists a performed task entity from the supplied DTO, resolving all related entities
+     * and validating that they belong to the current user's organization/department.
+     */
     private PerformedTask savePerformedTask(PerformedTask performedTask, PerformedTaskRequestDTO dto) {
         Client client = clientRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
@@ -111,11 +126,9 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         for (Long employeeId : dto.getCaregiverIds()) {
             Employee caregiver = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
-
             caregivers.add(caregiver);
         }
 
-        // Validace, že všechny entity patří do správné organizace/departmentu
         validateDepartmentAccess(
                 client,
                 c -> c.getOrganization().getId(),
@@ -127,15 +140,27 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         }
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
-
         return performedTaskRepository.save(performedTask);
     }
 
+    /**
+     * Creates a new performed task record.
+     *
+     * @param dto the performed task data
+     * @return the persisted entity
+     */
     public PerformedTask createPerformedTask(PerformedTaskRequestDTO dto) {
         PerformedTask performedTask = new PerformedTask();
         return savePerformedTask(performedTask, dto);
     }
 
+    /**
+     * Updates an existing performed task, applying role-based write access and caregiver assignment validation.
+     *
+     * @param id the performed task ID
+     * @param dto updated task data
+     * @return the updated entity
+     */
     public PerformedTask updatePerformedTask(Long id, PerformedTaskRequestDTO dto) {
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
@@ -151,6 +176,11 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         return savePerformedTask(task, dto);
     }
 
+    /**
+     * Deletes a performed task, applying role-based write access and caregiver assignment validation.
+     *
+     * @param id the performed task ID to delete
+     */
     public void deletePerformedTask(Long id) {
         PerformedTask task = performedTaskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provedený úkon nebyl nalezen"));
@@ -166,6 +196,12 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         performedTaskRepository.delete(task);
     }
 
+    /**
+     * For CAREGIVER role, ensures they are listed as one of the task's caregivers before allowing a mutation.
+     * Other roles pass through unconditionally.
+     *
+     * @throws SecurityException if a CAREGIVER is not assigned to this task
+     */
     private void validateCaregiverAssignment(PerformedTask task) {
         User currentUser = getCurrentUser();
         if (currentUser.getRole() != UserRole.CAREGIVER) return;

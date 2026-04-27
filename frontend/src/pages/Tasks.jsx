@@ -44,7 +44,6 @@ function Tasks() {
     const [searchParams, setSearchParams] = useSearchParams();
     const { user, superadminOrg } = useAuth();
 
-    // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialActiveFilter = () => {
         const status = searchParams.get("status");
@@ -78,10 +77,8 @@ function Tasks() {
     const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
     const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
 
-    // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Kontrola oprávnění
     const canAlterTask = React.useMemo(() => {
         if (!user) return false;
         const allowedRoles = ["SUPERADMIN", "ADMIN"];
@@ -89,7 +86,6 @@ function Tasks() {
         return allowedRoles.includes(user.role);
     }, [user]);
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => col.key === "name" || col.key === "actions");
@@ -102,7 +98,6 @@ function Tasks() {
     const filteredItems = React.useMemo(() => {
         let filteredTasks = [...tasks];
 
-        // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredTasks = filteredTasks.filter((employee) =>
@@ -129,12 +124,10 @@ function Tasks() {
         setFilterValue("");
     }, []);
 
-    // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
 
-    // Validace filtrů podle role uživatele
     React.useEffect(() => {
         if (!user) return;
 
@@ -148,7 +141,6 @@ function Tasks() {
         }
     }, [user]);
 
-    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
         if (!user) return;
 
@@ -172,7 +164,6 @@ function Tasks() {
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, user]);
 
-    // Když se změní filtry, znovu načíst ukony s filtrem
     React.useEffect(() => {
         if (user?.role === "SUPERADMIN" && !superadminOrg) {
             setTasks([]);
@@ -187,13 +178,10 @@ function Tasks() {
         fetchTasks(filters);
     }, [superadminOrg, activeFilter, user]);
 
-    // Helper funkce pro převod filtrů z Set na parametry
     function getStatusFromFilter(activeFilter) {
-        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
         if (activeFilter.size === 0 || activeFilter.size === 2) {
             return undefined;
         }
-        // Jinak vrať true nebo false
         return activeFilter.has("true");
     }
 
