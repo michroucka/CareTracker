@@ -2,7 +2,6 @@ package cz.zcu.kiv.caretracker.config;
 
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationFailureHandler;
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationSuccessHandler;
-
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
