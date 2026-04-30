@@ -6,5 +6,4 @@ WORKDIR /app
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
 
-# Spusť aplikaci přes spring-boot:run (ne přes jar)
-CMD ["./mvnw", "spring-boot:run"]
+CMD ["sh", "mvnw", "spring-boot:run"]
