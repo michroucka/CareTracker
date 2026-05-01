@@ -47,6 +47,7 @@ compile:
 test: test-backend test-frontend
 
 test-backend:
+	docker exec caretracker-backend chmod +x ./mvnw
 	docker exec caretracker-backend ./mvnw test
 
 test-frontend:
