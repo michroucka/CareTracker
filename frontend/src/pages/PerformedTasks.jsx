@@ -89,7 +89,6 @@ function PerformedTasks() {
         column: "date",
         direction: "descending",
     });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(() => searchParams.get("openCreate") === "true");
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
@@ -215,9 +214,6 @@ function PerformedTasks() {
         }
     }, [caregiverFilter]);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     React.useEffect(() => {
         if (!user || hasLoadedMetadata.current) return;
@@ -685,10 +681,9 @@ function PerformedTasks() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
-                aria-label="Performed tasks table"
-                maxTableHeight={maxTableHeight}
+                removeWrapper
+                                aria-label="Performed tasks table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -707,7 +702,7 @@ function PerformedTasks() {
                 </TableHeader>
                 <TableBody
                     isLoading={isLoading}
-                    loadingContent={<Spinner label="Načítání úkonů..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání úkonů..." />}
                     emptyContent={
                         isSuperadminWithoutOrg
                             ? "Vyberte prosím organizaci v navigační liště" : "Žádné provedené úkony nenalezeny"

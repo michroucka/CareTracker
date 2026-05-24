@@ -57,7 +57,7 @@ export default function AppNavbar() {
 
     const filteredMenuItems = React.useMemo(() => {
         return menuItems.filter((item) => {
-            if (!user) return false;
+            if (!user) return item.path === "/";
             return hasRole(user.role, item.allowedRoles);
         });
     }, [user]);
@@ -126,13 +126,13 @@ export default function AppNavbar() {
                                 key={item.path}
                                 href={item.path}
                                 color="foreground"
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-lg transition-all ease-in-out duration-200
                                     ${isActive
                                         ? "bg-primary/10 text-primary font-semibold opacity-100"
                                         : "opacity-60 hover:opacity-100 hover:bg-content2"
                                     }`}
                             >
-                                <Icon className="size-5 shrink-0" />
+                                <Icon className="size-5.5 shrink-0" />
                                 <span>{item.name}</span>
                             </Link>
                         );
@@ -150,19 +150,20 @@ export default function AppNavbar() {
                             <div className="flex-1 h-9" />
                         ) : user ? (
                             <>
-                                <User
-                                    as="button"
+                                <button
                                     onClick={() => navigate("/account")}
-                                    name={user.username}
-                                    description={getRoleLabel(user.role)}
-                                    avatarProps={{ className: "hidden" }}
-                                    className="cursor-pointer justify-start flex-1 min-w-0"
-                                    classNames={{
-                                        base: "gap-1 min-w-0",
-                                        name: "font-semibold text-sm truncate",
-                                        description: "opacity-65 text-xs truncate",
-                                    }}
-                                />
+                                    className="flex-1 min-w-0 flex flex-col items-start text-left cursor-pointer rounded-lg px-1 hover:opacity-70 transition-opacity"
+                                >
+                                    <span className={`font-semibold w-full truncate 
+                                        ${user.username.length > 13
+                                        ? "text-sm"
+                                        : ""
+                                    }`}
+                                    >
+                                        {user.username}
+                                    </span>
+                                    <span className="opacity-65 text-xs w-full truncate">{getRoleLabel(user.role)}</span>
+                                </button>
                                 <Button
                                     isIconOnly
                                     color="danger"
@@ -174,7 +175,7 @@ export default function AppNavbar() {
                                 </Button>
                             </>
                         ) : (
-                            <Link href="/login" className="flex-1 font-semibold text-sm text-foreground">
+                            <Link href="/login" className="flex-1 font-semibold text-foreground text-lg">
                                 Přihlásit se
                             </Link>
                         )}

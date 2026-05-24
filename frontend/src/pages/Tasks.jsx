@@ -57,7 +57,6 @@ function Tasks() {
         column: "name",
         direction: "ascending",
     });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const {
         tasks,
         setTasks,
@@ -124,9 +123,6 @@ function Tasks() {
         setFilterValue("");
     }, []);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -456,10 +452,9 @@ function Tasks() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
-                aria-label="Tasks table"
-                maxTableHeight={maxTableHeight}
+                removeWrapper
+                                aria-label="Tasks table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -481,7 +476,7 @@ function Tasks() {
                 </TableHeader>
                 <TableBody
                     isLoading={shouldShowLoading}
-                    loadingContent={<Spinner label="Načítání úkonů..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání úkonů..." />}
                     emptyContent={
                         isSuperadminWithoutOrg
                             ? "Vyberte prosím organizaci v navigační liště" : "Žádné úkony nenalezeny"

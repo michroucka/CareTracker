@@ -65,7 +65,6 @@ function Organizations() {
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({ column: "name", direction: "ascending" });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
@@ -106,9 +105,6 @@ function Organizations() {
     const onSearchChange = React.useCallback((value) => setFilterValue(value || ""), []);
     const onClear = React.useCallback(() => setFilterValue(""), []);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -283,10 +279,9 @@ function Organizations() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
-                aria-label="Organizations table"
-                maxTableHeight={maxTableHeight}
+                removeWrapper
+                                aria-label="Organizations table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -306,7 +301,7 @@ function Organizations() {
                 </TableHeader>
                 <TableBody
                     isLoading={loading}
-                    loadingContent={<Spinner label="Načítání organizace..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání organizace..." />}
                     emptyContent="Žádná organizace nenalezena"
                     items={sortedItems}
                 >
