@@ -6,7 +6,6 @@ import cz.zcu.kiv.caretracker.entity.Organization;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.stream.Collectors;
 

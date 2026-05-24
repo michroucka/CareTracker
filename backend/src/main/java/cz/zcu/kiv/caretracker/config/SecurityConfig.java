@@ -2,7 +2,6 @@ package cz.zcu.kiv.caretracker.config;
 
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationFailureHandler;
 import cz.zcu.kiv.caretracker.security.handler.CustomAuthenticationSuccessHandler;
-
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +11,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Spring Security configuration.
+ * Uses session-based authentication (no JWT) with a 7-day remember-me cookie.
+ * Login/logout return JSON responses so the React SPA can handle them without redirects.
+ * Method-level security (@PreAuthorize) is enabled via @EnableMethodSecurity.
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {

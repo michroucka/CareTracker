@@ -10,6 +10,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/**
+ * Translates exceptions thrown from controllers and services into structured JSON error responses.
+ * All handlers return an {@link ErrorResponse} body with an appropriate HTTP status code.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -20,7 +24,6 @@ public class GlobalExceptionHandler {
 
         String message = "Chyba při ukládání dat";
 
-        // Kontrola na duplicate key (UNIQUE constraint)
         if (ex.getMessage().contains("duplicate key") || ex.getMessage().contains("unique constraint")) {
             if (ex.getMessage().contains("personal_number") ||
                 ex.getMessage().contains("idx_client_personal_number_organization")) {
@@ -33,11 +36,9 @@ public class GlobalExceptionHandler {
                 message = "Záznam s těmito údaji již existuje";
             }
         }
-        // Kontrola na foreign key constraint
         else if (ex.getMessage().contains("foreign key constraint")) {
             message = "Nelze smazat, existují závislé záznamy";
         }
-        // Kontrola na not-null constraint
         else if (ex.getMessage().contains("not-null") || ex.getMessage().contains("NULL")) {
             message = "Všechna povinná pole musí být vyplněna";
         }
@@ -59,7 +60,6 @@ public class GlobalExceptionHandler {
 
         String message = ex.getMessage();
 
-        // Pokud je message prázdná, použij výchozí
         if (message == null || message.isEmpty()) {
             message = "Nastala neočekávaná chyba";
         }
@@ -184,7 +184,6 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
-        // Log the exception for debugging
         ex.printStackTrace();
 
         ErrorResponse error = new ErrorResponse(

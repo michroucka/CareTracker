@@ -5,9 +5,6 @@ public enum EmployeeRole {
     COORDINATOR,
     MANAGER;
 
-    /**
-     * Převede EmployeeRole na odpovídající UserRole.
-     */
     public UserRole toUserRole() {
         return switch (this) {
             case CAREGIVER -> UserRole.CAREGIVER;

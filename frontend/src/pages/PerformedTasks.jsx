@@ -61,7 +61,6 @@ function PerformedTasks() {
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
 
-    // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialDepartmentFilter = () => {
         const depts = searchParams.get("departments");
@@ -102,10 +101,8 @@ function PerformedTasks() {
 
     const hasLoadedMetadata = React.useRef(false);
 
-    // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Filtrované sloupce pro mobile
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => ["client", "task", "actions"].includes(col.key));
@@ -115,9 +112,6 @@ function PerformedTasks() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
-    // Pro SUPERADMIN: načteno s filtrem organizationId z API
-    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
             name: dept.city,
@@ -125,12 +119,9 @@ function PerformedTasks() {
         }));
     }, [departments]);
 
-    // Filtrované employees podle departmentu
-    // Pro SUPERADMIN: employees už jsou načtené s filtrem organizationId z API, takže filtrujeme jen podle departmentu
     const filteredEmployees = React.useMemo(() => {
         let filtered = [...employees];
 
-        // Filtruj podle departmentu
         if (!departmentFilter.has("all")) {
             filtered = filtered.filter(employee =>
                 departmentFilter.has(employee.department?.city)
@@ -162,7 +153,6 @@ function PerformedTasks() {
     const filteredItems = React.useMemo(() => {
         let filteredPerformedTasks = [...performedTasks];
 
-        // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) =>
@@ -189,7 +179,6 @@ function PerformedTasks() {
         setFilterValue("");
     }, []);
 
-    // Handler pro změnu department filtru
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -208,7 +197,6 @@ function PerformedTasks() {
         }
     }, [departmentFilter]);
 
-    // Handler pro změnu caregiver filtru
     const handleCaregiverFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -227,7 +215,6 @@ function PerformedTasks() {
         }
     }, [caregiverFilter]);
 
-    // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
@@ -255,7 +242,6 @@ function PerformedTasks() {
         fetchTasks({ organizationId: superadminOrg.id, status: "true" });
     }, [user, superadminOrg]);
 
-    // Validace filtrů podle role uživatele
     React.useEffect(() => {
         if (!user) return;
 
@@ -270,8 +256,8 @@ function PerformedTasks() {
     }, [user, departments]);
 
     React.useEffect(() => {
-        // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
-        // Ale pouze pokud v URL není žádný specifický department filter (aby se nepřepisoval uložený stav)
+        // Set default department filter for COORDINATOR/CAREGIVER only once, and only when the URL
+        // does not already contain a specific department selection (to preserve bookmarked state)
         const urlDepartments = searchParams.get("departments");
         if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
@@ -281,7 +267,6 @@ function PerformedTasks() {
         }
     }, [user, departments]);
 
-    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
         if (!user) return;
 
@@ -316,7 +301,6 @@ function PerformedTasks() {
         setSearchParams(params, { replace: true });
     }, [filterValue, departmentFilter, caregiverFilter, monthYearFilter, user, superadminOrg]);
 
-    // Pro SUPERADMIN resetovat department a caregiver filtry při změně organizace
     const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
         if (user?.role !== "SUPERADMIN") return;
@@ -329,7 +313,6 @@ function PerformedTasks() {
         prevSuperadminOrgId.current = superadminOrg?.id;
     }, [user, superadminOrg]);
 
-    // Když se změní filtry, znovu načíst ukony s filtrem
     React.useEffect(() => {
         if (user?.role === "SUPERADMIN") {
             if (!superadminOrg) return;
@@ -358,7 +341,6 @@ function PerformedTasks() {
         if (departmentFilter.has("all")) {
             return undefined;
         }
-        // Převést názvy středisek na ID
         return departments
             .filter(dept => departmentFilter.has(dept.city))
             .map(dept => dept.id);
@@ -368,7 +350,6 @@ function PerformedTasks() {
         if (caregiverFilter.has("all")) {
             return undefined;
         }
-        // Převést jména pečovatelů na ID
         return employees
             .filter(emp => caregiverFilter.has(emp.fullName))
             .map(emp => emp.id);
@@ -689,12 +670,9 @@ function PerformedTasks() {
         }
     }, [user, isLoadingDetail]);
 
-    // Kontrola jestli se načítají metadata nebo data
-    // hasLoadedData sleduje, jestli už proběhlo první načtení
     const hasLoadedData = React.useRef(false);
 
     React.useEffect(() => {
-        // Označit jako načteno, jakmile se dokončí první načtení
         if (!loading && departments.length > 0 && employees.length > 0) {
             hasLoadedData.current = true;
         }

@@ -5,13 +5,8 @@ import cz.zcu.kiv.caretracker.dto.employee.EmployeeSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.List;
 
-/**
- * Lightweight DTO pro seznam klientů s minimální duplikací dat.
- * Obsahuje jen ID a názvy pro relace - frontend má již načtené seznamy departments/caregivers.
- */
 @Getter
 @Setter
 public class ClientShortDTO {

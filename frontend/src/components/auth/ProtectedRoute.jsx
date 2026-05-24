@@ -7,11 +7,11 @@ import { ShieldAlert, UserRoundX } from "lucide-react";
 import {Spinner} from "@heroui/react";
 
 /**
- * Komponenta pro ochranu routes podle autentizace a autorizace
+ * Route guard that requires authentication and optionally a specific role.
  *
  * @param {Object} props
- * @param {React.ReactNode} props.children - Komponenta k zobrazení
- * @param {Array<string>} props.allowedRoles - Povolené role (nepovinné, pokud není zadáno, stačí být přihlášen)
+ * @param {React.ReactNode} props.children component to render when access is granted
+ * @param {Array<string>} [props.allowedRoles] permitted roles; if omitted, any authenticated user is allowed
  */
 export function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading } = useAuth();
@@ -23,7 +23,6 @@ export function ProtectedRoute({ children, allowedRoles }) {
         if (user) wasAuthenticatedRef.current = true;
     }, [user]);
 
-    // Kontrola přihlášení a oprávnění
     const isNotAuthenticated = !loading && !user;
     const hasInsufficientPermissions = !loading && user && allowedRoles && !hasRole(user.role, allowedRoles);
 
@@ -50,7 +49,6 @@ export function ProtectedRoute({ children, allowedRoles }) {
         }
     }, [isNotAuthenticated, hasInsufficientPermissions]);
 
-    // Počkej na načtení autentizace
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -59,9 +57,8 @@ export function ProtectedRoute({ children, allowedRoles }) {
         );
     }
 
-    // Přesměrování
     if (isNotAuthenticated) {
-        // Uživatel byl přihlášen → záměrné odhlášení, přesměruj na domovskou stránku
+        // User was previously logged in — intentional logout, go home instead of login
         if (wasAuthenticatedRef.current) {
             return <Navigate to="/" replace />;
         }
@@ -72,6 +69,5 @@ export function ProtectedRoute({ children, allowedRoles }) {
         return <Navigate to="/" replace />;
     }
 
-    // Vše OK, zobraz požadovanou komponentu
     return children;
 }

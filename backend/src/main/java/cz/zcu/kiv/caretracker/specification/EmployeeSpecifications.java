@@ -3,50 +3,48 @@ package cz.zcu.kiv.caretracker.specification;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import org.springframework.data.jpa.domain.Specification;
-
 import java.util.List;
 
 /**
- * Třída poskytující JPA Specifications pro dynamické filtrování Employee entit.
- * Dědí z BaseSpecifications pro sdílení společné logiky.
+ * JPA Specifications for dynamic filtering of {@link Employee} entities.
  */
 public class EmployeeSpecifications extends BaseSpecifications<Employee> {
 
     /**
-     * Vytvoří specification pro filtrování podle organizace.
+     * Filters employees by organization ID.
      *
-     * @param organizationId ID organizace (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle organizace
+     * @param organizationId the organization ID; {@code null} means no filter
+     * @return the specification
      */
     public static Specification<Employee> hasOrganization(Long organizationId) {
         return filterByOrganization("organization", organizationId);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle seznamu oddělení.
+     * Filters employees by department IDs.
      *
-     * @param departmentIds Seznam ID oddělení (může být null nebo prázdný - pak nefiltruje)
-     * @return Specification pro filtrování podle oddělení
+     * @param departmentIds the department IDs; {@code null} or empty means no filter
+     * @return the specification
      */
     public static Specification<Employee> hasDepartments(List<Long> departmentIds) {
         return filterByDepartments("department", departmentIds);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle statusu (aktivní/neaktivní).
+     * Filters employees by active/inactive status.
      *
-     * @param active Status zaměstnance (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle statusu
+     * @param active the desired status; {@code null} means no filter
+     * @return the specification
      */
     public static Specification<Employee> hasStatus(Boolean active) {
         return filterByStatus("active", active);
     }
 
     /**
-     * Vytvoří specification pro filtrování podle role zaměstnance.
+     * Filters employees by their role.
      *
-     * @param role Role zaměstnance (může být null - pak nefiltruje)
-     * @return Specification pro filtrování podle role
+     * @param role the employee role; {@code null} means no filter
+     * @return the specification
      */
     public static Specification<Employee> hasRole(EmployeeRole role) {
         return (root, query, criteriaBuilder) -> {
@@ -58,12 +56,12 @@ public class EmployeeSpecifications extends BaseSpecifications<Employee> {
     }
 
     /**
-     * Kombinuje všechny filtry do jedné specification pomocí AND.
+     * Combines all individual filters into a single AND-composed specification.
      *
-     * @param organizationId ID organizace (může být null)
-     * @param departmentIds Seznam ID oddělení (může být null nebo prázdný)
-     * @param active Status zaměstnance (může být null)
-     * @return Kombinovaná specification se všemi filtry
+     * @param organizationId optional organization filter
+     * @param departmentIds optional department filter
+     * @param active optional status filter
+     * @return the combined specification
      */
     public static Specification<Employee> withFilters(
             Long organizationId,

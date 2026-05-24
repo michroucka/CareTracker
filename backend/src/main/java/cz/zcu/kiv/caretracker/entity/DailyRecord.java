@@ -6,9 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter
@@ -22,7 +20,6 @@ public class DailyRecord {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 

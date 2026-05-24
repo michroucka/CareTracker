@@ -1,3 +1,9 @@
+/**
+ * Formats a number using the Czech locale (e.g. thousands separator as space, decimal as comma).
+ * @param {number|string|null|undefined} value
+ * @param {{ minDecimals?: number, maxDecimals?: number } & Intl.NumberFormatOptions} [options]
+ * @returns {string} formatted number, or empty string for null/undefined/empty input
+ */
 export function formatNumber(value, options = {}) {
     if (value === null || value === undefined || value === '') return '';
 
@@ -10,82 +16,68 @@ export function formatNumber(value, options = {}) {
     return formatter.format(value);
 }
 
-// Formátování telefonního čísla: volitelně +XXX a pak XXX XXX XXX
+/**
+ * Formats a phone number string into a human-readable form: optionally +XXX then groups of XXX.
+ * Strips all non-digit characters (except a leading +).
+ * @param {string} value raw input value
+ * @returns {string} formatted phone number
+ */
 export function formatPhoneNumber(value) {
-    // Povolit pouze + na začátku a číslice
     let cleaned = value.replace(/[^\d+]/g, '');
 
-    // + může být pouze na začátku
+    // + is only valid at the start
     const hasPlus = cleaned.startsWith('+');
     cleaned = cleaned.replace(/\+/g, '');
 
     if (hasPlus) {
-        // S předčíslím: +XXX XXX XXX XXX (max 3 pro předčíslí + 9 pro číslo)
+        // +XXX XXX XXX XXX — max 3 digits for country code + 9 for the local number
         const limited = cleaned.slice(0, 12);
-
-        if (limited.length <= 3) {
-            // Jen předčíslí
-            return `+${limited}`;
-        } else if (limited.length <= 6) {
-            // Předčíslí + první část
-            return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
-        } else if (limited.length <= 9) {
-            // Předčíslí + první 2 části
-            return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
-        } else {
-            // Plné číslo s předčíslím
-            return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
-        }
+        if (limited.length <= 3) return `+${limited}`;
+        if (limited.length <= 6) return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
+        if (limited.length <= 9) return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+        return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
     } else {
-        // Bez předčíslí: XXX XXX XXX (max 9 číslic)
+        // XXX XXX XXX — max 9 digits
         const limited = cleaned.slice(0, 9);
-
-        if (limited.length <= 3) {
-            return limited;
-        } else if (limited.length <= 6) {
-            return `${limited.slice(0, 3)} ${limited.slice(3)}`;
-        } else {
-            return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
-        }
+        if (limited.length <= 3) return limited;
+        if (limited.length <= 6) return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+        return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
     }
 }
 
-// Formátování PSČ: XXX XX
+/**
+ * Formats a Czech postal code as "XXX XX" (five digits with a space after the third).
+ * Strips all non-digit characters and caps input at 5 digits.
+ * @param {string} value raw input value
+ * @returns {string} formatted postal code
+ */
 export function formatPostalCode(value) {
-    // Povolit pouze číslice
-    const cleaned = value.replace(/\D/g, '');
-
-    // Omezit na 5 číslic
-    const limited = cleaned.slice(0, 5);
-
-    // Formátovat jako XXX XX
-    if (limited.length <= 3) {
-        return limited;
-    } else {
-        return `${limited.slice(0, 3)} ${limited.slice(3)}`;
-    }
+    const cleaned = value.replace(/\D/g, '').slice(0, 5);
+    if (cleaned.length <= 3) return cleaned;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
 }
 
-// Odstranění diakritiky z textu pro vyhledávání
+/**
+ * Removes Czech/Slovak diacritics for accent-insensitive search comparisons.
+ * @param {string} text
+ * @returns {string} lowercased string without diacritical marks
+ */
 export function removeDiacritics(text) {
     if (!text) return '';
-
     return text
-        .normalize('NFD') // Rozloží znaky s diakritikou na základní znak + combining diacritical mark
-        .replace(/[\u0300-\u036f]/g, '') // Odstraní combining diacritical marks
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
         .toLowerCase();
 }
 
 /**
- * Formátuje datum do českého formátu
- * @param {string|Date} date - Datum jako ISO string nebo Date objekt
- * @returns {string} Formátované datum (např. "13. 12. 2024")
+ * Formats a date into the Czech locale format.
+ * @param {string|Date} date ISO string or Date object
+ * @returns {string} formatted date (e.g. "13. 12. 2024")
  */
 export function formatDate(date) {
     if (!date) return '';
-
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-
     return new Intl.DateTimeFormat('cs-CZ', {
         day: 'numeric',
         month: 'numeric',
@@ -94,15 +86,13 @@ export function formatDate(date) {
 }
 
 /**
- * Formátuje datum a čas do českého formátu
- * @param {string|Date} date - Datum jako ISO string nebo Date objekt
- * @returns {string} Formátované datum a čas (např. "13. 12. 2024 14:30")
+ * Formats a date and time into the Czech locale format.
+ * @param {string|Date} date ISO string or Date object
+ * @returns {string} formatted date and time (e.g. "13. 12. 2024 14:30")
  */
 export function formatDateTime(date) {
     if (!date) return '';
-
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-
     return new Intl.DateTimeFormat('cs-CZ', {
         day: 'numeric',
         month: 'numeric',
@@ -113,15 +103,13 @@ export function formatDateTime(date) {
 }
 
 /**
- * Formátuje čas
- * @param {string|Date} date - Datum jako ISO string nebo Date objekt
- * @returns {string} Formátovaný čas (např. "14:30")
+ * Formats only the time portion of a date into the Czech locale format.
+ * @param {string|Date} date ISO string or Date object
+ * @returns {string} formatted time (e.g. "14:30")
  */
 export function formatTime(date) {
     if (!date) return '';
-
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-
     return new Intl.DateTimeFormat('cs-CZ', {
         hour: '2-digit',
         minute: '2-digit',

@@ -17,7 +17,7 @@ function Account() {
     const [isEditMode, setIsEditMode] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
 
-    // Záloha hodnot před editací pro možnost zrušení
+    // Snapshot of values at edit start — restored on cancel
     const [savedUsername, setSavedUsername] = React.useState("");
     const [savedEmail, setSavedEmail] = React.useState("");
 

@@ -107,32 +107,26 @@ function IndividualPlan() {
         setExercisingRights(content.exercisingRights || "");
     };
 
-    // Načíst data při mount
     useEffect(() => {
         async function loadData() {
             try {
-                // Načti klienta
                 const clientData = await fetchClient(clientId);
                 setClient(clientData);
 
-                // Načti IP
                 const plan = await fetchIndividualPlan(clientId);
 
                 if (plan) {
-                    // Pokud má IP, načti historii verzí
                     await fetchVersions(clientId);
 
-                    // Nastav vybranou verzi na nejnovější
                     if (plan.currentContent) {
                         setSelectedVersionNumber(plan.currentContent.versionNumber);
                     }
                 } else {
-                    // Pokud nemá IP, zkontroluj oprávnění
                     const isCaregiver = user && clientData && user.employeeId === clientData.caregiver?.id;
                     const isAdmin = user && ["SUPERADMIN", "ADMIN"].includes(user.role);
 
                     if (!isCaregiver && !isAdmin) {
-                        // Uživatel není oprávněn vytvořit IP - zobraz toast jen jednou
+                        // Show the permission toast only once to avoid duplicate toasts on re-renders
                         if (!hasShownPermissionToast.current) {
                             hasShownPermissionToast.current = true;
                             showToast({
@@ -145,11 +139,9 @@ function IndividualPlan() {
                         return;
                     }
 
-                    // Pokud nemá IP a je oprávněn, automaticky zapni edit mode
+                    // No plan yet and user is authorized — auto-enter edit mode to create the first version
                     setIsEditMode(true);
-                    // Nastav defaultní processedDate na dnešek
                     setProcessedDate(today(getLocalTimeZone()).toString());
-                    // Nastav plannedUpdateDate na za 6 měsíců
                     const sixMonthsLater = today(getLocalTimeZone()).add({ months: 6 });
                     setPlannedUpdateDate(sixMonthsLater.toString());
                 }
@@ -163,31 +155,26 @@ function IndividualPlan() {
         return () => reset();
     }, [clientId]);
 
-    // Inicializuj formulář když se změní currentContent
     useEffect(() => {
         initializeFormFromContent(currentContent);
     }, [currentContent]);
 
-    // Handler pro změnu verze
     const handleVersionChange = async (versionNumber) => {
         const versionNum = parseInt(versionNumber);
         setSelectedVersionNumber(versionNum);
-        setIsEditMode(false); // Disable edit při prohlížení staré verze
+        setIsEditMode(false); // disable edit when browsing a historical version
         await fetchIndividualPlanByVersion(clientId, versionNum);
     };
 
-    // Handler pro zapnutí edit mode
     const handleEnterEditMode = () => {
-        // Načti nejnovější verzi pokud nejsme na ní
         if (individualPlan?.currentContent && selectedVersionNumber !== individualPlan.currentContent.versionNumber) {
             setSelectedVersionNumber(individualPlan.currentContent.versionNumber);
             initializeFormFromContent(individualPlan.currentContent);
         } else if (currentContent) {
-            // Pokud jsme už na nejnovější verzi, načti její obsah
             initializeFormFromContent(currentContent);
         }
 
-        // Vždy nastav nové datumy při zapnutí edit módu (vytváření nové verze)
+        // Always set fresh dates when entering edit mode — each save creates a new version
         setProcessedDate(today(getLocalTimeZone()).toString());
         const sixMonthsLater = today(getLocalTimeZone()).add({ months: 6 });
         setPlannedUpdateDate(sixMonthsLater.toString());
@@ -195,30 +182,21 @@ function IndividualPlan() {
         setIsEditMode(true);
     };
 
-    // Handler pro zrušení edit mode
     const handleCancelEdit = () => {
         setIsEditMode(false);
         setErrors({});
 
-        // Reset formulář na aktuální content
         if (currentContent) {
             initializeFormFromContent(currentContent);
         } else {
-            // Pokud jsme v create mode a zrušíme, vrátíme se zpět
             navigate(-1);
         }
     };
 
-    // Validace
     const validateForm = () => {
-        const newErrors = {};
-
-        // Datumy se nastavují automaticky, takže není potřeba je validovat
-
-        return newErrors;
+        return {};
     };
 
-    // Submit handler
     const handleSubmit = async (e) => {
         if (e && e.preventDefault) {
             e.preventDefault();
@@ -255,11 +233,9 @@ function IndividualPlan() {
 
         try {
             if (individualPlan) {
-                // Update - vytvoří novou verzi
                 const updated = await updateIndividualPlan(clientId, formData);
                 setSelectedVersionNumber(updated.currentContent.versionNumber);
             } else {
-                // Create - první verze
                 const created = await createIndividualPlan(clientId, formData);
                 setSelectedVersionNumber(created.currentContent.versionNumber);
             }
@@ -271,24 +247,21 @@ function IndividualPlan() {
         }
     };
 
-    // Handler pro přidání denního záznamu
     const handleAddDailyRecord = async (dailyRecordData) => {
         try {
             await addDailyRecord(clientId, dailyRecordData);
             setIsDailyRecordModalOpen(false);
         } catch (error) {
             console.error("Error adding daily record:", error);
-            throw error; // Re-throw aby modal zůstal otevřený při chybě
+            throw error; // re-throw so the modal stays open on failure
         }
     };
 
-    // Handler pro otevření delete modalu
     const handleOpenDeleteModal = (dailyRecordId) => {
         setSelectedDailyRecordId(dailyRecordId);
         setIsDailyRecordDeleteModalOpen(true);
     };
 
-    // Handler pro smazání denního záznamu
     const handleDeleteDailyRecord = async (dailyRecordId) => {
         try {
             await removeDailyRecord(clientId, dailyRecordId);
@@ -300,20 +273,17 @@ function IndividualPlan() {
         }
     };
 
-    // Kontrola zda může uživatel smazat konkrétní daily record
     const canDeleteDailyRecord = (record) => {
         if (!user) return false;
 
-        // Admin může smazat jakýkoliv záznam
         if (["SUPERADMIN", "ADMIN"].includes(user.role)) {
             return true;
         }
 
-        // Caregiver a Coordinator mohou smazat pouze záznamy, které vytvořili oni
+        // COORDINATOR and CAREGIVER can only delete records they created themselves
         return record.createdBy.id === user.employeeId;
     };
 
-    // Může editovat pouze klíčový pracovník klienta nebo admin
     const canEdit = user && client && (
         user.employeeId === client.caregiver?.id ||
         ["SUPERADMIN", "ADMIN"].includes(user.role)
@@ -703,7 +673,6 @@ function IndividualPlan() {
                         </div>
                     ) : null}
 
-                    {/* Upozornění při prohlížení staré verze */}
                     {isViewingOldVersion && (
                         <div className="flex flex-col gap-4 w-full">
                             <Alert
@@ -769,7 +738,6 @@ function IndividualPlan() {
 
             <Divider className="mt-6" />
 
-            {/* Denní záznamy sekce */}
             {individualPlan && !loading && (
                 <div className="mt-6 space-y-4">
                     <div className="flex justify-between items-center">
@@ -783,7 +751,6 @@ function IndividualPlan() {
                         </Button>
                     </div>
 
-                    {/* Seznam záznamů */}
                     {individualPlan.dailyRecords && individualPlan.dailyRecords.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {individualPlan.dailyRecords

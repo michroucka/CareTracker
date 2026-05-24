@@ -33,7 +33,6 @@ function Employees() {
     const [searchParams, setSearchParams] = useSearchParams();
     const { user, superadminOrg } = useAuth();
 
-    // Helper funkce pro inicializaci filtrů z URL
     const getInitialFilterValue = () => searchParams.get("search") || "";
     const getInitialActiveFilter = () => {
         const status = searchParams.get("status");
@@ -83,10 +82,8 @@ function Employees() {
         {name: "AKCE", key: "actions"},
     ];
 
-    // Detekce mobilního zobrazení
     const isMobile = useIsMobile();
 
-    // Kontrola oprávnění
     const canAlterEmployee = React.useMemo(() => {
         if (!user) return false;
         const allowedRoles = ["SUPERADMIN", "ADMIN", "COORDINATOR"];
@@ -94,7 +91,6 @@ function Employees() {
         return allowedRoles.includes(user.role);
     }, [user]);
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => col.key === "fullName" || col.key === "actions");
@@ -104,9 +100,6 @@ function Employees() {
 
     const hasSearchFilter = Boolean(filterValue);
 
-    // Departments jsou již filtrovány backendem podle role uživatele a organizationId
-    // Pro SUPERADMIN: načteno s filtrem organizationId z API
-    // Pro ostatní role: automaticky filtrováno backendem podle organizace uživatele
     const departmentOptions = React.useMemo(() => {
         return departments.map(dept => ({
             name: dept.city,
@@ -117,7 +110,6 @@ function Employees() {
     const filteredItems = React.useMemo(() => {
         let filteredEmployees = [...employees];
 
-        // Filtr podle jména (s podporou diakritiky)
         if (hasSearchFilter) {
             const normalizedSearchValue = removeDiacritics(filterValue);
             filteredEmployees = filteredEmployees.filter((employee) =>
@@ -144,7 +136,6 @@ function Employees() {
         setFilterValue("");
     }, []);
 
-    // Handler pro změnu department filtru
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
 
@@ -163,7 +154,6 @@ function Employees() {
         }
     }, [departmentFilter]);
 
-    // Dynamická výška tabulky podle velikosti obrazovky
     React.useEffect(() => {
         setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
     }, [isMobile]);
@@ -185,7 +175,6 @@ function Employees() {
         fetchDepartments({ organizationId: superadminOrg.id, status: "true" });
     }, [user, superadminOrg]);
 
-    // Validace filtrů podle role uživatele
     React.useEffect(() => {
         if (!user) return;
 
@@ -200,8 +189,8 @@ function Employees() {
     }, [user]);
 
     React.useEffect(() => {
-        // Nastavit defaultní department filter jen pro COORDINATOR/CAREGIVER a jen jednou
-        // Ale pouze pokud v URL není žádný specifický department filter (aby se nepřepisoval uložený stav)
+        // Set default department filter for COORDINATOR/CAREGIVER only once, and only when the URL
+        // does not already contain a specific department selection (to preserve bookmarked state)
         const urlDepartments = searchParams.get("departments");
         if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
             const userDepartment = departments.find(dept => dept.id === user.departmentId);
@@ -211,7 +200,6 @@ function Employees() {
         }
     }, [user, departments]);
 
-    // Aktualizovat URL parametry při změně filtrů (s validací oprávnění)
     React.useEffect(() => {
         if (!user) return;
 
@@ -246,7 +234,6 @@ function Employees() {
         setSearchParams(params, { replace: true });
     }, [filterValue, activeFilter, departmentFilter, user, superadminOrg]);
 
-    // Pro SUPERADMIN resetovat department filtr při změně organizace
     const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
         if (user?.role !== "SUPERADMIN") return;
@@ -258,7 +245,6 @@ function Employees() {
         prevSuperadminOrgId.current = superadminOrg?.id;
     }, [user, superadminOrg]);
 
-    // Když se změní filtry, znovu načíst zaměstnance s filtrem
     React.useEffect(() => {
         if (user?.role === "SUPERADMIN") {
             if (!superadminOrg) return;
@@ -276,13 +262,10 @@ function Employees() {
         fetchEmployees(filters);
     }, [superadminOrg, activeFilter, departmentFilter, user, departments]);
 
-    // Helper funkce pro převod filtrů z Set na parametry
     function getStatusFromFilter(activeFilter) {
-        // Pokud jsou vybrané obě možnosti nebo žádná, nefiltruj
         if (activeFilter.size === 0 || activeFilter.size === 2) {
             return undefined;
         }
-        // Jinak vrať true nebo false
         return activeFilter.has("true");
     }
 
@@ -290,7 +273,6 @@ function Employees() {
         if (departmentFilter.has("all")) {
             return undefined;
         }
-        // Převést názvy středisek na ID
         return departments
             .filter(dept => departmentFilter.has(dept.city))
             .map(dept => dept.id);
@@ -317,12 +299,9 @@ function Employees() {
     const handleCreateEmployee = async (employeeData) => {
         try {
             await createEmployee(employeeData);
-            // Zavři modal JEN pokud bylo vytvoření úspěšné
             handleCloseCreateModal();
         } catch (error) {
-            // Pokud je error, modal zůstane otevřený
             console.error("Failed to create employee: ", error);
-            // Znovu vyhoď chybu aby modal věděl, že došlo k chybě
             throw error;
         }
     }

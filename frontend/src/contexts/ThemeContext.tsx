@@ -27,7 +27,6 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
-    // Hook pro detekci system dark mode
     const prefersDarkMode = usePrefersDarkMode();
 
     useEffect(() => {
@@ -38,7 +37,6 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
             }
         };
 
-        // Resolv theme: použij system preference pokud theme === "system"
         const systemTheme = prefersDarkMode ? "dark" : "light";
         const newResolvedTheme = theme === "system" ? systemTheme : theme;
 

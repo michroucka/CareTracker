@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for performed task management, billing receipts, and payment QR codes.
+ */
 @RestController
 @RequestMapping("/api/performed-tasks")
 public class PerformedTaskController {

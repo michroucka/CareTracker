@@ -12,8 +12,8 @@ import { ShieldAlert } from "lucide-react";
  * Use this for login/register pages to prevent authenticated users from accessing them.
  *
  * @param {Object} props
- * @param {React.ReactNode} props.children - Component to render
- * @param {string} [props.redirectTo='/'] - Path to redirect authenticated users (default: '/')
+ * @param {React.ReactNode} props.children component to render for unauthenticated users
+ * @param {string} [props.redirectTo='/'] path to redirect authenticated users
  */
 const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
     const { user, loading } = useAuth();
@@ -23,7 +23,8 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
 
     const isAuthenticated = !loading && user;
 
-    // Zaznamenej initial auth status po dokončení loadingu
+    // Record the auth state once the initial loading completes so we can distinguish
+    // "user was already logged in" from "user just logged in on this page"
     useEffect(() => {
         if (!loading && initialAuthStatusRef.current === null) {
             initialAuthStatusRef.current = !!user;
@@ -31,8 +32,6 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
     }, [loading, user]);
 
     useEffect(() => {
-        // Toast zobraz jen když už byl uživatel přihlášený na začátku
-        // (ne když se právě přihlásil na této stránce)
         if (isAuthenticated && !toastShownRef.current && initialAuthStatusRef.current === true) {
             showToast({
                 title: "Již jste přihlášeni",
@@ -44,24 +43,21 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
         }
     }, [isAuthenticated]);
 
-        // Wait for auth check to complete
-        if (loading) {
-            return (
-                <div className="flex justify-center items-center h-screen">
-                  <Spinner size="lg" variant="gradient" label="Načítání..." />
-                </div>
-            );
-        }
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+              <Spinner size="lg" variant="gradient" label="Načítání..." />
+            </div>
+        );
+    }
 
-        // If user is authenticated, redirect them away from this page
-        if (user) {
-          // Pokud přišel přes ProtectedRoute (má uloženou původní stránku), vrať ho tam
-          const from = location.state?.from?.pathname || redirectTo;
-          return <Navigate to={from} replace />;
-        }
+    if (user) {
+        // If the user arrived via ProtectedRoute (state.from is set), return them there
+        const from = location.state?.from?.pathname || redirectTo;
+        return <Navigate to={from} replace />;
+    }
 
-        // If user is not authenticated, allow access
-        return <>{children}</>;
+    return <>{children}</>;
 };
 
 export default PublicOnlyRoute;

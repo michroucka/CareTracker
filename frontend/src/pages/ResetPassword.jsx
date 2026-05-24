@@ -7,15 +7,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
 
 function ResetPassword() {
-    // Získání tokenu z URL
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
 
-    // Stavy pro validaci tokenu
     const [isValidatingToken, setIsValidatingToken] = React.useState(true);
     const [isTokenValid, setIsTokenValid] = React.useState(false);
 
-    // Stavy pro formulář
     const [password, setPassword] = React.useState("");
     const [passwordConfirm, setPasswordConfirm] = React.useState("");
     const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
@@ -25,7 +22,6 @@ function ResetPassword() {
     const navigate = useNavigate();
     const { logoutSilent } = useAuth();
 
-    // Validace tokenu při načtení stránky
     React.useEffect(() => {
         const validateToken = async () => {
             if (!token) {
@@ -70,7 +66,6 @@ function ResetPassword() {
         const trimmedPassword = password.trim();
         const trimmedPasswordConfirm = passwordConfirm.trim();
 
-        // Validace trimnutých hodnot
         const newErrors = {};
 
         if (!trimmedPassword) {
@@ -146,7 +141,6 @@ function ResetPassword() {
         );
     }
 
-    // Validní token - zobraz formulář
     return (
         <Form
             className="w-full justify-center items-center space-y-4"

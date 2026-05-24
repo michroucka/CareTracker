@@ -11,10 +11,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * Sends transactional emails (account activation, password reset) via JavaMailSender
+ * using Thymeleaf HTML templates.
+ */
 @Service
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
@@ -35,7 +38,12 @@ public class EmailService {
     private String appName;
 
     /**
-     * Odešle aktivační email s HTML šablonou
+     * Sends an HTML account activation email using the {@code email/activation-email} Thymeleaf template.
+     *
+     * @param recipientEmail the target email address
+     * @param activationToken the activation token to embed in the link
+     * @param recipientName the recipient's full name for the greeting
+     * @throws ValidationException if the email cannot be sent
      */
     public void sendActivationEmail(String recipientEmail, String activationToken, String recipientName) {
         try {
@@ -59,7 +67,12 @@ public class EmailService {
     }
 
     /**
-     * Odešle jednoduchý textový email
+     * Sends a plain-text email.
+     *
+     * @param to recipient email address
+     * @param subject email subject
+     * @param text plain-text body
+     * @throws ValidationException if the email cannot be sent
      */
     public void sendSimpleEmail(String to, String subject, String text) {
         try {
@@ -79,7 +92,11 @@ public class EmailService {
     }
 
     /**
-     * Odešle HTML email
+     * Sends a UTF-8 HTML email via MIME message.
+     *
+     * @param to recipient email address
+     * @param subject email subject
+     * @param htmlContent rendered HTML body
      */
     private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
@@ -94,7 +111,12 @@ public class EmailService {
     }
 
     /**
-     * Odešle resetovací email pro heslo
+     * Sends an HTML password-reset email using the {@code email/password-reset-email} Thymeleaf template.
+     *
+     * @param email the target email address
+     * @param resetToken the reset token to embed in the link
+     * @param recipientName the recipient's name for the greeting
+     * @throws ValidationException if the email cannot be sent
      */
     public void sendPasswordResetEmail(String email, String resetToken, String recipientName) {
         try {

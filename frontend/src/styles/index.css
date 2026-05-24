@@ -8,14 +8,14 @@
     --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* schová interní bottom-right provider, workaround until fixed */
+/* hides the internal bottom-right toast provider — workaround until fixed upstream */
 div[role="alertdialog"][data-placement="bottom-right"] {
     display: none !important;
 }
 
 /* toast exiting */
 [data-toast="true"][data-toast-exiting="true"][data-placement="top-center"] {
-    transform: translateY(-150%) !important; /* úplně zmizí nahoru */
+    transform: translateY(-150%) !important; /* slide fully out of view */
     opacity: 0 !important;
     transition: all 0.4s ease-in-out !important;
 }

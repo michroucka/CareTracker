@@ -1,4 +1,4 @@
-.PHONY: up down start stop restart build rebuild clean logs compile
+.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend
 
 # Start všech služeb
 up:
@@ -42,3 +42,13 @@ logs:
 # Zkompilovat backend (DevTools automaticky restartuje aplikaci)
 compile:
 	docker exec caretracker-backend ./mvnw compile -q
+
+# Spustit všechny testy
+test: test-backend test-frontend
+
+test-backend:
+	docker exec caretracker-backend chmod +x ./mvnw
+	docker exec caretracker-backend ./mvnw test
+
+test-frontend:
+	docker exec caretracker-frontend npm test -- --run

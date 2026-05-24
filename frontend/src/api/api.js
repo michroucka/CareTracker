@@ -1,11 +1,22 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+/**
+ * Dispatches an "auth:unauthorized" custom event when the response status is 401,
+ * triggering the global logout flow in AuthContext.
+ * @param {Response} response
+ */
 function handleUnauthorized(response) {
     if (response.status === 401) {
         window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
 }
 
+/**
+ * Sends a GET request with credentials (session cookie) and returns the raw Response.
+ * Does not throw on non-2xx — callers must check response.ok themselves.
+ * @param {string} endpoint
+ * @returns {Promise<Response>}
+ */
 export async function get(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "GET",
@@ -14,6 +25,13 @@ export async function get(endpoint) {
     return response;
 }
 
+/**
+ * Sends a POST request with form-encoded body (application/x-www-form-urlencoded).
+ * Used exclusively for Spring Security form login and logout endpoints.
+ * @param {string} endpoint
+ * @param {Object} data key-value pairs to encode
+ * @returns {Promise<Response>}
+ */
 export async function post(endpoint, data) {
     const formData = new URLSearchParams();
     Object.keys(data).forEach((key) => {
@@ -29,6 +47,14 @@ export async function post(endpoint, data) {
     return response;
 }
 
+/**
+ * Sends a GET request and parses the JSON response.
+ * Throws an Error with the server's message field on non-2xx responses.
+ * Dispatches "auth:unauthorized" on 401.
+ * @param {string} endpoint
+ * @param {{ signal?: AbortSignal }} [options]
+ * @returns {Promise<any>}
+ */
 export async function getJSON(endpoint, options = {}) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "GET",
@@ -48,6 +74,13 @@ export async function getJSON(endpoint, options = {}) {
     return response.json();
 }
 
+/**
+ * Sends a POST request with a JSON body and parses the response.
+ * Throws an Error with the server's message field on non-2xx responses.
+ * @param {string} endpoint
+ * @param {any} data will be serialized to JSON
+ * @returns {Promise<any>}
+ */
 export async function postJSON(endpoint, data) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
@@ -67,6 +100,14 @@ export async function postJSON(endpoint, data) {
     return response.json();
 }
 
+/**
+ * Sends a PUT request with a JSON body and parses the response.
+ * Returns null for 204 No Content responses.
+ * Throws an Error with the server's message field on non-2xx responses.
+ * @param {string} endpoint
+ * @param {any} data will be serialized to JSON
+ * @returns {Promise<any|null>}
+ */
 export async function putJSON(endpoint, data) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "PUT",
@@ -87,6 +128,12 @@ export async function putJSON(endpoint, data) {
     return response.json();
 }
 
+/**
+ * Sends a DELETE request and returns the raw Response.
+ * Throws an Error with the server's message field on non-2xx responses.
+ * @param {string} endpoint
+ * @returns {Promise<Response>}
+ */
 export async function deleteJSON(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "DELETE",
@@ -104,6 +151,13 @@ export async function deleteJSON(endpoint) {
     return response;
 }
 
+/**
+ * Uploads a file using multipart/form-data POST and parses the JSON response.
+ * The file is sent under the "file" field name, matching the backend @RequestParam("file").
+ * @param {string} endpoint
+ * @param {File} file
+ * @returns {Promise<any>}
+ */
 export async function uploadFile(endpoint, file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -123,6 +177,12 @@ export async function uploadFile(endpoint, file) {
     return response.json();
 }
 
+/**
+ * Fetches a binary image and returns a blob object URL suitable for use in an <img> src.
+ * The caller is responsible for calling URL.revokeObjectURL() when the URL is no longer needed.
+ * @param {string} endpoint
+ * @returns {Promise<string>} blob object URL
+ */
 export async function fetchImage(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "GET",
@@ -137,6 +197,11 @@ export async function fetchImage(endpoint) {
     return URL.createObjectURL(blob);
 }
 
+/**
+ * Sends a DELETE request for an image resource and returns the raw Response.
+ * @param {string} endpoint
+ * @returns {Promise<Response>}
+ */
 export async function deleteImage(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "DELETE",

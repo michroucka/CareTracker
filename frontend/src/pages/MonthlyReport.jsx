@@ -65,7 +65,6 @@ function MonthlyReport() {
 
     const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
 
-    // Filtrované sloupce pro mobile - jen jméno a akce
     const visibleColumns = React.useMemo(() => {
         if (isMobile) {
             return columns.filter(col => ["date", "task", "detail"].includes(col.key));
@@ -85,7 +84,6 @@ function MonthlyReport() {
         setSearchParams(params, { replace: true });
     }, [monthYearFilter]);
 
-    // Načíst provedené úkony při změně filtru
     React.useEffect(() => {
         if (!user?.clientId) return;
         fetchPerformedTasks({
@@ -95,7 +93,6 @@ function MonthlyReport() {
         });
     }, [monthYearFilter, user]);
 
-    // Reset QR kódu při změně filtru
     React.useEffect(() => {
         setQrCodeUrl(null);
     }, [monthYearFilter]);

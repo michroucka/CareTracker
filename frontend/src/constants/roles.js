@@ -1,4 +1,4 @@
-// Definice rolí v systému (hodnoty odpovídají UserRole enum z backendu)
+/** Role constants matching the UserRole enum on the backend. */
 export const ROLES = {
     SUPERADMIN: "SUPERADMIN",
     ADMIN: "ADMIN",
@@ -7,7 +7,7 @@ export const ROLES = {
     CLIENT: "CLIENT"
 };
 
-// České názvy rolí pro zobrazení v UI
+/** Czech display labels for each role, used in the UI. */
 export const ROLE_LABELS = {
     SUPERADMIN: "Superadmin",
     ADMIN: "Administrátor",
@@ -18,23 +18,25 @@ export const ROLE_LABELS = {
 };
 
 /**
- * Získá český název role pro zobrazení v UI
- * @param {string} role - Role z backendu (např. "MANAGER")
- * @returns {string} - Český název role (např. "Manažer")
+ * Returns the Czech UI label for a given role key.
+ * Falls back to the raw role string if no label is defined.
+ * @param {string} role backend role value (e.g. "MANAGER")
+ * @returns {string}
  */
 export function getRoleLabel(role) {
     return ROLE_LABELS[role] || role;
 }
 
 /**
- * Zkontroluje, zda uživatel má některou z povolených rolí
- * @param {string} userRole - Role uživatele z backendu
- * @param {Array<string>} allowedRoles - Pole povolených rolí
+ * Returns true if the user's role is included in the allowed roles list.
+ * Returns true when allowedRoles is empty or undefined (no restriction).
+ * @param {string} userRole the user's role from the backend
+ * @param {Array<string>} allowedRoles the permitted roles
  * @returns {boolean}
  */
 export function hasRole(userRole, allowedRoles) {
     if (!allowedRoles || allowedRoles.length === 0) {
-        return true; // Pokud nejsou definované role, přístup povolen
+        return true;
     }
     return allowedRoles.includes(userRole);
 }

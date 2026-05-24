@@ -24,12 +24,11 @@ export function useClients() {
     }
 
     const fetchClients = async (filters = {}, { silent = false } = {}) => {
-        // Zruš předchozí request pokud stále běží
+        // Abort any in-flight request before starting a new one
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
 
-        // Vytvoř nový AbortController pro tento request
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
@@ -66,14 +65,12 @@ export function useClients() {
             const url = queryString ? `/clients?${queryString}` : "/clients";
             const clients = await getJSON(url, { signal: controller.signal });
 
-            // Mapuj data z backendu DTO
             const mappedClients = mapClients(clients);
             const sorted = sortByKey(mappedClients, 'lastName', 'ascending');
             setClients(sorted);
 
             if (!silent) setLoading(false);
         } catch (err) {
-            // Ignoruj abort chyby (request byl zrušen, což je OK)
             if (err.name === 'AbortError') {
                 console.log("Request was cancelled");
                 return;
@@ -85,19 +82,16 @@ export function useClients() {
         }
     };
 
-    // Načtení jednoho klienta
     const fetchClient = async (id) => {
         try {
             const client = await getJSON(`/clients/${id}`);
 
-            // Pokud má klient obrázek, načti ho
             if (client.hasPicture) {
                 try {
                     const imageUrl = await fetchImage(`/clients/${id}/picture`);
                     client.pictureUrl = imageUrl;
                 } catch (imgErr) {
                     console.error("Error fetching client picture:", imgErr);
-                    // Klient se načetl, jen se nepodařilo načíst obrázek
                     client.pictureUrl = null;
                 }
             }
@@ -110,22 +104,18 @@ export function useClients() {
         }
     };
 
-    // Vytvoření klienta
     const createClient = async (clientData) => {
         try {
-            // Oddělení picture od ostatních dat
+            // Separate picture from the rest of the data — picture is uploaded separately after creation
             const { picture, ...clientDataWithoutPicture } = clientData;
 
-            // Vytvoření klienta
             const newClient = await postJSON("/clients", clientDataWithoutPicture);
 
-            // Pokud je obrázek vybrán, nahraj ho
             if (picture && picture instanceof File) {
                 try {
                     await uploadFile(`/clients/${newClient.id}/picture`, picture);
                 } catch (uploadErr) {
                     console.error("Error uploading picture:", uploadErr);
-                    // Klient je vytvořen, ale obrázek se nenahrál - zobrazíme upozornění
                     showToast({
                         title: "Klient vytvořen, ale obrázek se nenahrál",
                         description: "Můžete ho nahrát později při editaci",
@@ -134,7 +124,6 @@ export function useClients() {
                 }
             }
 
-            // Přidej do seznamu s mapováním
             const mappedClient = mapClient(newClient);
 
             setClients(prev =>
@@ -155,16 +144,14 @@ export function useClients() {
         }
     };
 
-    // Aktualizace klienta
     const updateClient = async (id, updatedData) => {
         try {
-            // Oddělení picture od ostatních dat
+            // Separate picture — it is handled via a dedicated upload/delete endpoint
             const { picture, ...updatedDataWithoutPicture } = updatedData;
 
-            // Aktualizace klienta
             const updated = await putJSON(`/clients/${id}`, updatedDataWithoutPicture);
 
-            // Pokud má být obrázek smazán (special "DELETE" marker)
+            // "DELETE" is a sentinel value set by the UI to request picture removal
             if (picture === "DELETE") {
                 try {
                     await deleteImage(`/clients/${id}/picture`);
@@ -178,15 +165,12 @@ export function useClients() {
                         color: "warning",
                     });
                 }
-            }
-            // Pokud je obrázek vybrán a je to nový soubor, nahraj ho
-            else if (picture && picture instanceof File) {
+            } else if (picture && picture instanceof File) {
                 try {
                     await uploadFile(`/clients/${id}/picture`, picture);
-                    updated.hasPicture = true; // Mark that client now has picture
+                    updated.hasPicture = true;
                 } catch (uploadErr) {
                     console.error("Error uploading picture:", uploadErr);
-                    // Klient je aktualizován, ale obrázek se nenahrál - zobrazíme upozornění
                     showToast({
                         title: "Klient aktualizován, ale obrázek se nenahrál",
                         description: "Zkuste to prosím znovu",
@@ -195,7 +179,6 @@ export function useClients() {
                 }
             }
 
-            // Pokud má klient obrázek, načti ho pro zobrazení
             if (updated.hasPicture) {
                 try {
                     const imageUrl = await fetchImage(`/clients/${id}/picture`);
@@ -222,7 +205,6 @@ export function useClients() {
         }
     };
 
-    // Deaktivace klienta
     const terminateClient = async (id, data) => {
         try {
             const updated = await putJSON(`/clients/${id}/terminate`, data);
@@ -332,5 +314,3 @@ export function useClients() {
         activateClientAccount
     };
 }
-
-

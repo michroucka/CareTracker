@@ -16,10 +16,13 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages organizations (top-level tenants).
+ * Handles manager role promotion/demotion as a side effect of organization create/update.
+ */
 @Service
 public class OrganizationService extends BaseRoleFilteringService<Organization, OrganizationDTO> {
     @Autowired
@@ -33,6 +36,13 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    /**
+     * Returns organizations visible to the current user, optionally filtered by active status.
+     * Non-SUPERADMIN users see only their own organization.
+     *
+     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all
+     * @return list of organization DTOs
+     */
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getOrganizations(Boolean status) {
         RoleBasedFilters roleFilters = calculateRoleBasedFiltersOrganizationOnly(null);
@@ -57,9 +67,11 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Vrací organizaci podle ID s kontrolou oprávnění.
-     * - SUPERADMIN: Vidí všechny organizace
-     * - ADMIN/COORDINATOR/CAREGIVER: Mohou vidět pouze svoji organizaci
+     * Returns a single organization by ID with role-based access control.
+     * SUPERADMIN may access any organization; all other roles may only access their own.
+     *
+     * @param id the organization ID
+     * @return the organization DTO, or empty if not found or inaccessible
      */
     @Transactional(readOnly = true)
     public java.util.Optional<OrganizationDTO> getOrganizationById(Long id) {
@@ -72,8 +84,10 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Vytvoří novou organizaci.
-     * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
+     * Creates a new organization. Restricted to SUPERADMIN via {@code @PreAuthorize} in the controller.
+     *
+     * @param dto the organization creation data
+     * @return the persisted organization entity
      */
     public Organization createOrganization(OrganizationRequestDTO dto) {
         Organization organization = new Organization();
@@ -81,8 +95,11 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Upraví organizaci.
-     * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
+     * Updates an existing organization. Restricted to SUPERADMIN via {@code @PreAuthorize} in the controller.
+     *
+     * @param id the organization ID
+     * @param dto updated organization data
+     * @return the updated organization entity
      */
     public Organization updateOrganization(Long id, OrganizationRequestDTO dto) {
         Organization organization = organizationRepository.findById(id)
@@ -90,6 +107,7 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
         return saveOrganization(organization, dto);
     }
 
+    /** Sets the active flag on an organization. */
     private Organization setOrganizationStatus(Long id, boolean status) {
         Organization organization = organizationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
@@ -99,8 +117,11 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Deaktivuje organizaci a všechny její uživatelské účty.
-     * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
+     * Deactivates an organization and all its associated user accounts.
+     * Restricted to SUPERADMIN via {@code @PreAuthorize} in the controller.
+     *
+     * @param id the organization ID
+     * @return the updated organization entity
      */
     @Transactional
     public Organization terminateOrganization(Long id) {
@@ -118,13 +139,22 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
     }
 
     /**
-     * Aktivuje organizaci.
-     * Pouze SUPERADMIN - kontrolováno @PreAuthorize v controlleru.
+     * Re-activates a previously deactivated organization.
+     * Restricted to SUPERADMIN via {@code @PreAuthorize} in the controller.
+     *
+     * @param id the organization ID
+     * @return the updated organization entity
      */
     public Organization activateOrganization(Long id) {
         return setOrganizationStatus(id, true);
     }
 
+    /**
+     * Promotes the new manager to MANAGER employee role and demotes the old one.
+     * The old manager is demoted to COORDINATOR if they still coordinate a department, otherwise to CAREGIVER.
+     * SUPERADMIN user accounts are never downgraded.
+     * No-ops when old and new manager are the same person.
+     */
     private void updateManagerRoles(Employee oldManager, Employee newManager) {
         Long oldId = oldManager != null ? oldManager.getId() : null;
         Long newId = newManager != null ? newManager.getId() : null;
@@ -154,16 +184,18 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
         }
     }
 
+    /**
+     * Persists an organization from the supplied DTO, resolving the manager employee.
+     * Triggers manager role promotion/demotion as a side effect.
+     */
     private Organization saveOrganization(Organization organization, OrganizationRequestDTO dto) {
-        organization.setName(dto.getName());
-
         Employee oldManager = organization.getManager();
         Employee newManager = dto.getManagerId() != null
                 ? employeeRepository.findById(dto.getManagerId())
                         .orElseThrow(() -> new ResourceNotFoundException("Manažer nebyl nalezen"))
                 : null;
 
-        organization.setManager(newManager);
+        organizationMapper.requestToOrganization(organization, dto, newManager);
         Organization saved = organizationRepository.save(organization);
 
         updateManagerRoles(oldManager, newManager);

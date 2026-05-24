@@ -11,6 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for account activation and password reset flows.
+ * All endpoints are publicly accessible (no authentication required) since they are
+ * used before the user has an active session.
+ */
 @RestController
 @RequestMapping("/api/activation")
 public class ActivationController {
@@ -23,7 +28,10 @@ public class ActivationController {
     private PasswordEncoder passwordEncoder;
 
     /**
-     * Validuje aktivační token - kontroluje expiraci i to, zda účet ještě není aktivován
+     * Validates an activation token, checking expiry and whether the account is already activated.
+     *
+     * @param token the activation token from the email link
+     * @return 200 OK if valid, 400 Bad Request if invalid or expired
      */
     @GetMapping("/validate")
     public ResponseEntity<MessageResponseDTO> validateActivationToken(@RequestParam String token) {
@@ -40,7 +48,10 @@ public class ActivationController {
     }
 
     /**
-     * Validuje token pro reset hesla - kontroluje pouze expiraci
+     * Validates a password-reset token, checking expiry only (activation state is not checked).
+     *
+     * @param token the reset token from the email link
+     * @return 200 OK if valid, 400 Bad Request if invalid or expired
      */
     @GetMapping("/validate-reset")
     public ResponseEntity<MessageResponseDTO> validateResetToken(@RequestParam String token) {
@@ -57,7 +68,11 @@ public class ActivationController {
     }
 
     /**
-     * Dokončí aktivaci účtu - nastaví username a heslo
+     * Completes account activation by setting the username and password.
+     * The password is hashed here before being passed to the service.
+     *
+     * @param request contains the token, chosen username, and plaintext password
+     * @return 200 OK on success; exceptions propagate to {@link cz.zcu.kiv.caretracker.exception.GlobalExceptionHandler}
      */
     @PostMapping("/complete")
     public ResponseEntity<MessageResponseDTO> completeActivation(@RequestBody CompleteActivationRequestDTO request) {
@@ -66,8 +81,6 @@ public class ActivationController {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-
-        // Dokončení aktivace - výjimky se propagují do GlobalExceptionHandler
         userService.completeActivation(request.getToken(), request.getUsername(), hashedPassword);
 
         log.info("Account activation completed successfully for user: {}", request.getUsername());

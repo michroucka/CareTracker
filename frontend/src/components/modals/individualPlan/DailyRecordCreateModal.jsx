@@ -47,7 +47,6 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
             e.preventDefault();
         }
 
-        // Validace před odesláním
         const newErrors = validateForm();
 
         if (Object.keys(newErrors).length > 0) {
@@ -55,7 +54,6 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
             return;
         }
 
-        // Vše je validní, připrav data a zavolej původní onSubmit
         setErrors({});
         setIsLoading(true);
 
@@ -68,10 +66,8 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
             if (onSubmit) {
                 await onSubmit(dailyRecordData);
             }
-            // Pokud úspěch, reset formuláře
             resetForm();
         } catch (error) {
-            // Pokud error, formulář zůstane vyplněný
             console.error("Error submitting form:", error);
         } finally {
             setIsLoading(false);

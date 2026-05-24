@@ -12,12 +12,10 @@ export function usePerformedTasks() {
     const abortControllerRef = useRef(null);
 
     const fetchPerformedTasks = async (filters = {}) => {
-        // Zruš předchozí request pokud stále běží
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
 
-        // Vytvoř nový AbortController pro tento request
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
@@ -48,7 +46,7 @@ export function usePerformedTasks() {
             }
 
             if (filters.month !== undefined) {
-                params.append("month", filters.month + 1); // getMonth() je 0-based, backend čeká 1-12
+                params.append("month", filters.month + 1); // getMonth() is 0-based; backend expects 1-12
             }
 
             if (filters.year !== undefined) {

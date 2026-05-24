@@ -1,6 +1,5 @@
 package cz.zcu.kiv.caretracker.service;
 
-import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentDTO;
 import cz.zcu.kiv.caretracker.dto.department.DepartmentRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
@@ -16,10 +15,13 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Manages departments within organizations.
+ * Handles coordinator role promotion/demotion as a side effect of department create/update/terminate.
+ */
 @Service
 public class DepartmentService extends BaseRoleFilteringService<Department, DepartmentDTO> {
     @Autowired
@@ -35,6 +37,13 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     @Autowired
     private ClientRepository clientRepository;
 
+    /**
+     * Returns departments filtered by role and optional criteria.
+     *
+     * @param organizationId optional organization filter (SUPERADMIN only)
+     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all
+     * @return role-filtered list of department DTOs
+     */
     @Transactional(readOnly = true)
     public List<DepartmentDTO> getDepartments(Long organizationId, Boolean status) {
         // Calculate filters based on user role
@@ -59,6 +68,12 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         return departmentMapper.toDTOList(departments);
     }
 
+    /**
+     * Returns a single department by ID with organization-level access control.
+     *
+     * @param id the department ID
+     * @return the department DTO, or empty if not found or inaccessible
+     */
     @Transactional(readOnly = true)
     public Optional<DepartmentDTO> getDepartmentById(Long id) {
         return getEntityByIdWithPermissionCheck(
@@ -69,6 +84,11 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         );
     }
 
+    /**
+     * Promotes the new coordinator to the COORDINATOR employee role and demotes the old one back to CAREGIVER.
+     * MANAGER-level employees and ADMIN/SUPERADMIN user accounts are not downgraded.
+     * No-ops when old and new coordinator are the same person.
+     */
     private void updateCoordinatorRoles(Employee oldCoordinator, Employee newCoordinator) {
         Long oldId = oldCoordinator != null ? oldCoordinator.getId() : null;
         Long newId = newCoordinator != null ? newCoordinator.getId() : null;
@@ -99,6 +119,10 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         }
     }
 
+    /**
+     * Persists a department from the supplied DTO, resolving the organization and coordinator.
+     * Triggers coordinator role promotion/demotion as a side effect.
+     */
     private Department saveDepartment(Department department, DepartmentRequestDTO dto) {
         User user = getCurrentUser();
 
@@ -135,11 +159,24 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         return saved;
     }
 
+    /**
+     * Creates a new department.
+     *
+     * @param dto the department creation data
+     * @return the persisted department entity
+     */
     public Department createDepartment(DepartmentRequestDTO dto) {
         Department department = new Department();
         return saveDepartment(department, dto);
     }
 
+    /**
+     * Updates an existing department.
+     *
+     * @param id the department ID
+     * @param dto updated department data
+     * @return the updated department entity
+     */
     public Department updateDepartment(Long id, DepartmentRequestDTO dto) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
@@ -149,6 +186,7 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         return saveDepartment(department, dto);
     }
 
+    /** Sets the active flag on a department without performing any pre-condition checks. */
     private Department setDepartmentStatus(Long id, boolean status) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
@@ -158,6 +196,14 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         department.setActive(status);
         return departmentRepository.save(department);
     }
+    /**
+     * Deactivates a department, removing its coordinator assignment.
+     * Throws if the department still has active clients or employees.
+     *
+     * @param id the department ID
+     * @return the updated department entity
+     * @throws ValidationException if there are active clients or employees in this department
+     */
     @Transactional
     public Department terminateDepartment(Long id) {
         Department department = departmentRepository.findById(id)
@@ -180,6 +226,12 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         return saved;
     }
 
+    /**
+     * Re-activates a previously deactivated department.
+     *
+     * @param id the department ID
+     * @return the updated department entity
+     */
     public Department activateDepartment(Long id) {
         return setDepartmentStatus(id, true);
     }

@@ -10,7 +10,6 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDate;
 import java.util.List;
 

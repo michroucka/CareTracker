@@ -11,7 +11,6 @@ import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -20,6 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Builds role-specific dashboard data for CAREGIVER, COORDINATOR, and ADMIN users.
+ * Each role receives a tailored set of statistics and recent activity for the current month.
+ */
 @Service
 @Transactional(readOnly = true)
 public class DashboardService extends BaseRoleFilteringService<PerformedTask, DashboardDTO> {
@@ -31,6 +34,12 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     @Autowired private PerformedTaskMapper performedTaskMapper;
     @Autowired private DashboardMapper dashboardMapper;
 
+    /**
+     * Returns dashboard data appropriate for the current user's role.
+     * Returns an empty DTO for roles without a dashboard (e.g. SUPERADMIN, CLIENT).
+     *
+     * @return the dashboard DTO
+     */
     public DashboardDTO getDashboard() {
         User user = getCurrentUser();
         return switch (user.getRole()) {
@@ -41,6 +50,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         };
     }
 
+    /** Builds dashboard statistics for a CAREGIVER: their own task count, client count, and time totals. */
     private DashboardDTO buildCaregiverDashboard(User user) {
         Long caregiverId = user.getEmployee().getId();
         Long deptId = user.getEmployee().getDepartment().getId();
@@ -66,6 +76,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return dto;
     }
 
+    /** Builds dashboard statistics for a COORDINATOR: department-level task counts and income. */
     private DashboardDTO buildCoordinatorDashboard(User user) {
         Long deptId = user.getEmployee().getDepartment().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
@@ -90,6 +101,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return dto;
     }
 
+    /** Builds dashboard statistics for an ADMIN: organization-wide income, client/employee counts, and per-department breakdowns. */
     private DashboardDTO buildAdminDashboard(User user) {
         Long orgId = user.getEmployee().getOrganization().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
@@ -116,6 +128,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return dto;
     }
 
+    /** Sums the unit counts (in minutes) for all HOUR-type tasks. */
     private Integer calculateTotalMinutes(List<PerformedTask> tasks) {
         return tasks.stream()
                 .filter(t -> t.getTask().getUnitType() == UnitType.HOUR)
@@ -123,6 +136,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 .sum();
     }
 
+    /** Returns a 6-element list of monthly task counts, oldest month first (current month last). */
     private List<Integer> buildCountHistory(List<PerformedTask> tasks) {
         List<Integer> history = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
@@ -135,6 +149,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return history;
     }
 
+    /** Returns a 6-element list of monthly income totals (in CZK), oldest month first (current month last). */
     private List<Integer> buildIncomeHistory(List<PerformedTask> tasks) {
         List<Integer> history = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
@@ -148,6 +163,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return history;
     }
 
+    /** Aggregates performed task counts per department for the given task list. */
     private List<DepartmentPerformedTasksDTO> buildDepartmentTaskCounts(List<PerformedTask> tasks) {
         Map<Long, String> deptNames = new java.util.LinkedHashMap<>();
         Map<Long, Integer> deptCounts = new java.util.TreeMap<>();
