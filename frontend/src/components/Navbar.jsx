@@ -16,7 +16,6 @@ import {
     DropdownTrigger,
     User,
 } from "@heroui/react";
-import logo from "../assets/ct_icon.svg";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import {
@@ -24,11 +23,12 @@ import {
     Building, Building2, BarChart3, ChevronDown, LogOut,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
+import { CareTrackerLogo } from "./CareTrackerLogo.jsx";
 import { getRoleLabel, ROLES, hasRole } from "../constants/roles.js";
 import { useOrganizations } from "../hooks/useOrganizations.jsx";
 
 const menuItems = [
-    { name: "Domů",             path: "/",               icon: Home,          allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
+    { name: "Nástěnka",         path: "/",                icon: Home,          allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     { name: "Klienti",          path: "/clients",         icon: Users,         allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     { name: "Provedené úkony",  path: "/performed-tasks", icon: ClipboardCheck,allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
     { name: "Zaměstnanci",      path: "/employees",       icon: UserRound,     allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER] },
@@ -37,16 +37,6 @@ const menuItems = [
     { name: "Organizace",       path: "/organizations",   icon: Building2,     allowedRoles: [ROLES.SUPERADMIN] },
     { name: "Měsíční přehled",  path: "/monthly-report",  icon: BarChart3,     allowedRoles: [ROLES.CLIENT] },
 ];
-
-export const CareTrackerLogo = () => (
-    <img
-        src={logo}
-        alt="CareTracker Logo"
-        className="size-8 me-1.5 select-none"
-        draggable={false}
-        onContextMenu={(e) => e.preventDefault()}
-    />
-);
 
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);

@@ -463,6 +463,7 @@ function PerformedTasks() {
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                     />
                     <div className="flex gap-3">
                         <Button
@@ -543,6 +544,7 @@ function PerformedTasks() {
                         <Button color="primary"
                                 endContent={<Plus className="size-4" />}
                                 onPress={handleOpenCreateModal}
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                         >
                             Přidat
                         </Button>
@@ -558,6 +560,7 @@ function PerformedTasks() {
                             size="sm"
                             className="rounded-full"
                             onPress={handleOpenReceiptModal}
+                            isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                         >
                             <Printer className="size-5" />
                         </Button>

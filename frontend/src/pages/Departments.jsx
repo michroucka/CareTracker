@@ -191,6 +191,7 @@ function Departments() {
                     value={filterValue}
                     onClear={onClear}
                     onValueChange={onSearchChange}
+                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                 />
                 <div className="flex gap-3">
                     <Button isIconOnly variant="flat" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
@@ -221,7 +222,12 @@ function Departments() {
                             ))}
                         </DropdownMenu>
                     </Dropdown>
-                    <Button color="primary" endContent={<Plus className="size-4" />} onPress={() => setIsCreateModalOpen(true)}>
+                    <Button
+                        color="primary"
+                        endContent={<Plus className="size-4" />}
+                        onPress={() => setIsCreateModalOpen(true)}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                    >
                         Přidat
                     </Button>
                 </div>

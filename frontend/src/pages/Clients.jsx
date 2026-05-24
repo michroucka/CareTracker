@@ -501,6 +501,7 @@ function Clients() {
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                     />
                     <div className="flex gap-3">
                         <Button
@@ -606,6 +607,7 @@ function Clients() {
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                             >
                                 Přidat
                             </Button>
