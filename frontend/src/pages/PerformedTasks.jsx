@@ -13,18 +13,13 @@ import {MIN_YEAR} from "../constants/globalConstants.js";
 import {
     Button,
     Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
+    Label,
+    Separator,
+    TextField,
+    InputGroup,
     Spinner,
     Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow, Tooltip
+    Tooltip
 } from "@heroui/react";
 import {
     ChevronDown,
@@ -455,20 +450,23 @@ function PerformedTasks() {
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
+                    <TextField
                         className="w-full sm:max-w-[44%]"
-                        placeholder="Hledat podle klienta..."
-                        startContent={<Search className="size-5" />}
-                        value={filterValue}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                    />
+                    >
+                        <InputGroup>
+                            <InputGroup.Prefix><Search className="size-5 opacity-50" /></InputGroup.Prefix>
+                            <InputGroup.Input
+                                placeholder="Hledat podle klienta..."
+                                value={filterValue}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            />
+                        </InputGroup>
+                    </TextField>
                     <div className="flex gap-3">
                         <Button
                             isIconOnly
-                            variant="flat"
+                            variant="tertiary"
                             className="sm:hidden"
                             onPress={handleOpenFiltersModal}
                         >
@@ -483,87 +481,91 @@ function PerformedTasks() {
 
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                <Button
+                                    variant="tertiary"
+                                    className="hidden sm:flex text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                >Středisko <ChevronDown className="size-4" /></Button>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        disallowEmptySelection
+                                        aria-label="Department Filter"
+                                        closeOnSelect={false}
+                                        selectedKeys={departmentFilter}
+                                        selectionMode="multiple"
+                                        onSelectionChange={handleDepartmentFilterChange}
+                                        className="max-h-60 overflow-y-auto"
                                     >
-                                        Středisko
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Department Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={departmentFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleDepartmentFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všechny</DropdownItem>
-                                    {departmentOptions.map((dept) => (
-                                        <DropdownItem key={dept.key}>
-                                            {dept.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
+                                        <Dropdown.Item id="all" textValue="Všechny">
+                                            <Dropdown.ItemIndicator />
+                                            <Label>Všechny</Label>
+                                        </Dropdown.Item>
+                                        {departmentOptions.map((dept) => (
+                                            <Dropdown.Item key={dept.key} id={dept.key} textValue={dept.name}>
+                                                <Dropdown.ItemIndicator />
+                                                <Label>{dept.name}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
                             </Dropdown>
                         )}
 
                         <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
-                                <Button
-                                    endContent={<ChevronDown className="size-4" />}
-                                    variant="flat"
-                                    className="text-foreground"
-                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            <Button
+                                variant="tertiary"
+                                className="hidden sm:flex text-foreground"
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            >Pečovatel <ChevronDown className="size-4" /></Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu
+                                    disallowEmptySelection
+                                    aria-label="Caregiver Filter"
+                                    closeOnSelect={false}
+                                    selectedKeys={caregiverFilter}
+                                    selectionMode="multiple"
+                                    onSelectionChange={handleCaregiverFilterChange}
+                                    className="max-h-60 overflow-y-auto"
                                 >
-                                    Pečovatel
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Caregiver Filter"
-                                closeOnSelect={false}
-                                selectedKeys={caregiverFilter}
-                                selectionMode="multiple"
-                                onSelectionChange={handleCaregiverFilterChange}
-                                className="max-h-60 overflow-y-auto"
-                            >
-                                <DropdownItem key="all">Všichni</DropdownItem>
-                                {caregiverOptions.map((caregiver) => (
-                                    <DropdownItem key={caregiver.key}>
-                                        {caregiver.name}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
+                                    <Dropdown.Item id="all" textValue="Všichni">
+                                        <Dropdown.ItemIndicator />
+                                        <Label>Všichni</Label>
+                                    </Dropdown.Item>
+                                    {caregiverOptions.map((caregiver) => (
+                                        <Dropdown.Item key={caregiver.key} id={caregiver.key} textValue={caregiver.name}>
+                                            <Dropdown.ItemIndicator />
+                                            <Label>{caregiver.name}</Label>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
 
-                        <Button color="primary"
-                                endContent={<Plus className="size-4" />}
+                        <Button variant="primary"
                                 onPress={handleOpenCreateModal}
                                 isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                        >
-                            Přidat
-                        </Button>
+                        >Přidat <Plus className="size-4" /></Button>
                     </div>
                 </div>
                 <div className="flex flex-row justify-between items-center">
                     <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
 
-                    <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
-                        <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            className="rounded-full"
-                            onPress={handleOpenReceiptModal}
-                            isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                        >
-                            <Printer className="size-5" />
-                        </Button>
+                    <Tooltip delay={0}>
+                        <Tooltip.Trigger>
+                            <Button
+                                isIconOnly
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-full"
+                                onPress={handleOpenReceiptModal}
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            >
+                                <Printer className="size-5" />
+                            </Button>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content placement="bottom">
+                            Vygenerovat stvrzenku
+                        </Tooltip.Content>
                     </Tooltip>
                 </div>
             </div>
@@ -631,35 +633,37 @@ function PerformedTasks() {
                 return (
                     <div className="relative flex justify-end items-center gap-2">
                         <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider={canEdit}>
-                                    <DropdownItem key="view"
-                                                  startContent={<ClipboardList />}
-                                                  variant="light"
-                                                  onPress={() => handleOpenDetailModal(performedTask.id)}
-                                                  isLoading={isLoadingDetail}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
-                                {canEdit && (
-                                    <DropdownSection>
-                                        <DropdownItem key="delete"
-                                                      startContent={<Trash2 />}
-                                                      variant="light"
-                                                      color="danger"
-                                                      onPress={() => handleOpenDeleteModal(performedTask.id)}
+                            <Button isIconOnly size="sm" variant="ghost">
+                                <MoreVertical size={20} />
+                            </Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                    <Dropdown.Section>
+                                        <Dropdown.Item id="view"
+                                                       textValue="Detail"
+                                                       onAction={() => handleOpenDetailModal(performedTask.id)}
                                         >
-                                            Smazat
-                                        </DropdownItem>
-                                    </DropdownSection>
-                                )}
-                            </DropdownMenu>
+                                            <ClipboardList />
+                                            <Label>{isLoadingDetail ? "Načítání..." : "Detail"}</Label>
+                                        </Dropdown.Item>
+                                    </Dropdown.Section>
+                                    {canEdit && (
+                                        <>
+                                            <Separator />
+                                            <Dropdown.Section>
+                                                <Dropdown.Item id="delete"
+                                                               textValue="Smazat"
+                                                               variant="danger"
+                                                               onAction={() => handleOpenDeleteModal(performedTask.id)}
+                                                >
+                                                    <Trash2 />
+                                                    <Label>Smazat</Label>
+                                                </Dropdown.Item>
+                                            </Dropdown.Section>
+                                        </>
+                                    )}
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
                     </div>
                 );
@@ -683,40 +687,49 @@ function PerformedTasks() {
 
     return (
         <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Performed tasks table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ? "end" : "start"}
-                            allowsSorting={column.sortable}
+            {topContent}
+            <Table>
+                <Table.ScrollContainer>
+                    <Table.Content
+                        aria-label="Performed tasks table"
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={setSortDescriptor}
+                    >
+                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                            {(column) => (
+                                <Table.Column
+                                    key={column.key}
+                                    align={column.key === "actions" ? "end" : "start"}
+                                    allowsSorting={column.sortable}
+                                >
+                                    {column.name}
+                                </Table.Column>
+                            )}
+                        </Table.Header>
+                        <Table.Body
+                            items={isLoading ? [] : sortedItems}
+                            renderEmptyState={() => (
+                                isLoading ? (
+                                    <div className="flex flex-col items-center gap-2 mt-72">
+                                        <Spinner />
+                                        <p className="text-sm text-foreground/60">Načítání úkonů...</p>
+                                    </div>
+                                ) : (
+                                    <p>
+                                        {isSuperadminWithoutOrg
+                                            ? "Vyberte prosím organizaci v navigační liště" : "Žádné provedené úkony nenalezeny"}
+                                    </p>
+                                )
+                            )}
                         >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody
-                    isLoading={isLoading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání úkonů..." />}
-                    emptyContent={
-                        isSuperadminWithoutOrg
-                            ? "Vyberte prosím organizaci v navigační liště" : "Žádné provedené úkony nenalezeny"
-                    }
-                    items={sortedItems}>
-                    {(item) => (
-                        <TableRow key={item.id}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
+                            {(item) => (
+                                <Table.Row key={item.id}>
+                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table.Content>
+                </Table.ScrollContainer>
             </Table>
 
             <PerformedTaskCreateModal

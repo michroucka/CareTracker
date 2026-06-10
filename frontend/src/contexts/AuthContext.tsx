@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { get, post } from "../api/api.js";
-import { addToast } from "@heroui/react";
-import { X } from "lucide-react";
+import { toast } from "@heroui/react";
 import {useNavigate} from "react-router-dom";
 
 interface User {
@@ -140,30 +139,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(null);
                 setSuperadminOrgState(null);
                 localStorage.removeItem(SUPERADMIN_ORG_KEY);
-                addToast({
-                    title: "Odhlášení úspěšné",
+                toast.success("Odhlášení úspěšné", {
                     description: "Byli jste úspěšně odhlášeni",
-                    color: "success",
-                    closeIcon: <X />,
-                    timeout: 5000,
-                    classNames: {
-                        closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-                    },
                 });
 
                 navigate("/");
             }
         } catch (error) {
             console.error("Logout error:", error);
-            addToast({
-                title: "Chyba při odhlašování",
+            toast.danger("Chyba při odhlašování", {
                 description: "Nepodařilo se odhlásit",
-                color: "danger",
-                closeIcon: <X />,
-                timeout: 5000,
-                classNames: {
-                    closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-                },
             });
         }
     };

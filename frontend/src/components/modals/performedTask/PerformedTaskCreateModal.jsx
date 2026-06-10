@@ -1,10 +1,6 @@
 import React from "react";
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Button,
 } from "@heroui/react";
 import { Save } from "lucide-react";
@@ -42,42 +38,45 @@ export function PerformedTaskCreateModal({ isOpen, onClose, onSubmit, clients = 
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Zadat nový provedený úkon</ModalHeader>
-                <ModalBody>
-                    <PerformedTaskForm
-                        ref={formRef}
-                        onSubmit={handleSubmit}
-                        isLoading={isLoading}
-                        clients={clients}
-                        caregivers={caregivers}
-                        tasks={tasks}
-                        userEmployeeId={user?.employeeId}
-                    />
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button
-                        className="text-base"
-                        type="reset"
-                        variant="bordered"
-                        isDisabled={isLoading}
-                        onPress={handleReset}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="primary"
-                        isLoading={isLoading}
-                        isDisabled={isLoading}
-                        endContent={<Save className="size-4" />}
-                        onPress={handleFormSubmit}
-                    >
-                        {isLoading ? "Ukládání..." : "Uložit úkon"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="lg">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex flex-col gap-1">
+                            <Modal.Heading>Zadat nový provedený úkon</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <PerformedTaskForm
+                                ref={formRef}
+                                onSubmit={handleSubmit}
+                                isLoading={isLoading}
+                                clients={clients}
+                                caregivers={caregivers}
+                                tasks={tasks}
+                                userEmployeeId={user?.employeeId}
+                            />
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button
+                                className="text-base"
+                                type="reset"
+                                variant="outline"
+                                isDisabled={isLoading}
+                                onPress={handleReset}
+                            >
+                                Reset
+                            </Button>
+                            <Button variant="primary"
+                                className="text-base"
+                                isPending={isLoading}
+                                isDisabled={isLoading}
+                                onPress={handleFormSubmit}
+                            >{isLoading ? "Ukládání..." : "Uložit úkon"} <Save className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

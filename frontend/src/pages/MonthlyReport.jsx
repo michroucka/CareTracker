@@ -8,17 +8,9 @@ import { formatDateTime, formatNumber } from "../utils/formatters.js";
 import { fetchImage } from "../api/api.js";
 import {
     Button,
-    Image,
     Modal,
-    ModalBody,
-    ModalContent,
     Spinner,
     Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
 } from "@heroui/react";
 import MonthYearPicker from "../components/MonthYearPicker.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
@@ -157,7 +149,7 @@ function MonthlyReport() {
                 return `${formatNumber(performedTask.price)} Kč`;
             case "detail":
                 return (
-                    <Button isIconOnly size="sm" variant="light" onPress={() => handleOpenDetailModal(performedTask.id)}>
+                    <Button isIconOnly size="sm" variant="ghost" onPress={() => handleOpenDetailModal(performedTask.id)}>
                         <Eye size={20} />
                     </Button>
                 )
@@ -187,44 +179,50 @@ function MonthlyReport() {
                     <h1>Měsíční přehled</h1>
                 </div>
 
-                <Table
-                    isHeaderSticky
-                    removeWrapper
-                                        aria-label="Měsíční přehled úkonů"
-                    sortDescriptor={sortDescriptor}
-                    topContent={topContent}
-                    topContentPlacement="outside"
-                    onSortChange={setSortDescriptor}
-                >
-                    <TableHeader columns={columns}>
-                        {(column) => (
-                            <TableColumn
-                                key={column.key}
-                                align={column.key === "detail" ? "end" : "start"}
+                {topContent}
+                <Table>
+                    <Table.ScrollContainer>
+                        <Table.Content
+                            aria-label="Měsíční přehled úkonů"
+                            sortDescriptor={sortDescriptor}
+                            onSortChange={setSortDescriptor}
+                        >
+                            <Table.Header columns={columns} className="sticky top-0 bg-background z-10">
+                                {(column) => (
+                                    <Table.Column
+                                        key={column.key}
+                                        align={column.key === "detail" ? "end" : "start"}
+                                    >
+                                        {column.name}
+                                    </Table.Column>
+                                )}
+                            </Table.Header>
+                            <Table.Body
+                                items={loading ? [] : performedTasks}
+                                renderEmptyState={() => (
+                                    loading ? (
+                                        <div className="flex flex-col items-center gap-2 mt-72">
+                                            <Spinner />
+                                            <p className="text-sm text-foreground/60">Načítání přehledu...</p>
+                                        </div>
+                                    ) : (
+                                        <p>V tomto měsíci nebyly provedeny žádné úkony</p>
+                                    )
+                                )}
                             >
-                                {column.name}
-                            </TableColumn>
-                        )}
-                    </TableHeader>
-                    <TableBody
-                        isLoading={loading}
-                        loadingContent={<Spinner className="mt-72" label="Načítání přehledu..." />}
-                        emptyContent="V tomto měsíci nebyly provedeny žádné úkony"
-                        items={performedTasks}
-                    >
-                        {(item) => (
-                            <TableRow key={item.id}>
-                                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                            </TableRow>
-                        )}
-                    </TableBody>
+                                {(item) => (
+                                    <Table.Row key={item.id}>
+                                        {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                    </Table.Row>
+                                )}
+                            </Table.Body>
+                        </Table.Content>
+                    </Table.ScrollContainer>
                 </Table>
 
                 {!loading && performedTasks.length > 0 && (
                     <div className="flex justify-between items-end">
-                        <Button variant="ghost" startContent={<QrCode className="size-4.5" />} onPress={handleOpenQrModal}>
-                            QR Platba
-                        </Button>
+                        <Button variant="ghost" onPress={handleOpenQrModal}><QrCode className="size-4.5" /> QR Platba</Button>
                         <span className="text-large font-semibold">
                             Celkem: {formatNumber(totalPrice)} Kč
                         </span>
@@ -232,12 +230,17 @@ function MonthlyReport() {
                 )}
             </div>
 
-            <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} size="sm">
-                <ModalContent>
-                    <ModalBody className="flex items-center justify-center py-6">
-                        <Image src={qrCodeUrl} alt="QR platba" width={300} height={300} isLoading={isLoadingQr} />
-                    </ModalBody>
-                </ModalContent>
+            <Modal>
+                <Modal.Backdrop isOpen={isQrModalOpen} onOpenChange={(open) => !open && setIsQrModalOpen(false)}>
+                    <Modal.Container size="sm">
+                        <Modal.Dialog>
+                            <Modal.CloseTrigger />
+                            <Modal.Body className="flex items-center justify-center py-6">
+                                {isLoadingQr ? <Spinner size="md" /> : <img src={qrCodeUrl} alt="QR platba" width={300} height={300} />}
+                            </Modal.Body>
+                        </Modal.Dialog>
+                    </Modal.Container>
+                </Modal.Backdrop>
             </Modal>
 
             <PerformedTaskDetailModal

@@ -1,26 +1,15 @@
 import React from "react";
 import {
-    Navbar,
-    NavbarBrand,
-    NavbarContent,
-    NavbarItem,
-    NavbarMenuToggle,
-    NavbarMenu,
-    NavbarMenuItem,
-    Link,
     Button,
-    Divider,
+    Label,
+    Separator,
     Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownTrigger,
-    User,
 } from "@heroui/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import {
     Home, Users, ClipboardCheck, UserRound, ListChecks,
-    Building, Building2, BarChart3, ChevronDown, LogOut,
+    Building, Building2, BarChart3, ChevronDown, LogOut, Menu, X,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher.jsx";
 import { CareTrackerLogo } from "./CareTrackerLogo.jsx";
@@ -68,27 +57,30 @@ export default function AppNavbar() {
 
     const orgSwitcherDropdown = (
         <Dropdown>
-            <DropdownTrigger>
-                <Button
-                    startContent={<Building2 className="size-4 shrink-0" />}
-                    endContent={<ChevronDown className="size-4 shrink-0" />}
-                    variant="flat"
-                    className="w-full justify-start gap-2 px-3"
-                >
-                    <span className="truncate text-sm">{superadminOrg?.name ?? "Vyberte organizaci"}</span>
-                </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-                aria-label="Výběr organizace"
-                selectionMode="single"
-                selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
-                onSelectionChange={handleOrgChange}
-                className="max-h-72 overflow-y-auto"
+            <Button
+                variant="tertiary"
+                className="w-full justify-start gap-2 px-3"
             >
-                {organizations.map(org => (
-                    <DropdownItem key={String(org.id)}>{org.name}</DropdownItem>
-                ))}
-            </DropdownMenu>
+                <Building2 className="size-4 shrink-0" />
+                <span className="truncate text-sm">{superadminOrg?.name ?? "Vyberte organizaci"}</span>
+                <ChevronDown className="size-4 shrink-0" />
+            </Button>
+            <Dropdown.Popover>
+                <Dropdown.Menu
+                    aria-label="Výběr organizace"
+                    selectionMode="single"
+                    selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
+                    onSelectionChange={handleOrgChange}
+                    className="max-h-72 overflow-y-auto"
+                >
+                    {organizations.map(org => (
+                        <Dropdown.Item key={String(org.id)} id={String(org.id)} textValue={org.name}>
+                            <Dropdown.ItemIndicator />
+                            <Label>{org.name}</Label>
+                        </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+            </Dropdown.Popover>
         </Dropdown>
     );
 
@@ -112,10 +104,9 @@ export default function AppNavbar() {
                         const isActive = location.pathname === item.path;
                         const Icon = item.icon;
                         return (
-                            <Link
+                            <a
                                 key={item.path}
                                 href={item.path}
-                                color="foreground"
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-lg transition-all ease-in-out duration-200
                                     ${isActive
                                         ? "bg-primary/10 text-primary font-semibold opacity-100"
@@ -124,16 +115,16 @@ export default function AppNavbar() {
                             >
                                 <Icon className="size-5.5 shrink-0" />
                                 <span>{item.name}</span>
-                            </Link>
+                            </a>
                         );
                     })}
                 </nav>
 
-                {/* Bottom: org switcher + divider + user row */}
+                {/* Bottom: org switcher + separator + user row */}
                 <div className="flex flex-col gap-2">
                     {user?.role === "SUPERADMIN" && orgSwitcherDropdown}
 
-                    <Divider />
+                    <Separator />
 
                     <div className="flex items-center gap-1 px-1">
                         {loading ? (
@@ -144,7 +135,7 @@ export default function AppNavbar() {
                                     onClick={() => navigate("/account")}
                                     className="flex-1 min-w-0 flex flex-col items-start text-left cursor-pointer rounded-lg px-1 hover:opacity-70 transition-opacity"
                                 >
-                                    <span className={`font-semibold w-full truncate 
+                                    <span className={`font-semibold w-full truncate
                                         ${user.username.length > 13
                                         ? "text-sm"
                                         : ""
@@ -156,8 +147,7 @@ export default function AppNavbar() {
                                 </button>
                                 <Button
                                     isIconOnly
-                                    color="danger"
-                                    variant="light"
+                                    variant="danger-soft"
                                     size="sm"
                                     onPress={logout}
                                 >
@@ -165,9 +155,9 @@ export default function AppNavbar() {
                                 </Button>
                             </>
                         ) : (
-                            <Link href="/login" className="flex-1 font-semibold text-foreground text-lg">
+                            <a href="/login" className="flex-1 font-semibold text-foreground text-lg">
                                 Přihlásit se
-                            </Link>
+                            </a>
                         )}
 
                         <ThemeSwitcher />
@@ -175,130 +165,128 @@ export default function AppNavbar() {
                 </div>
             </aside>
 
-            {/* ── Mobile navbar (HeroUI, beze změny) ───────────────────── */}
-            <Navbar
-                isMenuOpen={isMenuOpen}
-                shouldHideOnScroll
-                onMenuOpenChange={setIsMenuOpen}
-                maxWidth="full"
-                className="sm:hidden px-0 shadow-md"
-            >
-                <NavbarContent>
-                    <NavbarBrand className="cursor-pointer" onClick={() => navigate("/")}>
+            {/* ── Mobile navbar ───────────────────────────────────────── */}
+            <nav className="sm:hidden sticky top-0 z-40 w-full bg-background border-b border-separator shadow-sm">
+                <div className="flex h-16 items-center justify-between px-4">
+                    <button
+                        onClick={() => navigate("/")}
+                        className="flex items-center gap-1 cursor-pointer"
+                    >
                         <CareTrackerLogo />
                         <p className="font-bold text-xl">CareTracker</p>
-                    </NavbarBrand>
-                    <ThemeSwitcher className="mr-4" iconSize="size-6.5" />
-                    <NavbarMenuToggle
-                        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-                        justify="end"
-                    />
-                </NavbarContent>
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <ThemeSwitcher iconSize="size-6.5" />
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            aria-label={isMenuOpen ? "Zavřít menu" : "Otevřít menu"}
+                            aria-expanded={isMenuOpen}
+                            className="p-2 rounded-lg hover:bg-content2 transition-colors"
+                        >
+                            {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+                        </button>
+                    </div>
+                </div>
 
-                <NavbarMenu className="pt-4 gap-1 flex flex-col max-h-[calc(100dvh-4rem)] overflow-y-auto pb-[env(safe-area-inset-bottom,1rem)]">
-                    {filteredMenuItems.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        const Icon = item.icon;
-                        return (
-                            <NavbarMenuItem key={item.path}>
-                                <Link
-                                    href={item.path}
-                                    aria-current={isActive ? "page" : undefined}
-                                    color="foreground"
-                                    onPress={() => setIsMenuOpen(false)}
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-medium transition-colors
-                                        ${isActive
-                                            ? "bg-primary/10 text-primary font-semibold opacity-100"
-                                            : "opacity-60"
-                                        }`}
-                                >
-                                    <Icon className="size-5 shrink-0" />
-                                    <span className="text-lg">{item.name}</span>
-                                </Link>
-                            </NavbarMenuItem>
-                        );
-                    })}
-
-                    {user?.role === "SUPERADMIN" && (
-                        <NavbarMenuItem className="mt-auto">
-                            <Dropdown className="w-full">
-                                <DropdownTrigger>
-                                    <Button
-                                        startContent={<Building2 className="size-5 opacity-60" />}
-                                        endContent={<ChevronDown className="size-5 opacity-60" />}
-                                        variant="flat"
-                                        className="text-foreground w-full justify-between text-base"
+                {isMenuOpen && (
+                    <div className="border-t border-separator max-h-[calc(100dvh-4rem)] overflow-y-auto pb-[env(safe-area-inset-bottom,1rem)]">
+                        <div className="flex flex-col gap-1 p-3">
+                            {filteredMenuItems.map((item) => {
+                                const isActive = location.pathname === item.path;
+                                const Icon = item.icon;
+                                return (
+                                    <a
+                                        key={item.path}
+                                        href={item.path}
+                                        aria-current={isActive ? "page" : undefined}
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className={`flex items-center gap-3 px-3 py-3 rounded-xl font-medium transition-colors
+                                            ${isActive
+                                                ? "bg-primary/10 text-primary font-semibold opacity-100"
+                                                : "opacity-60"
+                                            }`}
                                     >
-                                        <span className="truncate">{superadminOrg?.name ?? "Vyberte organizaci"}</span>
+                                        <Icon className="size-5 shrink-0" />
+                                        <span className="text-lg">{item.name}</span>
+                                    </a>
+                                );
+                            })}
+
+                            {user?.role === "SUPERADMIN" && (
+                                <div className="mt-auto">
+                                    <Dropdown className="w-full">
+                                        <Button
+                                            variant="tertiary"
+                                            className="text-foreground w-full justify-between text-base"
+                                        >
+                                            <Building2 className="size-5 opacity-60" />
+                                            <span className="truncate">{superadminOrg?.name ?? "Vyberte organizaci"}</span>
+                                            <ChevronDown className="size-5 opacity-60" />
+                                        </Button>
+                                        <Dropdown.Popover>
+                                            <Dropdown.Menu
+                                                aria-label="Výběr organizace"
+                                                selectionMode="single"
+                                                selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
+                                                onSelectionChange={(keys) => {
+                                                    handleOrgChange(keys);
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="max-h-72 overflow-y-auto"
+                                            >
+                                                {organizations.map(org => (
+                                                    <Dropdown.Item key={String(org.id)} id={String(org.id)} textValue={org.name}>
+                                                        <Dropdown.ItemIndicator />
+                                                        <Label>{org.name}</Label>
+                                                    </Dropdown.Item>
+                                                ))}
+                                            </Dropdown.Menu>
+                                        </Dropdown.Popover>
+                                    </Dropdown>
+                                </div>
+                            )}
+
+                            <Separator className={user?.role !== "SUPERADMIN" ? "mt-auto" : undefined} />
+
+                            {loading ? (
+                                <div className="h-10" />
+                            ) : user ? (
+                                <div className="w-full flex items-center justify-between gap-2 py-2 px-2 mb-4">
+                                    <button
+                                        onClick={() => {
+                                            navigate("/account");
+                                            setIsMenuOpen(false);
+                                        }}
+                                        className="flex flex-col items-start cursor-pointer"
+                                    >
+                                        <span className="font-bold text-xl">{user.username}</span>
+                                        <span className="opacity-75 font-medium text-sm">{getRoleLabel(user.role)}</span>
+                                    </button>
+                                    <Button
+                                        isIconOnly
+                                        variant="danger-soft"
+                                        size="lg"
+                                        onPress={() => {
+                                            setIsMenuOpen(false);
+                                            logout();
+                                        }}
+                                    >
+                                        <LogOut className="size-8.5" />
                                     </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    aria-label="Výběr organizace"
-                                    selectionMode="single"
-                                    selectedKeys={superadminOrg ? new Set([String(superadminOrg.id)]) : new Set()}
-                                    onSelectionChange={(keys) => {
-                                        handleOrgChange(keys);
-                                        setIsMenuOpen(false);
-                                    }}
-                                    className="max-h-72 overflow-y-auto"
+                                </div>
+                            ) : (
+                                <a
+                                    href="/login"
+                                    className="w-full font-bold py-2 text-foreground text-xl flex justify-end px-2 mb-4"
+                                    onClick={() => setIsMenuOpen(false)}
                                 >
-                                    {organizations.map(org => (
-                                        <DropdownItem key={String(org.id)}>{org.name}</DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        </NavbarMenuItem>
-                    )}
-
-                    <Divider className={user?.role !== "SUPERADMIN" ? "mt-auto" : null} />
-
-                    {loading ? (
-                        <div className="h-10" />
-                    ) : user ? (
-                        <NavbarMenuItem>
-                            <div className="w-full flex items-center justify-between gap-2 py-2 px-2 mb-4">
-                                <User
-                                    as="button"
-                                    onClick={() => {
-                                        navigate("/account");
-                                        setIsMenuOpen(false);
-                                    }}
-                                    name={user.username}
-                                    description={getRoleLabel(user.role)}
-                                    avatarProps={{ className: "hidden" }}
-                                    classNames={{
-                                        name: "font-bold text-xl",
-                                        description: "opacity-75 font-medium text-sm",
-                                    }}
-                                />
-                                <Button
-                                    isIconOnly
-                                    color="danger"
-                                    variant="light"
-                                    size="lg"
-                                    onPress={() => {
-                                        setIsMenuOpen(false);
-                                        logout();
-                                    }}
-                                >
-                                    <LogOut className="size-8.5" />
-                                </Button>
-                            </div>
-                        </NavbarMenuItem>
-                    ) : (
-                        <NavbarMenuItem>
-                            <Link
-                                className="w-full font-bold py-2 text-foreground text-xl justify-end px-2 mb-4"
-                                href="/login"
-                                size="lg"
-                                onPress={() => setIsMenuOpen(false)}
-                            >
-                                Přihlásit se
-                            </Link>
-                        </NavbarMenuItem>
-                    )}
-                </NavbarMenu>
-            </Navbar>
+                                    Přihlásit se
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </nav>
         </>
     );
 }

@@ -1,36 +1,9 @@
 @import "tailwindcss";
 @import "./table.css";
-@plugin "./hero.ts";
-@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
 @custom-variant dark (&:is(.dark *));
 
 @theme {
     --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
-}
-
-/* hides the internal bottom-right toast provider — workaround until fixed upstream */
-div[role="alertdialog"][data-placement="bottom-right"] {
-    display: none !important;
-}
-
-/* toast exiting */
-[data-toast="true"][data-toast-exiting="true"][data-placement="top-center"] {
-    transform: translateY(-150%) !important; /* slide fully out of view */
-    opacity: 0 !important;
-    transition: all 0.4s ease-in-out !important;
-}
-
-/* toast entering */
-[data-toast="true"][data-toast-entering="true"][data-placement="top-center"] {
-    transform: translateY(-150%) scale(0.9);
-    opacity: 0;
-    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-[data-toast="true"][data-placement="top-center"] {
-    transform: translateY(0%) scale(1);
-    opacity: 1;
-    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 

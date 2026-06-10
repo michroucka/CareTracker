@@ -3,7 +3,7 @@ import {useAccount} from "../hooks/useAccount.jsx";
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {getRoleLabel} from "../constants/roles.js";
 import React from "react";
-import {Button, Divider, Form, Input, Spinner} from "@heroui/react";
+import {Button, Separator, Form, TextField, Input, Label, FieldError, Spinner} from "@heroui/react";
 import {Pencil, Save, UserRound, X, RefreshCw} from "lucide-react";
 
 
@@ -88,8 +88,9 @@ function Account() {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner label="Načítání údajů..." />
+            <div className="flex flex-col justify-center items-center h-[calc(100dvh-20rem)] gap-2">
+                <Spinner />
+                <p className="text-sm text-foreground/60">Načítání údajů...</p>
             </div>
         );
     }
@@ -105,7 +106,7 @@ function Account() {
                     <UserRound className="size-14 text-default-400" />
                     <h1 className="cursor-default">Můj účet</h1>
                 </div>
-                <Divider className="mb-3 w-5/6" />
+                <Separator className="mb-3 w-5/6" />
 
                 <div className="flex flex-row items-start gap-4 w-full">
                     <ReadOnlyField label="Jméno" value={fullName} className="flex-1" />
@@ -114,62 +115,50 @@ function Account() {
 
                 {isEditMode ? (
                     <>
-                        <Input
-                            isRequired
-                            isDisabled={isSubmitting}
-                            isInvalid={!!errors.username}
-                            errorMessage={errors.username}
-                            label="Uživatelské jméno"
-                            labelPlacement="inside"
-                            name="username"
-                            value={username}
-                            onValueChange={(value) => {
-                                setUsername(value);
-                                if (errors.username) {
-                                    setErrors({...errors, username: undefined});
-                                }
-                            }}
-                        />
+                        <TextField name="username" isRequired isInvalid={!!errors.username}>
+                            <Label>Uživatelské jméno</Label>
+                            <Input
+                                isDisabled={isSubmitting}
+                                value={username}
+                                onChange={(e) => {
+                                    setUsername(e.target.value);
+                                    if (errors.username) {
+                                        setErrors({...errors, username: undefined});
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.username}</FieldError>
+                        </TextField>
 
-                        <Input
-                            isRequired
-                            isDisabled={isSubmitting}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email}
-                            label="Email"
-                            labelPlacement="inside"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onValueChange={(value) => {
-                                setEmail(value);
-                                if (errors.email) {
-                                    setErrors({...errors, email: undefined});
-                                }
-                            }}
-                        />
+                        <TextField name="email" isRequired type="email" isInvalid={!!errors.email}>
+                            <Label>Email</Label>
+                            <Input
+                                isDisabled={isSubmitting}
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (errors.email) {
+                                        setErrors({...errors, email: undefined});
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.email}</FieldError>
+                        </TextField>
 
                         <div className="flex gap-3 w-full">
                             <Button
                                 className="flex-1 text-base"
-                                variant="flat"
+                                variant="tertiary"
                                 type="button"
                                 isDisabled={isSubmitting}
                                 onPress={handleCancelEdit}
-                                startContent={<X className="size-4" />}
-                            >
-                                Zrušit
-                            </Button>
-                            <Button
+                            ><X className="size-4" /> Zrušit</Button>
+                            <Button variant="primary"
                                 className="flex-1 text-base"
-                                color="primary"
                                 type="submit"
-                                isLoading={isSubmitting}
+                                isPending={isSubmitting}
                                 isDisabled={isSubmitting}
-                                startContent={<Save className="size-4" />}
-                            >
-                                {isSubmitting ? "Ukládám..." : "Uložit změny"}
-                            </Button>
+                            ><Save className="size-4" /> {isSubmitting ? "Ukládám..." : "Uložit změny"}</Button>
                         </div>
                     </>
                 ) : (
@@ -179,25 +168,19 @@ function Account() {
 
                         <Button
                             className="w-full"
-                            variant="flat"
+                            variant="tertiary"
                             type="button"
                             onPress={handleEnterEditMode}
-                            startContent={<Pencil className="size-4" />}
-                        >
-                            Upravit údaje
-                        </Button>
+                        ><Pencil className="size-4" /> Upravit údaje</Button>
                     </>
                 )}
                 <Button
                     className="w-full"
-                    variant="flat"
+                    variant="tertiary"
                     type="button"
-                    startContent={isSendingReset ? <Spinner size="sm" /> : <RefreshCw className="size-4" />}
                     isDisabled={isSendingReset}
                     onPress={requestResetPasswordEmail}
-                >
-                    Obnovit heslo
-                </Button>
+                >isSendingReset ? <Spinner size="sm" /> : <RefreshCw className="size-4" /> Obnovit heslo</Button>
             </div>
         </Form>
     );

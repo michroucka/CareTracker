@@ -1,9 +1,13 @@
 import {
+    TextField,
     Input,
+    Label,
+    FieldError,
     Checkbox,
     Select,
-    SelectItem,
-    Form, NumberInput,
+    ListBox,
+    Form,
+    NumberField,
 } from "@heroui/react";
 import React from "react";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
@@ -107,46 +111,46 @@ export const TaskForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Název" value={name} />
                 ) : (
-                    <Input
-                        isDisabled={isLoading}
-                        isInvalid={!!errors.name}
-                        errorMessage={errors.name}
-                        label="Název"
-                        labelPlacement="inside"
-                        name="name"
-                        value={name}
-                        onValueChange={(value) => {
-                            setName(value);
-                            if (errors.name) {
-                                setErrors({ ...errors, name: undefined });
-                            }
-                        }}
-                        isRequired
-                    />
+                    <TextField name="name" isRequired isInvalid={!!errors.name}>
+                        <Label>Název</Label>
+                        <Input
+                            isDisabled={isLoading}
+                            value={name}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                if (errors.name) {
+                                    setErrors({ ...errors, name: undefined });
+                                }
+                            }}
+                        />
+                        <FieldError>{errors.name}</FieldError>
+                    </TextField>
                 )}
 
                 <div className="grid grid-cols-3 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField label="Cena" value={unitPrice} type="number" endContent="Kč" />
                     ) : (
-                        <NumberInput
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.unitPrice}
-                            errorMessage={errors.unitPrice}
-                            label="Cena"
-                            labelPlacement="inside"
+                        <NumberField
                             name="unitPrice"
+                            isRequired
+                            isInvalid={!!errors.unitPrice}
+                            isDisabled={isLoading}
                             value={unitPrice}
-                            onValueChange={(value) => {
+                            onChange={(value) => {
                                 setUnitPrice(value);
                                 if (errors.unitPrice) {
                                     setErrors({ ...errors, unitPrice: undefined });
                                 }
                             }}
-                            isRequired
-                            endContent="Kč"
-                            hideStepper
-                        />
+                        >
+                            <Label>Cena</Label>
+                            <NumberField.Group>
+                                <NumberField.Input />
+                                <span className="text-foreground/50 text-sm px-2 self-center">Kč</span>
+                            </NumberField.Group>
+                            <FieldError>{errors.unitPrice}</FieldError>
+                        </NumberField>
                     )}
                     {isReadOnly ? (
                         <ReadOnlyField
@@ -157,20 +161,27 @@ export const TaskForm = React.forwardRef(({
                         <Select
                             isDisabled={isLoading}
                             isInvalid={!!errors.unitType}
-                            errorMessage={errors.unitType}
-                            label="Jednotka"
-                            labelPlacement="inside"
                             name="unitType"
-                            selectedKeys={[unitType]}
-                            onSelectionChange={(keys) => {setUnitType(Array.from(keys)[0]);}}
+                            value={unitType}
+                            onChange={setUnitType}
                             isRequired
-                            disallowEmptySelection
                         >
-                            {unitTypeOptions.map((type) => (
-                                <SelectItem key={type.key} value={type.key}>
-                                    {type.name}
-                                </SelectItem>
-                            ))}
+                            <Label>Jednotka</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {unitTypeOptions.map((type) => (
+                                        <ListBox.Item key={type.key} id={type.key} textValue={type.name}>
+                                            {type.name}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.unitType}</FieldError>
                         </Select>
                     )}
 
@@ -182,12 +193,17 @@ export const TaskForm = React.forwardRef(({
                     ) : (
                         <div className="flex items-center h-14">
                             <Checkbox
+                                id="doubleMeeting"
                                 isDisabled={isLoading}
                                 isSelected={doubleMeeting}
-                                onValueChange={setDoubleMeeting}
-                                name="doubleMeeting"
+                                onChange={setDoubleMeeting}
                             >
-                                Dvojité setkání
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                <Checkbox.Content>
+                                    <Label htmlFor="doubleMeeting">Dvojité setkání</Label>
+                                </Checkbox.Content>
                             </Checkbox>
                         </div>
                     )}

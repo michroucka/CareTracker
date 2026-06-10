@@ -1,9 +1,5 @@
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Button,
     Spinner,
 } from "@heroui/react";
@@ -67,69 +63,66 @@ export function TaskDetailModal({ isOpen, onClose, onSubmit, canEdit, task, isLo
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex justify-between items-center">
-                    Detail úkonu
-                </ModalHeader>
-                <ModalBody>
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-8">
-                            <Spinner size="lg" label="Načítání úkonu..." />
-                        </div>
-                    ) : task ? (
-                        <TaskForm
-                            ref={formRef}
-                            initialData={currentTaskData}
-                            onSubmit={handleSubmit}
-                            isLoading={isLoading}
-                            isReadOnly={!isEditMode}
-                        />
-                    ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            Úkon nebyl nalezen
-                        </div>
-                    )}
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    {isEditMode ? (
-                        <>
-                            <Button
-                                variant="bordered"
-                                startContent={<X size={16} />}
-                                onPress={handleCancelEdit}
-                                isDisabled={isSubmitting}
-                            >
-                                Zrušit
-                            </Button>
-                            <Button
-                                color="primary"
-                                startContent={<Save size={16} />}
-                                onPress={handleFormSubmit}
-                                isLoading={isSubmitting}
-                                isDisabled={isSubmitting}
-                            >
-                                {isSubmitting ? "Ukládání..." : "Uložit změny"}
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            <Button variant="bordered" onPress={onClose}>
-                                Zavřít
-                            </Button>
-                            {canEdit && (
-                                <Button
-                                    color="primary"
-                                    startContent={<Pencil size={16} />}
-                                    onPress={handleEnterEditMode}
-                                >
-                                    Upravit
-                                </Button>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="lg">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex justify-between items-center">
+                            <Modal.Heading>Detail úkonu</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            {isLoading ? (
+                                <div className="flex flex-col justify-center items-center py-8 gap-2">
+                                    <Spinner size="lg" />
+                                    <p className="text-sm text-foreground/60">Načítání úkonu...</p>
+                                </div>
+                            ) : task ? (
+                                <TaskForm
+                                    ref={formRef}
+                                    initialData={currentTaskData}
+                                    onSubmit={handleSubmit}
+                                    isLoading={isLoading}
+                                    isReadOnly={!isEditMode}
+                                />
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                    Úkon nebyl nalezen
+                                </div>
                             )}
-                        </>
-                    )}
-                </ModalFooter>
-            </ModalContent>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            {isEditMode ? (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        onPress={handleCancelEdit}
+                                        isDisabled={isSubmitting}
+                                    ><X size={16} /> Zrušit</Button>
+                                    <Button
+                                        variant="primary"
+                                        onPress={handleFormSubmit}
+                                        isPending={isSubmitting}
+                                        isDisabled={isSubmitting}
+                                    ><Save size={16} /> {isSubmitting ? "Ukládání..." : "Uložit změny"}</Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button variant="outline" onPress={onClose}>
+                                        Zavřít
+                                    </Button>
+                                    {canEdit && (
+                                        <Button
+                                            variant="primary"
+                                            onPress={handleEnterEditMode}
+                                        ><Pencil size={16} /> Upravit</Button>
+                                    )}
+                                </>
+                            )}
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

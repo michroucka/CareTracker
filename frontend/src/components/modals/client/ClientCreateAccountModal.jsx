@@ -1,11 +1,8 @@
 import React from "react";
 import {
     Modal,
-    ModalBody,
-    ModalContent,
-    ModalHeader,
     Button,
-    ModalFooter, Form, Input
+    Form, TextField, Input, Label, FieldError
 } from "@heroui/react";
 import {Send} from "lucide-react";
 
@@ -38,60 +35,54 @@ export function ClientCreateAccountModal({ isOpen, onClose, onSubmit, clientName
     }
 
     return (
-        <Modal isOpen={isOpen}
-               onClose={onClose}
-               size="sm"
-               scrollBehavior="outside"
-        >
-            <ModalContent>
-                <ModalHeader className="flex justify-between items-center pb-0">
-                    Vytvořit klientovi účet
-                </ModalHeader>
-                <ModalBody className="text-foreground/50 text-sm gap-1">
-                    <Form
-                        className="w-full space-y-4"
-                        validationErrors={errors}
-                        onSubmit={handleSubmit}
-                    >
-                        <p>{clientName} obdrží na zadaný email odkaz pro aktivaci účtu.</p>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="sm">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex justify-between items-center pb-0">
+                            <Modal.Heading>Vytvořit klientovi účet</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body className="text-foreground/50 text-sm gap-1">
+                            <Form
+                                className="w-full space-y-4"
+                                validationErrors={errors}
+                                onSubmit={handleSubmit}
+                            >
+                                <p>{clientName} obdrží na zadaný email odkaz pro aktivaci účtu.</p>
 
-                        <div className="flex flex-col gap-4 w-full">
-                            <Input
+                                <div className="flex flex-col gap-4 w-full">
+                                    <TextField name="email" isRequired type="email" isInvalid={!!errors.email}>
+                                        <Label>Email</Label>
+                                        <Input
+                                            isDisabled={isSubmitting}
+                                            value={email}
+                                            onChange={(e) => {
+                                                setEmail(e.target.value);
+                                                if (errors.email) {
+                                                    setErrors({ ...errors, email: undefined });
+                                                }
+                                            }}
+                                        />
+                                        <FieldError>{errors.email}</FieldError>
+                                    </TextField>
+                                </div>
+                            </Form>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button variant="outline" onPress={onClose}>
+                                Zavřít
+                            </Button>
+                            <Button variant="primary"
+                                className="text-base"
+                                isPending={isSubmitting}
                                 isDisabled={isSubmitting}
-                                isInvalid={!!errors.email}
-                                errorMessage={errors.email}
-                                label="Email"
-                                labelPlacement="inside"
-                                name="email"
-                                type="email"
-                                value={email}
-                                onValueChange={(value) => {
-                                    setEmail(value);
-                                    if (errors.email) {
-                                        setErrors({ ...errors, email: undefined });
-                                    }
-                                }}
-                                isRequired
-                            />
-                        </div>
-                    </Form>
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button variant="bordered" onPress={onClose}>
-                        Zavřít
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="primary"
-                        isLoading={isSubmitting}
-                        isDisabled={isSubmitting}
-                        endContent={<Send className="size-4" />}
-                        onPress={handleSubmit}
-                    >
-                        {isSubmitting ? "Odesílání..." : "Odeslat"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+                                onPress={handleSubmit}
+                            >{isSubmitting ? "Odesílání..." : "Odeslat"} <Send className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

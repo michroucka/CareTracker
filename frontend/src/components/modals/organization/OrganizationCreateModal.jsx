@@ -1,9 +1,5 @@
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Button,
 } from "@heroui/react";
 import { Plus } from "lucide-react";
@@ -28,36 +24,39 @@ export function OrganizationCreateModal({ isOpen, onClose, onSubmit, employees =
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Přidat novou organizaci</ModalHeader>
-                <ModalBody>
-                    <OrganizationForm
-                        ref={formRef}
-                        onSubmit={handleSubmit}
-                        isLoading={isLoading}
-                        employees={employees}
-                    />
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button
-                        variant="bordered"
-                        isDisabled={isLoading}
-                        onPress={() => formRef.current?.reset()}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        color="primary"
-                        isLoading={isLoading}
-                        isDisabled={isLoading}
-                        endContent={<Plus className="size-4" />}
-                        onPress={() => formRef.current?.submit()}
-                    >
-                        {isLoading ? "Ukládání..." : "Přidat organizaci"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="lg">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex flex-col gap-1">
+                            <Modal.Heading>Přidat novou organizaci</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <OrganizationForm
+                                ref={formRef}
+                                onSubmit={handleSubmit}
+                                isLoading={isLoading}
+                                employees={employees}
+                            />
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button
+                                variant="outline"
+                                isDisabled={isLoading}
+                                onPress={() => formRef.current?.reset()}
+                            >
+                                Reset
+                            </Button>
+                            <Button variant="primary"
+                                isPending={isLoading}
+                                isDisabled={isLoading}
+                                onPress={() => formRef.current?.submit()}
+                            >{isLoading ? "Ukládání..." : "Přidat organizaci"} <Plus className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Card, CardBody } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { Upload, X, User, FileX, Camera } from "lucide-react";
 import { showToast } from "./MyToast.jsx";
 
@@ -218,8 +218,7 @@ export function ImageUpload({
                 {preview && !isDisabled && (
                     <Button
                         isIconOnly
-                        color="danger"
-                        variant="light"
+                        variant="danger-soft"
                         className="absolute -top-1 -right-1 min-w-6 h-6 w-6 rounded-full z-10"
                         onPress={handleRemove}
                     >

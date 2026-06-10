@@ -13,8 +13,7 @@ export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
             onPress={() => setTheme(isDark ? 'light' : 'dark')}
             className={`rounded-full group ${className}`}
             size="sm"
-            variant="light"
-            disableRipple
+            variant="ghost"
         >
             <div className={`relative ${iconSize}`}>
                 {!isDark ? (

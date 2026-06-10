@@ -1,11 +1,7 @@
 import React from "react";
 import {
     Modal,
-    ModalBody,
-    ModalContent,
-    ModalHeader,
     Button,
-    ModalFooter
 } from "@heroui/react";
 import { Trash2 } from "lucide-react";
 
@@ -54,33 +50,34 @@ export function DeleteConfirmationModal({
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="sm" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex justify-between items-center pb-0">
-                    {title}
-                </ModalHeader>
-                <ModalBody className="text-foreground/50 text-sm gap-1">
-                    <p>{message}</p>
-                    {warningMessage && (
-                        <p className="text-danger/75">{warningMessage}</p>
-                    )}
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button variant="bordered" onPress={onClose} isDisabled={isSubmitting}>
-                        {cancelButtonText}
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="danger"
-                        isLoading={isSubmitting}
-                        isDisabled={isSubmitting}
-                        endContent={<Trash2 className="size-4" />}
-                        onPress={handleSubmit}
-                    >
-                        {confirmButtonText}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="sm">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex justify-between items-center pb-0">
+                            <Modal.Heading>{title}</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body className="text-foreground/50 text-sm gap-1">
+                            <p>{message}</p>
+                            {warningMessage && (
+                                <p className="text-danger/75">{warningMessage}</p>
+                            )}
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button variant="outline" onPress={onClose} isDisabled={isSubmitting}>
+                                {cancelButtonText}
+                            </Button>
+                            <Button variant="danger"
+                                className="text-base"
+                                isPending={isSubmitting}
+                                isDisabled={isSubmitting}
+                                onPress={handleSubmit}
+                            >{confirmButtonText} <Trash2 className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

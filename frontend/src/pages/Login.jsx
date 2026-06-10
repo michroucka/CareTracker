@@ -1,4 +1,4 @@
-import {Form, Input, Checkbox, Button, Divider, Link} from "@heroui/react";
+import {Form, TextField, Input, InputGroup, Label, FieldError, Description, Checkbox, Button, Separator, Link} from "@heroui/react";
 import React from "react";
 import {post} from "../api/api.js"
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, ArrowLeft, MailCheck, MailX, Users, Edit, FileText } from "lucide-react"
@@ -219,70 +219,72 @@ function Login() {
                     >
                         <div className="flex flex-col gap-4 w-full">
                             <p className="cursor-default text-3xl sm:text-4xl leading-tight font-bold mt-8 sm:mt-0">Přihlásit se</p>
-                            <Divider className="mb-2" />
+                            <Separator className="mb-2" />
 
-                            <Input
-                                isDisabled={isLoading}
-                                isInvalid={!!errors.username}
-                                errorMessage={errors.username}
-                                label="Uživatelské jméno"
-                                labelPlacement="inside"
-                                name="username"
-                                value={username}
-                                onValueChange={(value) => {
-                                    setUsername(value);
-                                    if (errors.username || errors.password) setErrors({});
-                                }}
-                            />
+                            <TextField name="username" isInvalid={!!errors.username}>
+                                <Label>Uživatelské jméno</Label>
+                                <Input
+                                    isDisabled={isLoading}
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                        if (errors.username || errors.password) setErrors({});
+                                    }}
+                                />
+                                <FieldError>{errors.username}</FieldError>
+                            </TextField>
 
-                            <Input
-                                isDisabled={isLoading}
-                                isInvalid={!!errors.password}
-                                errorMessage={errors.password}
-                                endContent={
-                                    <button
-                                        aria-label="toggle password visibility"
-                                        className="focus:outline-solid outline-transparent cursor-pointer"
-                                        type="button"
-                                        onClick={togglePassword}
-                                        title="Zobrazit heslo"
-                                        disabled={isLoading}
-                                    >
-                                        {isPasswordVisible ? (
-                                            <EyeOff className="size-6 sm:size-5 pointer-events-none" />
-                                        ) : (
-                                            <Eye className="size-6 sm:size-5 pointer-events-none" />
-                                        )}
-                                    </button>
-                                }
-                                label="Heslo"
-                                labelPlacement="inside"
-                                name="password"
-                                type={isPasswordVisible ? "text" : "password"}
-                                value={password}
-                                onValueChange={(value) => {
-                                    setPassword(value);
-                                    if (errors.username || errors.password) setErrors({});
-                                }}
-                            />
+                            <TextField name="password" type={isPasswordVisible ? "text" : "password"} isInvalid={!!errors.password}>
+                                <Label>Heslo</Label>
+                                <InputGroup>
+                                    <InputGroup.Input
+                                        isDisabled={isLoading}
+                                        value={password}
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            if (errors.username || errors.password) setErrors({});
+                                        }}
+                                    />
+                                    <InputGroup.Suffix>
+                                        <button
+                                            aria-label="toggle password visibility"
+                                            className="focus:outline-solid outline-transparent cursor-pointer"
+                                            type="button"
+                                            onClick={togglePassword}
+                                            title="Zobrazit heslo"
+                                            disabled={isLoading}
+                                        >
+                                            {isPasswordVisible ? (
+                                                <EyeOff className="size-6 sm:size-5 pointer-events-none" />
+                                            ) : (
+                                                <Eye className="size-6 sm:size-5 pointer-events-none" />
+                                            )}
+                                        </button>
+                                    </InputGroup.Suffix>
+                                </InputGroup>
+                                <FieldError>{errors.password}</FieldError>
+                            </TextField>
 
                             <Checkbox
                                 className="self-start"
-                                name="remember-me"
-                                value="true"
+                                id="remember-me"
                                 isSelected={remember}
-                                onValueChange={setRemember}
+                                onChange={setRemember}
                                 isDisabled={isLoading}
                             >
-                                Zapamatovat si mě
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                <Checkbox.Content>
+                                    <Label htmlFor="remember-me">Zapamatovat si mě</Label>
+                                </Checkbox.Content>
                             </Checkbox>
 
                             <div className="flex gap-4 w-full">
-                                <Button
+                                <Button variant="primary"
                                     className="w-full text-base"
-                                    color="primary"
                                     type="submit"
-                                    isLoading={isLoading}
+                                    isPending={isLoading}
                                     isDisabled={isLoading}
                                     size="lg"
                                 >
@@ -291,7 +293,7 @@ function Login() {
                                 <Button
                                     className="text-base"
                                     type="reset"
-                                    variant="bordered"
+                                    variant="outline"
                                     isDisabled={isLoading}
                                     size="lg"
                                 >
@@ -315,31 +317,27 @@ function Login() {
                     >
                         <div className="flex flex-col gap-4 w-full">
                             <h2 className="cursor-default mb-1">Zapomenuté heslo</h2>
-                            <Divider className="mb-2" />
+                            <Separator className="mb-2" />
 
-                            <Input
-                                isDisabled={isLoading}
-                                isInvalid={!!errors.email}
-                                errorMessage={errors.email}
-                                label="Email"
-                                labelPlacement="inside"
-                                type="email"
-                                description="Sem Vám přijdou instrukce pro obnovení hesla"
-                                name="email"
-                                value={email}
-                                onValueChange={(value) => {
-                                    setEmail(value);
-                                    if (errors.email) setErrors({});
-                                }}
-                                classNames={{ description: "text-foreground/50" }}
-                            />
+                            <TextField name="email" type="email" isInvalid={!!errors.email}>
+                                <Label>Email</Label>
+                                <Input
+                                    isDisabled={isLoading}
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (errors.email) setErrors({});
+                                    }}
+                                />
+                                <Description className="text-foreground/50">Sem Vám přijdou instrukce pro obnovení hesla</Description>
+                                <FieldError>{errors.email}</FieldError>
+                            </TextField>
 
                             <div className="flex gap-4 w-full">
-                                <Button
+                                <Button variant="primary"
                                     className="w-full text-base"
-                                    color="primary"
                                     type="submit"
-                                    isLoading={isLoading}
+                                    isPending={isLoading}
                                     isDisabled={isLoading}
                                 >
                                     {isLoading ? "Odesílání..." : "Odeslat"}

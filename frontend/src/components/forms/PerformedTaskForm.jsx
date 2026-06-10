@@ -1,20 +1,23 @@
 import {
     Select,
-    SelectItem,
-    Textarea,
-    DatePicker,
+    ListBox,
     Form,
+    TextField,
     Input,
+    Label,
+    FieldError,
     Tooltip,
     Autocomplete,
-    AutocompleteItem,
+    SearchField,
+    useFilter,
     Button,
 } from "@heroui/react";
-import { CalendarDays, ListFilter } from "lucide-react";
+import { ListFilter } from "lucide-react";
 import React from "react";
 import { getLocalTimeZone, now, CalendarDateTime, parseDateTime } from "@internationalized/date";
 import {calculatePrice, unitTypeTranslations} from "../../constants/performedTaskConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
+import { AppDatePicker } from "../AppDatePicker.jsx";
 import {MIN_YEAR} from "../../constants/globalConstants.js";
 
 /**
@@ -59,6 +62,7 @@ export const PerformedTaskForm = React.forwardRef(({
     const [caregiverIds, setCaregiverIds] = React.useState([]);
     const [showAllTasks, setShowAllTasks] = React.useState(false);
     const [errors, setErrors] = React.useState({});
+    const {contains} = useFilter({sensitivity: "base"});
 
     // Initialize form with initial data
     React.useEffect(() => {
@@ -230,27 +234,44 @@ export const PerformedTaskForm = React.forwardRef(({
                         isRequired
                         isDisabled={isLoading}
                         isInvalid={!!errors.clientId}
-                        errorMessage={errors.clientId}
-                        label="Klient"
-                        labelPlacement="inside"
                         name="clientId"
-                        selectedKey={clientId ? clientId.toString() : null}
-                        onSelectionChange={(key) => {
+                        value={clientId ? clientId.toString() : null}
+                        onChange={(key) => {
                             setClientId(key ? parseInt(key) : null);
                             if (errors.clientId) {
                                 setErrors({ ...errors, clientId: undefined });
                             }
                         }}
                     >
-                        {clients.map((client) => (
-                            <AutocompleteItem
-                                key={client.id.toString()}
-                                value={client.id.toString()}
-                                textValue={client.fullName}
-                            >
-                                {client.fullName}
-                            </AutocompleteItem>
-                        ))}
+                        <Label>Klient</Label>
+                        <Autocomplete.Trigger>
+                            <Autocomplete.Value />
+                            <Autocomplete.ClearButton />
+                            <Autocomplete.Indicator />
+                        </Autocomplete.Trigger>
+                        <Autocomplete.Popover>
+                            <Autocomplete.Filter filter={contains}>
+                                <SearchField>
+                                    <SearchField.Group>
+                                        <SearchField.SearchIcon />
+                                        <SearchField.Input placeholder="Hledat..." />
+                                    </SearchField.Group>
+                                </SearchField>
+                                <ListBox>
+                                    {clients.map((client) => (
+                                        <ListBox.Item
+                                            key={client.id.toString()}
+                                            id={client.id.toString()}
+                                            textValue={client.fullName}
+                                        >
+                                            {client.fullName}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Autocomplete.Filter>
+                        </Autocomplete.Popover>
+                        <FieldError>{errors.clientId}</FieldError>
                     </Autocomplete>
                 )}
 
@@ -266,49 +287,72 @@ export const PerformedTaskForm = React.forwardRef(({
                             isRequired
                             isDisabled={isDisabled}
                             isInvalid={!!errors.taskId}
-                            errorMessage={errors.taskId}
-                            label="Úkon"
-                            labelPlacement="inside"
                             name="taskId"
-                            selectedKey={taskId ? taskId.toString() : null}
-                            onSelectionChange={(key) => {
+                            value={taskId ? taskId.toString() : null}
+                            onChange={(key) => {
                                 setTaskId(key ? parseInt(key) : null);
                                 if (errors.taskId) {
                                     setErrors({ ...errors, taskId: undefined });
                                 }
                             }}
+                            className="flex-1"
                         >
-                            {filteredTasks.map((task) => (
-                                <AutocompleteItem
-                                    key={task.id.toString()}
-                                    value={task.id.toString()}
-                                    textValue={task.name}
-                                >
-                                    {task.name}
-                                </AutocompleteItem>
-                            ))}
+                            <Label>Úkon</Label>
+                            <Autocomplete.Trigger>
+                                <Autocomplete.Value />
+                                <Autocomplete.ClearButton />
+                                <Autocomplete.Indicator />
+                            </Autocomplete.Trigger>
+                            <Autocomplete.Popover>
+                                <Autocomplete.Filter filter={contains}>
+                                    <SearchField>
+                                        <SearchField.Group>
+                                            <SearchField.SearchIcon />
+                                            <SearchField.Input placeholder="Hledat..." />
+                                        </SearchField.Group>
+                                    </SearchField>
+                                    <ListBox>
+                                        {filteredTasks.map((task) => (
+                                            <ListBox.Item
+                                                key={task.id.toString()}
+                                                id={task.id.toString()}
+                                                textValue={task.name}
+                                            >
+                                                {task.name}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Autocomplete.Filter>
+                            </Autocomplete.Popover>
+                            <FieldError>{errors.taskId}</FieldError>
                         </Autocomplete>
 
-                        <Tooltip content="Zobrazit všechny úkony" placement="bottom">
-                            <Button
-                                isIconOnly
-                                isDisabled={isDisabled}
-                                onPress={() => {
-                                    const newShowAllTasks = !showAllTasks;
-                                    setShowAllTasks(newShowAllTasks);
-                                    // If switching to client tasks only and task is not in them, reset task
-                                    if (!newShowAllTasks && taskId && selectedClient?.tasks) {
-                                        const clientTaskIds = selectedClient.tasks.map(t => t.id);
-                                        if (!clientTaskIds.includes(taskId)) {
-                                            setTaskId(null);
+                        <Tooltip delay={0}>
+                            <Tooltip.Trigger>
+                                <Button
+                                    isIconOnly
+                                    isDisabled={isDisabled}
+                                    onPress={() => {
+                                        const newShowAllTasks = !showAllTasks;
+                                        setShowAllTasks(newShowAllTasks);
+                                        // If switching to client tasks only and task is not in them, reset task
+                                        if (!newShowAllTasks && taskId && selectedClient?.tasks) {
+                                            const clientTaskIds = selectedClient.tasks.map(t => t.id);
+                                            if (!clientTaskIds.includes(taskId)) {
+                                                setTaskId(null);
+                                            }
                                         }
-                                    }
-                                }}
-                                variant="light"
-                                color={showAllTasks ? 'primary' : 'default'}
-                                children={<ListFilter size={20} />}
-                                className="m-2"
-                            />
+                                    }}
+                                    variant="ghost"
+                                    color={showAllTasks ? 'primary' : 'default'}
+                                    children={<ListFilter size={20} />}
+                                    className="m-2"
+                                />
+                            </Tooltip.Trigger>
+                            <Tooltip.Content placement="bottom">
+                                Zobrazit všechny úkony
+                            </Tooltip.Content>
                         </Tooltip>
                     </div>
                 )}
@@ -323,23 +367,24 @@ export const PerformedTaskForm = React.forwardRef(({
                             endContent={unitTypeTranslations[initialData?.task?.unitType] || ''}
                         />
                     ) : (
-                        <Input
-                            isRequired
-                            isDisabled={isDisabled}
-                            isInvalid={!!errors.unitCount}
-                            errorMessage={errors.unitCount}
-                            label={unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}
-                            labelPlacement="inside"
-                            name="unitCount"
-                            type="number"
-                            value={unitCount ?? ""}
-                            min={allowDecimals ? 0.01 : 1}
-                            step={allowDecimals ? 0.01 : 1}
-                            onChange={(e) => {
-                                const val = allowDecimals ? parseFloat(e.target.value) : parseInt(e.target.value);
-                                setUnitCount(isNaN(val) ? null : val);
-                            }}
-                        />
+                        <TextField name="unitCount" isRequired isInvalid={!!errors.unitCount}>
+                            <Label>{unitLabel ? `Počet (${unitLabel})` : "Počet jednotek"}</Label>
+                            <Input
+                                isDisabled={isDisabled}
+                                type="number"
+                                value={unitCount ?? ""}
+                                min={allowDecimals ? 0.01 : 1}
+                                step={allowDecimals ? 0.01 : 1}
+                                onChange={(e) => {
+                                    const val = allowDecimals ? parseFloat(e.target.value) : parseInt(e.target.value);
+                                    setUnitCount(isNaN(val) ? null : val);
+                                    if (errors.unitCount) {
+                                        setErrors({ ...errors, unitCount: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.unitCount}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
@@ -352,39 +397,42 @@ export const PerformedTaskForm = React.forwardRef(({
                             isRequired
                             isDisabled={isDisabled}
                             isInvalid={!!errors.caregiverIds}
-                            errorMessage={errors.caregiverIds}
-                            label="Pečovatelé"
-                            labelPlacement="inside"
                             name="caregiverIds"
                             selectionMode="multiple"
-                            selectedKeys={caregiverIds.map(id => id.toString())}
-                            onSelectionChange={(keys) => {
-                                const selectedIds = Array.from(keys).map(key => parseInt(key));
+                            value={caregiverIds.map(id => id.toString())}
+                            onChange={(keys) => {
+                                const selectedIds = keys.map(key => parseInt(key));
                                 setCaregiverIds(selectedIds);
                                 if (errors.caregiverIds) {
                                     setErrors({ ...errors, caregiverIds: undefined });
                                 }
                             }}
-                            classNames={{
-                                trigger: "min-h-12",
-                            }}
-                            renderValue={(items) => {
-                                const count = items.length;
-                                return count > 1 ? `Celkem: ${count}` : items[0]?.textValue;
-                            }}
                         >
-                            {caregivers.map((caregiver) => {
-                                const caregiverName = caregiver.fullName;
-                                return (
-                                    <SelectItem
-                                        key={caregiver.id.toString()}
-                                        value={caregiver.id.toString()}
-                                        textValue={caregiverName}
-                                    >
-                                        {caregiverName}
-                                    </SelectItem>
-                                );
-                            })}
+                            <Label>Pečovatelé</Label>
+                            <Select.Trigger className="min-h-12">
+                                <Select.Value>
+                                    {() => {
+                                        if (caregiverIds.length > 1) return `Celkem: ${caregiverIds.length}`;
+                                        return caregivers.find(c => c.id === caregiverIds[0])?.fullName ?? "";
+                                    }}
+                                </Select.Value>
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {caregivers.map((caregiver) => (
+                                        <ListBox.Item
+                                            key={caregiver.id.toString()}
+                                            id={caregiver.id.toString()}
+                                            textValue={caregiver.fullName}
+                                        >
+                                            {caregiver.fullName}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.caregiverIds}</FieldError>
                         </Select>
                     )}
                 </div>
@@ -404,13 +452,12 @@ export const PerformedTaskForm = React.forwardRef(({
                             }) : '-'}
                         />
                     ) : (
-                        <DatePicker
+                        <AppDatePicker
                             hideTimeZone
                             isDisabled={isDisabled}
                             isInvalid={!!errors.date}
                             errorMessage={errors.date}
                             label="Datum"
-                            labelPlacement="inside"
                             name="date"
                             value={date ? parseDateTime(date) : null}
                             onChange={(date) => {
@@ -419,8 +466,6 @@ export const PerformedTaskForm = React.forwardRef(({
                                     setErrors({ ...errors, date: undefined });
                                 }
                             }}
-                            showMonthAndYearPickers
-                            selectorIcon={<CalendarDays size={18} />}
                             minValue={new CalendarDateTime(MIN_YEAR, 1, 1, 0, 0)}
                             maxValue={(() => {
                                 const zonedNow = now(getLocalTimeZone());
@@ -434,9 +479,6 @@ export const PerformedTaskForm = React.forwardRef(({
                                 );
                             })()}
                             isRequired
-                            classNames={{
-                                segment: "text-default-500"
-                            }}
                             className="col-span-3"
                         />
                     )}
@@ -456,15 +498,17 @@ export const PerformedTaskForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Poznámky" value={notes} />
                 ) : (
-                    <Textarea
-                        isDisabled={isDisabled}
-                        label="Poznámky"
-                        labelPlacement="inside"
-                        name="notes"
-                        value={notes}
-                        onValueChange={setNotes}
-                        minRows={2}
-                    />
+                    <div className="flex flex-col gap-1 w-full">
+                        <label className="text-sm font-medium text-foreground/70">Poznámky</label>
+                        <textarea
+                            disabled={isDisabled}
+                            name="notes"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
                 )}
             </div>
         </Form>

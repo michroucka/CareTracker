@@ -2,14 +2,8 @@ import React from "react";
 import {
     Button,
     Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownTrigger,
+    Label,
     Modal,
-    ModalBody,
-    ModalContent,
-    ModalFooter,
-    ModalHeader
 } from "@heroui/react";
 import {ChevronDown, Funnel} from "lucide-react";
 import MonthYearPicker from "../MonthYearPicker.jsx";
@@ -107,134 +101,137 @@ export function FiltersModal({
     const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrgSelected;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="sm" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Filtry</ModalHeader>
-                <ModalBody>
-                    <div className="flex flex-col gap-4 w-full">
-                        {showMonthYearFilter && (
-                            <MonthYearPicker
-                                className="w-full"
-                                defaultValue={monthYearFilter}
-                                onChange={setMonthYearFilter}
-                                isDisabled={isSuperadminWithoutOrg}
-                            />
-                        )}
-
-                        {showStatusFilter && activeOptions && activeOptions.length > 0 && (
-                            <Dropdown>
-                                <DropdownTrigger>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="sm">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex flex-col gap-1">
+                            <Modal.Heading>Filtry</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <div className="flex flex-col gap-4 w-full">
+                            {showMonthYearFilter && (
+                                <MonthYearPicker
+                                    className="w-full"
+                                    defaultValue={monthYearFilter}
+                                    onChange={setMonthYearFilter}
+                                    isDisabled={isSuperadminWithoutOrg}
+                                />
+                            )}
+    
+                            {showStatusFilter && activeOptions && activeOptions.length > 0 && (
+                                <Dropdown>
                                     <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
+                                        variant="tertiary"
                                         className="text-foreground w-full justify-between"
                                         isDisabled={isSuperadminWithoutOrg}
-                                    >
-                                        Status
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Active Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={activeFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={setActiveFilter}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {activeOptions.map((active) => (
-                                        <DropdownItem key={active.key}>
-                                            {active.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {!['CAREGIVER', 'COORDINATOR'].includes(user?.role) && departmentOptions && departmentOptions.length > 0 && (
-                            <Dropdown>
-                                <DropdownTrigger>
+                                    >Status <ChevronDown className="size-4" /></Button>
+                                    <Dropdown.Popover>
+                                        <Dropdown.Menu
+                                            disallowEmptySelection
+                                            aria-label="Active Filter"
+                                            closeOnSelect={false}
+                                            selectedKeys={activeFilter}
+                                            selectionMode="multiple"
+                                            onSelectionChange={setActiveFilter}
+                                            className="max-h-60 overflow-y-auto"
+                                        >
+                                            {activeOptions.map((active) => (
+                                                <Dropdown.Item key={active.key} id={active.key} textValue={active.name}>
+                                                    <Dropdown.ItemIndicator />
+                                                    <Label>{active.name}</Label>
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown.Popover>
+                                </Dropdown>
+                            )}
+    
+                            {!['CAREGIVER', 'COORDINATOR'].includes(user?.role) && departmentOptions && departmentOptions.length > 0 && (
+                                <Dropdown>
                                     <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
+                                        variant="tertiary"
                                         className="text-foreground w-full justify-between"
                                         isDisabled={isSuperadminWithoutOrg}
-                                    >
-                                        Středisko
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Department Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={departmentFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleDepartmentFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všechny</DropdownItem>
-                                    {departmentOptions.map((dept) => (
-                                        <DropdownItem key={dept.key}>
-                                            {dept.city}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        {caregiverOptions && caregiverOptions.length > 0 && (
-                            <Dropdown>
-                                <DropdownTrigger>
+                                    >Středisko <ChevronDown className="size-4" /></Button>
+                                    <Dropdown.Popover>
+                                        <Dropdown.Menu
+                                            disallowEmptySelection
+                                            aria-label="Department Filter"
+                                            closeOnSelect={false}
+                                            selectedKeys={departmentFilter}
+                                            selectionMode="multiple"
+                                            onSelectionChange={handleDepartmentFilterChange}
+                                            className="max-h-60 overflow-y-auto"
+                                        >
+                                            <Dropdown.Item id="all" textValue="Všechny">
+                                                <Dropdown.ItemIndicator />
+                                                <Label>Všechny</Label>
+                                            </Dropdown.Item>
+                                            {departmentOptions.map((dept) => (
+                                                <Dropdown.Item key={dept.key} id={dept.key} textValue={dept.city}>
+                                                    <Dropdown.ItemIndicator />
+                                                    <Label>{dept.city}</Label>
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown.Popover>
+                                </Dropdown>
+                            )}
+    
+                            {caregiverOptions && caregiverOptions.length > 0 && (
+                                <Dropdown>
                                     <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
+                                        variant="tertiary"
                                         className="text-foreground w-full justify-between"
                                         isDisabled={isSuperadminWithoutOrg}
-                                    >
-                                        Pečovatel
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Caregiver Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={caregiverFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleCaregiverFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všichni</DropdownItem>
-                                    {caregiverOptions.map((caregiver) => (
-                                        <DropdownItem key={caregiver.key}>
-                                            {caregiver.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-                    </div>
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button
-                        className="text-base"
-                        variant="flat"
-                        isDisabled={isSubmitting}
-                        onPress={onClose}
-                    >
-                        Zrušit
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="primary"
-                        isLoading={isSubmitting}
-                        isDisabled={isSubmitting}
-                        endContent={<Funnel className="size-4" />}
-                        onPress={handleSubmit}
-                    >
-                        {isSubmitting ? "Aplikování..." : "Použít filtry"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+                                    >Pečovatel <ChevronDown className="size-4" /></Button>
+                                    <Dropdown.Popover>
+                                        <Dropdown.Menu
+                                            disallowEmptySelection
+                                            aria-label="Caregiver Filter"
+                                            closeOnSelect={false}
+                                            selectedKeys={caregiverFilter}
+                                            selectionMode="multiple"
+                                            onSelectionChange={handleCaregiverFilterChange}
+                                            className="max-h-60 overflow-y-auto"
+                                        >
+                                            <Dropdown.Item id="all" textValue="Všichni">
+                                                <Dropdown.ItemIndicator />
+                                                <Label>Všichni</Label>
+                                            </Dropdown.Item>
+                                            {caregiverOptions.map((caregiver) => (
+                                                <Dropdown.Item key={caregiver.key} id={caregiver.key} textValue={caregiver.name}>
+                                                    <Dropdown.ItemIndicator />
+                                                    <Label>{caregiver.name}</Label>
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown.Popover>
+                                </Dropdown>
+                            )}
+                            </div>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button
+                                className="text-base"
+                                variant="tertiary"
+                                isDisabled={isSubmitting}
+                                onPress={onClose}
+                            >
+                                Zrušit
+                            </Button>
+                            <Button variant="primary"
+                                className="text-base"
+                                isPending={isSubmitting}
+                                isDisabled={isSubmitting}
+                                onPress={handleSubmit}
+                            >{isSubmitting ? "Aplikování..." : "Použít filtry"} <Funnel className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

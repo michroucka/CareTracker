@@ -1,11 +1,7 @@
 import React from "react";
 import {
     Modal,
-    ModalBody,
-    ModalContent,
-    ModalHeader,
     Button,
-    ModalFooter
 } from "@heroui/react";
 import {Ban} from "lucide-react";
 
@@ -30,34 +26,31 @@ export function DepartmentTerminateModal({ isOpen, onClose, onSubmit, department
     }
 
     return (
-        <Modal isOpen={isOpen}
-               onClose={onClose}
-               size="md"
-               scrollBehavior="outside"
-        >
-            <ModalContent>
-                <ModalHeader className="flex justify-between items-center pb-0">
-                    Deaktivovat středisko
-                </ModalHeader>
-                <ModalBody className="text-foreground/50 text-sm gap-1">
-                    <p>Opravdu chcete deaktivovat středisko {departmentName}?</p>
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button variant="bordered" onPress={onClose}>
-                        Zavřít
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="danger"
-                        isLoading={isSubmitting}
-                        isDisabled={isSubmitting}
-                        endContent={<Ban className="size-4" />}
-                        onPress={handleSubmit}
-                    >
-                        {isSubmitting ? "Ukládání..." : "Deaktivovat"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="md">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex justify-between items-center pb-0">
+                            <Modal.Heading>Deaktivovat středisko</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body className="text-foreground/50 text-sm gap-1">
+                            <p>Opravdu chcete deaktivovat středisko {departmentName}?</p>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button variant="outline" onPress={onClose}>
+                                Zavřít
+                            </Button>
+                            <Button variant="danger"
+                                className="text-base"
+                                isPending={isSubmitting}
+                                isDisabled={isSubmitting}
+                                onPress={handleSubmit}
+                            >{isSubmitting ? "Ukládání..." : "Deaktivovat"} <Ban className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     )
 }

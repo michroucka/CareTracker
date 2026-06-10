@@ -4,17 +4,11 @@ import { useAuth } from "../contexts/AuthContext.tsx";
 import {
     Button,
     Card,
-    CardHeader,
-    CardBody,
-    CardFooter,
-    Divider,
+    Separator,
     Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
+    Label,
     Form,
     Spinner,
-    Textarea,
     Alert
 } from "@heroui/react";
 import { ReadOnlyField } from "../components/ReadOnlyField.jsx";
@@ -299,12 +293,9 @@ function IndividualPlan() {
             {/* Header */}
             <div className="flex items-center align-middle justify-between pb-3">
                 <Button
-                    variant="flat"
-                    startContent={<ChevronLeft size={18} />}
+                    variant="tertiary"
                     onPress={() => navigate(-1)}
-                >
-                    Zpět
-                </Button>
+                ><ChevronLeft size={18} /> Zpět</Button>
 
                 {!isMobile && (
                     <h1 className="text-center">Individuální plán</h1>
@@ -312,38 +303,38 @@ function IndividualPlan() {
 
                 {versions.length > 0 && !isEditMode ? (
                     <Dropdown>
-                        <DropdownTrigger>
-                            <Button
-                                endContent={<ChevronDown className="size-4" />}
-                                variant="flat"
+                        <Button
+                            variant="tertiary"
+                        >{selectedVersionNumber
+                                ? `Verze ${selectedVersionNumber}${
+                                    selectedVersionNumber === individualPlan?.currentContent?.versionNumber
+                                        ? ' (Aktuální)'
+                                        : ''
+                                  }`
+                                : 'Vyberte verzi'
+                            } <ChevronDown className="size-4" /></Button>
+                        <Dropdown.Popover>
+                            <Dropdown.Menu
+                                disallowEmptySelection
+                                aria-label="Výběr verze individuálního plánu"
+                                selectedKeys={selectedVersionNumber ? [selectedVersionNumber.toString()] : []}
+                                selectionMode="single"
+                                onSelectionChange={(keys) => {
+                                    const versionNum = Array.from(keys)[0];
+                                    handleVersionChange(versionNum);
+                                }}
                             >
-                                {selectedVersionNumber
-                                    ? `Verze ${selectedVersionNumber}${
-                                        selectedVersionNumber === individualPlan?.currentContent?.versionNumber
-                                            ? ' (Aktuální)'
-                                            : ''
-                                      }`
-                                    : 'Vyberte verzi'
-                                }
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu
-                            disallowEmptySelection
-                            aria-label="Výběr verze individuálního plánu"
-                            selectedKeys={selectedVersionNumber ? [selectedVersionNumber.toString()] : []}
-                            selectionMode="single"
-                            onSelectionChange={(keys) => {
-                                const versionNum = Array.from(keys)[0];
-                                handleVersionChange(versionNum);
-                            }}
-                        >
-                            {versions.map((v) => (
-                                <DropdownItem key={v.versionNumber.toString()}>
-                                    Verze {v.versionNumber} - {new Date(v.processedDate).toLocaleDateString('cs-CZ')}
-                                    {v.versionNumber === individualPlan?.currentContent?.versionNumber && " (Aktuální)"}
-                                </DropdownItem>
-                            ))}
-                        </DropdownMenu>
+                                {versions.map((v) => (
+                                    <Dropdown.Item key={v.versionNumber.toString()} id={v.versionNumber.toString()} textValue={`Verze ${v.versionNumber}`}>
+                                        <Dropdown.ItemIndicator />
+                                        <Label>
+                                            Verze {v.versionNumber} - {new Date(v.processedDate).toLocaleDateString('cs-CZ')}
+                                            {v.versionNumber === individualPlan?.currentContent?.versionNumber && " (Aktuální)"}
+                                        </Label>
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown.Popover>
                     </Dropdown>
                 ) : (
                     <div />
@@ -356,8 +347,9 @@ function IndividualPlan() {
 
             {/* Loading */}
             {loading && !currentContent && (
-                <div className="flex justify-center items-center py-12">
-                    <Spinner size="lg" label="Načítání individuálního plánu..." />
+                <div className="flex flex-col justify-center items-center py-12 gap-2">
+                    <Spinner size="lg" />
+                    <p className="text-sm text-foreground/60">Načítání individuálního plánu...</p>
                 </div>
             )}
 
@@ -424,13 +416,14 @@ function IndividualPlan() {
                             <h4>Co mám rád/a, co mě baví, co je pro mě důležité</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="likes"
                                 value={likes}
-                                onValueChange={setLikes}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setLikes(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={likes} multiline={true} />
                         )}
@@ -440,13 +433,14 @@ function IndividualPlan() {
                             <h4>Co nemám rád/a, co mi vadí</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="dislikes"
                                 value={dislikes}
-                                onValueChange={setDislikes}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setDislikes(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={dislikes} multiline={true} />
                         )}
@@ -456,13 +450,14 @@ function IndividualPlan() {
                             <h4>Co na mě mají lidé rádi, mé silné stránky</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="strengths"
                                 value={strengths}
-                                onValueChange={setStrengths}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setStrengths(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={strengths} multiline={true} />
                         )}
@@ -472,13 +467,14 @@ function IndividualPlan() {
                             <h4>Moje touhy, přání, sny</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="aspirations"
                                 value={aspirations}
-                                onValueChange={setAspirations}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setAspirations(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={aspirations} multiline={true} />
                         )}
@@ -488,13 +484,14 @@ function IndividualPlan() {
                             <h4>Životní cesta</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="lifePath"
                                 value={lifePath}
-                                onValueChange={setLifePath}
-                                minRows={4}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setLifePath(e.target.value)}
+                                rows={4}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={lifePath} multiline={true} />
                         )}
@@ -504,13 +501,14 @@ function IndividualPlan() {
                             <h4>Další důležité informace</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="additionalInfo"
                                 value={additionalInfo}
-                                onValueChange={setAdditionalInfo}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setAdditionalInfo(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={additionalInfo} multiline={true} />
                         )}
@@ -523,13 +521,14 @@ function IndividualPlan() {
                             <h4>Osobní hygiena</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="hygiene"
                                 value={hygiene}
-                                onValueChange={setHygiene}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setHygiene(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={hygiene} multiline={true} />
                         )}
@@ -539,13 +538,14 @@ function IndividualPlan() {
                             <h4>Péče o vlastní osobu</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="selfCare"
                                 value={selfCare}
-                                onValueChange={setSelfCare}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setSelfCare(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={selfCare} multiline={true} />
                         )}
@@ -555,13 +555,14 @@ function IndividualPlan() {
                             <h4>Samostatný pohyb</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="mobility"
                                 value={mobility}
-                                onValueChange={setMobility}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setMobility(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={mobility} multiline={true} />
                         )}
@@ -571,13 +572,14 @@ function IndividualPlan() {
                             <h4>Stravování</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="diet"
                                 value={diet}
-                                onValueChange={setDiet}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setDiet(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={diet} multiline={true} />
                         )}
@@ -587,13 +589,14 @@ function IndividualPlan() {
                             <h4>Péče o domácnost nebo pokoj</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="homeCare"
                                 value={homeCare}
-                                onValueChange={setHomeCare}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setHomeCare(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={homeCare} multiline={true} />
                         )}
@@ -603,13 +606,14 @@ function IndividualPlan() {
                             <h4>Kontakt s lidmi</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="socialContact"
                                 value={socialContact}
-                                onValueChange={setSocialContact}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setSocialContact(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={socialContact} multiline={true} />
                         )}
@@ -619,13 +623,14 @@ function IndividualPlan() {
                             <h4>Aktivity a činnosti</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="activities"
                                 value={activities}
-                                onValueChange={setActivities}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setActivities(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={activities} multiline={true} />
                         )}
@@ -635,13 +640,14 @@ function IndividualPlan() {
                             <h4>Zdraví a bezpečí</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="health"
                                 value={health}
-                                onValueChange={setHealth}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setHealth(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={health} multiline={true} />
                         )}
@@ -651,13 +657,14 @@ function IndividualPlan() {
                             <h4>Uplatňování práv</h4>
                         </div>
                         {isEditMode ? (
-                            <Textarea
+                            <textarea
                                 name="exercisingRights"
                                 value={exercisingRights}
-                                onValueChange={setExercisingRights}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
+                                onChange={(e) => setExercisingRights(e.target.value)}
+                                rows={3}
+                                disabled={isSubmitting}
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={exercisingRights} multiline={true} />
                         )}
@@ -675,80 +682,64 @@ function IndividualPlan() {
 
                     {isViewingOldVersion && (
                         <div className="flex flex-col gap-4 w-full">
-                            <Alert
-                                color="warning"
-                                variant="faded"
-                                title="Prohlížíte si starší verzi individuálního plánu."
-                                endContent={
+                            <Alert status="warning">
+                                <Alert.Content>
+                                    <Alert.Title>Prohlížíte si starší verzi individuálního plánu.</Alert.Title>
                                     <Button
-                                        color="warning"
                                         size="sm"
-                                        variant="light"
-                                        className="whitespace-normal text-wrap"
+                                        variant="ghost"
+                                        className="whitespace-normal text-wrap mt-2"
                                         onPress={() => handleVersionChange(individualPlan.currentContent.versionNumber)}
                                     >
                                         Zobrazit aktuální verzi
                                     </Button>
-                                }
-                                hideIconWrapper
-                            />
+                                </Alert.Content>
+                            </Alert>
                         </div>
                     )}
 
                     {isEditMode ? (
                         <div className="flex w-full items-center pt-4 justify-between">
                             <Button
-                                variant="bordered"
-                                startContent={<X size={16} />}
+                                variant="outline"
                                 onPress={handleCancelEdit}
                                 isDisabled={isSubmitting}
-                            >
-                                Zrušit
-                            </Button>
+                            ><X size={16} /> Zrušit</Button>
                             <Button
-                                color="primary"
-                                startContent={<Save size={16} />}
+                                variant="primary"
                                 onPress={handleSubmit}
-                                isLoading={isSubmitting}
+                                isPending={isSubmitting}
                                 isDisabled={isSubmitting}
-                            >
-                                {isSubmitting
+                            ><Save size={16} /> {isSubmitting
                                     ? "Ukládání..."
                                     : individualPlan
                                         ? "Uložit novou verzi"
                                         : "Vytvořit plán"
-                                }
-                            </Button>
+                                }</Button>
                         </div>
                     ) : (
                         canEdit && !isViewingOldVersion && (
                             <div className="flex w-full items-center pt-4 justify-center">
                                 <Button
-                                    color="primary"
-                                    startContent={individualPlan ? <Plus size={16} /> : <Pencil size={16} />}
+                                    variant="primary"
                                     onPress={handleEnterEditMode}
-                                >
-                                    {individualPlan ? "Vytvořit novou verzi" : "Vytvořit plán"}
-                                </Button>
+                                >{individualPlan ? <Plus size={16} /> : <Pencil size={16} />} {individualPlan ? "Vytvořit novou verzi" : "Vytvořit plán"}</Button>
                             </div>
                         )
                     )}
                 </Form>
             ) : null}
 
-            <Divider className="mt-6" />
+            <Separator className="mt-6" />
 
             {individualPlan && !loading && (
                 <div className="mt-6 space-y-4">
                     <div className="flex justify-between items-center">
                         <h2>Denní záznamy</h2>
                         <Button
-                            color="primary"
-                            startContent={<Plus size={16} />}
+                            variant="primary"
                             onPress={() => setIsDailyRecordModalOpen(true)}
-                        >
-                            Přidat záznam
-                        </Button>
+                        ><Plus size={16} /> Přidat záznam</Button>
                     </div>
 
                     {individualPlan.dailyRecords && individualPlan.dailyRecords.length > 0 ? (
@@ -757,7 +748,7 @@ function IndividualPlan() {
                                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                                 .map((record) => (
                                     <Card key={record.id} className="w-full h-full">
-                                        <CardHeader className="flex justify-between">
+                                        <Card.Header className="flex justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Calendar size={16} className="text-default-400" />
                                                 <span className="text-small font-semibold">
@@ -770,25 +761,21 @@ function IndividualPlan() {
                                                     {record.createdBy.firstName} {record.createdBy.lastName}
                                                 </span>
                                             </div>
-                                        </CardHeader>
-                                        <Divider />
-                                        <CardBody>
+                                        </Card.Header>
+                                        <Separator />
+                                        <Card.Content>
                                             <p className="whitespace-pre-wrap">{record.content}</p>
-                                        </CardBody>
+                                        </Card.Content>
                                         {canDeleteDailyRecord(record) && (
                                             <>
-                                                <Divider />
-                                                <CardFooter className="justify-end p-1.5">
+                                                <Separator />
+                                                <Card.Footer className="justify-end p-1.5">
                                                     <Button
                                                         size="sm"
-                                                        color="danger"
-                                                        variant="light"
-                                                        startContent={<Trash2 size={14} />}
+                                                        variant="danger-soft"
                                                         onPress={() => handleOpenDeleteModal(record.id)}
-                                                    >
-                                                        Smazat
-                                                    </Button>
-                                                </CardFooter>
+                                                    ><Trash2 size={14} /> Smazat</Button>
+                                                </Card.Footer>
                                             </>
                                         )}
                                     </Card>

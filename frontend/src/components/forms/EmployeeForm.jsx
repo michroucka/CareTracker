@@ -1,14 +1,12 @@
 import {
+    TextField,
     Input,
+    Label,
+    FieldError,
     Checkbox,
     Select,
-    SelectItem,
-    Textarea,
-    DatePicker,
+    ListBox,
     Form,
-    NumberInput,
-    Autocomplete,
-    AutocompleteItem, Tooltip,
 } from "@heroui/react";
 import React from "react";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
@@ -161,43 +159,39 @@ export const EmployeeForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Jméno" value={firstName} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.firstName}
-                            errorMessage={errors.firstName}
-                            label="Jméno"
-                            labelPlacement="inside"
-                            name="firstName"
-                            value={firstName}
-                            onValueChange={(value) => {
-                                setFirstName(value);
-                                if (errors.firstName) {
-                                    setErrors({ ...errors, firstName: undefined });
-                                }
-                            }}
-                            isRequired
-                        />
+                        <TextField name="firstName" isRequired isInvalid={!!errors.firstName}>
+                            <Label>Jméno</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={firstName}
+                                onChange={(e) => {
+                                    setFirstName(e.target.value);
+                                    if (errors.firstName) {
+                                        setErrors({ ...errors, firstName: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.firstName}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
                         <ReadOnlyField label="Příjmení" value={lastName} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.lastName}
-                            errorMessage={errors.lastName}
-                            label="Příjmení"
-                            labelPlacement="inside"
-                            name="lastName"
-                            value={lastName}
-                            onValueChange={(value) => {
-                                setLastName(value);
-                                if (errors.lastName) {
-                                    setErrors({ ...errors, lastName: undefined });
-                                }
-                            }}
-                            isRequired
-                        />
+                        <TextField name="lastName" isRequired isInvalid={!!errors.lastName}>
+                            <Label>Příjmení</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={lastName}
+                                onChange={(e) => {
+                                    setLastName(e.target.value);
+                                    if (errors.lastName) {
+                                        setErrors({ ...errors, lastName: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.lastName}</FieldError>
+                        </TextField>
                     )}
                 </div>
 
@@ -211,27 +205,42 @@ export const EmployeeForm = React.forwardRef(({
                         <Select
                             isDisabled={isLoading}
                             isInvalid={!!errors.role}
-                            errorMessage={errors.role}
-                            label="Role"
-                            labelPlacement="inside"
                             name="role"
-                            selectedKeys={role ? [role] : []}
-                            onSelectionChange={(keys) => {
-                                setRole(Array.from(keys)[0]);
+                            value={role}
+                            onChange={(value) => {
+                                setRole(value);
                                 if (errors.role) {
                                     setErrors({ ...errors, role: undefined });
                                 }
                             }}
                             isRequired
-                            disallowEmptySelection
                         >
-                            <SelectItem key="CAREGIVER" value="CAREGIVER">Pečovatel</SelectItem>
-                            {userIsAdmin && (
-                                <>
-                                    <SelectItem key="COORDINATOR" value="COORDINATOR">Koordinátor</SelectItem>
-                                    <SelectItem key="MANAGER" value="MANAGER">Vedoucí</SelectItem>
-                                </>
-                            )}
+                            <Label>Role</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    <ListBox.Item id="CAREGIVER" textValue="Pečovatel">
+                                        Pečovatel
+                                        <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                    {userIsAdmin && (
+                                        <>
+                                            <ListBox.Item id="COORDINATOR" textValue="Koordinátor">
+                                                Koordinátor
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                            <ListBox.Item id="MANAGER" textValue="Vedoucí">
+                                                Vedoucí
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        </>
+                                    )}
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.role}</FieldError>
                         </Select>
                     )}
 
@@ -245,28 +254,35 @@ export const EmployeeForm = React.forwardRef(({
                             isRequired
                             isDisabled={isLoading}
                             isInvalid={!!errors.departmentId}
-                            errorMessage={errors.departmentId}
-                            label="Středisko"
-                            labelPlacement="inside"
                             name="departmentId"
-                            selectedKeys={departmentId ? [departmentId.toString()] : []}
-                            onSelectionChange={(keys) => {
-                                const selectedId = Array.from(keys)[0];
-                                setDepartmentId(selectedId ? parseInt(selectedId) : null);
+                            value={departmentId ? departmentId.toString() : null}
+                            onChange={(value) => {
+                                setDepartmentId(value ? parseInt(value) : null);
                                 if (errors.departmentId) {
                                     setErrors({ ...errors, departmentId: undefined });
                                 }
                             }}
                         >
-                            {departments.map((dept) => (
-                                <SelectItem
-                                    key={dept.id.toString()}
-                                    value={dept.id.toString()}
-                                    textValue={dept.city}
-                                >
-                                    {dept.city}
-                                </SelectItem>
-                            ))}
+                            <Label>Středisko</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {departments.map((dept) => (
+                                        <ListBox.Item
+                                            key={dept.id.toString()}
+                                            id={dept.id.toString()}
+                                            textValue={dept.city}
+                                        >
+                                            {dept.city}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.departmentId}</FieldError>
                         </Select>
                     )}
                 </div>
@@ -278,24 +294,21 @@ export const EmployeeForm = React.forwardRef(({
                             value={email}
                         />
                     ) : (
-                        <Input
-                            isRequired={!doNotCreateAccount}
-                            isDisabled={isLoading || doNotCreateAccount}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email}
-                            label="Email"
-                            labelPlacement="inside"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onValueChange={(value) => {
-                                setEmail(value);
-                                if (errors.email) {
-                                    setErrors({ ...errors, email: undefined });
-                                }
-                            }}
-                            className="flex-1"
-                        />
+                        <TextField name="email" isRequired={!doNotCreateAccount} isInvalid={!!errors.email} className="flex-1">
+                            <Label>Email</Label>
+                            <Input
+                                isDisabled={isLoading || doNotCreateAccount}
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (errors.email) {
+                                        setErrors({ ...errors, email: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.email}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
@@ -306,12 +319,17 @@ export const EmployeeForm = React.forwardRef(({
                     ) : (
                         <div className="flex items-center h-14">
                             <Checkbox
+                                id="isAdmin"
                                 isDisabled={isLoading || doNotCreateAccount || !userIsAdmin}
                                 isSelected={isAdmin}
-                                onValueChange={setIsAdmin}
-                                name="isAdmin"
+                                onChange={setIsAdmin}
                             >
-                                Administrátor
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                <Checkbox.Content>
+                                    <Label htmlFor="isAdmin">Administrátor</Label>
+                                </Checkbox.Content>
                             </Checkbox>
                         </div>
                     )}
@@ -319,12 +337,17 @@ export const EmployeeForm = React.forwardRef(({
 
                 {!isReadOnly && !initialData?.email ? (
                     <Checkbox
+                        id="doNotCreateAccount"
                         isDisabled={isLoading}
                         isSelected={doNotCreateAccount}
-                        onValueChange={setDoNotCreateAccount}
-                        name="doNotCreateAccount"
+                        onChange={setDoNotCreateAccount}
                     >
-                        Nevytvářet uživatelský účet
+                        <Checkbox.Control>
+                            <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Content>
+                            <Label htmlFor="doNotCreateAccount">Nevytvářet uživatelský účet</Label>
+                        </Checkbox.Content>
                     </Checkbox>
                 ) : null}
             </div>

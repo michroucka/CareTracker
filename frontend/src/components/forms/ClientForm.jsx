@@ -1,22 +1,24 @@
 import {
+    TextField,
     Input,
+    Label,
+    FieldError,
     Checkbox,
     Select,
-    SelectItem,
-    Textarea,
-    DatePicker,
+    ListBox,
     Form,
-    NumberInput,
+    NumberField,
     Autocomplete,
-    AutocompleteItem,
+    SearchField,
+    useFilter,
 } from "@heroui/react";
-import { CalendarDays } from "lucide-react";
 import React, {useState} from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../utils/formatters.js";
 import { benefitsOptions, terminationReasonOptions } from "../../constants/clientConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
 import { ImageUpload } from "../ImageUpload.jsx";
+import { AppDatePicker } from "../AppDatePicker.jsx";
 import {MIN_YEAR} from "../../constants/globalConstants.js";
 
 /**
@@ -68,6 +70,7 @@ export const ClientForm = React.forwardRef(({
     const [terminationReason, setTerminationReason] = React.useState("");
 
     const [errors, setErrors] = React.useState({});
+    const {contains} = useFilter({sensitivity: "base"});
 
     // Initialize form with initial data
     React.useEffect(() => {
@@ -265,43 +268,39 @@ export const ClientForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Jméno" value={firstName} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.firstName}
-                            errorMessage={errors.firstName}
-                            label="Jméno"
-                            labelPlacement="inside"
-                            name="firstName"
-                            value={firstName}
-                            onValueChange={(value) => {
-                                setFirstName(value);
-                                if (errors.firstName) {
-                                    setErrors({ ...errors, firstName: undefined });
-                                }
-                            }}
-                            isRequired
-                        />
+                        <TextField name="firstName" isRequired isInvalid={!!errors.firstName}>
+                            <Label>Jméno</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={firstName}
+                                onChange={(e) => {
+                                    setFirstName(e.target.value);
+                                    if (errors.firstName) {
+                                        setErrors({ ...errors, firstName: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.firstName}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
                         <ReadOnlyField label="Příjmení" value={lastName} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.lastName}
-                            errorMessage={errors.lastName}
-                            label="Příjmení"
-                            labelPlacement="inside"
-                            name="lastName"
-                            value={lastName}
-                            onValueChange={(value) => {
-                                setLastName(value);
-                                if (errors.lastName) {
-                                    setErrors({ ...errors, lastName: undefined });
-                                }
-                            }}
-                            isRequired
-                        />
+                        <TextField name="lastName" isRequired isInvalid={!!errors.lastName}>
+                            <Label>Příjmení</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={lastName}
+                                onChange={(e) => {
+                                    setLastName(e.target.value);
+                                    if (errors.lastName) {
+                                        setErrors({ ...errors, lastName: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.lastName}</FieldError>
+                        </TextField>
                     )}
                 </div>
 
@@ -315,21 +314,34 @@ export const ClientForm = React.forwardRef(({
                         <Select
                             isDisabled={isLoading}
                             isInvalid={!!errors.gender}
-                            errorMessage={errors.gender}
-                            label="Pohlaví"
-                            labelPlacement="inside"
                             name="gender"
-                            selectedKeys={gender ? [gender] : []}
-                            onSelectionChange={(keys) => {
-                                setGender(Array.from(keys)[0]);
+                            value={gender || null}
+                            onChange={(value) => {
+                                setGender(value);
                                 if (errors.gender) {
                                     setErrors({ ...errors, gender: undefined });
                                 }
                             }}
                             isRequired
                         >
-                            <SelectItem key="MALE" value="MALE">Muž</SelectItem>
-                            <SelectItem key="FEMALE" value="FEMALE">Žena</SelectItem>
+                            <Label>Pohlaví</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    <ListBox.Item id="MALE" textValue="Muž">
+                                        Muž
+                                        <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                    <ListBox.Item id="FEMALE" textValue="Žena">
+                                        Žena
+                                        <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.gender}</FieldError>
                         </Select>
                     )}
 
@@ -339,12 +351,11 @@ export const ClientForm = React.forwardRef(({
                             value={dateOfBirth ? new Date(dateOfBirth).toLocaleDateString('cs-CZ') : '-'}
                         />
                     ) : (
-                        <DatePicker
+                        <AppDatePicker
                             isDisabled={isLoading}
                             isInvalid={!!errors.dateOfBirth}
                             errorMessage={errors.dateOfBirth}
                             label="Datum narození"
-                            labelPlacement="inside"
                             name="dateOfBirth"
                             value={dateOfBirth ? parseDate(dateOfBirth) : null}
                             onChange={(date) => {
@@ -353,15 +364,10 @@ export const ClientForm = React.forwardRef(({
                                     setErrors({ ...errors, dateOfBirth: undefined });
                                 }
                             }}
-                            showMonthAndYearPickers
-                            selectorIcon={<CalendarDays size={18}/>}
                             placeholderValue={new CalendarDate(1960, 1, 1)}
                             minValue={new CalendarDate(MIN_YEAR, 1, 1)}
                             maxValue={today(getLocalTimeZone())}
                             isRequired
-                            classNames={{
-                                segment: "text-default-500"
-                            }}
                         />
                     )}
                 </div>
@@ -377,28 +383,35 @@ export const ClientForm = React.forwardRef(({
                             isRequired
                             isDisabled={isLoading}
                             isInvalid={!!errors.departmentId}
-                            errorMessage={errors.departmentId}
-                            label="Středisko"
-                            labelPlacement="inside"
                             name="departmentId"
-                            selectedKeys={departmentId ? [departmentId.toString()] : []}
-                            onSelectionChange={(keys) => {
-                                const selectedId = Array.from(keys)[0];
-                                setDepartmentId(selectedId ? parseInt(selectedId) : null);
+                            value={departmentId ? departmentId.toString() : null}
+                            onChange={(value) => {
+                                setDepartmentId(value ? parseInt(value) : null);
                                 if (errors.departmentId) {
                                     setErrors({ ...errors, departmentId: undefined });
                                 }
                             }}
                         >
-                            {departments.map((dept) => (
-                                <SelectItem
-                                    key={dept.id.toString()}
-                                    value={dept.id.toString()}
-                                    textValue={dept.city}
-                                >
-                                    {dept.city}
-                                </SelectItem>
-                            ))}
+                            <Label>Středisko</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {departments.map((dept) => (
+                                        <ListBox.Item
+                                            key={dept.id.toString()}
+                                            id={dept.id.toString()}
+                                            textValue={dept.city}
+                                        >
+                                            {dept.city}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
+                            <FieldError>{errors.departmentId}</FieldError>
                         </Select>
                     )}
 
@@ -414,30 +427,44 @@ export const ClientForm = React.forwardRef(({
                             isRequired
                             isDisabled={isLoading || !departmentId}
                             isInvalid={!!errors.caregiverId}
-                            errorMessage={errors.caregiverId}
-                            label="Klíčový pracovník"
-                            labelPlacement="inside"
                             name="caregiverId"
-                            selectedKey={caregiverId ? caregiverId.toString() : null}
-                            onSelectionChange={(key) => {
+                            value={caregiverId ? caregiverId.toString() : null}
+                            onChange={(key) => {
                                 setCaregiverId(key ? parseInt(key) : null);
                                 if (errors.caregiverId) {
                                     setErrors({ ...errors, caregiverId: undefined });
                                 }
                             }}
                         >
-                            {filteredCaregivers.map((caregiver) => {
-                                const caregiverName = caregiver.fullName;
-                                return (
-                                    <AutocompleteItem
-                                        key={caregiver.id.toString()}
-                                        value={caregiver.id.toString()}
-                                        textValue={caregiverName}
-                                    >
-                                        {caregiverName}
-                                    </AutocompleteItem>
-                                );
-                            })}
+                            <Label>Klíčový pracovník</Label>
+                            <Autocomplete.Trigger>
+                                <Autocomplete.Value />
+                                <Autocomplete.ClearButton />
+                                <Autocomplete.Indicator />
+                            </Autocomplete.Trigger>
+                            <Autocomplete.Popover>
+                                <Autocomplete.Filter filter={contains}>
+                                    <SearchField>
+                                        <SearchField.Group>
+                                            <SearchField.SearchIcon />
+                                            <SearchField.Input placeholder="Hledat..." />
+                                        </SearchField.Group>
+                                    </SearchField>
+                                    <ListBox>
+                                        {filteredCaregivers.map((caregiver) => (
+                                            <ListBox.Item
+                                                key={caregiver.id.toString()}
+                                                id={caregiver.id.toString()}
+                                                textValue={caregiver.fullName}
+                                            >
+                                                {caregiver.fullName}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Autocomplete.Filter>
+                            </Autocomplete.Popover>
+                            <FieldError>{errors.caregiverId}</FieldError>
                         </Autocomplete>
                     )}
                 </div>
@@ -446,66 +473,59 @@ export const ClientForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Ulice a číslo popisné" value={street} />
                 ) : (
-                    <Input
-                        isRequired
-                        isDisabled={isLoading}
-                        isInvalid={!!errors.street}
-                        errorMessage={errors.street}
-                        label="Ulice a číslo popisné"
-                        labelPlacement="inside"
-                        name="street"
-                        value={street}
-                        onValueChange={(value) => {
-                            setStreet(value);
-                            if (errors.street) {
-                                setErrors({ ...errors, street: undefined });
-                            }
-                        }}
-                    />
+                    <TextField name="street" isRequired isInvalid={!!errors.street}>
+                        <Label>Ulice a číslo popisné</Label>
+                        <Input
+                            isDisabled={isLoading}
+                            value={street}
+                            onChange={(e) => {
+                                setStreet(e.target.value);
+                                if (errors.street) {
+                                    setErrors({ ...errors, street: undefined });
+                                }
+                            }}
+                        />
+                        <FieldError>{errors.street}</FieldError>
+                    </TextField>
                 )}
 
                 <div className="grid grid-cols-3 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField label="Město" value={city} className="col-span-2" />
                     ) : (
-                        <Input
-                            isRequired
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.city}
-                            errorMessage={errors.city}
-                            label="Město"
-                            labelPlacement="inside"
-                            name="city"
-                            value={city}
-                            onValueChange={(value) => {
-                                setCity(value);
-                                if (errors.city) {
-                                    setErrors({ ...errors, city: undefined });
-                                }
-                            }}
-                            className="col-span-2"
-                        />
+                        <TextField name="city" isRequired isInvalid={!!errors.city} className="col-span-2">
+                            <Label>Město</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={city}
+                                onChange={(e) => {
+                                    setCity(e.target.value);
+                                    if (errors.city) {
+                                        setErrors({ ...errors, city: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.city}</FieldError>
+                        </TextField>
                     )}
                     {isReadOnly ? (
                         <ReadOnlyField label="PSČ" value={postalCode} />
                     ) : (
-                        <Input
-                            isRequired
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.postalCode}
-                            errorMessage={errors.postalCode}
-                            label="PSČ"
-                            labelPlacement="inside"
-                            name="postalCode"
-                            value={postalCode}
-                            onValueChange={(value) => {
-                                setPostalCode(formatPostalCode(value));
-                                if (errors.postalCode) {
-                                    setErrors({ ...errors, postalCode: undefined });
-                                }
-                            }}
-                            maxLength={6}
-                        />
+                        <TextField name="postalCode" isRequired isInvalid={!!errors.postalCode}>
+                            <Label>PSČ</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={postalCode}
+                                maxLength={6}
+                                onChange={(e) => {
+                                    setPostalCode(formatPostalCode(e.target.value));
+                                    if (errors.postalCode) {
+                                        setErrors({ ...errors, postalCode: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.postalCode}</FieldError>
+                        </TextField>
                     )}
                 </div>
 
@@ -513,23 +533,21 @@ export const ClientForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Email" value={email} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email}
-                            label="Email"
-                            labelPlacement="inside"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onValueChange={(value) => {
-                                setEmail(value);
-                                if (errors.email) {
-                                    setErrors({ ...errors, email: undefined });
-                                }
-                            }}
-                            className="flex-1"
-                        />
+                        <TextField name="email" isInvalid={!!errors.email} className="flex-1">
+                            <Label>Email</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (errors.email) {
+                                        setErrors({ ...errors, email: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.email}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
@@ -537,12 +555,17 @@ export const ClientForm = React.forwardRef(({
                     ) : (
                         <div className="flex items-center h-14">
                             <Checkbox
-                                name="legallyCompetent"
+                                id="legallyCompetent"
                                 isSelected={legallyCompetent}
-                                onValueChange={setLegallyCompetent}
+                                onChange={setLegallyCompetent}
                                 isDisabled={isLoading}
                             >
-                                Svéprávný
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                <Checkbox.Content>
+                                    <Label htmlFor="legallyCompetent">Svéprávný</Label>
+                                </Checkbox.Content>
                             </Checkbox>
                         </div>
                     )}
@@ -552,38 +575,39 @@ export const ClientForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Telefon" value={phone} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.phone}
-                            errorMessage={errors.phone}
-                            label="Telefon"
-                            labelPlacement="inside"
-                            name="phone"
-                            type="tel"
-                            value={phone}
-                            onValueChange={(value) => {
-                                setPhone(formatPhoneNumber(value));
-                                if (errors.phone) {
-                                    setErrors({ ...errors, phone: undefined });
-                                }
-                            }}
-                            maxLength={17}
-                        />
+                        <TextField name="phone" isInvalid={!!errors.phone}>
+                            <Label>Telefon</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                type="tel"
+                                value={phone}
+                                maxLength={17}
+                                onChange={(e) => {
+                                    setPhone(formatPhoneNumber(e.target.value));
+                                    if (errors.phone) {
+                                        setErrors({ ...errors, phone: undefined });
+                                    }
+                                }}
+                            />
+                            <FieldError>{errors.phone}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
                         <ReadOnlyField label="Osobní číslo" value={personalNumber} />
                     ) : (
-                        <NumberInput
-                            hideStepper
-                            isDisabled={isLoading}
-                            label="Osobní číslo"
-                            labelPlacement="inside"
+                        <NumberField
                             name="personalNumber"
-                            type="number"
+                            isDisabled={isLoading}
                             value={personalNumber}
-                            onValueChange={setPersonalNumber}
-                        />
+                            onChange={setPersonalNumber}
+                        >
+                            <Label>Osobní číslo</Label>
+                            <NumberField.Group>
+                                <NumberField.Input />
+                            </NumberField.Group>
+                            <FieldError />
+                        </NumberField>
                     )}
                 </div>
 
@@ -596,19 +620,26 @@ export const ClientForm = React.forwardRef(({
                         />
                     ) : (
                         <Select
-                            disallowEmptySelection
                             isDisabled={isLoading}
-                            label="Příspěvek na péči"
-                            labelPlacement="inside"
                             name="benefits"
-                            selectedKeys={[benefits]}
-                            onSelectionChange={(keys) => setBenefits(Array.from(keys)[0])}
+                            value={benefits}
+                            onChange={setBenefits}
                         >
-                            {benefitsOptions.map((b) => (
-                                <SelectItem key={b.key} value={b.key}>
-                                    {b.name}
-                                </SelectItem>
-                            ))}
+                            <Label>Příspěvek na péči</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {benefitsOptions.map((b) => (
+                                        <ListBox.Item key={b.key} id={b.key} textValue={b.name}>
+                                            {b.name}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
                         </Select>
                     )}
 
@@ -624,32 +655,35 @@ export const ClientForm = React.forwardRef(({
                     ) : (
                         <Select
                             isDisabled={isLoading}
-                            label="Úkony"
-                            labelPlacement="inside"
                             name="taskIds"
                             selectionMode="multiple"
-                            selectedKeys={taskIds.map(id => id.toString())}
-                            onSelectionChange={(keys) => {
-                                const selectedIds = Array.from(keys).map(key => parseInt(key));
+                            value={taskIds.map(id => id.toString())}
+                            onChange={(keys) => {
+                                const selectedIds = keys.map(key => parseInt(key));
                                 setTaskIds(selectedIds);
                             }}
-                            classNames={{
-                                trigger: "min-h-12",
-                            }}
-                            renderValue={(items) => {
-                                const count = items.length;
-                                return `Celkem: ${count}`;
-                            }}
                         >
-                            {tasks.map((task) => (
-                                <SelectItem
-                                    key={task.id.toString()}
-                                    value={task.id.toString()}
-                                    textValue={task.name}
-                                >
-                                    {task.name}
-                                </SelectItem>
-                            ))}
+                            <Label>Úkony</Label>
+                            <Select.Trigger className="min-h-12">
+                                <Select.Value>
+                                    {() => `Celkem: ${taskIds.length}`}
+                                </Select.Value>
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {tasks.map((task) => (
+                                        <ListBox.Item
+                                            key={task.id.toString()}
+                                            id={task.id.toString()}
+                                            textValue={task.name}
+                                        >
+                                            {task.name}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
                         </Select>
                     )}
                 </div>
@@ -657,43 +691,49 @@ export const ClientForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Kontakt na příbuzné" value={relativesContact} />
                 ) : (
-                    <Textarea
-                        isDisabled={isLoading}
-                        label="Kontakt na příbuzné"
-                        labelPlacement="inside"
-                        name="relativesContact"
-                        value={relativesContact}
-                        onValueChange={setRelativesContact}
-                        minRows={2}
-                    />
+                    <div className="flex flex-col gap-1 w-full">
+                        <label className="text-sm font-medium text-foreground/70">Kontakt na příbuzné</label>
+                        <textarea
+                            disabled={isLoading}
+                            name="relativesContact"
+                            value={relativesContact}
+                            onChange={(e) => setRelativesContact(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
                 )}
 
                 {isReadOnly ? (
                     <ReadOnlyField label="Praktický lékař" value={generalPractitioner} />
                 ) : (
-                    <Textarea
-                        isDisabled={isLoading}
-                        label="Praktický lékař"
-                        labelPlacement="inside"
-                        name="generalPractitioner"
-                        value={generalPractitioner}
-                        onValueChange={setGeneralPractitioner}
-                        minRows={2}
-                    />
+                    <div className="flex flex-col gap-1 w-full">
+                        <label className="text-sm font-medium text-foreground/70">Praktický lékař</label>
+                        <textarea
+                            disabled={isLoading}
+                            name="generalPractitioner"
+                            value={generalPractitioner}
+                            onChange={(e) => setGeneralPractitioner(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
                 )}
 
                 {isReadOnly ? (
                     <ReadOnlyField label="Poznámky" value={notes} />
                 ) : (
-                    <Textarea
-                        isDisabled={isLoading}
-                        label="Poznámky"
-                        labelPlacement="inside"
-                        name="notes"
-                        value={notes}
-                        onValueChange={setNotes}
-                        minRows={2}
-                    />
+                    <div className="flex flex-col gap-1 w-full">
+                        <label className="text-sm font-medium text-foreground/70">Poznámky</label>
+                        <textarea
+                            disabled={isLoading}
+                            name="notes"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
                 )}
 
                 {/* Termination fields (only for inactive clients) */}
@@ -705,11 +745,10 @@ export const ClientForm = React.forwardRef(({
                                 value={terminationDate ? new Date(terminationDate).toLocaleDateString('cs-CZ') : '-'}
                             />
                         ) : (
-                            <DatePicker
+                            <AppDatePicker
                                 isInvalid={!!errors.terminationDate}
                                 errorMessage={errors.terminationDate}
                                 label="Datum ukončení smlouvy"
-                                labelPlacement="inside"
                                 name="terminationDate"
                                 value={terminationDate ? parseDate(terminationDate) : null}
                                 onChange={(date) => {
@@ -718,15 +757,10 @@ export const ClientForm = React.forwardRef(({
                                         setErrors({ ...errors, terminationDate: undefined });
                                     }
                                 }}
-                                showMonthAndYearPickers
-                                selectorIcon={<CalendarDays size={18} />}
                                 minValue={new CalendarDate(MIN_YEAR, 1, 1)}
                                 maxValue={today(getLocalTimeZone())}
                                 isRequired
                                 isDisabled={isLoading}
-                                classNames={{
-                                    segment: "text-default-500"
-                                }}
                             />
                         )}
 
@@ -738,13 +772,10 @@ export const ClientForm = React.forwardRef(({
                         ) : (
                             <Select
                                 isInvalid={!!errors.terminationReason}
-                                errorMessage={errors.terminationReason}
-                                label="Důvod ukončení smlouvy"
-                                labelPlacement="inside"
                                 name="terminationReason"
-                                selectedKeys={terminationReason ? [terminationReason] : []}
-                                onSelectionChange={(keys) => {
-                                    setTerminationReason(Array.from(keys)[0]);
+                                value={terminationReason || null}
+                                onChange={(value) => {
+                                    setTerminationReason(value);
                                     if (errors.terminationReason) {
                                         setErrors({ ...errors, terminationReason: undefined });
                                     }
@@ -752,11 +783,22 @@ export const ClientForm = React.forwardRef(({
                                 isRequired
                                 isDisabled={isLoading}
                             >
-                                {terminationReasonOptions.map((reason) => (
-                                    <SelectItem key={reason.key} value={reason.key}>
-                                        {reason.name}
-                                    </SelectItem>
-                                ))}
+                                <Label>Důvod ukončení smlouvy</Label>
+                                <Select.Trigger>
+                                    <Select.Value />
+                                    <Select.Indicator />
+                                </Select.Trigger>
+                                <Select.Popover>
+                                    <ListBox>
+                                        {terminationReasonOptions.map((reason) => (
+                                            <ListBox.Item key={reason.key} id={reason.key} textValue={reason.name}>
+                                                {reason.name}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Select.Popover>
+                                <FieldError>{errors.terminationReason}</FieldError>
                             </Select>
                         )}
                     </>

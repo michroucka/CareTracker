@@ -46,7 +46,7 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-              <Spinner size="lg" variant="gradient" label="Načítání..." />
+              <Spinner size="lg" />
             </div>
         );
     }

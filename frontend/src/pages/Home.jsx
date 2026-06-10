@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {Card, CardHeader, CardBody, Button, Spinner, Divider} from "@heroui/react"
+import {Card, Button, Spinner, Separator} from "@heroui/react"
 import {
     Plus, Clock, Users, Activity, CloudAlert, TrendingUp, Briefcase, CalendarClock,
     ClipboardPenLine, Smile, ArrowRight, Construction
@@ -85,8 +85,9 @@ function DashboardContent() {
             </div>
 
             {loading ? (
-                <div className="flex justify-center items-center py-32">
-                    <Spinner size="lg" label="Načítání nástěnky..." />
+                <div className="flex flex-col justify-center items-center py-32 gap-2">
+                    <Spinner size="lg" />
+                    <p className="text-sm text-foreground/60">Načítání nástěnky...</p>
                 </div>
             ) : isSuperadmin ? (
                 <div className="flex flex-col justify-center items-center text-center cursor-default flex-1">
@@ -99,7 +100,7 @@ function DashboardContent() {
                         {isCaregiver && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Activity className="w-6 h-6 text-primary" />
                                         </div>
@@ -107,10 +108,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Výkony tento měsíc</p>
                                             <p className="text-2xl font-bold">{dashboard?.tasksPerformedCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -118,10 +119,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Moji klienti</p>
                                             <p className="text-2xl font-bold">{dashboard?.myClientsCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <Clock className="w-6 h-6 text-secondary" />
                                         </div>
@@ -131,14 +132,14 @@ function DashboardContent() {
                                                 {Math.floor((dashboard?.totalMonthMinutes ?? 0) / 60)}h {(dashboard?.totalMonthMinutes ?? 0) % 60}m
                                             </p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                             </>
                         )}
                         {isCoordinator && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Activity className="w-6 h-6 text-primary" />
                                         </div>
@@ -146,10 +147,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Výkony tento měsíc</p>
                                             <p className="text-2xl font-bold">{dashboard?.tasksPerformedCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -157,10 +158,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Klienti ve středisku</p>
                                             <p className="text-2xl font-bold">{dashboard?.clientCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>
@@ -168,14 +169,14 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Příjem tento měsíc</p>
                                             <p className="text-2xl font-bold">{(dashboard?.totalMonthlyIncome ?? 0).toLocaleString("cs-CZ")} Kč</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                             </>
                         )}
                         {isAdmin && (
                             <>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-success/10 rounded-lg">
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
@@ -183,10 +184,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Aktivní klienti</p>
                                             <p className="text-2xl font-bold">{dashboard?.clientCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card>
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-lg">
                                             <Briefcase className="w-6 h-6 text-primary" />
                                         </div>
@@ -194,10 +195,10 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Zaměstnanci</p>
                                             <p className="text-2xl font-bold">{dashboard?.employeeCount ?? 0}</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
-                                    <CardBody className="flex flex-row items-center gap-4">
+                                    <Card.Content className="flex flex-row items-center gap-4">
                                         <div className="p-3 bg-secondary/10 rounded-lg">
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>
@@ -205,54 +206,40 @@ function DashboardContent() {
                                             <p className="text-sm text-default-500">Příjem tento měsíc</p>
                                             <p className="text-2xl font-bold">{(dashboard?.totalMonthlyIncome ?? 0).toLocaleString("cs-CZ")} Kč</p>
                                         </div>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                             </>
                         )}
                     </div>
 
                     <Card>
-                        <CardHeader>
+                        <Card.Header>
                             <h2 className="text-xl font-semibold">Rychlé akce</h2>
-                        </CardHeader>
-                        <Divider />
-                        <CardBody>
+                        </Card.Header>
+                        <Separator />
+                        <Card.Content>
                             <div className="flex flex-wrap gap-3">
-                                <Button color="primary" startContent={<Plus className="w-4 h-4" />} onPress={() => navigate("/performed-tasks?openCreate=true")}>
-                                    Zaznamenat péči
-                                </Button>
+                                <Button variant="primary" onPress={() => navigate("/performed-tasks?openCreate=true")}><Plus className="w-4 h-4" /> Zaznamenat péči</Button>
                                 {isCaregiver && (
                                     <>
-                                        <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate(`/clients?caregivers=${encodeURIComponent(user.fullName)}`)}>
-                                            Moji klienti
-                                        </Button>
+                                        <Button variant="outline" onPress={() => navigate(`/clients?caregivers=${encodeURIComponent(user.fullName)}`)}><Users className="w-4 h-4" /> Moji klienti</Button>
                                     </>
                                 )}
                                 {isCoordinator && (
                                     <>
-                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
-                                            Záznamy péče
-                                        </Button>
-                                        <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>
-                                            Klienti
-                                        </Button>
+                                        <Button variant="secondary" onPress={() => navigate("/performed-tasks")}><Activity className="w-4 h-4" /> Záznamy péče</Button>
+                                        <Button variant="outline" onPress={() => navigate("/clients")}><Users className="w-4 h-4" /> Klienti</Button>
                                     </>
                                 )}
                                 {isAdmin && (
                                     <>
-                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
-                                            Záznamy péče
-                                        </Button>
-                                        <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>
-                                            Klienti
-                                        </Button>
-                                        <Button color="default" variant="bordered" startContent={<Briefcase className="w-4 h-4" />} onPress={() => navigate("/employees")}>
-                                            Zaměstnanci
-                                        </Button>
+                                        <Button variant="secondary" onPress={() => navigate("/performed-tasks")}><Activity className="w-4 h-4" /> Záznamy péče</Button>
+                                        <Button variant="outline" onPress={() => navigate("/clients")}><Users className="w-4 h-4" /> Klienti</Button>
+                                        <Button variant="outline" onPress={() => navigate("/employees")}><Briefcase className="w-4 h-4" /> Zaměstnanci</Button>
                                     </>
                                 )}
                             </div>
-                        </CardBody>
+                        </Card.Content>
                     </Card>
 
                     {/* Grafy */}
@@ -260,13 +247,13 @@ function DashboardContent() {
                         <div className={deptChartData ? "grid lg:grid-cols-2 gap-6" : ""}>
                             {historyChartData && (
                                 <Card>
-                                    <CardHeader>
+                                    <Card.Header>
                                         <h2 className="text-xl font-semibold">
                                             {isCaregiver ? "Provedené úkony za posledních 6 měsíců" : "Příjmy za posledních 6 měsíců"}
                                         </h2>
-                                    </CardHeader>
-                                    <Divider />
-                                    <CardBody>
+                                    </Card.Header>
+                                    <Separator />
+                                    <Card.Content>
                                         <ResponsiveContainer width="100%" height={200}>
                                             <BarChart data={historyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.2)" />
@@ -280,16 +267,16 @@ function DashboardContent() {
                                                 <Bar dataKey="value" fill="hsl(var(--heroui-primary))" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                             )}
                             {deptChartData && (
                                 <Card>
-                                    <CardHeader>
+                                    <Card.Header>
                                         <h2 className="text-xl font-semibold">Výkony podle středisek</h2>
-                                    </CardHeader>
-                                    <Divider />
-                                    <CardBody>
+                                    </Card.Header>
+                                    <Separator />
+                                    <Card.Content>
                                         <ResponsiveContainer width="100%" height={200}>
                                             <BarChart data={deptChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.2)" />
@@ -303,7 +290,7 @@ function DashboardContent() {
                                                 <Bar dataKey="value" fill="hsl(var(--heroui-secondary))" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
-                                    </CardBody>
+                                    </Card.Content>
                                 </Card>
                             )}
                         </div>
@@ -311,12 +298,12 @@ function DashboardContent() {
 
                     <div className={`grid gap-6 ${(isCaregiver || isCoordinator || isAdmin) ? "lg:grid-cols-2" : ""}`}>
                         <Card>
-                            <CardHeader className="flex items-center gap-2">
+                            <Card.Header className="flex items-center gap-2">
                                 <ClipboardPenLine className="size-7" />
                                 <h2>Nedávné záznamy</h2>
-                            </CardHeader>
-                            <Divider />
-                            <CardBody>
+                            </Card.Header>
+                            <Separator />
+                            <Card.Content>
                                 {!dashboard?.recentPerformedTasks?.length ? (
                                     <p className="text-default-400 text-center py-4">Zatím žádné záznamy</p>
                                 ) : (
@@ -336,17 +323,17 @@ function DashboardContent() {
                                         ))}
                                     </div>
                                 )}
-                            </CardBody>
+                            </Card.Content>
                         </Card>
 
                         {(isCaregiver || isCoordinator || isAdmin) && (
                             <Card>
-                                <CardHeader className="flex items-center gap-2">
+                                <Card.Header className="flex items-center gap-2">
                                     <CalendarClock className="size-7" />
                                     <h2>Aktualizace individuálních plánů</h2>
-                                </CardHeader>
-                                <Divider />
-                                <CardBody>
+                                </Card.Header>
+                                <Separator />
+                                <Card.Content>
                                     {!dashboard?.clientIPUpdates?.length ? (
                                         <p className="text-default-400 text-center py-4 flex items-center justify-center gap-2">Žádné blížící se aktualizace <Smile className="inline-block" /></p>
                                     ) : (
@@ -362,7 +349,7 @@ function DashboardContent() {
                                                             </p>
                                                             <Button
                                                                 size="sm"
-                                                                variant="light"
+                                                                variant="ghost"
                                                                 onPress={() => navigate(`/clients/${item.clientId}/individual-plan`)}
                                                                 isIconOnly
                                                                 startContent={<ArrowRight className="size-4" />}
@@ -373,7 +360,7 @@ function DashboardContent() {
                                             })}
                                         </div>
                                     )}
-                                </CardBody>
+                                </Card.Content>
                             </Card>
                         )}
                     </div>

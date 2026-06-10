@@ -1,8 +1,13 @@
 import {
+    TextField,
     Input,
+    Label,
+    FieldError,
     Form,
     Autocomplete,
-    AutocompleteItem,
+    SearchField,
+    ListBox,
+    useFilter,
 } from "@heroui/react";
 import React from "react";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
@@ -17,6 +22,7 @@ export const OrganizationForm = React.forwardRef(({
     const [name, setName] = React.useState("");
     const [managerId, setManagerId] = React.useState(null);
     const [errors, setErrors] = React.useState({});
+    const {contains} = useFilter({sensitivity: "base"});
 
     React.useEffect(() => {
         if (initialData) {
@@ -74,17 +80,15 @@ export const OrganizationForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Název" value={name} />
                 ) : (
-                    <Input
-                        isRequired
-                        isDisabled={isLoading}
-                        isInvalid={!!errors.name}
-                        errorMessage={errors.name}
-                        label="Název"
-                        labelPlacement="inside"
-                        name="name"
-                        value={name}
-                        onValueChange={(v) => { setName(v); clearError("name"); }}
-                    />
+                    <TextField name="name" isRequired isInvalid={!!errors.name}>
+                        <Label>Název</Label>
+                        <Input
+                            isDisabled={isLoading}
+                            value={name}
+                            onChange={(e) => { setName(e.target.value); clearError("name"); }}
+                        />
+                        <FieldError>{errors.name}</FieldError>
+                    </TextField>
                 )}
 
                 {isReadOnly ? (
@@ -92,21 +96,38 @@ export const OrganizationForm = React.forwardRef(({
                 ) : (
                     <Autocomplete
                         isDisabled={isLoading}
-                        label="Vedoucí"
-                        labelPlacement="inside"
                         name="managerId"
-                        selectedKey={managerId ? managerId.toString() : null}
-                        onSelectionChange={(key) => setManagerId(key ? parseInt(key) : null)}
+                        value={managerId ? managerId.toString() : null}
+                        onChange={(key) => setManagerId(key ? parseInt(key) : null)}
                     >
-                        {employees.map((emp) => (
-                            <AutocompleteItem
-                                key={emp.id.toString()}
-                                value={emp.id.toString()}
-                                textValue={emp.fullName}
-                            >
-                                {emp.fullName}
-                            </AutocompleteItem>
-                        ))}
+                        <Label>Vedoucí</Label>
+                        <Autocomplete.Trigger>
+                            <Autocomplete.Value />
+                            <Autocomplete.ClearButton />
+                            <Autocomplete.Indicator />
+                        </Autocomplete.Trigger>
+                        <Autocomplete.Popover>
+                            <Autocomplete.Filter filter={contains}>
+                                <SearchField>
+                                    <SearchField.Group>
+                                        <SearchField.SearchIcon />
+                                        <SearchField.Input placeholder="Hledat..." />
+                                    </SearchField.Group>
+                                </SearchField>
+                                <ListBox>
+                                    {employees.map((emp) => (
+                                        <ListBox.Item
+                                            key={emp.id.toString()}
+                                            id={emp.id.toString()}
+                                            textValue={emp.fullName}
+                                        >
+                                            {emp.fullName}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Autocomplete.Filter>
+                        </Autocomplete.Popover>
                     </Autocomplete>
                 )}
             </div>

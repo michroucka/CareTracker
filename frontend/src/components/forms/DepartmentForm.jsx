@@ -1,9 +1,14 @@
 import {
+    TextField,
     Input,
-    NumberInput,
+    Label,
+    FieldError,
+    NumberField,
     Form,
     Autocomplete,
-    AutocompleteItem,
+    SearchField,
+    ListBox,
+    useFilter,
 } from "@heroui/react";
 import React from "react";
 import { formatPostalCode } from "../../utils/formatters.js";
@@ -23,6 +28,7 @@ export const DepartmentForm = React.forwardRef(({
     const [departmentNumber, setDepartmentNumber] = React.useState(null);
     const [coordinatorId, setCoordinatorId] = React.useState(null);
     const [errors, setErrors] = React.useState({});
+    const {contains} = useFilter({sensitivity: "base"});
 
     React.useEffect(() => {
         if (initialData) {
@@ -91,50 +97,45 @@ export const DepartmentForm = React.forwardRef(({
                 {isReadOnly ? (
                     <ReadOnlyField label="Ulice a číslo popisné" value={street} />
                 ) : (
-                    <Input
-                        isRequired
-                        isDisabled={isLoading}
-                        isInvalid={!!errors.street}
-                        errorMessage={errors.street}
-                        label="Ulice a číslo popisné"
-                        labelPlacement="inside"
-                        name="street"
-                        value={street}
-                        onValueChange={(v) => { setStreet(v); clearError("street"); }}
-                    />
+                    <TextField name="street" isRequired isInvalid={!!errors.street}>
+                        <Label>Ulice a číslo popisné</Label>
+                        <Input
+                            isDisabled={isLoading}
+                            value={street}
+                            onChange={(e) => { setStreet(e.target.value); clearError("street"); }}
+                        />
+                        <FieldError>{errors.street}</FieldError>
+                    </TextField>
                 )}
 
                 <div className="grid grid-cols-3 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField label="Město" value={city} className="col-span-2" />
                     ) : (
-                        <Input
-                            isRequired
-                            isDisabled={isLoading}
-                            isInvalid={!!errors.city}
-                            errorMessage={errors.city}
-                            label="Město"
-                            labelPlacement="inside"
-                            name="city"
-                            value={city}
-                            onValueChange={(v) => { setCity(v); clearError("city"); }}
-                            className="col-span-2"
-                        />
+                        <TextField name="city" isRequired isInvalid={!!errors.city} className="col-span-2">
+                            <Label>Město</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={city}
+                                onChange={(e) => { setCity(e.target.value); clearError("city"); }}
+                            />
+                            <FieldError>{errors.city}</FieldError>
+                        </TextField>
                     )}
 
                     {isReadOnly ? (
                         <ReadOnlyField label="PSČ" value={postalCode} />
                     ) : (
-                        <Input
-                            isDisabled={isLoading}
-                            label="PSČ"
-                            labelPlacement="inside"
-                            name="postalCode"
-                            value={postalCode}
-                            onValueChange={(v) => setPostalCode(formatPostalCode(v))}
-                            maxLength={6}
-                            isRequired
-                        />
+                        <TextField name="postalCode" isRequired>
+                            <Label>PSČ</Label>
+                            <Input
+                                isDisabled={isLoading}
+                                value={postalCode}
+                                onChange={(e) => setPostalCode(formatPostalCode(e.target.value))}
+                                maxLength={6}
+                            />
+                            <FieldError />
+                        </TextField>
                     )}
                 </div>
 
@@ -142,17 +143,20 @@ export const DepartmentForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Číslo" value={departmentNumber} />
                     ) : (
-                        <NumberInput
-                            isDisabled={isLoading}
-                            label="Číslo"
-                            labelPlacement="inside"
+                        <NumberField
                             name="departmentNumber"
+                            isDisabled={isLoading}
                             value={departmentNumber}
-                            onValueChange={setDepartmentNumber}
-                            hideStepper
+                            onChange={setDepartmentNumber}
                             maxValue={99}
                             minValue={1}
-                        />
+                        >
+                            <Label>Číslo</Label>
+                            <NumberField.Group>
+                                <NumberField.Input />
+                            </NumberField.Group>
+                            <FieldError />
+                        </NumberField>
                     )}
 
                     {isReadOnly ? (
@@ -160,22 +164,39 @@ export const DepartmentForm = React.forwardRef(({
                     ) : (
                         <Autocomplete
                             isDisabled={isLoading}
-                            label="Koordinátor"
-                            labelPlacement="inside"
                             name="coordinatorId"
-                            selectedKey={coordinatorId ? coordinatorId.toString() : null}
-                            onSelectionChange={(key) => setCoordinatorId(key ? parseInt(key) : null)}
+                            value={coordinatorId ? coordinatorId.toString() : null}
+                            onChange={(key) => setCoordinatorId(key ? parseInt(key) : null)}
                             className="col-span-2"
                         >
-                            {employees.map((emp) => (
-                                <AutocompleteItem
-                                    key={emp.id.toString()}
-                                    value={emp.id.toString()}
-                                    textValue={emp.fullName}
-                                >
-                                    {emp.fullName}
-                                </AutocompleteItem>
-                            ))}
+                            <Label>Koordinátor</Label>
+                            <Autocomplete.Trigger>
+                                <Autocomplete.Value />
+                                <Autocomplete.ClearButton />
+                                <Autocomplete.Indicator />
+                            </Autocomplete.Trigger>
+                            <Autocomplete.Popover>
+                                <Autocomplete.Filter filter={contains}>
+                                    <SearchField>
+                                        <SearchField.Group>
+                                            <SearchField.SearchIcon />
+                                            <SearchField.Input placeholder="Hledat..." />
+                                        </SearchField.Group>
+                                    </SearchField>
+                                    <ListBox>
+                                        {employees.map((emp) => (
+                                            <ListBox.Item
+                                                key={emp.id.toString()}
+                                                id={emp.id.toString()}
+                                                textValue={emp.fullName}
+                                            >
+                                                {emp.fullName}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Autocomplete.Filter>
+                            </Autocomplete.Popover>
                         </Autocomplete>
                     )}
                 </div>

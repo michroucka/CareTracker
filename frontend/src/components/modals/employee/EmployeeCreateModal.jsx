@@ -1,9 +1,5 @@
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Button,
 } from "@heroui/react";
 import { Plus } from "lucide-react";
@@ -40,41 +36,44 @@ export function EmployeeCreateModal({ isOpen, onClose, onSubmit, userDept, userR
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Přidat nového zaměstnance</ModalHeader>
-                <ModalBody>
-                    <EmployeeForm
-                        ref={formRef}
-                        onSubmit={handleSubmit}
-                        isLoading={isLoading}
-                        departments={departments}
-                        userDept={userDept}
-                        userRole={userRole}
-                    />
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button
-                        className="text-base"
-                        type="reset"
-                        variant="bordered"
-                        isDisabled={isLoading}
-                        onPress={handleReset}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="primary"
-                        isLoading={isLoading}
-                        isDisabled={isLoading}
-                        endContent={<Plus className="size-4" />}
-                        onPress={handleFormSubmit}
-                    >
-                        {isLoading ? "Ukládání..." : "Přidat zaměstnance"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="lg">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex flex-col gap-1">
+                            <Modal.Heading>Přidat nového zaměstnance</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <EmployeeForm
+                                ref={formRef}
+                                onSubmit={handleSubmit}
+                                isLoading={isLoading}
+                                departments={departments}
+                                userDept={userDept}
+                                userRole={userRole}
+                            />
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button
+                                className="text-base"
+                                type="reset"
+                                variant="outline"
+                                isDisabled={isLoading}
+                                onPress={handleReset}
+                            >
+                                Reset
+                            </Button>
+                            <Button variant="primary"
+                                className="text-base"
+                                isPending={isLoading}
+                                isDisabled={isLoading}
+                                onPress={handleFormSubmit}
+                            >{isLoading ? "Ukládání..." : "Přidat zaměstnance"} <Plus className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

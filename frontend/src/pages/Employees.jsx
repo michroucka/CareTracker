@@ -2,17 +2,12 @@ import React from "react";
 import {
     Button,
     Dropdown,
-    DropdownItem,
-    DropdownMenu, DropdownSection,
-    DropdownTrigger,
-    Input,
+    Label,
+    Separator,
+    TextField,
+    InputGroup,
     Spinner,
     Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
 } from "@heroui/react";
 import {ChevronDown, Funnel, Mail, MoreVertical, Plus, Search, Send, UserRound, UserRoundCheck, UserRoundX} from "lucide-react";
 import {useDepartments} from "../hooks/useDepartments.jsx";
@@ -379,20 +374,23 @@ function Employees() {
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
+                    <TextField
                         className="w-full sm:max-w-[44%]"
-                        placeholder="Hledat podle jména..."
-                        startContent={<Search className="size-5" />}
-                        value={filterValue}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                    />
+                    >
+                        <InputGroup>
+                            <InputGroup.Prefix><Search className="size-5 opacity-50" /></InputGroup.Prefix>
+                            <InputGroup.Input
+                                placeholder="Hledat podle jména..."
+                                value={filterValue}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            />
+                        </InputGroup>
+                    </TextField>
                     <div className="flex gap-3">
                         <Button
                             isIconOnly
-                            variant="flat"
+                            variant="tertiary"
                             className="sm:hidden"
                             onPress={handleOpenFiltersModal}
                         >
@@ -400,74 +398,70 @@ function Employees() {
                         </Button>
                         {canAlterEmployee && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown
-                                            className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                <Button
+                                    variant="tertiary"
+                                    className="hidden sm:flex text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                >Status <ChevronDown
+                                        className="size-4" /></Button>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        disallowEmptySelection
+                                        aria-label="Active Filter"
+                                        closeOnSelect={false}
+                                        selectedKeys={activeFilter}
+                                        selectionMode="multiple"
+                                        onSelectionChange={setActiveFilter}
+                                        className="max-h-60 overflow-y-auto"
                                     >
-                                        Status
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Active Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={activeFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={setActiveFilter}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {activeOptions.map((active) => (
-                                        <DropdownItem key={active.key}>
-                                            {active.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
+                                        {activeOptions.map((active) => (
+                                            <Dropdown.Item key={active.key} id={active.key} textValue={active.name}>
+                                                <Dropdown.ItemIndicator />
+                                                <Label>{active.name}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
                             </Dropdown>
                         )}
 
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                <Button
+                                    variant="tertiary"
+                                    className="hidden sm:flex text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                >Středisko <ChevronDown className="size-4" /></Button>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        disallowEmptySelection
+                                        aria-label="Department Filter"
+                                        closeOnSelect={false}
+                                        selectedKeys={departmentFilter}
+                                        selectionMode="multiple"
+                                        onSelectionChange={handleDepartmentFilterChange}
+                                        className="max-h-60 overflow-y-auto"
                                     >
-                                        Středisko
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Department Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={departmentFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleDepartmentFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všechny</DropdownItem>
-                                    {departmentOptions.map((dept) => (
-                                        <DropdownItem key={dept.key}>
-                                            {dept.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
+                                        <Dropdown.Item id="all" textValue="Všechny">
+                                            <Dropdown.ItemIndicator />
+                                            <Label>Všechny</Label>
+                                        </Dropdown.Item>
+                                        {departmentOptions.map((dept) => (
+                                            <Dropdown.Item key={dept.key} id={dept.key} textValue={dept.name}>
+                                                <Dropdown.ItemIndicator />
+                                                <Label>{dept.name}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
                             </Dropdown>
                         )}
 
                         {canAlterEmployee && (
-                            <Button color="primary"
-                                    endContent={<Plus className="size-4" />}
+                            <Button variant="primary"
                                     onPress={handleOpenCreateModal}
                                     isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                            >
-                                Přidat
-                            </Button>
+                            >Přidat <Plus className="size-4" /></Button>
                         )}
                     </div>
                 </div>
@@ -519,57 +513,59 @@ function Employees() {
                 return (
                     <div className="relative flex justify-end items-center gap-2">
                         <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider={canAlterEmployee}>
-                                    <DropdownItem key="view"
-                                                  startContent={<UserRound />}
-                                                  variant="light"
-                                                  isLoading={isLoadingDetail}
-                                                  onPress={() => handleOpenDetailModal(employee.id)}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
+                            <Button isIconOnly size="sm" variant="ghost">
+                                <MoreVertical size={20} />
+                            </Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                    <Dropdown.Section>
+                                        <Dropdown.Item id="view"
+                                                       textValue={isLoadingDetail ? "Načítání..." : "Detail"}
+                                                       onAction={() => handleOpenDetailModal(employee.id)}
+                                        >
+                                            <UserRound />
+                                            <Label>{isLoadingDetail ? "Načítání..." : "Detail"}</Label>
+                                        </Dropdown.Item>
+                                    </Dropdown.Section>
 
-                                {canAlterEmployee ? (
-                                    <DropdownSection>
-                                        {!employee.isActivated && employee.email ? (
-                                            <DropdownItem key="resend"
-                                                          startContent={<Mail />}
-                                                          variant="light"
-                                                          onPress={() => resendActivationEmail(employee.id)}
-                                            >
-                                                Poslat aktivační email
-                                            </DropdownItem>
-                                        ) : null }
-                                        {employee.active ? (
-                                            <DropdownItem key="terminate"
-                                                          startContent={<UserRoundX />}
-                                                          variant="light"
-                                                          color="danger"
-                                                          isDisabled={employee.id === user?.employeeId}
-                                                          onPress={() => handleOpenTerminateModal(employee.id)}
-                                            >
-                                                Deaktivovat
-                                            </DropdownItem>
-                                        ) : (
-                                            <DropdownItem key="activate"
-                                                          startContent={<UserRoundCheck />}
-                                                          variant="light"
-                                                          color="success"
-                                                          onPress={() => handleActivateEmployee(employee.id)}
-                                            >
-                                                Aktivovat
-                                            </DropdownItem>
-                                        )}
-                                    </DropdownSection>
-                                ) : null}
-                            </DropdownMenu>
+                                    {canAlterEmployee ? (
+                                        <>
+                                            <Separator />
+                                            <Dropdown.Section>
+                                                {!employee.isActivated && employee.email ? (
+                                                    <Dropdown.Item id="resend"
+                                                                   textValue="Poslat aktivační email"
+                                                                   onAction={() => resendActivationEmail(employee.id)}
+                                                    >
+                                                        <Mail />
+                                                        <Label>Poslat aktivační email</Label>
+                                                    </Dropdown.Item>
+                                                ) : null }
+                                                {employee.active ? (
+                                                    <Dropdown.Item id="terminate"
+                                                                   textValue="Deaktivovat"
+                                                                   variant="danger"
+                                                                   isDisabled={employee.id === user?.employeeId}
+                                                                   onAction={() => handleOpenTerminateModal(employee.id)}
+                                                    >
+                                                        <UserRoundX />
+                                                        <Label>Deaktivovat</Label>
+                                                    </Dropdown.Item>
+                                                ) : (
+                                                    <Dropdown.Item id="activate"
+                                                                   textValue="Aktivovat"
+                                                                   className="text-success"
+                                                                   onAction={() => handleActivateEmployee(employee.id)}
+                                                    >
+                                                        <UserRoundCheck />
+                                                        <Label>Aktivovat</Label>
+                                                    </Dropdown.Item>
+                                                )}
+                                            </Dropdown.Section>
+                                        </>
+                                    ) : null}
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
                     </div>
                 );
@@ -583,40 +579,49 @@ function Employees() {
 
     return (
         <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Employees table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ? "end" : "start"}
-                            allowsSorting={column.sortable}
+            {topContent}
+            <Table>
+                <Table.ScrollContainer>
+                    <Table.Content
+                        aria-label="Employees table"
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={setSortDescriptor}
+                    >
+                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                            {(column) => (
+                                <Table.Column
+                                    key={column.key}
+                                    align={column.key === "actions" ? "end" : "start"}
+                                    allowsSorting={column.sortable}
+                                >
+                                    {column.name}
+                                </Table.Column>
+                            )}
+                        </Table.Header>
+                        <Table.Body
+                            items={shouldShowLoading ? [] : sortedItems}
+                            renderEmptyState={() => (
+                                shouldShowLoading ? (
+                                    <div className="flex flex-col items-center gap-2 mt-72">
+                                        <Spinner />
+                                        <p className="text-sm text-foreground/60">Načítání zaměstnanců...</p>
+                                    </div>
+                                ) : (
+                                    <p>
+                                        {isSuperadminWithoutOrg
+                                            ? "Vyberte prosím organizaci v navigační liště" : "Žádní zaměstnanci nenalezeni"}
+                                    </p>
+                                )
+                            )}
                         >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody
-                    isLoading={shouldShowLoading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání zaměstnanců..." />}
-                    emptyContent={
-                        isSuperadminWithoutOrg
-                            ? "Vyberte prosím organizaci v navigační liště" : "Žádní zaměstnanci nenalezeni"
-                    }
-                    items={sortedItems}>
-                    {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
+                            {(item) => (
+                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
+                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table.Content>
+                </Table.ScrollContainer>
             </Table>
 
             <EmployeeCreateModal

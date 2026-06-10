@@ -2,18 +2,12 @@ import React from "react";
 import {
     Button,
     Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
+    Label,
+    Separator,
+    TextField,
+    InputGroup,
     Spinner,
     Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
 } from "@heroui/react";
 import {
     Ban,
@@ -169,46 +163,47 @@ function Organizations() {
     const topContent = React.useMemo(() => (
         <div className="flex flex-col gap-4">
             <div className="flex justify-between gap-3 items-end">
-                <Input
-                    isClearable
+                <TextField
                     className="w-full sm:max-w-[44%]"
-                    placeholder="Hledat podle názvu..."
-                    startContent={<Search className="size-5" />}
-                    value={filterValue}
-                    onClear={onClear}
-                    onValueChange={onSearchChange}
-                />
+                >
+                    <InputGroup>
+                        <InputGroup.Prefix><Search className="size-5 opacity-50" /></InputGroup.Prefix>
+                        <InputGroup.Input
+                            placeholder="Hledat podle názvu..."
+                            value={filterValue}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                        />
+                    </InputGroup>
+                </TextField>
                 <div className="flex gap-3">
-                    <Button isIconOnly variant="flat" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
+                    <Button isIconOnly variant="tertiary" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
                         <Funnel className="size-4" />
                     </Button>
                     <Dropdown>
-                        <DropdownTrigger className="hidden sm:flex">
-                            <Button
-                                endContent={<ChevronDown className="size-4" />}
-                                variant="flat"
-                                className="text-foreground"
+                        <Button
+                            variant="tertiary"
+                            className="hidden sm:flex text-foreground"
+                        >Status <ChevronDown className="size-4" /></Button>
+                        <Dropdown.Popover>
+                            <Dropdown.Menu
+                                disallowEmptySelection
+                                aria-label="Active Filter"
+                                closeOnSelect={false}
+                                selectedKeys={activeFilter}
+                                selectionMode="multiple"
+                                onSelectionChange={setActiveFilter}
+                                className="max-h-60 overflow-y-auto"
                             >
-                                Status
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu
-                            disallowEmptySelection
-                            aria-label="Active Filter"
-                            closeOnSelect={false}
-                            selectedKeys={activeFilter}
-                            selectionMode="multiple"
-                            onSelectionChange={setActiveFilter}
-                            className="max-h-60 overflow-y-auto"
-                        >
-                            {activeOptions.map((active) => (
-                                <DropdownItem key={active.key}>{active.name}</DropdownItem>
-                            ))}
-                        </DropdownMenu>
+                                {activeOptions.map((active) => (
+                                    <Dropdown.Item key={active.key} id={active.key} textValue={active.name}>
+                                        <Dropdown.ItemIndicator />
+                                        <Label>{active.name}</Label>
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown.Popover>
                     </Dropdown>
-                    <Button color="primary" endContent={<Plus className="size-4" />} onPress={() => setIsCreateModalOpen(true)}>
-                        Přidat
-                    </Button>
+                    <Button variant="primary" onPress={() => setIsCreateModalOpen(true)}>Přidat <Plus className="size-4" /></Button>
                 </div>
             </div>
             <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
@@ -227,47 +222,47 @@ function Organizations() {
                 return (
                     <div className="relative flex justify-end items-center gap-2">
                         <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider>
-                                    <DropdownItem
-                                        key="view"
-                                        startContent={<Building2 />}
-                                        variant="light"
-                                        isLoading={isLoadingDetail}
-                                        onPress={() => handleOpenDetailModal(organization.id)}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
-                                <DropdownSection>
-                                    {organization.active ? (
-                                        <DropdownItem
-                                            key="terminate"
-                                            startContent={<Ban />}
-                                            variant="light"
-                                            color="danger"
-                                            onPress={() => handleOpenTerminateModal(organization.id)}
+                            <Button isIconOnly size="sm" variant="ghost">
+                                <MoreVertical size={20} />
+                            </Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                    <Dropdown.Section>
+                                        <Dropdown.Item
+                                            id="view"
+                                            textValue="Detail"
+                                            onAction={() => handleOpenDetailModal(organization.id)}
                                         >
-                                            Deaktivovat
-                                        </DropdownItem>
-                                    ) : (
-                                        <DropdownItem
-                                            key="activate"
-                                            startContent={<Check />}
-                                            variant="light"
-                                            color="success"
-                                            onPress={() => activateOrganization(organization.id)}
-                                        >
-                                            Aktivovat
-                                        </DropdownItem>
-                                    )}
-                                </DropdownSection>
-                            </DropdownMenu>
+                                            <Building2 />
+                                            <Label>{isLoadingDetail ? "Načítání..." : "Detail"}</Label>
+                                        </Dropdown.Item>
+                                    </Dropdown.Section>
+                                    <Separator />
+                                    <Dropdown.Section>
+                                        {organization.active ? (
+                                            <Dropdown.Item
+                                                id="terminate"
+                                                textValue="Deaktivovat"
+                                                variant="danger"
+                                                onAction={() => handleOpenTerminateModal(organization.id)}
+                                            >
+                                                <Ban />
+                                                <Label>Deaktivovat</Label>
+                                            </Dropdown.Item>
+                                        ) : (
+                                            <Dropdown.Item
+                                                id="activate"
+                                                textValue="Aktivovat"
+                                                className="text-success"
+                                                onAction={() => activateOrganization(organization.id)}
+                                            >
+                                                <Check />
+                                                <Label>Aktivovat</Label>
+                                            </Dropdown.Item>
+                                        )}
+                                    </Dropdown.Section>
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
                     </div>
                 );
@@ -278,39 +273,47 @@ function Organizations() {
 
     return (
         <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Organizations table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ?
-                                "end" : "start"}
-                            allowsSorting={column.sortable}
+            {topContent}
+            <Table>
+                <Table.ScrollContainer>
+                    <Table.Content
+                        aria-label="Organizations table"
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={setSortDescriptor}
+                    >
+                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                            {(column) => (
+                                <Table.Column
+                                    key={column.key}
+                                    align={column.key === "actions" ?
+                                        "end" : "start"}
+                                    allowsSorting={column.sortable}
+                                >
+                                    {column.name}
+                                </Table.Column>
+                            )}
+                        </Table.Header>
+                        <Table.Body
+                            items={loading ? [] : sortedItems}
+                            renderEmptyState={() => (
+                                loading ? (
+                                    <div className="flex flex-col items-center gap-2 mt-72">
+                                        <Spinner />
+                                        <p className="text-sm text-foreground/60">Načítání organizace...</p>
+                                    </div>
+                                ) : (
+                                    <p>Žádná organizace nenalezena</p>
+                                )
+                            )}
                         >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody
-                    isLoading={loading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání organizace..." />}
-                    emptyContent="Žádná organizace nenalezena"
-                    items={sortedItems}
-                >
-                    {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
+                            {(item) => (
+                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
+                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table.Content>
+                </Table.ScrollContainer>
             </Table>
 
             <OrganizationCreateModal

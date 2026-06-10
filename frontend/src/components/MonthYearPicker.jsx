@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import {
     Button,
     Popover,
-    PopoverTrigger,
-    PopoverContent,
     Select,
-    SelectItem
+    Label,
+    ListBox
 } from "@heroui/react";
 import { CalendarDays } from "lucide-react";
 import {MIN_YEAR, MONTHS_SHORT} from "../constants/globalConstants.js";
@@ -21,25 +20,19 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
     const years = Array.from({ length: currentYear - MIN_YEAR + 1 }, (_, i) => currentYear - i);
 
     return (
-        <Popover isOpen={isOpen} onOpenChange={setIsOpen} placement="bottom">
-            <PopoverTrigger>
-                <Button
-                    variant="flat"
-                    endContent={<CalendarDays className="size-4 ms-2" />}
-                    className={`justify-between ${className}`}
-                    isDisabled={isDisabled}
-                >
-                    {MONTHS_SHORT[selectedMonth]} {selectedYear}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="p-3 w-[175px]">
+        <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+            <Button
+                variant="tertiary"
+                className={`justify-between ${className}`}
+                isDisabled={isDisabled}
+            >{MONTHS_SHORT[selectedMonth]} {selectedYear} <CalendarDays className="size-4 ms-2" /></Button>
+            <Popover.Content placement="bottom" className="p-3 w-[175px]">
+                <Popover.Dialog>
                 <div className="flex flex-col gap-4 w-full">
                     <Select
-                        label="Rok"
-                        size="sm"
-                        selectedKeys={[selectedYear.toString()]}
-                        onChange={(e) => {
-                            const year = Number(e.target.value);
+                        value={selectedYear.toString()}
+                        onChange={(value) => {
+                            const year = Number(value);
                             const month = year === currentYear && selectedMonth > currentMonth
                                 ? currentMonth
                                 : selectedMonth;
@@ -47,11 +40,22 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                             setSelectedMonth(month);
                             onChange?.({ month, year });
                         }}
-                        disallowEmptySelection
                     >
-                        {years.map((y) => (
-                            <SelectItem key={y} textValue={y.toString()}>{y}</SelectItem>
-                        ))}
+                        <Label>Rok</Label>
+                        <Select.Trigger>
+                            <Select.Value />
+                            <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                            <ListBox>
+                                {years.map((y) => (
+                                    <ListBox.Item key={y} id={y.toString()} textValue={y.toString()}>
+                                        {y}
+                                        <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                ))}
+                            </ListBox>
+                        </Select.Popover>
                     </Select>
 
                     <div className="grid grid-cols-3 gap-2">
@@ -74,7 +78,8 @@ export default function MonthYearPicker({ className = "", onChange, defaultValue
                         ))}
                     </div>
                 </div>
-            </PopoverContent>
+                </Popover.Dialog>
+            </Popover.Content>
         </Popover>
     );
 };

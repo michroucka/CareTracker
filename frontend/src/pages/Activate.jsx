@@ -1,4 +1,4 @@
-import { Form, Input, Button, Divider, Spinner, Card, CardBody } from "@heroui/react";
+import { Form, TextField, Input, InputGroup, Label, FieldError, Button, Separator, Spinner, Card } from "@heroui/react";
 import React from "react";
 import { get, postJSON } from "../api/api.js";
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, AlertCircle } from "lucide-react";
@@ -121,10 +121,10 @@ function Activate() {
         return (
             <div className="w-full flex justify-center items-center min-h-[400px]">
                 <Card className="w-sm">
-                    <CardBody className="flex flex-col items-center gap-4 py-8">
+                    <Card.Content className="flex flex-col items-center gap-4 py-8">
                         <Spinner size="lg" />
                         <p className="text-lg">Ověřuji platnost odkazu...</p>
-                    </CardBody>
+                    </Card.Content>
                 </Card>
             </div>
         );
@@ -134,13 +134,13 @@ function Activate() {
         return (
             <div className="w-full flex justify-center items-center min-h-[400px]">
                 <Card className="w-sm">
-                    <CardBody className="flex flex-col items-center gap-4 py-8">
+                    <Card.Content className="flex flex-col items-center gap-4 py-8">
                         <AlertCircle className="size-16 text-danger" />
                         <h2 className="text-xl font-semibold text-center">Neplatný aktivační odkaz</h2>
                         <p className="text-center text-foreground/70">
                             Tento odkaz je neplatný nebo již vypršel. Pokud potřebujete nový odkaz, kontaktujte administrátora.
                         </p>
-                    </CardBody>
+                    </Card.Content>
                 </Card>
             </div>
         );
@@ -154,98 +154,93 @@ function Activate() {
         >
             <div className="flex flex-col justify-center items-center gap-4 p-12 w-sm">
                 <h1 className="cursor-default">Aktivace účtu</h1>
-                <Divider className="mb-3 w-5/6" />
+                <Separator className="mb-3 w-5/6" />
 
-                <Input
-                    isRequired
-                    isDisabled={isSubmitting}
-                    isInvalid={!!errors.username}
-                    errorMessage={errors.username}
-                    label="Uživatelské jméno"
-                    labelPlacement="inside"
-                    name="username"
-                    value={username}
-                    onValueChange={(value) => {
-                        setUsername(value);
-                        if (errors.username) {
-                            setErrors({ ...errors, username: undefined });
-                        }
-                    }}
-                />
+                <TextField name="username" isRequired isInvalid={!!errors.username} className="w-full">
+                    <Label>Uživatelské jméno</Label>
+                    <Input
+                        isDisabled={isSubmitting}
+                        value={username}
+                        onChange={(e) => {
+                            setUsername(e.target.value);
+                            if (errors.username) {
+                                setErrors({ ...errors, username: undefined });
+                            }
+                        }}
+                    />
+                    <FieldError>{errors.username}</FieldError>
+                </TextField>
 
-                <Input
-                    isRequired
-                    isDisabled={isSubmitting}
-                    isInvalid={!!errors.password}
-                    errorMessage={errors.password}
-                    endContent={
-                        <button
-                            aria-label="toggle password visibility"
-                            className="focus:outline-solid outline-transparent cursor-pointer"
-                            type="button"
-                            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            title="Zobrazit heslo"
-                            disabled={isSubmitting}
-                        >
-                            {isPasswordVisible ? (
-                                <EyeOff className="size-6 sm:size-5 pointer-events-none" />
-                            ) : (
-                                <Eye className="size-6 sm:size-5 pointer-events-none" />
-                            )}
-                        </button>
-                    }
-                    label="Heslo"
-                    labelPlacement="inside"
-                    name="password"
-                    type={isPasswordVisible ? "text" : "password"}
-                    value={password}
-                    onValueChange={(value) => {
-                        setPassword(value);
-                        if (errors.password) {
-                            setErrors({ ...errors, password: undefined });
-                        }
-                    }}
-                />
+                <TextField name="password" isRequired type={isPasswordVisible ? "text" : "password"} isInvalid={!!errors.password} className="w-full">
+                    <Label>Heslo</Label>
+                    <InputGroup>
+                        <InputGroup.Input
+                            isDisabled={isSubmitting}
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) {
+                                    setErrors({ ...errors, password: undefined });
+                                }
+                            }}
+                        />
+                        <InputGroup.Suffix>
+                            <button
+                                aria-label="toggle password visibility"
+                                className="focus:outline-solid outline-transparent cursor-pointer"
+                                type="button"
+                                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                                title="Zobrazit heslo"
+                                disabled={isSubmitting}
+                            >
+                                {isPasswordVisible ? (
+                                    <EyeOff className="size-6 sm:size-5 pointer-events-none" />
+                                ) : (
+                                    <Eye className="size-6 sm:size-5 pointer-events-none" />
+                                )}
+                            </button>
+                        </InputGroup.Suffix>
+                    </InputGroup>
+                    <FieldError>{errors.password}</FieldError>
+                </TextField>
 
-                <Input
-                    isRequired
-                    isDisabled={isSubmitting}
-                    isInvalid={!!errors.passwordConfirm}
-                    errorMessage={errors.passwordConfirm}
-                    endContent={
-                        <button
-                            aria-label="toggle password confirmation visibility"
-                            className="focus:outline-solid outline-transparent cursor-pointer"
-                            type="button"
-                            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                            title="Zobrazit heslo"
-                            disabled={isSubmitting}
-                        >
-                            {isPasswordVisible ? (
-                                <EyeOff className="size-6 sm:size-5 pointer-events-none" />
-                            ) : (
-                                <Eye className="size-6 sm:size-5 pointer-events-none" />
-                            )}
-                        </button>
-                    }
-                    label="Potvrzení hesla"
-                    labelPlacement="inside"
-                    name="passwordConfirm"
-                    type={isPasswordVisible ? "text" : "password"}
-                    value={passwordConfirm}
-                    onValueChange={(value) => {
-                        setPasswordConfirm(value);
-                        if (errors.passwordConfirm) {
-                            setErrors({ ...errors, passwordConfirm: undefined });
-                        }
-                    }}
-                />
+                <TextField name="passwordConfirm" isRequired type={isPasswordVisible ? "text" : "password"} isInvalid={!!errors.passwordConfirm} className="w-full">
+                    <Label>Potvrzení hesla</Label>
+                    <InputGroup>
+                        <InputGroup.Input
+                            isDisabled={isSubmitting}
+                            value={passwordConfirm}
+                            onChange={(e) => {
+                                setPasswordConfirm(e.target.value);
+                                if (errors.passwordConfirm) {
+                                    setErrors({ ...errors, passwordConfirm: undefined });
+                                }
+                            }}
+                        />
+                        <InputGroup.Suffix>
+                            <button
+                                aria-label="toggle password confirmation visibility"
+                                className="focus:outline-solid outline-transparent cursor-pointer"
+                                type="button"
+                                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                                title="Zobrazit heslo"
+                                disabled={isSubmitting}
+                            >
+                                {isPasswordVisible ? (
+                                    <EyeOff className="size-6 sm:size-5 pointer-events-none" />
+                                ) : (
+                                    <Eye className="size-6 sm:size-5 pointer-events-none" />
+                                )}
+                            </button>
+                        </InputGroup.Suffix>
+                    </InputGroup>
+                    <FieldError>{errors.passwordConfirm}</FieldError>
+                </TextField>
 
-                <Button
+                <Button variant="primary"
                     className="w-full text-base"
-                    color="primary"
                     type="submit"
-                    isLoading={isSubmitting}
+                    isPending={isSubmitting}
                     isDisabled={isSubmitting}
                 >
                     {isSubmitting ? "Aktivuji účet..." : "Aktivovat účet"}

@@ -1,11 +1,7 @@
 import React from "react";
 import {
     Modal,
-    ModalBody,
-    ModalContent,
-    ModalHeader,
     Button,
-    ModalFooter,
 } from "@heroui/react";
 import {UserRoundX} from "lucide-react";
 
@@ -26,39 +22,36 @@ export function ClientDeactivateAccountModal({ isOpen, onClose, onSubmit, client
     }
 
     return (
-        <Modal isOpen={isOpen}
-               onClose={onClose}
-               size="sm"
-               scrollBehavior="outside"
-        >
-            <ModalContent>
-                <ModalHeader className="flex justify-between items-center pb-0">
-                    Deaktivovat účet klienta
-                </ModalHeader>
-                <ModalBody className="text-foreground/50 text-sm">
-                    <p>
-                        Opravdu chcete deaktivovat účet klienta {clientName}?
-                    </p>
-                    <p>
-                        Klient se dočasně nebude moci přihlásit do aplikace. Účet lze kdykoli znovu aktivovat.
-                    </p>
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button variant="bordered" onPress={onClose}>
-                        Zavřít
-                    </Button>
-                    <Button
-                        className="text-base"
-                        color="danger"
-                        isLoading={isSubmitting}
-                        isDisabled={isSubmitting}
-                        endContent={<UserRoundX className="size-4" />}
-                        onPress={handleSubmit}
-                    >
-                        {isSubmitting ? "Ukládání..." : "Deaktivovat účet"}
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <Modal.Container size="sm">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex justify-between items-center pb-0">
+                            <Modal.Heading>Deaktivovat účet klienta</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body className="text-foreground/50 text-sm">
+                            <p>
+                                Opravdu chcete deaktivovat účet klienta {clientName}?
+                            </p>
+                            <p>
+                                Klient se dočasně nebude moci přihlásit do aplikace. Účet lze kdykoli znovu aktivovat.
+                            </p>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
+                            <Button variant="outline" onPress={onClose}>
+                                Zavřít
+                            </Button>
+                            <Button variant="danger"
+                                className="text-base"
+                                isPending={isSubmitting}
+                                isDisabled={isSubmitting}
+                                onPress={handleSubmit}
+                            >{isSubmitting ? "Ukládání..." : "Deaktivovat účet"} <UserRoundX className="size-4" /></Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }

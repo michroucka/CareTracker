@@ -3,18 +3,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Button,
     Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
+    Label,
+    Separator,
+    TextField,
+    InputGroup,
     Spinner,
     Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
 } from "@heroui/react";
 import {
     ChevronDown,
@@ -493,20 +487,23 @@ function Clients() {
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
+                    <TextField
                         className="w-full sm:max-w-[44%]"
-                        placeholder="Hledat podle jména..."
-                        startContent={<Search className="size-5" />}
-                        value={filterValue}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                    />
+                    >
+                        <InputGroup>
+                            <InputGroup.Prefix><Search className="size-5 opacity-50" /></InputGroup.Prefix>
+                            <InputGroup.Input
+                                placeholder="Hledat podle jména..."
+                                value={filterValue}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            />
+                        </InputGroup>
+                    </TextField>
                     <div className="flex gap-3">
                         <Button
                             isIconOnly
-                            variant="flat"
+                            variant="tertiary"
                             className="sm:hidden"
                             onPress={handleOpenFiltersModal}
                         >
@@ -514,103 +511,99 @@ function Clients() {
                         </Button>
                         {user?.role !== "CLIENT" && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown
-                                            className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                <Button
+                                    variant="tertiary"
+                                    className="hidden sm:flex text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                >Status <ChevronDown className="size-4" /></Button>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        disallowEmptySelection
+                                        aria-label="Active Filter"
+                                        closeOnSelect={false}
+                                        selectedKeys={activeFilter}
+                                        selectionMode="multiple"
+                                        onSelectionChange={setActiveFilter}
+                                        className="max-h-60 overflow-y-auto"
                                     >
-                                        Status
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Active Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={activeFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={setActiveFilter}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    {activeOptions.map((active) => (
-                                        <DropdownItem key={active.key}>
-                                            {active.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
+                                        {activeOptions.map((active) => (
+                                            <Dropdown.Item key={active.key} id={active.key} textValue={active.name}>
+                                                <Dropdown.ItemIndicator />
+                                                <Label>{active.name}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
                             </Dropdown>
                         )}
 
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
-                                    <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                <Button
+                                    variant="tertiary"
+                                    className="hidden sm:flex text-foreground"
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                                >Středisko <ChevronDown className="size-4" /></Button>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        disallowEmptySelection
+                                        aria-label="Department Filter"
+                                        closeOnSelect={false}
+                                        selectedKeys={departmentFilter}
+                                        selectionMode="multiple"
+                                        onSelectionChange={handleDepartmentFilterChange}
+                                        className="max-h-60 overflow-y-auto"
                                     >
-                                        Středisko
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Department Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={departmentFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleDepartmentFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všechny</DropdownItem>
-                                    {departmentOptions.map((dept) => (
-                                        <DropdownItem key={dept.key}>
-                                            {dept.city}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
+                                        <Dropdown.Item id="all" textValue="Všechny">
+                                            <Dropdown.ItemIndicator />
+                                            <Label>Všechny</Label>
+                                        </Dropdown.Item>
+                                        {departmentOptions.map((dept) => (
+                                            <Dropdown.Item key={dept.key} id={dept.key} textValue={dept.city}>
+                                                <Dropdown.ItemIndicator />
+                                                <Label>{dept.city}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
                             </Dropdown>
                         )}
 
                         <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
-                                <Button
-                                    endContent={<ChevronDown className="size-4" />}
-                                    variant="flat"
-                                    className="text-foreground"
-                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            <Button
+                                variant="tertiary"
+                                className="hidden sm:flex text-foreground"
+                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                            >Pečovatel <ChevronDown className="size-4" /></Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu
+                                    disallowEmptySelection
+                                    aria-label="Caregiver Filter"
+                                    closeOnSelect={false}
+                                    selectedKeys={caregiverFilter}
+                                    selectionMode="multiple"
+                                    onSelectionChange={handleCaregiverFilterChange}
+                                    className="max-h-60 overflow-y-auto"
                                 >
-                                    Pečovatel
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Caregiver Filter"
-                                closeOnSelect={false}
-                                selectedKeys={caregiverFilter}
-                                selectionMode="multiple"
-                                onSelectionChange={handleCaregiverFilterChange}
-                                className="max-h-60 overflow-y-auto"
-                            >
-                                <DropdownItem key="all">Všichni</DropdownItem>
-                                {caregiverOptions.map((caregiver) => (
-                                    <DropdownItem key={caregiver.key}>
-                                        {caregiver.name}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
+                                    <Dropdown.Item id="all" textValue="Všichni">
+                                        <Dropdown.ItemIndicator />
+                                        <Label>Všichni</Label>
+                                    </Dropdown.Item>
+                                    {caregiverOptions.map((caregiver) => (
+                                        <Dropdown.Item key={caregiver.key} id={caregiver.key} textValue={caregiver.name}>
+                                            <Dropdown.ItemIndicator />
+                                            <Label>{caregiver.name}</Label>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
 
                         {canAlterClient && (
-                            <Button color="primary"
-                                    endContent={<Plus className="size-4" />}
+                            <Button variant="primary"
                                     onPress={handleOpenCreateModal}
                                     isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                            >
-                                Přidat
-                            </Button>
+                            >Přidat <Plus className="size-4" /></Button>
                         )}
                     </div>
                 </div>
@@ -680,81 +673,58 @@ function Clients() {
                 return (
                     <div className="relative flex justify-end items-center gap-2">
                         <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider={canAlterClient}>
-                                    <DropdownItem key="view"
-                                                  startContent={<UserRound />}
-                                                  variant="light"
-                                                  isLoading={isLoadingDetail}
-                                                  onPress={() => handleOpenDetailModal(client.id)}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                    <DropdownItem key="view-ip"
-                                                  startContent={<FileText />}
-                                                  variant="light"
-                                                  onPress={() => navigate(`/clients/${client.id}/individual-plan`)}
-                                    >
-                                        Individuální plán
-                                    </DropdownItem>
-                                </DropdownSection>
+                            <Button isIconOnly size="sm" variant="ghost">
+                                <MoreVertical size={20} />
+                            </Button>
+                            <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                    <Dropdown.Section>
+                                        <Dropdown.Item id="view" textValue="Detail" onAction={() => handleOpenDetailModal(client.id)}>
+                                            <UserRound />
+                                            <Label>{isLoadingDetail ? "Načítání..." : "Detail"}</Label>
+                                        </Dropdown.Item>
+                                        <Dropdown.Item id="view-ip" textValue="Individuální plán" onAction={() => navigate(`/clients/${client.id}/individual-plan`)}>
+                                            <FileText />
+                                            <Label>Individuální plán</Label>
+                                        </Dropdown.Item>
+                                    </Dropdown.Section>
 
-                                {canAlterClient ? (
-                                    <DropdownSection>
-                                        {client.userAccountActive === null ? (
-                                            <DropdownItem key="create-account"
-                                                          startContent={<UserRoundPlus />}
-                                                          variant="light"
-                                                          onPress={() => handleOpenCreateAccountModal(client.id)}
-                                            >
-                                                Vytvořit účet
-                                            </DropdownItem>
-                                        ) : client.userAccountActive === true ? (
-                                            <DropdownItem key="deactivate-account"
-                                                          startContent={<UserRoundX />}
-                                                          variant="light"
-                                                          color="danger"
-                                                          onPress={() => handleOpenDeactivateAccountModal(client.id)}
-                                            >
-                                                Deaktivovat účet
-                                            </DropdownItem>
-                                        ) : (
-                                            <DropdownItem key="activate-account"
-                                                          startContent={<UserRoundCheck />}
-                                                          variant="light"
-                                                          color="success"
-                                                          onPress={() => handleActivateClientAccount(client.id)}
-                                            >
-                                                Aktivovat účet
-                                            </DropdownItem>
-                                        )}
-                                        {client.active ? (
-                                            <DropdownItem key="terminate"
-                                                          startContent={<UserRoundX />}
-                                                          variant="light"
-                                                          color="danger"
-                                                          onPress={() => handleOpenTerminateModal(client.id)}
-                                            >
-                                                Deaktivovat
-                                            </DropdownItem>
-                                        ) : (
-                                            <DropdownItem key="activate"
-                                                          startContent={<UserRoundCheck />}
-                                                          variant="light"
-                                                          color="success"
-                                                          onPress={() => handleActivateClient(client.id)}
-                                            >
-                                                Aktivovat
-                                            </DropdownItem>
-                                        )}
-                                    </DropdownSection>
-                                ) : null}
-                            </DropdownMenu>
+                                    {canAlterClient ? (
+                                        <>
+                                            <Separator />
+                                            <Dropdown.Section>
+                                                {client.userAccountActive === null ? (
+                                                    <Dropdown.Item id="create-account" textValue="Vytvořit účet" onAction={() => handleOpenCreateAccountModal(client.id)}>
+                                                        <UserRoundPlus />
+                                                        <Label>Vytvořit účet</Label>
+                                                    </Dropdown.Item>
+                                                ) : client.userAccountActive === true ? (
+                                                    <Dropdown.Item id="deactivate-account" textValue="Deaktivovat účet" variant="danger" onAction={() => handleOpenDeactivateAccountModal(client.id)}>
+                                                        <UserRoundX />
+                                                        <Label>Deaktivovat účet</Label>
+                                                    </Dropdown.Item>
+                                                ) : (
+                                                    <Dropdown.Item id="activate-account" textValue="Aktivovat účet" className="text-success" onAction={() => handleActivateClientAccount(client.id)}>
+                                                        <UserRoundCheck />
+                                                        <Label>Aktivovat účet</Label>
+                                                    </Dropdown.Item>
+                                                )}
+                                                {client.active ? (
+                                                    <Dropdown.Item id="terminate" textValue="Deaktivovat" variant="danger" onAction={() => handleOpenTerminateModal(client.id)}>
+                                                        <UserRoundX />
+                                                        <Label>Deaktivovat</Label>
+                                                    </Dropdown.Item>
+                                                ) : (
+                                                    <Dropdown.Item id="activate" textValue="Aktivovat" className="text-success" onAction={() => handleActivateClient(client.id)}>
+                                                        <UserRoundCheck />
+                                                        <Label>Aktivovat</Label>
+                                                    </Dropdown.Item>
+                                                )}
+                                            </Dropdown.Section>
+                                        </>
+                                    ) : null}
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
                         </Dropdown>
                     </div>
                 );
@@ -777,41 +747,49 @@ function Clients() {
 
     return (
         <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                aria-label="Clients table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ? "end" : "start"}
-                            allowsSorting={column.sortable}
+            {topContent}
+            <Table>
+                <Table.ScrollContainer>
+                    <Table.Content
+                        aria-label="Clients table"
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={setSortDescriptor}
+                    >
+                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                            {(column) => (
+                                <Table.Column
+                                    key={column.key}
+                                    align={column.key === "actions" ? "end" : "start"}
+                                    allowsSorting={column.sortable}
+                                >
+                                    {column.name}
+                                </Table.Column>
+                            )}
+                        </Table.Header>
+                        <Table.Body
+                            items={isLoading ? [] : sortedItems}
+                            renderEmptyState={() => (
+                                isLoading ? (
+                                    <div className="flex flex-col items-center gap-2 mt-72">
+                                        <Spinner />
+                                        <p className="text-sm text-foreground/60">Načítání klientů...</p>
+                                    </div>
+                                ) : (
+                                    <p>
+                                        {isSuperadminWithoutOrg
+                                            ? "Vyberte prosím organizaci v navigační liště" : "Žádní klienti nenalezeni"}
+                                    </p>
+                                )
+                            )}
                         >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody
-                    isLoading={isLoading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání klientů..." />}
-                    emptyContent={
-                        isSuperadminWithoutOrg
-                            ? "Vyberte prosím organizaci v navigační liště" : "Žádní klienti nenalezeni"
-                    }
-                    items={sortedItems}
-                >
-                    {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
+                            {(item) => (
+                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
+                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table.Content>
+                </Table.ScrollContainer>
             </Table>
 
             <ClientCreateModal

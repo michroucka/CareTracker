@@ -1,11 +1,7 @@
 import React from "react";
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    Button, Autocomplete, AutocompleteItem, Tooltip, Form,
+    Button, Autocomplete, Label, SearchField, ListBox, FieldError, useFilter, Tooltip, Form,
 } from "@heroui/react";
 import {Printer, Download} from "lucide-react";
 import MonthYearPicker from "../../MonthYearPicker.jsx";
@@ -21,6 +17,7 @@ export function GenerateReceiptModal({ isOpen, onClose, clients = [] }) {
     const [errors, setErrors] = React.useState({});
 
     const {fetchReceipt} = usePerformedTasks();
+    const {contains} = useFilter({sensitivity: "base"});
 
     // Validate form
     const validateForm = () => {
@@ -88,86 +85,114 @@ export function GenerateReceiptModal({ isOpen, onClose, clients = [] }) {
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} size="sm" scrollBehavior="outside">
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">Vygenerovat stvrzenku</ModalHeader>
-                <ModalBody>
-                    <Form
-                        className="w-full space-y-4"
-                        validationErrors={errors}
-                        onReset={resetForm}
-                    >
-                        <div className="flex flex-col gap-4 w-full">
-                            {/* Client Selection */}
-                            <Autocomplete
-                                isRequired
-                                isDisabled={isLoadingPrint || isLoadingDownload}
-                                isInvalid={!!errors.clientId}
-                                errorMessage={errors.clientId}
-                                label="Klient"
-                                labelPlacement="inside"
-                                name="clientId"
-                                selectedKey={clientId ? clientId.toString() : null}
-                                onSelectionChange={(key) => {
-                                    setClientId(key ? parseInt(key) : null);
-                                    if (errors.clientId) {
-                                        setErrors({ ...errors, clientId: undefined });
-                                    }
-                                }}
+        <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && handleClose()}>
+                <Modal.Container size="sm">
+                    <Modal.Dialog>
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="flex flex-col gap-1">
+                            <Modal.Heading>Vygenerovat stvrzenku</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Form
+                                className="w-full space-y-4"
+                                validationErrors={errors}
+                                onReset={resetForm}
                             >
-                                {clients.map((client) => (
-                                    <AutocompleteItem
-                                        key={client.id.toString()}
-                                        value={client.id.toString()}
-                                        textValue={client.fullName}
+                                <div className="flex flex-col gap-4 w-full">
+                                    {/* Client Selection */}
+                                    <Autocomplete
+                                        isRequired
+                                        isDisabled={isLoadingPrint || isLoadingDownload}
+                                        isInvalid={!!errors.clientId}
+                                        name="clientId"
+                                        value={clientId ? clientId.toString() : null}
+                                        onChange={(key) => {
+                                            setClientId(key ? parseInt(key) : null);
+                                            if (errors.clientId) {
+                                                setErrors({ ...errors, clientId: undefined });
+                                            }
+                                        }}
                                     >
-                                        {client.fullName}
-                                    </AutocompleteItem>
-                                ))}
-                            </Autocomplete>
+                                        <Label>Klient</Label>
+                                        <Autocomplete.Trigger>
+                                            <Autocomplete.Value />
+                                            <Autocomplete.ClearButton />
+                                            <Autocomplete.Indicator />
+                                        </Autocomplete.Trigger>
+                                        <Autocomplete.Popover>
+                                            <Autocomplete.Filter filter={contains}>
+                                                <SearchField>
+                                                    <SearchField.Group>
+                                                        <SearchField.SearchIcon />
+                                                        <SearchField.Input placeholder="Hledat..." />
+                                                    </SearchField.Group>
+                                                </SearchField>
+                                                <ListBox>
+                                                    {clients.map((client) => (
+                                                        <ListBox.Item
+                                                            key={client.id.toString()}
+                                                            id={client.id.toString()}
+                                                            textValue={client.fullName}
+                                                        >
+                                                            {client.fullName}
+                                                            <ListBox.ItemIndicator />
+                                                        </ListBox.Item>
+                                                    ))}
+                                                </ListBox>
+                                            </Autocomplete.Filter>
+                                        </Autocomplete.Popover>
+                                        <FieldError>{errors.clientId}</FieldError>
+                                    </Autocomplete>
 
-                            <MonthYearPicker onChange={({ month, year }) => {setMonth(month); setYear(year)}} />
-                        </div>
-                    </Form>
-                </ModalBody>
-                <ModalFooter className="justify-between">
-                    <Button
-                        className="text-base"
-                        type="reset"
-                        variant="bordered"
-                        isDisabled={isLoadingPrint || isLoadingDownload}
-                        onPress={resetForm}
-                    >
-                        Reset
-                    </Button>
-                    <div className="flex gap-3">
-                        <Tooltip content="Vytisknout stvrzenku">
+                                    <MonthYearPicker onChange={({ month, year }) => {setMonth(month); setYear(year)}} />
+                                </div>
+                            </Form>
+                        </Modal.Body>
+                        <Modal.Footer className="justify-between">
                             <Button
-                                isIconOnly
-                                color="primary"
-                                isLoading={isLoadingPrint}
-                                isDisabled={isLoadingDownload}
-                                onPress={handlePrint}
-                                variant="ghost"
+                                className="text-base"
+                                type="reset"
+                                variant="outline"
+                                isDisabled={isLoadingPrint || isLoadingDownload}
+                                onPress={resetForm}
                             >
-                                <Printer className="size-6" />
+                                Reset
                             </Button>
-                        </Tooltip>
-                        <Tooltip content="Stáhnout stvrzenku">
-                            <Button
-                                isIconOnly
-                                color="primary"
-                                isLoading={isLoadingDownload}
-                                isDisabled={isLoadingPrint}
-                                onPress={handleDownload}
-                                variant="ghost"
-                            >
-                                <Download className="size-6" />
-                            </Button>
-                        </Tooltip>
-                    </div>
-                </ModalFooter>
-            </ModalContent>
+                            <div className="flex gap-3">
+                                <Tooltip delay={0}>
+                                    <Tooltip.Trigger>
+                                        <Button
+                                            isIconOnly
+                                            isPending={isLoadingPrint}
+                                            isDisabled={isLoadingDownload}
+                                            onPress={handlePrint}
+                                            variant="ghost"
+                                        >
+                                            <Printer className="size-6" />
+                                        </Button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content>Vytisknout stvrzenku</Tooltip.Content>
+                                </Tooltip>
+                                <Tooltip delay={0}>
+                                    <Tooltip.Trigger>
+                                        <Button
+                                            isIconOnly
+                                            isPending={isLoadingDownload}
+                                            isDisabled={isLoadingPrint}
+                                            onPress={handleDownload}
+                                            variant="ghost"
+                                        >
+                                            <Download className="size-6" />
+                                        </Button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content>Stáhnout stvrzenku</Tooltip.Content>
+                                </Tooltip>
+                            </div>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     );
 }
