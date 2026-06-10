@@ -11,14 +11,12 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@heroui/react": "^2.8.4",
-    "@heroui/use-theme": "^2.1.10",
+    "@heroui/react": "^3.1.0",
+    "@heroui/styles": "^3.1.0",
     "@internationalized/date": "^3.10.0",
     "@react-aria/i18n": "^3.12.13",
     "@tailwindcss/vite": "^4.1.13",
-    "framer-motion": "^12.23.22",
     "lucide-react": "^0.556.0",
-    "motion": "^12.23.22",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3",
