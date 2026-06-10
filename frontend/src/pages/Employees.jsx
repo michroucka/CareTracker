@@ -466,7 +466,7 @@ function Employees() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "zaměstnanec" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "zaměstnanci" : "zaměstnanců"}</span>
+                    <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "zaměstnanec" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "zaměstnanci" : "zaměstnanců"}</span>
                 </div>
             </div>
         );
@@ -494,19 +494,19 @@ function Employees() {
             case "fullName":
                 return (
                     <div className="flex flex-col">
-                        <p className="font-bold text-small">{cellValue}</p>
+                        <p className="font-bold text-sm">{cellValue}</p>
                     </div>
                 );
             case "role":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{ROLE_LABELS[cellValue]}</p>
+                        <p className="text-sm">{ROLE_LABELS[cellValue]}</p>
                     </div>
                 );
             case "department":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue?.city || "-"}</p>
+                        <p className="text-sm">{cellValue?.city || "-"}</p>
                     </div>
                 );
             case "actions":

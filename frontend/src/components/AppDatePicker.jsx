@@ -33,7 +33,7 @@ export function AppDatePicker({
             <Label>{label}</Label>
             <DateField.Group fullWidth>
                 <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} className="text-default-500" />}
+                    {(segment) => <DateField.Segment segment={segment} className="text-muted" />}
                 </DateField.Input>
                 <DateField.Suffix>
                     <DatePicker.Trigger>

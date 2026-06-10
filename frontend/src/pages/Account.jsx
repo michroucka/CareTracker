@@ -103,7 +103,7 @@ function Account() {
         >
             <div className="flex flex-col justify-center items-center gap-4 w-full sm:w-sm">
                 <div className="flex flex-col items-center gap-1">
-                    <UserRound className="size-14 text-default-400" />
+                    <UserRound className="size-14 text-muted" />
                     <h1 className="cursor-default">Můj účet</h1>
                 </div>
                 <Separator className="mb-3 w-5/6" />

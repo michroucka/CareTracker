@@ -1,14 +1,17 @@
 @import "tailwindcss";
 @import "@heroui/styles";
-@import "./table.css";
 @custom-variant dark (&:is(.dark *));
 
 @theme {
     --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
 }
 
-
 :root {
+    --secondary: #2176b8;
+    --secondary-foreground: #fff;
+
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

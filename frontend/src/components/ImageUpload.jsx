@@ -141,7 +141,7 @@ export function ImageUpload({
                 )}
 
                 <div
-                    className="rounded-full border-2 overflow-hidden border-default-200"
+                    className="rounded-full border-2 overflow-hidden border-default"
                     style={{ width: `${size * 4}px`, height: `${size * 4}px` }}
                 >
                     {preview ? (
@@ -151,8 +151,8 @@ export function ImageUpload({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-default-100">
-                            <Camera size={actualIconSize} className="text-default-400" />
+                        <div className="w-full h-full flex items-center justify-center bg-default">
+                            <Camera size={actualIconSize} className="text-muted" />
                         </div>
                     )}
                 </div>
@@ -186,8 +186,8 @@ export function ImageUpload({
                     onDrop={handleDrop}
                     className={`
                         relative rounded-full overflow-hidden transition-all duration-300 ease-in-out group
-                        ${isInvalid ? 'border-2 border-danger' : 'border-2 border-default-200'}
-                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'}
+                        ${isInvalid ? 'border-2 border-danger' : 'border-2 border-default'}
+                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-accent'}
                     `}
                     style={{ width: `${size * 4}px`, height: `${size * 4}px` }}
                 >
@@ -207,10 +207,10 @@ export function ImageUpload({
                     ) : (
                         <div className={`
                             w-full h-full flex items-center justify-center
-                            ${dragActive ? 'bg-primary/10' : 'bg-default-100'}
+                            ${dragActive ? 'bg-accent/10' : 'bg-default'}
                             transition-colors
                         `}>
-                            <Camera size={actualIconSize} className="text-default-400" />
+                            <Camera size={actualIconSize} className="text-muted" />
                         </div>
                     )}
                 </div>

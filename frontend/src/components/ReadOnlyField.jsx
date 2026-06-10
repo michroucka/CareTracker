@@ -11,7 +11,7 @@ export function ReadOnlyField({ label, value, className = "", labelPlacement = "
         return (
             <div className={containerCls}>
                 {label && <label className="text-xs font-medium text-foreground/50 mb-1">{label}</label>}
-                <div className={`w-full rounded-md bg-default-100 px-3 text-sm text-foreground ${multiline ? "py-2 min-h-20 whitespace-pre-wrap" : "h-14 flex items-center"}`}>
+                <div className={`w-full rounded-md bg-default px-3 text-sm text-foreground ${multiline ? "py-2 min-h-20 whitespace-pre-wrap" : "h-14 flex items-center"}`}>
                     {value || "-"} {endContent}
                 </div>
             </div>
@@ -20,7 +20,7 @@ export function ReadOnlyField({ label, value, className = "", labelPlacement = "
 
     return (
         <div className={containerCls}>
-            <div className={`relative w-full rounded-md bg-default-100 px-3 flex flex-col justify-center ${multiline ? "py-2 min-h-20" : "h-14"}`}>
+            <div className={`relative w-full rounded-md bg-default px-3 flex flex-col justify-center ${multiline ? "py-2 min-h-20" : "h-14"}`}>
                 {label && <label className="text-xs font-medium text-foreground/50">{label}</label>}
                 <div className={`text-sm text-foreground ${multiline ? "whitespace-pre-wrap" : ""}`}>
                     {value || "-"} {endContent}

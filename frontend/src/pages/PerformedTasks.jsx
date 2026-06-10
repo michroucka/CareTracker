@@ -548,7 +548,7 @@ function PerformedTasks() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-between items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
+                    <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
 
                     <Tooltip delay={0}>
                         <Tooltip.Trigger>
@@ -594,19 +594,19 @@ function PerformedTasks() {
             case "date":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{formatDateTime(performedTask.date)}</p>
+                        <p className="text-sm">{formatDateTime(performedTask.date)}</p>
                     </div>
                 );
             case "task":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{performedTask.taskName}</p>
+                        <p className="text-sm">{performedTask.taskName}</p>
                     </div>
                 );
             case "client":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">
+                        <p className="text-sm">
                             {performedTask.clientName}
                         </p>
                     </div>
@@ -614,7 +614,7 @@ function PerformedTasks() {
             case "unitCount":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">
+                        <p className="text-sm">
                             {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType] || "-"}
                         </p>
                     </div>
@@ -622,7 +622,7 @@ function PerformedTasks() {
             case "price":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">
+                        <p className="text-sm">
                             {formatNumber(cellValue)} Kč
                         </p>
                     </div>

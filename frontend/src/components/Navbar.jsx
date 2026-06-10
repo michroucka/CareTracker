@@ -92,7 +92,7 @@ export default function AppNavbar() {
                 {/* Logo */}
                 <button
                     onClick={() => navigate("/")}
-                    className="flex items-center px-2 py-3 mb-1 rounded-xl hover:bg-content2 transition-colors cursor-pointer"
+                    className="flex items-center px-2 py-3 mb-1 rounded-xl hover:bg-surface-secondary transition-colors cursor-pointer"
                 >
                     <CareTrackerLogo />
                     <span className="font-bold text-2xl">CareTracker</span>
@@ -109,8 +109,8 @@ export default function AppNavbar() {
                                 href={item.path}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-lg transition-all ease-in-out duration-200
                                     ${isActive
-                                        ? "bg-primary/10 text-primary font-semibold opacity-100"
-                                        : "opacity-60 hover:opacity-100 hover:bg-content2"
+                                        ? "bg-accent/10 text-accent font-semibold opacity-100"
+                                        : "opacity-60 hover:opacity-100 hover:bg-surface-secondary"
                                     }`}
                             >
                                 <Icon className="size-5.5 shrink-0" />
@@ -181,7 +181,7 @@ export default function AppNavbar() {
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             aria-label={isMenuOpen ? "Zavřít menu" : "Otevřít menu"}
                             aria-expanded={isMenuOpen}
-                            className="p-2 rounded-lg hover:bg-content2 transition-colors"
+                            className="p-2 rounded-lg hover:bg-surface-secondary transition-colors"
                         >
                             {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
                         </button>
@@ -202,7 +202,7 @@ export default function AppNavbar() {
                                         onClick={() => setIsMenuOpen(false)}
                                         className={`flex items-center gap-3 px-3 py-3 rounded-xl font-medium transition-colors
                                             ${isActive
-                                                ? "bg-primary/10 text-primary font-semibold opacity-100"
+                                                ? "bg-accent/10 text-accent font-semibold opacity-100"
                                                 : "opacity-60"
                                             }`}
                                     >

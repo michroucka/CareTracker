@@ -340,7 +340,7 @@ function Tasks() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
+                    <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
                 </div>
             </div>
         );
@@ -365,19 +365,19 @@ function Tasks() {
             case "name":
                 return (
                     <div className="flex flex-col">
-                        <p className="font-bold text-small">{cellValue}</p>
+                        <p className="font-bold text-sm">{cellValue}</p>
                     </div>
                 );
             case "unitPrice":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue} Kč</p>
+                        <p className="text-sm">{cellValue} Kč</p>
                     </div>
                 );
             case "unitType":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{unitTypeLabels[cellValue]}</p>
+                        <p className="text-sm">{unitTypeLabels[cellValue]}</p>
                     </div>
                 )
             case "doubleMeeting":

@@ -163,8 +163,8 @@ function Login() {
             </div>
 
             {/* Branding panel — jen desktop */}
-            <div className="hidden sm:flex flex-col justify-between gap-8 w-3/5 bg-primary/5 dark:bg-content2/50 border border-primary/10 dark:border-default-100 rounded-2xl p-10 relative overflow-hidden">
-                <div aria-hidden="true" className="absolute -top-16 -right-16 w-64 h-64 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="hidden sm:flex flex-col justify-between gap-8 w-3/5 bg-accent/5 dark:bg-surface-secondary/50 border border-accent/10 dark:border-default rounded-2xl p-10 relative overflow-hidden">
+                <div aria-hidden="true" className="absolute -top-16 -right-16 w-64 h-64 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
                 <div aria-hidden="true" className="absolute -bottom-20 -left-10 w-72 h-72 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
                 <img src={ctIcon} alt="" aria-hidden="true" className="absolute right-6 bottom-6 w-48 opacity-[0.04] select-none pointer-events-none" draggable={false} />
 
@@ -183,8 +183,8 @@ function Login() {
                 <div className="relative flex flex-col gap-5">
                     {brandingFeatures.map(({ icon: Icon, title, text }) => (
                         <div key={title} className="flex items-start gap-4">
-                            <div className="p-2.5 bg-primary/10 rounded-xl shrink-0">
-                                <Icon className="size-7 text-primary" />
+                            <div className="p-2.5 bg-accent/10 rounded-xl shrink-0">
+                                <Icon className="size-7 text-accent" />
                             </div>
                             <div>
                                 <p className="font-semibold">{title}</p>
@@ -302,7 +302,7 @@ function Login() {
                             </div>
 
                             <Link
-                                className="text-foreground/50 hover:text-primary cursor-pointer text-sm"
+                                className="text-foreground/50 hover:text-accent cursor-pointer text-sm"
                                 onPress={() => setShowForgotPassword(true)}
                             >
                                 Zapomenuté heslo?
@@ -345,7 +345,7 @@ function Login() {
                             </div>
 
                             <Link
-                                className="text-foreground/50 hover:text-primary cursor-pointer text-sm"
+                                className="text-foreground/50 hover:text-accent cursor-pointer text-sm"
                                 onPress={() => {
                                     setShowForgotPassword(false);
                                     setEmail("");

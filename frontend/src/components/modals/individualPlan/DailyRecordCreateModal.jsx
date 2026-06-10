@@ -137,7 +137,7 @@ export function DailyRecordCreateModal({ isOpen, onClose, onSubmit }) {
                                             }}
                                             rows={5}
                                             placeholder="Popište průběh dne, aktivity klienta, důležité události..."
-                                            className={`w-full rounded-md border px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed ${errors.content ? "border-danger" : "border-default"}`}
+                                            className={`w-full rounded-md border px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed ${errors.content ? "border-danger" : "border-default"}`}
                                         />
                                         {errors.content && <span className="text-sm text-danger">{errors.content}</span>}
                                     </div>

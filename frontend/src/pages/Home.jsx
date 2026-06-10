@@ -75,7 +75,7 @@ function DashboardContent() {
             <div className="flex justify-between items-end">
                 <div>
                     <h1>Nástěnka</h1>
-                    <p className="text-default-500 mt-1">
+                    <p className="text-muted mt-1">
                         Vítejte zpět, {user?.fullName || user?.username}
                     </p>
                 </div>
@@ -91,7 +91,7 @@ function DashboardContent() {
                 </div>
             ) : isSuperadmin ? (
                 <div className="flex flex-col justify-center items-center text-center cursor-default flex-1">
-                    <p className="text-warning-100 text-2xl font-bold flex items-center justify-center gap-4"><Construction className="size-8" /> Zatím tady nic není <Construction className="size-8" /></p>
+                    <p className="text-warning text-2xl font-bold flex items-center justify-center gap-4"><Construction className="size-8" /> Zatím tady nic není <Construction className="size-8" /></p>
                 </div>
             ) : (
                 <>
@@ -101,11 +101,11 @@ function DashboardContent() {
                             <>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-primary/10 rounded-lg">
-                                            <Activity className="w-6 h-6 text-primary" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Activity className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Výkony tento měsíc</p>
+                                            <p className="text-sm text-muted">Výkony tento měsíc</p>
                                             <p className="text-2xl font-bold">{dashboard?.tasksPerformedCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
@@ -116,7 +116,7 @@ function DashboardContent() {
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Moji klienti</p>
+                                            <p className="text-sm text-muted">Moji klienti</p>
                                             <p className="text-2xl font-bold">{dashboard?.myClientsCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
@@ -127,7 +127,7 @@ function DashboardContent() {
                                             <Clock className="w-6 h-6 text-secondary" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Hodin tento měsíc</p>
+                                            <p className="text-sm text-muted">Hodin tento měsíc</p>
                                             <p className="text-2xl font-bold">
                                                 {Math.floor((dashboard?.totalMonthMinutes ?? 0) / 60)}h {(dashboard?.totalMonthMinutes ?? 0) % 60}m
                                             </p>
@@ -140,11 +140,11 @@ function DashboardContent() {
                             <>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-primary/10 rounded-lg">
-                                            <Activity className="w-6 h-6 text-primary" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Activity className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Výkony tento měsíc</p>
+                                            <p className="text-sm text-muted">Výkony tento měsíc</p>
                                             <p className="text-2xl font-bold">{dashboard?.tasksPerformedCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
@@ -155,7 +155,7 @@ function DashboardContent() {
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Klienti ve středisku</p>
+                                            <p className="text-sm text-muted">Klienti ve středisku</p>
                                             <p className="text-2xl font-bold">{dashboard?.clientCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
@@ -166,7 +166,7 @@ function DashboardContent() {
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Příjem tento měsíc</p>
+                                            <p className="text-sm text-muted">Příjem tento měsíc</p>
                                             <p className="text-2xl font-bold">{(dashboard?.totalMonthlyIncome ?? 0).toLocaleString("cs-CZ")} Kč</p>
                                         </div>
                                     </Card.Content>
@@ -181,18 +181,18 @@ function DashboardContent() {
                                             <Users className="w-6 h-6 text-success" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Aktivní klienti</p>
+                                            <p className="text-sm text-muted">Aktivní klienti</p>
                                             <p className="text-2xl font-bold">{dashboard?.clientCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
                                 </Card>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-primary/10 rounded-lg">
-                                            <Briefcase className="w-6 h-6 text-primary" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Briefcase className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Zaměstnanci</p>
+                                            <p className="text-sm text-muted">Zaměstnanci</p>
                                             <p className="text-2xl font-bold">{dashboard?.employeeCount ?? 0}</p>
                                         </div>
                                     </Card.Content>
@@ -203,7 +203,7 @@ function DashboardContent() {
                                             <TrendingUp className="w-6 h-6 text-secondary" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-default-500">Příjem tento měsíc</p>
+                                            <p className="text-sm text-muted">Příjem tento měsíc</p>
                                             <p className="text-2xl font-bold">{(dashboard?.totalMonthlyIncome ?? 0).toLocaleString("cs-CZ")} Kč</p>
                                         </div>
                                     </Card.Content>
@@ -305,16 +305,16 @@ function DashboardContent() {
                             <Separator />
                             <Card.Content>
                                 {!dashboard?.recentPerformedTasks?.length ? (
-                                    <p className="text-default-400 text-center py-4">Zatím žádné záznamy</p>
+                                    <p className="text-muted text-center py-4">Zatím žádné záznamy</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {dashboard.recentPerformedTasks.map((task) => (
-                                            <div key={task.id} className="flex items-center justify-between p-3 bg-default-100 rounded-lg">
+                                            <div key={task.id} className="flex items-center justify-between p-3 bg-default rounded-lg">
                                                 <div>
                                                     <p className="font-medium">{task.clientName}</p>
-                                                    <p className="text-sm text-default-500">{task.taskName} - {task.unitCount} {unitTypeTranslations[task.unitType]}</p>
+                                                    <p className="text-sm text-muted">{task.taskName} - {task.unitCount} {unitTypeTranslations[task.unitType]}</p>
                                                 </div>
-                                                <p className="text-sm text-default-400">
+                                                <p className="text-sm text-muted">
                                                     {task.date && new Date(task.date).toDateString() === new Date().toDateString()
                                                         ? `Dnes ${formatTime(task.date)}`
                                                         : formatDate(task.date)}
@@ -335,16 +335,16 @@ function DashboardContent() {
                                 <Separator />
                                 <Card.Content>
                                     {!dashboard?.clientIPUpdates?.length ? (
-                                        <p className="text-default-400 text-center py-4 flex items-center justify-center gap-2">Žádné blížící se aktualizace <Smile className="inline-block" /></p>
+                                        <p className="text-muted text-center py-4 flex items-center justify-center gap-2">Žádné blížící se aktualizace <Smile className="inline-block" /></p>
                                     ) : (
                                         <div className="space-y-3">
                                             {dashboard.clientIPUpdates.map((item) => {
                                                 const overdue = new Date(item.plannedUpdateDate) < new Date(new Date().toDateString());
                                                 return (
-                                                    <div key={item.clientId} className={`flex items-center justify-between p-3 rounded-lg ${overdue ? "bg-danger/10" : "bg-default-100"}`}>
+                                                    <div key={item.clientId} className={`flex items-center justify-between p-3 rounded-lg ${overdue ? "bg-danger/10" : "bg-default"}`}>
                                                         <p className="font-medium">{item.clientName}</p>
                                                         <div className="flex items-center gap-2">
-                                                            <p className={`text-sm ${overdue ? "text-danger font-medium" : "text-default-400"}`}>
+                                                            <p className={`text-sm ${overdue ? "text-danger font-medium" : "text-muted"}`}>
                                                                 {formatDate(item.plannedUpdateDate)}
                                                             </p>
                                                             <Button

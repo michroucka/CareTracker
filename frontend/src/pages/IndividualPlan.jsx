@@ -422,7 +422,7 @@ function IndividualPlan() {
                                 onChange={(e) => setLikes(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={likes} multiline={true} />
@@ -439,7 +439,7 @@ function IndividualPlan() {
                                 onChange={(e) => setDislikes(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={dislikes} multiline={true} />
@@ -456,7 +456,7 @@ function IndividualPlan() {
                                 onChange={(e) => setStrengths(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={strengths} multiline={true} />
@@ -473,7 +473,7 @@ function IndividualPlan() {
                                 onChange={(e) => setAspirations(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={aspirations} multiline={true} />
@@ -490,7 +490,7 @@ function IndividualPlan() {
                                 onChange={(e) => setLifePath(e.target.value)}
                                 rows={4}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={lifePath} multiline={true} />
@@ -507,7 +507,7 @@ function IndividualPlan() {
                                 onChange={(e) => setAdditionalInfo(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={additionalInfo} multiline={true} />
@@ -527,7 +527,7 @@ function IndividualPlan() {
                                 onChange={(e) => setHygiene(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={hygiene} multiline={true} />
@@ -544,7 +544,7 @@ function IndividualPlan() {
                                 onChange={(e) => setSelfCare(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={selfCare} multiline={true} />
@@ -561,7 +561,7 @@ function IndividualPlan() {
                                 onChange={(e) => setMobility(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={mobility} multiline={true} />
@@ -578,7 +578,7 @@ function IndividualPlan() {
                                 onChange={(e) => setDiet(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={diet} multiline={true} />
@@ -595,7 +595,7 @@ function IndividualPlan() {
                                 onChange={(e) => setHomeCare(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={homeCare} multiline={true} />
@@ -612,7 +612,7 @@ function IndividualPlan() {
                                 onChange={(e) => setSocialContact(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={socialContact} multiline={true} />
@@ -629,7 +629,7 @@ function IndividualPlan() {
                                 onChange={(e) => setActivities(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={activities} multiline={true} />
@@ -646,7 +646,7 @@ function IndividualPlan() {
                                 onChange={(e) => setHealth(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={health} multiline={true} />
@@ -663,7 +663,7 @@ function IndividualPlan() {
                                 onChange={(e) => setExercisingRights(e.target.value)}
                                 rows={3}
                                 disabled={isSubmitting}
-                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
                             <ReadOnlyField labelPlacement="outside" value={exercisingRights} multiline={true} />
@@ -750,14 +750,14 @@ function IndividualPlan() {
                                     <Card key={record.id} className="w-full h-full">
                                         <Card.Header className="flex justify-between">
                                             <div className="flex items-center gap-2">
-                                                <Calendar size={16} className="text-default-400" />
-                                                <span className="text-small font-semibold">
+                                                <Calendar size={16} className="text-muted" />
+                                                <span className="text-sm font-semibold">
                                                     {formatDate(record.date)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <User size={16} className="text-default-400" />
-                                                <span className="text-small text-default-500">
+                                                <User size={16} className="text-muted" />
+                                                <span className="text-sm text-muted">
                                                     {record.createdBy.firstName} {record.createdBy.lastName}
                                                 </span>
                                             </div>
@@ -782,7 +782,7 @@ function IndividualPlan() {
                                 ))}
                         </div>
                     ) : (
-                        <p className="text-center text-default-400 py-8">
+                        <p className="text-center text-muted py-8">
                             Zatím zde nejsou žádné denní záznamy
                         </p>
                     )}

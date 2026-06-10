@@ -699,7 +699,7 @@ export const ClientForm = React.forwardRef(({
                             value={relativesContact}
                             onChange={(e) => setRelativesContact(e.target.value)}
                             rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </div>
                 )}
@@ -715,7 +715,7 @@ export const ClientForm = React.forwardRef(({
                             value={generalPractitioner}
                             onChange={(e) => setGeneralPractitioner(e.target.value)}
                             rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </div>
                 )}
@@ -731,7 +731,7 @@ export const ClientForm = React.forwardRef(({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default-100 outline-none focus:ring-1 focus:ring-primary transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </div>
                 )}

@@ -161,7 +161,7 @@ function MonthlyReport() {
     const topContent = React.useMemo(() => {
         return (
             <div className="flex justify-between gap-3 items-end">
-                <span className="text-small">
+                <span className="text-sm">
                         Celkem {performedTasks.length} {performedTasks.length === 1 ? "úkon" : performedTasks.length >= 2 && performedTasks.length <= 4 ? "úkony" : "úkonů"}
                 </span>
                 <MonthYearPicker
@@ -223,7 +223,7 @@ function MonthlyReport() {
                 {!loading && performedTasks.length > 0 && (
                     <div className="flex justify-between items-end">
                         <Button variant="ghost" onPress={handleOpenQrModal}><QrCode className="size-4.5" /> QR Platba</Button>
-                        <span className="text-large font-semibold">
+                        <span className="text-lg font-semibold">
                             Celkem: {formatNumber(totalPrice)} Kč
                         </span>
                     </div>

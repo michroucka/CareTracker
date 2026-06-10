@@ -206,7 +206,7 @@ function Organizations() {
                     <Button variant="primary" onPress={() => setIsCreateModalOpen(true)}>Přidat <Plus className="size-4" /></Button>
                 </div>
             </div>
-            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
+            <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
         </div>
     ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear]);
 
@@ -215,9 +215,9 @@ function Organizations() {
 
         switch (columnKey) {
             case "name":
-                return <p className="font-bold text-small">{cellValue}</p>;
+                return <p className="font-bold text-sm">{cellValue}</p>;
             case "manager":
-                return <p className="text-small">{cellValue?.fullName || "-"}</p>;
+                return <p className="text-sm">{cellValue?.fullName || "-"}</p>;
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">

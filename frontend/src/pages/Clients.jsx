@@ -608,7 +608,7 @@ function Clients() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-start items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "klient" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "klienti" : "klientů"}</span>
+                    <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "klient" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "klienti" : "klientů"}</span>
                 </div>
             </div>
         );
@@ -640,31 +640,31 @@ function Clients() {
             case "fullName":
                 return (
                     <div className="flex flex-col">
-                        <p className="font-bold text-small">{cellValue}</p>
+                        <p className="font-bold text-sm">{cellValue}</p>
                     </div>
                 );
             case "gender":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{genderTranslations[cellValue] || "-"}</p>
+                        <p className="text-sm">{genderTranslations[cellValue] || "-"}</p>
                     </div>
                 );
             case "address":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue || "-"}</p>
+                        <p className="text-sm">{cellValue || "-"}</p>
                     </div>
                 );
             case "department":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">{cellValue?.city || "-"}</p>
+                        <p className="text-sm">{cellValue?.city || "-"}</p>
                     </div>
                 );
             case "caregiver":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-small">
+                        <p className="text-sm">
                             {cellValue ? `${cellValue.fullName}` : "-"}
                         </p>
                     </div>

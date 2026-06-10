@@ -225,7 +225,7 @@ function Departments() {
                     >Přidat <Plus className="size-4" /></Button>
                 </div>
             </div>
-            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
+            <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
         </div>
     ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear, user, superadminOrg]);
 
@@ -234,9 +234,9 @@ function Departments() {
 
         switch (columnKey) {
             case "name":
-                return <p className="font-bold text-small">{cellValue}</p>;
+                return <p className="font-bold text-sm">{cellValue}</p>;
             case "coordinator":
-                return <p className="text-small">{cellValue?.fullName || "-"}</p>;
+                return <p className="text-sm">{cellValue?.fullName || "-"}</p>;
             case "actions":
                 return (
                     <div className="relative flex justify-end items-center gap-2">
