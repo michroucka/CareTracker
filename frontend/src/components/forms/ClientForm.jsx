@@ -664,7 +664,7 @@ export const ClientForm = React.forwardRef(({
                             }}
                         >
                             <Label>Úkony</Label>
-                            <Select.Trigger className="min-h-12">
+                            <Select.Trigger>
                                 <Select.Value>
                                     {() => `Celkem: ${taskIds.length}`}
                                 </Select.Value>
