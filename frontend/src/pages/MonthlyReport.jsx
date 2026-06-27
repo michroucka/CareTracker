@@ -160,7 +160,7 @@ function MonthlyReport() {
 
     const topContent = React.useMemo(() => {
         return (
-            <div className="flex justify-between gap-3 items-end">
+            <div className="flex justify-between gap-3 items-end mb-4">
                 <span className="text-sm">
                         Celkem {performedTasks.length} {performedTasks.length === 1 ? "úkon" : performedTasks.length >= 2 && performedTasks.length <= 4 ? "úkony" : "úkonů"}
                 </span>
@@ -180,18 +180,20 @@ function MonthlyReport() {
                 </div>
 
                 {topContent}
-                <Table>
+                <Table variant="secondary">
                     <Table.ScrollContainer>
                         <Table.Content
                             aria-label="Měsíční přehled úkonů"
                             sortDescriptor={sortDescriptor}
                             onSortChange={setSortDescriptor}
                         >
-                            <Table.Header columns={columns} className="sticky top-0 bg-background z-10">
+                            <Table.Header columns={columns}>
                                 {(column) => (
                                     <Table.Column
                                         key={column.key}
-                                        align={column.key === "detail" ? "end" : "start"}
+                                        id={column.key}
+                                        className={column.key === "detail" ? "text-end" : ""}
+                                        isRowHeader={column.key === "date"}
                                     >
                                         {column.name}
                                     </Table.Column>
@@ -211,8 +213,12 @@ function MonthlyReport() {
                                 )}
                             >
                                 {(item) => (
-                                    <Table.Row key={item.id}>
-                                        {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                    <Table.Row key={item.id} id={item.id} columns={columns}>
+                                        {(column) =>
+                                            <Table.Cell className="py-1">
+                                                {renderCell(item, column.key)}
+                                            </Table.Cell>
+                                        }
                                     </Table.Row>
                                 )}
                             </Table.Body>

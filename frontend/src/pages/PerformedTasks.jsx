@@ -6,6 +6,7 @@ import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useTasks} from "../hooks/useTasks.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
+import {SortableColumnHeader} from "../components/SortableColumnHeader.jsx";
 import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
 import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
@@ -547,7 +548,7 @@ function PerformedTasks() {
                         >Přidat <Plus className="size-4" /></Button>
                     </div>
                 </div>
-                <div className="flex flex-row justify-between items-center">
+                <div className="flex flex-row justify-between items-center mb-4">
                     <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
 
                     <Tooltip delay={0}>
@@ -688,21 +689,27 @@ function PerformedTasks() {
     return (
         <>
             {topContent}
-            <Table>
+            <Table variant="secondary">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label="Performed tasks table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
                     >
-                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                        <Table.Header columns={visibleColumns}>
                             {(column) => (
                                 <Table.Column
                                     key={column.key}
-                                    align={column.key === "actions" ? "end" : "start"}
+                                    id={column.key}
+                                    className={column.key === "actions" ? "text-end" : ""}
                                     allowsSorting={column.sortable}
+                                    isRowHeader={column.key === "client"}
                                 >
-                                    {column.name}
+                                    {column.sortable
+                                        ? ({ sortDirection }) => (
+                                            <SortableColumnHeader sortDirection={sortDirection}>{column.name}</SortableColumnHeader>
+                                        )
+                                        : column.name}
                                 </Table.Column>
                             )}
                         </Table.Header>
@@ -723,8 +730,12 @@ function PerformedTasks() {
                             )}
                         >
                             {(item) => (
-                                <Table.Row key={item.id}>
-                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                <Table.Row key={item.id} id={item.id} columns={visibleColumns}>
+                                    {(column) =>
+                                        <Table.Cell className="py-1">
+                                            {renderCell(item, column.key)}
+                                        </Table.Cell>
+                                    }
                                 </Table.Row>
                             )}
                         </Table.Body>

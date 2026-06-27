@@ -5,7 +5,7 @@ import {
     Separator,
     Dropdown,
 } from "@heroui/react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import {
     Home, Users, ClipboardCheck, UserRound, ListChecks,
@@ -87,16 +87,21 @@ export default function AppNavbar() {
     return (
         <>
             {/* ── Desktop sidebar ───────────────────────────────────────── */}
-            <aside className="hidden sm:flex flex-col w-60 shrink-0 p-3 gap-1 overflow-y-auto">
+            <aside className="hidden sm:flex flex-col w-64 shrink-0 p-3 gap-1 overflow-y-auto">
 
                 {/* Logo */}
-                <button
+                <div
                     onClick={() => navigate("/")}
-                    className="flex items-center px-2 py-3 mb-1 rounded-xl hover:bg-surface-secondary transition-colors cursor-pointer"
+                    className="flex items-center px-2 py-3 rounded-xl hover:bg-surface-secondary transition-colors cursor-pointer"
                 >
                     <CareTrackerLogo />
                     <span className="font-bold text-2xl">CareTracker</span>
-                </button>
+                    <div className="ml-auto -mr-2" onClick={(e) => e.stopPropagation()}>
+                        <ThemeSwitcher />
+                    </div>
+                </div>
+
+                <Separator className="my-1" />
 
                 {/* Nav links */}
                 <nav className="flex flex-col gap-0.5 flex-1">
@@ -104,9 +109,9 @@ export default function AppNavbar() {
                         const isActive = location.pathname === item.path;
                         const Icon = item.icon;
                         return (
-                            <a
+                            <Link
                                 key={item.path}
-                                href={item.path}
+                                to={item.path}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-lg transition-all ease-in-out duration-200
                                     ${isActive
                                         ? "bg-accent/10 text-accent font-semibold opacity-100"
@@ -115,7 +120,7 @@ export default function AppNavbar() {
                             >
                                 <Icon className="size-5.5 shrink-0" />
                                 <span>{item.name}</span>
-                            </a>
+                            </Link>
                         );
                     })}
                 </nav>
@@ -129,7 +134,7 @@ export default function AppNavbar() {
                     <div className="flex items-center gap-1 px-1">
                         {loading ? (
                             <div className="flex-1 h-9" />
-                        ) : user ? (
+                        ) : (
                             <>
                                 <button
                                     onClick={() => navigate("/account")}
@@ -147,26 +152,20 @@ export default function AppNavbar() {
                                 </button>
                                 <Button
                                     isIconOnly
-                                    variant="danger-soft"
+                                    variant="ghost"
                                     size="sm"
                                     onPress={logout}
                                 >
-                                    <LogOut className="size-5" />
+                                    <LogOut className="size-5 text-danger" />
                                 </Button>
                             </>
-                        ) : (
-                            <a href="/login" className="flex-1 font-semibold text-foreground text-lg">
-                                Přihlásit se
-                            </a>
                         )}
-
-                        <ThemeSwitcher />
                     </div>
                 </div>
             </aside>
 
             {/* ── Mobile navbar ───────────────────────────────────────── */}
-            <nav className="sm:hidden sticky top-0 z-40 w-full bg-background border-b border-separator shadow-sm">
+            <nav className="sm:hidden sticky top-0 z-40 w-full bg-background border-b border-separator shadow-sm relative">
                 <div className="flex h-16 items-center justify-between px-4">
                     <button
                         onClick={() => navigate("/")}
@@ -188,16 +187,22 @@ export default function AppNavbar() {
                     </div>
                 </div>
 
-                {isMenuOpen && (
-                    <div className="border-t border-separator max-h-[calc(100dvh-4rem)] overflow-y-auto pb-[env(safe-area-inset-bottom,1rem)]">
-                        <div className="flex flex-col gap-1 p-3">
+                <div
+                    className={`absolute inset-x-0 top-full border-t border-separator overflow-y-auto pb-[env(safe-area-inset-bottom,1rem)] bg-background/80 backdrop-blur-lg shadow-lg transition-[height,opacity] duration-300 ease-in-out ${
+                        isMenuOpen
+                            ? "h-[calc(100dvh-4rem)] opacity-100"
+                            : "h-0 opacity-0 pointer-events-none"
+                    }`}
+                    aria-hidden={!isMenuOpen}
+                >
+                    <div className="flex flex-col gap-1 p-3 h-full">
                             {filteredMenuItems.map((item) => {
                                 const isActive = location.pathname === item.path;
                                 const Icon = item.icon;
                                 return (
-                                    <a
+                                    <Link
                                         key={item.path}
-                                        href={item.path}
+                                        to={item.path}
                                         aria-current={isActive ? "page" : undefined}
                                         onClick={() => setIsMenuOpen(false)}
                                         className={`flex items-center gap-3 px-3 py-3 rounded-xl font-medium transition-colors
@@ -208,7 +213,7 @@ export default function AppNavbar() {
                                     >
                                         <Icon className="size-5 shrink-0" />
                                         <span className="text-lg">{item.name}</span>
-                                    </a>
+                                    </Link>
                                 );
                             })}
 
@@ -250,8 +255,8 @@ export default function AppNavbar() {
 
                             {loading ? (
                                 <div className="h-10" />
-                            ) : user ? (
-                                <div className="w-full flex items-center justify-between gap-2 py-2 px-2 mb-4">
+                            ) : (
+                                <div className="w-full flex items-center justify-between gap-2 py-2 px-2">
                                     <button
                                         onClick={() => {
                                             navigate("/account");
@@ -264,28 +269,19 @@ export default function AppNavbar() {
                                     </button>
                                     <Button
                                         isIconOnly
-                                        variant="danger-soft"
+                                        variant="ghost"
                                         size="lg"
                                         onPress={() => {
                                             setIsMenuOpen(false);
                                             logout();
                                         }}
                                     >
-                                        <LogOut className="size-8.5" />
+                                        <LogOut className="size-8.5 text-danger" />
                                     </Button>
                                 </div>
-                            ) : (
-                                <a
-                                    href="/login"
-                                    className="w-full font-bold py-2 text-foreground text-xl flex justify-end px-2 mb-4"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    Přihlásit se
-                                </a>
                             )}
                         </div>
-                    </div>
-                )}
+                </div>
             </nav>
         </>
     );

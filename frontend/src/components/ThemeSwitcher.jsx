@@ -15,7 +15,7 @@ export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
             size="sm"
             variant="ghost"
         >
-            <div className={`relative ${iconSize}`}>
+            <div data-slot="link-icon" className={`relative ${iconSize}`}>
                 {!isDark ? (
                     <>
                         <Moon className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />

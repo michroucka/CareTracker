@@ -37,6 +37,8 @@ import {ClientTerminateModal} from "../components/modals/client/ClientTerminateM
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import {ClientCreateAccountModal} from "../components/modals/client/ClientCreateAccountModal.jsx";
 import {ClientDeactivateAccountModal} from "../components/modals/client/ClientDeactivateAccountModal.jsx";
+import {SortableColumnHeader} from "../components/SortableColumnHeader.jsx";
+import {BackToTopButton} from "../components/BackToTopButton.jsx";
 
 function Clients() {
     const navigate = useNavigate();
@@ -607,7 +609,7 @@ function Clients() {
                         )}
                     </div>
                 </div>
-                <div className="flex flex-row justify-start items-center">
+                <div className="flex flex-row justify-start items-center mb-4">
                     <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "klient" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "klienti" : "klientů"}</span>
                 </div>
             </div>
@@ -639,35 +641,25 @@ function Clients() {
         switch (columnKey) {
             case "fullName":
                 return (
-                    <div className="flex flex-col">
-                        <p className="font-bold text-sm">{cellValue}</p>
-                    </div>
+                    <p className="font-bold text-sm">{cellValue}</p>
                 );
             case "gender":
                 return (
-                    <div className="flex flex-col">
-                        <p className="text-sm">{genderTranslations[cellValue] || "-"}</p>
-                    </div>
+                    <p className="text-sm">{genderTranslations[cellValue] || "-"}</p>
                 );
             case "address":
                 return (
-                    <div className="flex flex-col">
-                        <p className="text-sm">{cellValue || "-"}</p>
-                    </div>
+                    <p className="text-sm">{cellValue || "-"}</p>
                 );
             case "department":
                 return (
-                    <div className="flex flex-col">
-                        <p className="text-sm">{cellValue?.city || "-"}</p>
-                    </div>
+                    <p className="text-sm">{cellValue?.city || "-"}</p>
                 );
             case "caregiver":
                 return (
-                    <div className="flex flex-col">
-                        <p className="text-sm">
-                            {cellValue ? `${cellValue.fullName}` : "-"}
-                        </p>
-                    </div>
+                    <p className="text-sm">
+                        {cellValue ? `${cellValue.fullName}` : "-"}
+                    </p>
                 );
             case "actions":
                 return (
@@ -748,21 +740,27 @@ function Clients() {
     return (
         <>
             {topContent}
-            <Table>
+            <Table variant="secondary">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label="Clients table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
                     >
-                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                        <Table.Header columns={visibleColumns}>
                             {(column) => (
                                 <Table.Column
                                     key={column.key}
-                                    align={column.key === "actions" ? "end" : "start"}
+                                    id={column.key}
+                                    className={column.key === "actions" ? "text-end" : ""}
                                     allowsSorting={column.sortable}
+                                    isRowHeader={column.key === "fullName"}
                                 >
-                                    {column.name}
+                                    {column.sortable
+                                        ? ({ sortDirection }) => (
+                                            <SortableColumnHeader sortDirection={sortDirection}>{column.name}</SortableColumnHeader>
+                                        )
+                                        : column.name}
                                 </Table.Column>
                             )}
                         </Table.Header>
@@ -783,14 +781,20 @@ function Clients() {
                             )}
                         >
                             {(item) => (
-                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
-                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                <Table.Row key={item.id} id={item.id} columns={visibleColumns} className={!item.active ? "opacity-50" : ""}>
+                                    {(column) =>
+                                        <Table.Cell className="py-1">
+                                            {renderCell(item, column.key)}
+                                        </Table.Cell>
+                                    }
                                 </Table.Row>
                             )}
                         </Table.Body>
                     </Table.Content>
                 </Table.ScrollContainer>
             </Table>
+
+            <BackToTopButton />
 
             <ClientCreateModal
                 isOpen={isCreateModalOpen}

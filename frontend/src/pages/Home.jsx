@@ -6,8 +6,8 @@ import {
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate, Navigate} from "react-router-dom";
-import {getLocalTimeZone, today} from "@internationalized/date";
-import {formatDate, formatTime} from "../utils/formatters.js";
+import {getLocalTimeZone, now, today} from "@internationalized/date";
+import {formatDate, formatDateTime, formatTime} from "../utils/formatters.js";
 import {getJSON} from "../api/api.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
 import {BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid} from "recharts";
@@ -80,7 +80,7 @@ function DashboardContent() {
                     </p>
                 </div>
                 <div className="flex gap-1 items-center">
-                    <p className="text-lg font-semibold">{formatDate(today(getLocalTimeZone()).toString())}</p>
+                    <p className="text-xl font-semibold">{formatDateTime(now(getLocalTimeZone()).toDate())}</p>
                 </div>
             </div>
 
@@ -112,8 +112,8 @@ function DashboardContent() {
                                 </Card>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-success/10 rounded-lg">
-                                            <Users className="w-6 h-6 text-success" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Users className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-muted">Moji klienti</p>
@@ -151,8 +151,8 @@ function DashboardContent() {
                                 </Card>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-success/10 rounded-lg">
-                                            <Users className="w-6 h-6 text-success" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Users className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-muted">Klienti ve středisku</p>
@@ -177,8 +177,8 @@ function DashboardContent() {
                             <>
                                 <Card>
                                     <Card.Content className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-success/10 rounded-lg">
-                                            <Users className="w-6 h-6 text-success" />
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <Users className="w-6 h-6 text-accent" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-muted">Aktivní klienti</p>
@@ -260,11 +260,11 @@ function DashboardContent() {
                                                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
                                                 <YAxis tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} width={40} />
                                                 <Tooltip
-                                                    contentStyle={{ borderRadius: "8px", border: "none", padding: "8px 12px 0 12px", backgroundColor: "hsl(var(--heroui-background) / 0.5)" }}
+                                                    contentStyle={{ borderRadius: "8px", border: "none", padding: "8px 12px 0 12px", backgroundColor: "color-mix(in oklab, var(--background) 50%, transparent)" }}
                                                     formatter={(v) => [isCaregiver ? `${v}` : `${v.toLocaleString("cs-CZ")} Kč`]}
                                                     cursor={false}
                                                 />
-                                                <Bar dataKey="value" fill="hsl(var(--heroui-primary))" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="value" fill="var(--accent)" radius={[16, 16, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </Card.Content>
@@ -287,7 +287,7 @@ function DashboardContent() {
                                                     formatter={(v) => [v, "Výkony"]}
                                                     cursor={false}
                                                 />
-                                                <Bar dataKey="value" fill="hsl(var(--heroui-secondary))" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="value" fill="var(--secondary)" radius={[16, 16, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </Card.Content>
@@ -298,7 +298,7 @@ function DashboardContent() {
 
                     <div className={`grid gap-6 ${(isCaregiver || isCoordinator || isAdmin) ? "lg:grid-cols-2" : ""}`}>
                         <Card>
-                            <Card.Header className="flex items-center gap-2">
+                            <Card.Header className="flex flex-row items-center gap-2">
                                 <ClipboardPenLine className="size-7" />
                                 <h2>Nedávné záznamy</h2>
                             </Card.Header>
@@ -328,7 +328,7 @@ function DashboardContent() {
 
                         {(isCaregiver || isCoordinator || isAdmin) && (
                             <Card>
-                                <Card.Header className="flex items-center gap-2">
+                                <Card.Header className="flex flex items-center gap-2">
                                     <CalendarClock className="size-7" />
                                     <h2>Aktualizace individuálních plánů</h2>
                                 </Card.Header>
@@ -371,7 +371,16 @@ function DashboardContent() {
 }
 
 function Home() {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
+
     if (!user) return <Navigate to="/login" replace />;
     if (user.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
     return <DashboardContent />;

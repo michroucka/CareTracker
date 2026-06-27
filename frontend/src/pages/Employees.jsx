@@ -13,6 +13,7 @@ import {ChevronDown, Funnel, Mail, MoreVertical, Plus, Search, Send, UserRound, 
 import {useDepartments} from "../hooks/useDepartments.jsx";
 import {useEmployees} from "../hooks/useEmployees.jsx";
 import {useIsMobile} from "../hooks/useMediaQuery.js";
+import {SortableColumnHeader} from "../components/SortableColumnHeader.jsx";
 import {activeOptions} from "../constants/globalConstants.js";
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {removeDiacritics} from "../utils/formatters.js";
@@ -465,7 +466,7 @@ function Employees() {
                         )}
                     </div>
                 </div>
-                <div className="flex flex-row justify-start items-center">
+                <div className="flex flex-row justify-start items-center mb-4">
                     <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "zaměstnanec" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "zaměstnanci" : "zaměstnanců"}</span>
                 </div>
             </div>
@@ -580,21 +581,27 @@ function Employees() {
     return (
         <>
             {topContent}
-            <Table>
+            <Table variant="secondary">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label="Employees table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
                     >
-                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                        <Table.Header columns={visibleColumns}>
                             {(column) => (
                                 <Table.Column
                                     key={column.key}
-                                    align={column.key === "actions" ? "end" : "start"}
+                                    id={column.key}
+                                    className={column.key === "actions" ? "text-end" : ""}
                                     allowsSorting={column.sortable}
+                                    isRowHeader={column.key === "fullName"}
                                 >
-                                    {column.name}
+                                    {column.sortable
+                                        ? ({ sortDirection }) => (
+                                            <SortableColumnHeader sortDirection={sortDirection}>{column.name}</SortableColumnHeader>
+                                        )
+                                        : column.name}
                                 </Table.Column>
                             )}
                         </Table.Header>
@@ -615,8 +622,12 @@ function Employees() {
                             )}
                         >
                             {(item) => (
-                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
-                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                <Table.Row key={item.id} id={item.id} columns={visibleColumns} className={!item.active ? "opacity-50" : ""}>
+                                    {(column) =>
+                                        <Table.Cell className="py-1">
+                                            {renderCell(item, column.key)}
+                                        </Table.Cell>
+                                    }
                                 </Table.Row>
                             )}
                         </Table.Body>

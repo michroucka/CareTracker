@@ -26,7 +26,7 @@ export default function App() {
     return (
         <div className="flex-1 sm:flex-none flex flex-col sm:flex-row sm:h-screen sm:overflow-hidden">
             {showNav && <Navbar />}
-            <main className={`flex-1 flex flex-col sm:overflow-hidden ${showNav ? "sm:p-6 sm:pl-2" : "sm:p-6"}`}>
+            <main className={`flex-1 flex flex-col sm:overflow-hidden ${showNav ? "sm:p-3 sm:pl-2" : "sm:p-3"}`}>
                 <div className="bg-background sm:rounded-2xl sm:shadow-lg p-4 sm:p-8 flex-1 sm:overflow-y-auto">
                     <Routes>
                         <Route path="/" element={<Home />} />

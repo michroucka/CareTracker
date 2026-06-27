@@ -22,6 +22,7 @@ import {
     UserRoundX
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
+import { SortableColumnHeader } from "../components/SortableColumnHeader.jsx";
 import { activeOptions } from '../constants/globalConstants.js';
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { removeDiacritics } from "../utils/formatters.js";
@@ -225,7 +226,7 @@ function Departments() {
                     >Přidat <Plus className="size-4" /></Button>
                 </div>
             </div>
-            <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
+            <span className="text-sm mb-4">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
         </div>
     ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear, user, superadminOrg]);
 
@@ -296,24 +297,30 @@ function Departments() {
     return (
         <>
             {topContent}
-            <Table>
+            <Table variant="secondary">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label="Departments table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
                     >
-                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                        <Table.Header columns={visibleColumns}>
                             {(column) => (
                                 <Table.Column
                                     key={column.key}
-                                    align={column.key === "actions" ?
-                                        "end" :
+                                    id={column.key}
+                                    className={column.key === "actions" ?
+                                        "text-end" :
                                         column.key === "departmentNumber" ?
-                                            "center" : "start"}
+                                            "text-center" : ""}
                                     allowsSorting={column.sortable}
+                                    isRowHeader={column.key === "city"}
                                 >
-                                    {column.name}
+                                    {column.sortable
+                                        ? ({ sortDirection }) => (
+                                            <SortableColumnHeader sortDirection={sortDirection}>{column.name}</SortableColumnHeader>
+                                        )
+                                        : column.name}
                                 </Table.Column>
                             )}
                         </Table.Header>
@@ -331,8 +338,12 @@ function Departments() {
                             )}
                         >
                             {(item) => (
-                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
-                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                <Table.Row key={item.id} id={item.id} columns={visibleColumns} className={!item.active ? "opacity-50" : ""}>
+                                    {(column) =>
+                                        <Table.Cell className="py-1">
+                                            {renderCell(item, column.key)}
+                                        </Table.Cell>
+                                    }
                                 </Table.Row>
                             )}
                         </Table.Body>

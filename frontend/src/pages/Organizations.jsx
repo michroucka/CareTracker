@@ -23,6 +23,7 @@ import {
     UserRoundX
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
+import { SortableColumnHeader } from "../components/SortableColumnHeader.jsx";
 import { activeOptions } from '../constants/globalConstants.js';
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { removeDiacritics } from "../utils/formatters.js";
@@ -206,7 +207,7 @@ function Organizations() {
                     <Button variant="primary" onPress={() => setIsCreateModalOpen(true)}>Přidat <Plus className="size-4" /></Button>
                 </div>
             </div>
-            <span className="text-sm">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
+            <span className="text-sm mb-4">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
         </div>
     ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear]);
 
@@ -274,22 +275,27 @@ function Organizations() {
     return (
         <>
             {topContent}
-            <Table>
+            <Table variant="secondary">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label="Organizations table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
                     >
-                        <Table.Header columns={visibleColumns} className="sticky top-0 bg-background z-10">
+                        <Table.Header columns={visibleColumns}>
                             {(column) => (
                                 <Table.Column
                                     key={column.key}
-                                    align={column.key === "actions" ?
-                                        "end" : "start"}
+                                    id={column.key}
+                                    className={column.key === "actions" ? "text-end" : ""}
                                     allowsSorting={column.sortable}
+                                    isRowHeader={column.key === "name"}
                                 >
-                                    {column.name}
+                                    {column.sortable
+                                        ? ({ sortDirection }) => (
+                                            <SortableColumnHeader sortDirection={sortDirection}>{column.name}</SortableColumnHeader>
+                                        )
+                                        : column.name}
                                 </Table.Column>
                             )}
                         </Table.Header>
@@ -307,8 +313,12 @@ function Organizations() {
                             )}
                         >
                             {(item) => (
-                                <Table.Row key={item.id} className={!item.active ? "opacity-50" : ""}>
-                                    {(columnKey) => <Table.Cell>{renderCell(item, columnKey)}</Table.Cell>}
+                                <Table.Row key={item.id} id={item.id} columns={visibleColumns} className={!item.active ? "opacity-50" : ""}>
+                                    {(column) =>
+                                        <Table.Cell className="py-1">
+                                            {renderCell(item, column.key)}
+                                        </Table.Cell>
+                                    }
                                 </Table.Row>
                             )}
                         </Table.Body>

@@ -1,0 +1,98 @@
+/*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes variables users need to customize
+ * @see https://heroui.com/docs/react/getting-started/theming
+ */
+
+:root,
+.light,
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+    /* Theme Colors (Light Mode) */
+    --accent: oklch(63.20% 0.1493 153.97);
+    --accent-foreground: oklch(99.11% 0 0);
+    --background: oklch(97.02% 0.0000 153.97);
+    --border: oklch(90.00% 0.0000 153.97);
+    --danger: oklch(65.32% 0.2328 13.76);
+    --danger-foreground: oklch(99.11% 0 0);
+    --default: oklch(94.00% 0.0000 153.97);
+    --default-foreground: oklch(21.03% 0.0059 153.97);
+    --field-background: oklch(100.00% 0.0000 153.97);
+    --field-border: transparent;
+    --field-foreground: oklch(21.03% 0.0000 153.97);
+    --field-placeholder: oklch(55.17% 0.0000 153.97);
+    --focus: oklch(63.20% 0.1493 153.97);
+    --foreground: oklch(21.03% 0.0000 153.97);
+    --muted: oklch(55.17% 0.0000 153.97);
+    --overlay: oklch(100.00% 0.0000 153.97);
+    --overlay-foreground: oklch(21.03% 0.0000 153.97);
+    --scrollbar: oklch(87.10% 0.0000 153.97);
+    --segment: oklch(100.00% 0.0000 153.97);
+    --segment-foreground: oklch(21.03% 0.0000 153.97);
+    --separator: oklch(92.00% 0.0000 153.97);
+    --success: oklch(73.29% 0.1935 138.83);
+    --success-foreground: oklch(21.03% 0.0059 138.83);
+    --surface: oklch(100.00% 0.0000 153.97);
+    --surface-foreground: oklch(21.03% 0.0000 153.97);
+    --surface-secondary: oklch(95.24% 0.0000 153.97);
+    --surface-secondary-foreground: oklch(21.03% 0.0000 153.97);
+    --surface-tertiary: oklch(93.73% 0.0000 153.97);
+    --surface-tertiary-foreground: oklch(21.03% 0.0000 153.97);
+    --warning: oklch(78.19% 0.1585 60.35);
+    --warning-foreground: oklch(21.03% 0.0059 60.35);
+
+    /* Custom colors */
+    --secondary: oklch(0.5496 0.129 247.08);
+    --secondary-foreground: oklch(99.11% 0 0);
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    --field-radius: 0.75rem;
+
+    /* Font Family */
+    /* Make sure to load Nunito font in your app */
+    --font-sans: "Nunito", sans-serif;
+}
+
+.dark,
+[data-theme="dark"] {
+    color-scheme: dark;
+    /* Theme Colors (Dark Mode) */
+    --accent: oklch(63.20% 0.1493 153.97);
+    --accent-foreground: oklch(99.11% 0 0);
+    --background: oklch(0.2103 0.0059 285.89);
+    --border: oklch(28.00% 0.0000 153.97);
+    --danger: oklch(59.40% 0.1967 12.65);
+    --danger-foreground: oklch(99.11% 0 0);
+    --default: oklch(27.40% 0.0000 153.97);
+    --default-foreground: oklch(99.11% 0 0);
+    --field-background: oklch(0.2389 0.0059 285.89);
+    --field-border: transparent;
+    --field-foreground: oklch(99.11% 0.0000 153.97);
+    --field-placeholder: oklch(70.50% 0.0000 153.97);
+    --focus: oklch(63.20% 0.1493 153.97);
+    --foreground: oklch(99.11% 0.0000 153.97);
+    --muted: oklch(70.50% 0.0000 153.97);
+    --overlay: oklch(21.03% 0.0000 153.97);
+    --overlay-foreground: oklch(99.11% 0.0000 153.97);
+    --scrollbar: oklch(70.50% 0.0000 153.97);
+    --segment: oklch(39.64% 0.0000 153.97);
+    --segment-foreground: oklch(99.11% 0.0000 153.97);
+    --separator: oklch(0.2289 0 0);
+    --success: oklch(73.29% 0.1935 138.83);
+    --success-foreground: oklch(21.03% 0.0059 138.83);
+    --surface: oklch(0.2389 0.0059 285.89);
+    --surface-foreground: oklch(99.11% 0.0000 153.97);
+    --surface-secondary: oklch(25.70% 0.0000 153.97);
+    --surface-secondary-foreground: oklch(99.11% 0.0000 153.97);
+    --surface-tertiary: oklch(27.21% 0.0000 153.97);
+    --surface-tertiary-foreground: oklch(99.11% 0.0000 153.97);
+    --warning: oklch(82.03% 0.1388 64.36);
+    --warning-foreground: oklch(21.03% 0.0059 64.36);
+
+    /* Custom colors */
+    --secondary: oklch(0.5496 0.129 247.08);
+    --secondary-foreground: oklch(99.11% 0 0);
+}

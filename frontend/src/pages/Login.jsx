@@ -1,4 +1,7 @@
-import {Form, TextField, Input, InputGroup, Label, FieldError, Description, Checkbox, Button, Separator, Link} from "@heroui/react";
+import {
+    Form, TextField, Input, InputGroup, Label, FieldError, Description, Checkbox, Button, Separator, Link,
+    Typography
+} from "@heroui/react";
 import React from "react";
 import {post} from "../api/api.js"
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, ArrowLeft, MailCheck, MailX, Users, Edit, FileText } from "lucide-react"
@@ -13,7 +16,7 @@ const brandingFeatures = [
     {
         icon: Users,
         title: "Evidence klientů",
-        text: "Přehled o klientech, jejich potřebách a historii poskytované péče — bezpečně na jednom místě.",
+        text: "Přehled o klientech, jejich potřebách a historii poskytované péče - bezpečně na jednom místě.",
     },
     {
         icon: Edit,
@@ -163,7 +166,7 @@ function Login() {
             </div>
 
             {/* Branding panel — jen desktop */}
-            <div className="hidden sm:flex flex-col justify-between gap-8 w-3/5 bg-accent/5 dark:bg-surface-secondary/50 border border-accent/10 dark:border-default rounded-2xl p-10 relative overflow-hidden">
+            <div className="hidden sm:flex flex-col justify-between gap-8 w-3/5 bg-accent/5 dark:bg-surface-secondary/50 rounded-2xl rounded-r-none -m-8 p-10 relative overflow-hidden">
                 <div aria-hidden="true" className="absolute -top-16 -right-16 w-64 h-64 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
                 <div aria-hidden="true" className="absolute -bottom-20 -left-10 w-72 h-72 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
                 <img src={ctIcon} alt="" aria-hidden="true" className="absolute right-6 bottom-6 w-48 opacity-[0.04] select-none pointer-events-none" draggable={false} />
@@ -174,8 +177,8 @@ function Login() {
                 </div>
 
                 <div className="relative flex flex-col gap-2">
-                    <p className="text-4xl font-bold leading-snug">Pomáháme pečovat<br />s přehledem a jistotou</p>
-                    <p className="text-foreground/60 mt-1">
+                    <p className="text-5xl font-bold leading-snug">Pomáháme pečovat<br />s přehledem a jistotou</p>
+                    <p className="text-foreground/60 text-xl mt-1">
                         Systém pro koordinaci a správu pečovatelských služeb
                     </p>
                 </div>
@@ -183,12 +186,12 @@ function Login() {
                 <div className="relative flex flex-col gap-5">
                     {brandingFeatures.map(({ icon: Icon, title, text }) => (
                         <div key={title} className="flex items-start gap-4">
-                            <div className="p-2.5 bg-accent/10 rounded-xl shrink-0">
-                                <Icon className="size-7 text-accent" />
+                            <div className="p-3 bg-accent/10 rounded-xl shrink-0">
+                                <Icon className="size-8 text-accent" />
                             </div>
                             <div>
-                                <p className="font-semibold">{title}</p>
-                                <p className="text-sm text-foreground/60 mt-0.5 leading-relaxed">{text}</p>
+                                <p className="font-semibold text-lg">{title}</p>
+                                <p className="text-foreground/60 mt-0.5 leading-relaxed">{text}</p>
                             </div>
                         </div>
                     ))}
@@ -218,7 +221,7 @@ function Login() {
                         onSubmit={submitLogin}
                     >
                         <div className="flex flex-col gap-4 w-full">
-                            <p className="cursor-default text-3xl sm:text-4xl leading-tight font-bold mt-8 sm:mt-0">Přihlásit se</p>
+                            <p className="cursor-default text-center text-4xl sm:text-4xl leading-tight font-bold mt-8 sm:mt-0">Přihlásit se</p>
                             <Separator className="mb-2" />
 
                             <TextField name="username" isInvalid={!!errors.username}>
@@ -302,7 +305,7 @@ function Login() {
                             </div>
 
                             <Link
-                                className="text-foreground/50 hover:text-accent cursor-pointer text-sm"
+                                className="text-foreground/50 hover:text-accent  cursor-pointer text-sm no-underline"
                                 onPress={() => setShowForgotPassword(true)}
                             >
                                 Zapomenuté heslo?
@@ -345,7 +348,7 @@ function Login() {
                             </div>
 
                             <Link
-                                className="text-foreground/50 hover:text-accent cursor-pointer text-sm"
+                                className="text-foreground/50 hover:text-accent cursor-pointer text-sm no-underline"
                                 onPress={() => {
                                     setShowForgotPassword(false);
                                     setEmail("");
