@@ -1,4 +1,4 @@
-export const MIN_YEAR = 1970;
+export const MIN_YEAR = 1900;
 
 export const MONTHS_SHORT = [
     "Led", "Úno", "Bře", "Dub", "Kvě", "Čer",

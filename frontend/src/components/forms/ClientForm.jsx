@@ -304,11 +304,12 @@ export const ClientForm = React.forwardRef(({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Pohlaví"
                             value={gender === 'MALE' ? 'Muž' : gender === 'FEMALE' ? 'Žena' : '-'}
+                            className="flex-1"
                         />
                     ) : (
                         <Select
@@ -323,6 +324,7 @@ export const ClientForm = React.forwardRef(({
                                 }
                             }}
                             isRequired
+                            className="flex-1"
                         >
                             <Label>Pohlaví</Label>
                             <Select.Trigger>

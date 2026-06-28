@@ -28,12 +28,12 @@ export function AppDatePicker({
             maxValue={maxValue}
             placeholderValue={placeholderValue}
             hideTimeZone={hideTimeZone}
-            className={className}
+            className={`${className} w-72`}
         >
             <Label>{label}</Label>
             <DateField.Group fullWidth>
                 <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} className="text-muted" />}
+                    {(segment) => <DateField.Segment segment={segment} />}
                 </DateField.Input>
                 <DateField.Suffix>
                     <DatePicker.Trigger>
@@ -44,7 +44,7 @@ export function AppDatePicker({
                 </DateField.Suffix>
             </DateField.Group>
             <DatePicker.Popover>
-                <Calendar aria-label={label}>
+                <Calendar aria-label={label} minValue={minValue} maxValue={maxValue}>
                     <Calendar.Header>
                         <Calendar.YearPickerTrigger>
                             <Calendar.YearPickerTriggerHeading />
