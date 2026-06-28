@@ -1,13 +1,12 @@
 import {
     Form, TextField, Input, InputGroup, Label, FieldError, Description, Checkbox, Button, Separator, Link,
-    Typography
+    Typography, toast
 } from "@heroui/react";
 import React from "react";
 import {post} from "../api/api.js"
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, ArrowLeft, MailCheck, MailX, Users, Edit, FileText } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { showToast } from "../components/MyToast";
 import { CareTrackerLogo } from "../components/CareTrackerLogo.jsx";
 import { ThemeSwitcher } from "../components/ThemeSwitcher.jsx";
 import ctIcon from "../assets/ct_icon.svg";
@@ -82,11 +81,9 @@ function Login() {
             if (response.ok && result.success) {
                 await checkAuth();
 
-                showToast({
-                    title: result.message,
+                toast.success(result.message, {
                     description: `Vítejte ${result.username}!`,
-                    color: "success",
-                    icon: <UserRoundCheck />
+                    indicator: <UserRoundCheck />,
                 })
 
                 const from = location.state?.from?.pathname || "/";
@@ -94,11 +91,7 @@ function Login() {
             } else {
                 const errorMessage = result.message || "Neplatné přihlašovací údaje";
 
-                showToast({
-                    title: errorMessage,
-                    color: "danger",
-                    icon: <UserRoundX />
-                })
+                toast.danger(errorMessage, { indicator: <UserRoundX /> })
 
                 setErrors({
                     username: errorMessage,
@@ -108,11 +101,7 @@ function Login() {
 
         } catch (error) {
             console.error("Login error:", error);
-            showToast({
-                title: error.message || "Server není dostupný",
-                color: "danger",
-                icon: <ServerOff />,
-            })
+            toast.danger(error.message || "Server není dostupný", { indicator: <ServerOff /> })
         } finally {
             setIsLoading(false);
         }
@@ -137,11 +126,11 @@ function Login() {
             const response = await post("/activation/forgot-password", { email: email });
             const result = await response.json();
 
-            showToast({
-                title: result.message,
-                color: result.success ? "success" : "danger",
-                icon: result.success ? <MailCheck /> : <MailX />
-            });
+            if (result.success) {
+                toast.success(result.message, { indicator: <MailCheck /> });
+            } else {
+                toast.danger(result.message, { indicator: <MailX /> });
+            }
 
             if (result.success) {
                 setShowForgotPassword(false);
@@ -149,11 +138,7 @@ function Login() {
             }
         } catch (error) {
             console.error("Forgot password error:", error);
-            showToast({
-                title: error.message || "Server není dostupný",
-                color: "danger",
-                icon: <ServerOff />,
-            });
+            toast.danger(error.message || "Server není dostupný", { indicator: <ServerOff /> });
         } finally {
             setIsLoading(false);
         }

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import {getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage} from "../api/api.js";
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {CloudAlert, MailCheck, MailX, UserRoundCheck, UserRoundX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
@@ -116,10 +116,8 @@ export function useClients() {
                     await uploadFile(`/clients/${newClient.id}/picture`, picture);
                 } catch (uploadErr) {
                     console.error("Error uploading picture:", uploadErr);
-                    showToast({
-                        title: "Klient vytvořen, ale obrázek se nenahrál",
+                    toast.warning("Klient vytvořen, ale obrázek se nenahrál", {
                         description: "Můžete ho nahrát později při editaci",
-                        color: "warning",
                     });
                 }
             }
@@ -130,11 +128,7 @@ export function useClients() {
                 sortByKey([...prev, mappedClient], 'lastName', 'ascending')
             );
 
-            showToast({
-                title: "Klient úspěšně vytvořen",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Klient úspěšně vytvořen", { indicator: <UserRoundCheck /> });
 
             return newClient;
         } catch (err) {
@@ -159,10 +153,8 @@ export function useClients() {
                     updated.pictureUrl = null;
                 } catch (deleteErr) {
                     console.error("Error deleting picture:", deleteErr);
-                    showToast({
-                        title: "Klient aktualizován, ale obrázek se nesmazal",
+                    toast.warning("Klient aktualizován, ale obrázek se nesmazal", {
                         description: "Zkuste to prosím znovu",
-                        color: "warning",
                     });
                 }
             } else if (picture && picture instanceof File) {
@@ -171,10 +163,8 @@ export function useClients() {
                     updated.hasPicture = true;
                 } catch (uploadErr) {
                     console.error("Error uploading picture:", uploadErr);
-                    showToast({
-                        title: "Klient aktualizován, ale obrázek se nenahrál",
+                    toast.warning("Klient aktualizován, ale obrázek se nenahrál", {
                         description: "Zkuste to prosím znovu",
-                        color: "warning",
                     });
                 }
             }
@@ -191,11 +181,7 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Klient úspěšně aktualizován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Klient úspěšně aktualizován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {
@@ -211,11 +197,7 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Klient úspěšně deaktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Klient úspěšně deaktivován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {
@@ -231,11 +213,11 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: result.message,
-                color: result.success ? "success" : "danger",
-                icon: result.success ? <MailCheck /> : <MailX />
-            });
+            if (result.success) {
+                toast.success(result.message, { indicator: <MailCheck /> });
+            } else {
+                toast.danger(result.message, { indicator: <MailX /> });
+            }
         } catch (err) {
             console.error("Error creating client account:", err);
             showErrorToast(err, "Chyba při vytváření účtu", { icon: <MailX /> });
@@ -249,11 +231,7 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Účet klienta byl deaktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Účet klienta byl deaktivován", { indicator: <UserRoundCheck /> });
         } catch (err) {
             console.error("Error deactivating client account:", err);
             showErrorToast(err, "Chyba při deaktivaci účtu", { icon: <UserRoundX /> });
@@ -267,11 +245,7 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Účet klienta byl aktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Účet klienta byl aktivován", { indicator: <UserRoundCheck /> });
         } catch (err) {
             console.error("Error activating client account:", err);
             showErrorToast(err, "Chyba při aktivaci účtu", { icon: <UserRoundX /> });
@@ -285,11 +259,7 @@ export function useClients() {
 
             fetchClients(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Klient úspěšně aktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Klient úspěšně aktivován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {

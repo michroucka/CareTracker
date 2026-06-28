@@ -3,7 +3,7 @@ import {deleteJSON, get, getJSON, postJSON, putJSON} from "../api/api.js";
 import {sortByKey} from "../utils/sorting.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
 import {CircleCheck, ClipboardCheck, ClipboardX, CloudAlert, Trash2} from "lucide-react";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 import {calculatePrice} from "../constants/performedTaskConstants.js";
 
 export function usePerformedTasks() {
@@ -92,11 +92,7 @@ export function usePerformedTasks() {
                 sortByKey([...prev, newPerformedTask], "date", "descending")
             );
 
-            showToast({
-                title: "Úkon úspěšně uložen",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně uložen", { indicator: <ClipboardCheck /> });
 
             return newPerformedTask;
         } catch (err) {
@@ -128,11 +124,7 @@ export function usePerformedTasks() {
                 "date", "descending"
             ));
 
-            showToast({
-                title: "Úkon úspěšně aktualizován",
-                color: "success",
-                icon: <CircleCheck />
-            });
+            toast.success("Úkon úspěšně aktualizován", { indicator: <CircleCheck /> });
 
             return updated;
         } catch (err) {
@@ -148,11 +140,7 @@ export function usePerformedTasks() {
 
             setPerformedTasks(prev => prev.filter(task => task.id !== id));
 
-            showToast({
-                title: "Úkon úspěšně odstraněn",
-                color: "success",
-                icon: <Trash2 />
-            });
+            toast.success("Úkon úspěšně odstraněn", { indicator: <Trash2 /> });
 
             return true;
         } catch (err) {

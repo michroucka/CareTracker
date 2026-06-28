@@ -3,7 +3,7 @@ import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 
 export function useTasks() {
     const [tasks, setTasks] = useState([]);
@@ -74,11 +74,7 @@ export function useTasks() {
                 sortByKey([...prev, newTask], 'name', 'ascending')
             );
 
-            showToast({
-                title: "Úkon úspěšně vytvořen",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně vytvořen", { indicator: <ClipboardCheck /> });
 
             return newTask;
         } catch (err) {
@@ -94,11 +90,7 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně aktualizován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně aktualizován", { indicator: <ClipboardCheck /> });
 
             return updated;
         } catch (err) {
@@ -114,11 +106,7 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně deaktivován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně deaktivován", { indicator: <ClipboardCheck /> });
 
             return updated;
         } catch (err) {
@@ -134,11 +122,7 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně aktivován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně aktivován", { indicator: <ClipboardCheck /> });
 
             return updated;
         } catch (err) {

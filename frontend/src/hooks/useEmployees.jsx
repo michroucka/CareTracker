@@ -3,7 +3,7 @@ import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {CloudAlert, UserRoundCheck, UserRoundX, MailCheck, MailX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 
 export function useEmployees() {
     const [employees, setEmployees] = useState([]);
@@ -94,11 +94,7 @@ export function useEmployees() {
                 sortByKey([...prev, mappedEmployee], 'lastName', 'ascending')
             );
 
-            showToast({
-                title: "Zaměstnanec úspěšně vytvořen",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně vytvořen", { indicator: <UserRoundCheck /> });
 
             return newEmployee;
         } catch (err) {
@@ -114,11 +110,7 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně aktualizován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně aktualizován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {
@@ -134,11 +126,7 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně deaktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně deaktivován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {
@@ -154,11 +142,7 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně aktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně aktivován", { indicator: <UserRoundCheck /> });
 
             return updated;
         } catch (err) {
@@ -173,17 +157,9 @@ export function useEmployees() {
             const response = await postJSON(`/employees/${id}/resend`);
 
             if (response.success) {
-                showToast({
-                    title: response.message,
-                    color: "success",
-                    icon: <MailCheck />
-                })
+                toast.success(response.message, { indicator: <MailCheck /> });
             } else {
-                showToast({
-                    title: response.message,
-                    color: "danger",
-                    icon: <MailX />
-                })
+                toast.danger(response.message, { indicator: <MailX /> });
             }
         } catch (err) {
             console.error("Error resending activation email:", err);

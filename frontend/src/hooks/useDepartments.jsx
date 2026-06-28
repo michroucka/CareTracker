@@ -3,7 +3,7 @@ import { getJSON, postJSON, putJSON } from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { Building2, CloudAlert } from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 
 export function useDepartments() {
     const [departments, setDepartments] = useState([]);
@@ -66,7 +66,7 @@ export function useDepartments() {
 
             setDepartments(prev => sortByKey([...prev, created], 'city', 'ascending'));
 
-            showToast({ title: "Středisko úspěšně vytvořeno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně vytvořeno", { indicator: <Building2 /> });
 
             return created;
         } catch (err) {
@@ -82,7 +82,7 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně aktualizováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně aktualizováno", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {
@@ -98,7 +98,7 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně deaktivováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně deaktivováno", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {
@@ -114,7 +114,7 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně aktivováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně aktivováno", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {

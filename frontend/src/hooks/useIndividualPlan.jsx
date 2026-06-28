@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getJSON, postJSON, putJSON, deleteJSON } from "../api/api.js";
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { FileX, FileCheck, FilePlus, FileEdit, Trash2 } from "lucide-react";
 
@@ -84,7 +84,7 @@ export function useIndividualPlan() {
             const response = await postJSON(`/clients/${clientId}/individual-plan`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Individuální plán byl úspěšně vytvořen", icon: <FilePlus />, color: "success" });
+            toast.success("Individuální plán byl úspěšně vytvořen", { indicator: <FilePlus /> });
 
             await fetchVersions(clientId);
 
@@ -110,7 +110,7 @@ export function useIndividualPlan() {
             const response = await putJSON(`/clients/${clientId}/individual-plan`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Nová verze individuálního plánu byla úspěšně vytvořena", icon: <FileEdit />, color: "success" });
+            toast.success("Nová verze individuálního plánu byla úspěšně vytvořena", { indicator: <FileEdit /> });
 
             await fetchVersions(clientId);
 
@@ -135,7 +135,7 @@ export function useIndividualPlan() {
             const response = await postJSON(`/clients/${clientId}/individual-plan/daily-records`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Denní záznam byl úspěšně přidán", icon: <FileCheck />, color: "success" });
+            toast.success("Denní záznam byl úspěšně přidán", { indicator: <FileCheck /> });
             return response;
         } catch (error) {
             console.error("Error adding daily record:", error);
@@ -161,7 +161,7 @@ export function useIndividualPlan() {
             setIndividualPlan(updatedPlan);
             setCurrentContent(updatedPlan?.currentContent || null);
 
-            showToast({ title: "Denní záznam byl úspěšně odstraněn", icon: <Trash2 />, color: "success" });
+            toast.success("Denní záznam byl úspěšně odstraněn", { indicator: <Trash2 /> });
             return updatedPlan;
         } catch (error) {
             console.error("Error removing daily record:", error);

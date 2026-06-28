@@ -2,9 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole } from "../../constants/roles";
-import { showToast } from "../MyToast";
 import { ShieldAlert, UserRoundX } from "lucide-react";
-import {Spinner} from "@heroui/react";
+import {Spinner, toast} from "@heroui/react";
 
 /**
  * Route guard that requires authentication and optionally a specific role.
@@ -29,20 +28,16 @@ export function ProtectedRoute({ children, allowedRoles }) {
     useEffect(() => {
         if (!toastShownRef.current) {
             if (isNotAuthenticated && !wasAuthenticatedRef.current) {
-                showToast({
-                    title: "Přístup odepřen",
+                toast.warning("Přístup odepřen", {
                     description: "Pro zobrazení této stránky se musíte přihlásit",
-                    color: "warning",
-                    icon: <ShieldAlert />,
+                    indicator: <ShieldAlert />,
                 });
                 toastShownRef.current = true;
             } else if (hasInsufficientPermissions) {
                 console.warn("User tried to access page with insufficient permissions:", user.role, " - ", location.pathname);
-                showToast({
-                    title: "Nedostatečná oprávnění",
+                toast.danger("Nedostatečná oprávnění", {
                     description: "Nemáte oprávnění pro zobrazení této stránky",
-                    color: "danger",
-                    icon: <UserRoundX />,
+                    indicator: <UserRoundX />,
                 });
                 toastShownRef.current = true;
             }

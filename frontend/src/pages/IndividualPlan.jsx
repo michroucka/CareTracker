@@ -9,14 +9,14 @@ import {
     Label,
     Form,
     Spinner,
-    Alert
+    Alert,
+    toast
 } from "@heroui/react";
 import { ReadOnlyField } from "../components/ReadOnlyField.jsx";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { ThumbsUp, Save, Pencil, X, ChevronLeft, Plus, ChevronDown, ThumbsDown, Star, Heart, Route, Info, Bath, PersonStanding, Footprints, Utensils, House, MessagesSquare, Hand, Cross, ScrollText, UserRound, Phone, Calendar, User, Trash2 } from "lucide-react";
 import { useIndividualPlan } from "../hooks/useIndividualPlan.jsx";
 import { useClients } from "../hooks/useClients.jsx";
-import { showToast } from "../components/MyToast.jsx";
 import { BackToTopButton } from "../components/BackToTopButton.jsx";
 import { DailyRecordCreateModal } from "../components/modals/individualPlan/DailyRecordCreateModal.jsx";
 import { DailyRecordDeleteModal } from "../components/modals/individualPlan/DailyRecordDeleteModal.jsx";
@@ -123,10 +123,8 @@ function IndividualPlan() {
                         // Show the permission toast only once to avoid duplicate toasts on re-renders
                         if (!hasShownPermissionToast.current) {
                             hasShownPermissionToast.current = true;
-                            showToast({
-                                title: "Nemáte oprávnění",
+                            toast.warning("Nemáte oprávnění", {
                                 description: "Individuální plán může vytvořit pouze klíčový pracovník klienta.",
-                                color: "warning"
                             });
                             navigate(-1);
                         }

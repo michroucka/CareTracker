@@ -1,22 +1,13 @@
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 import { CloudAlert } from "lucide-react";
 
-/**
- * Displays an error toast with the message from the error object.
- * @param {Error} error
- * @param {string} [defaultTitle="Chyba"] toast title
- * @param {Object} [options] additional toast options (icon, timeout, etc.)
- */
 export function showErrorToast(error, defaultTitle = "Chyba", options = {}) {
     const message = error?.message || "Nastala neočekávaná chyba";
 
-    showToast({
-        title: defaultTitle,
+    toast.danger(defaultTitle, {
         description: message,
-        color: "danger",
-        icon: options.icon || <CloudAlert />,
+        indicator: options.icon || <CloudAlert />,
         timeout: options.timeout || 5000,
-        ...options
     });
 }
 

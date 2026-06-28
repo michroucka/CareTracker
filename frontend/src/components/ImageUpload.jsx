@@ -1,7 +1,6 @@
 import React from "react";
-import { Button } from "@heroui/react";
+import { Button, toast } from "@heroui/react";
 import { Upload, X, User, FileX, Camera } from "lucide-react";
-import { showToast } from "./MyToast.jsx";
 
 /**
  * Image upload component with preview
@@ -53,22 +52,18 @@ export function ImageUpload({
         if (file) {
             // Validate file type
             if (!file.type.startsWith('image/')) {
-                showToast({
-                    title: "Neplatný formát souboru",
+                toast.danger("Neplatný formát souboru", {
                     description: "Podporované formáty: JPG, PNG, GIF, WebP",
-                    color: "danger",
-                    icon: <FileX />
+                    indicator: <FileX />,
                 });
                 return;
             }
             // Validate file size (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                showToast({
-                    title: "Soubor je příliš velký",
+                toast.danger("Soubor je příliš velký", {
                     description: `Velikost: ${sizeMB} MB. Maximum: 5 MB`,
-                    color: "danger",
-                    icon: <FileX />,
+                    indicator: <FileX />,
                 });
                 return;
             }
@@ -97,20 +92,16 @@ export function ImageUpload({
         if (file) {
             // Validate file type
             if (!file.type.startsWith('image/')) {
-                showToast({
-                    title: "Neplatný formát souboru",
+                toast.danger("Neplatný formát souboru", {
                     description: "Podporované formáty: JPG, PNG, GIF, WebP",
-                    color: "danger"
                 });
                 return;
             }
             // Validate file size (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                showToast({
-                    title: "Soubor je příliš velký",
+                toast.danger("Soubor je příliš velký", {
                     description: `Velikost: ${sizeMB} MB. Maximum: 5 MB`,
-                    color: "danger"
                 });
                 return;
             }

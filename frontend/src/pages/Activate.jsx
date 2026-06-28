@@ -1,9 +1,8 @@
-import { Form, TextField, Input, InputGroup, Label, FieldError, Button, Separator, Spinner, Card } from "@heroui/react";
+import { Form, TextField, Input, InputGroup, Label, FieldError, Button, Separator, Spinner, Card, toast } from "@heroui/react";
 import React from "react";
 import { get, postJSON } from "../api/api.js";
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { showToast } from "../components/MyToast";
 
 function Activate() {
     const [searchParams] = useSearchParams();
@@ -37,20 +36,12 @@ function Activate() {
                     setIsTokenValid(true);
                 } else {
                     setIsTokenValid(false);
-                    showToast({
-                        title: result.message || "Token je neplatný nebo vypršel",
-                        color: "danger",
-                        icon: <AlertCircle />
-                    });
+                    toast.danger(result.message || "Token je neplatný nebo vypršel", { indicator: <AlertCircle /> });
                 }
             } catch (error) {
                 console.error("Token validation error:", error);
                 setIsTokenValid(false);
-                showToast({
-                    title: "Chyba při validaci tokenu",
-                    color: "danger",
-                    icon: <ServerOff />
-                });
+                toast.danger("Chyba při validaci tokenu", { indicator: <ServerOff /> });
             } finally {
                 setIsValidatingToken(false);
             }
@@ -97,21 +88,15 @@ function Activate() {
                 password: trimmedPassword,
             });
 
-            showToast({
-                title: "Účet byl úspěšně aktivován",
+            toast.success("Účet byl úspěšně aktivován", {
                 description: "Nyní se můžete přihlásit",
-                color: "success",
-                icon: <UserRoundCheck />
+                indicator: <UserRoundCheck />,
             });
 
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Activation error:", error);
-            showToast({
-                title: error.message || "Server není dostupný",
-                color: "danger",
-                icon: <UserRoundX />
-            });
+            toast.danger(error.message || "Server není dostupný", { indicator: <UserRoundX /> });
         } finally {
             setIsSubmitting(false);
         }

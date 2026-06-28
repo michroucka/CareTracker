@@ -1,10 +1,9 @@
-import { Form, TextField, Input, InputGroup, Label, FieldError, Button, Separator, Spinner, Card } from "@heroui/react";
+import { Form, TextField, Input, InputGroup, Label, FieldError, Button, Separator, Spinner, Card, toast } from "@heroui/react";
 import React from "react";
 import { get, putJSON } from "../api/api.js";
 import { ServerOff, Eye, EyeOff, UserRoundCheck, UserRoundX, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { showToast } from "../components/MyToast";
 
 function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -38,20 +37,12 @@ function ResetPassword() {
                     setIsTokenValid(true);
                 } else {
                     setIsTokenValid(false);
-                    showToast({
-                        title: result.message || "Token je neplatný nebo vypršel",
-                        color: "danger",
-                        icon: <AlertCircle />
-                    });
+                    toast.danger(result.message || "Token je neplatný nebo vypršel", { indicator: <AlertCircle /> });
                 }
             } catch (error) {
                 console.error("Token validation error:", error);
                 setIsTokenValid(false);
-                showToast({
-                    title: "Chyba při validaci tokenu",
-                    color: "danger",
-                    icon: <ServerOff />
-                });
+                toast.danger("Chyba při validaci tokenu", { indicator: <ServerOff /> });
             } finally {
                 setIsValidatingToken(false);
             }
@@ -93,20 +84,12 @@ function ResetPassword() {
 
             await logoutSilent();
 
-            showToast({
-                title: "Heslo bylo úspěšně změněno",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Heslo bylo úspěšně změněno", { indicator: <UserRoundCheck /> });
 
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Password reset error:", error);
-            showToast({
-                title: error.message || "Server není dostupný",
-                color: "danger",
-                icon: <UserRoundX />
-            });
+            toast.danger(error.message || "Server není dostupný", { indicator: <UserRoundX /> });
         } finally {
             setIsSubmitting(false);
         }

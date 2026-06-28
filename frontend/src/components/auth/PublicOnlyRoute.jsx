@@ -1,8 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import React, { useEffect, useRef } from "react";
-import {Spinner} from "@heroui/react";
-import { showToast } from "../MyToast";
+import {Spinner, toast} from "@heroui/react";
 import { ShieldAlert } from "lucide-react";
 
 /**
@@ -33,11 +32,9 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
 
     useEffect(() => {
         if (isAuthenticated && !toastShownRef.current && initialAuthStatusRef.current === true) {
-            showToast({
-                title: "Již jste přihlášeni",
+            toast.warning("Již jste přihlášeni", {
                 description: "Nemůžete přistupovat na tuto stránku, když jste už přihlášeni",
-                color: "warning",
-                icon: <ShieldAlert />,
+                indicator: <ShieldAlert />,
             });
             toastShownRef.current = true;
         }

@@ -3,7 +3,7 @@ import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import {Building2, CloudAlert} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@heroui/react";
 
 export function useOrganizations() {
     const [organizations, setOrganizations] = useState([]);
@@ -61,7 +61,7 @@ export function useOrganizations() {
 
             setOrganizations(prev => sortByKey([...prev, created], 'name', 'ascending'));
 
-            showToast({ title: "Organizace úspěšně vytvořena", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně vytvořena", { indicator: <Building2 /> });
 
             return created;
         } catch (err) {
@@ -77,7 +77,7 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně aktualizována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně aktualizována", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {
@@ -93,7 +93,7 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně deaktivována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně deaktivována", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {
@@ -109,7 +109,7 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně aktivována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně aktivována", { indicator: <Building2 /> });
 
             return updated;
         } catch (err) {
