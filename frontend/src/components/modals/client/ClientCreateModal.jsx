@@ -39,12 +39,12 @@ export function ClientCreateModal({ isOpen, onClose, onSubmit, userDept, departm
         <Modal>
             <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <Modal.Container size="lg">
-                    <Modal.Dialog>
+                    <Modal.Dialog className="max-h-[90dvh] overflow-clip">
                         <Modal.CloseTrigger />
                         <Modal.Header className="flex flex-col gap-1">
                             <Modal.Heading>Přidat nového klienta</Modal.Heading>
                         </Modal.Header>
-                        <Modal.Body>
+                        <Modal.Body className="overflow-y-auto -mr-6 pr-6">
                             <ClientForm
                                 ref={formRef}
                                 onSubmit={handleSubmit}

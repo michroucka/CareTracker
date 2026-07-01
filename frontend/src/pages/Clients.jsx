@@ -62,6 +62,8 @@ function Clients() {
         return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
     };
 
+    const [isPending, startTransition] = React.useTransition();
+
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
     const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
@@ -174,39 +176,41 @@ function Clients() {
 
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !departmentFilter.has("all")) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setDepartmentFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else {
-            setDepartmentFilter(newKeys);
-        }
+        startTransition(() => {
+            if (newKeys.has("all") && !departmentFilter.has("all")) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else if (newKeys.size > 1 && newKeys.has("all")) {
+                newKeys.delete("all");
+                setDepartmentFilter(newKeys);
+            }
+            else if (newKeys.size === 0) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else {
+                setDepartmentFilter(newKeys);
+            }
+        });
     }, [departmentFilter]);
 
     const handleCaregiverFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !caregiverFilter.has("all")) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setCaregiverFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else {
-            setCaregiverFilter(newKeys);
-        }
-}, [caregiverFilter]);
+        startTransition(() => {
+            if (newKeys.has("all") && !caregiverFilter.has("all")) {
+                setCaregiverFilter(new Set(["all"]));
+            }
+            else if (newKeys.size > 1 && newKeys.has("all")) {
+                newKeys.delete("all");
+                setCaregiverFilter(newKeys);
+            }
+            else if (newKeys.size === 0) {
+                setCaregiverFilter(new Set(["all"]));
+            }
+            else {
+                setCaregiverFilter(newKeys);
+            }
+        });
+    }, [caregiverFilter]);
 
     React.useEffect(() => {
         if (!user || hasLoadedMetadata.current) return;
@@ -480,9 +484,11 @@ function Clients() {
     }
 
     const handleFiltersChange = React.useCallback((filters) => {
-        setActiveFilter(filters.activeFilter);
-        setDepartmentFilter(filters.departmentFilter);
-        setCaregiverFilter(filters.caregiverFilter);
+        startTransition(() => {
+            setActiveFilter(filters.activeFilter);
+            setDepartmentFilter(filters.departmentFilter);
+            setCaregiverFilter(filters.caregiverFilter);
+        });
     }, []);
 
     const topContent = React.useMemo(() => {
@@ -525,7 +531,7 @@ function Clients() {
                                         closeOnSelect={false}
                                         selectedKeys={activeFilter}
                                         selectionMode="multiple"
-                                        onSelectionChange={setActiveFilter}
+                                        onSelectionChange={(keys) => startTransition(() => setActiveFilter(keys))}
                                         className="max-h-60 overflow-y-auto"
                                     >
                                         {activeOptions.map((active) => (
@@ -746,6 +752,7 @@ function Clients() {
                         aria-label="Clients table"
                         sortDescriptor={sortDescriptor}
                         onSortChange={setSortDescriptor}
+                        className={isPending ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}
                     >
                         <Table.Header columns={visibleColumns}>
                             {(column) => (

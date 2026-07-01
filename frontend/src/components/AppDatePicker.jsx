@@ -28,7 +28,7 @@ export function AppDatePicker({
             maxValue={maxValue}
             placeholderValue={placeholderValue}
             hideTimeZone={hideTimeZone}
-            className={`${className} w-72`}
+            className={className}
         >
             <Label>{label}</Label>
             <DateField.Group fullWidth>
@@ -43,7 +43,7 @@ export function AppDatePicker({
                     </DatePicker.Trigger>
                 </DateField.Suffix>
             </DateField.Group>
-            <DatePicker.Popover>
+            <DatePicker.Popover className="min-w-72">
                 <Calendar aria-label={label} minValue={minValue} maxValue={maxValue}>
                     <Calendar.Header>
                         <Calendar.YearPickerTrigger>

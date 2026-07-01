@@ -66,12 +66,12 @@ export function ClientDetailModal({ isOpen, onClose, onSubmit, canEdit, client, 
         <Modal>
             <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <Modal.Container size="lg">
-                    <Modal.Dialog>
+                    <Modal.Dialog className="max-h-[90dvh] overflow-clip">
                         <Modal.CloseTrigger />
                         <Modal.Header className="flex justify-between items-center">
                             <Modal.Heading>Detail klienta</Modal.Heading>
                         </Modal.Header>
-                        <Modal.Body>
+                        <Modal.Body className="overflow-y-auto -mr-6 pr-6">
                             {isLoading ? (
                                 <div className="flex flex-col justify-center items-center py-8 gap-2">
                                     <Spinner size="lg" />

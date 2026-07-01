@@ -42,6 +42,8 @@ function Employees() {
         return depts === "all" ? new Set(["all"]) : new Set(depts.split(","));
     };
 
+    const [isPending, startTransition] = React.useTransition();
+
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
     const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
@@ -133,20 +135,21 @@ function Employees() {
 
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !departmentFilter.has("all")) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setDepartmentFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else {
-            setDepartmentFilter(newKeys);
-        }
+        startTransition(() => {
+            if (newKeys.has("all") && !departmentFilter.has("all")) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else if (newKeys.size > 1 && newKeys.has("all")) {
+                newKeys.delete("all");
+                setDepartmentFilter(newKeys);
+            }
+            else if (newKeys.size === 0) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else {
+                setDepartmentFilter(newKeys);
+            }
+        });
     }, [departmentFilter]);
 
 
@@ -367,8 +370,10 @@ function Employees() {
     }
 
     const handleFiltersChange = React.useCallback((filters) => {
-        setActiveFilter(filters.activeFilter);
-        setDepartmentFilter(filters.departmentFilter);
+        startTransition(() => {
+            setActiveFilter(filters.activeFilter);
+            setDepartmentFilter(filters.departmentFilter);
+        });
     }, []);
 
     const topContent = React.useMemo(() => {
@@ -412,7 +417,7 @@ function Employees() {
                                         closeOnSelect={false}
                                         selectedKeys={activeFilter}
                                         selectionMode="multiple"
-                                        onSelectionChange={setActiveFilter}
+                                        onSelectionChange={(keys) => startTransition(() => setActiveFilter(keys))}
                                         className="max-h-60 overflow-y-auto"
                                     >
                                         {activeOptions.map((active) => (
@@ -576,7 +581,7 @@ function Employees() {
     }, [canAlterEmployee]);
 
     const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
-    const shouldShowLoading = !isSuperadminWithoutOrg && loading;
+    const shouldShowLoading = !isSuperadminWithoutOrg && (loading || isPending);
 
     return (
         <>

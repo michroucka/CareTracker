@@ -10,7 +10,7 @@ import {
     NumberField,
     Autocomplete,
     SearchField,
-    useFilter,
+    useFilter, TextArea,
 } from "@heroui/react";
 import React, {useState} from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
@@ -304,12 +304,11 @@ export const ClientForm = React.forwardRef(({
                     )}
                 </div>
 
-                <div className="flex gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Pohlaví"
                             value={gender === 'MALE' ? 'Muž' : gender === 'FEMALE' ? 'Žena' : '-'}
-                            className="flex-1"
                         />
                     ) : (
                         <Select
@@ -324,7 +323,6 @@ export const ClientForm = React.forwardRef(({
                                 }
                             }}
                             isRequired
-                            className="flex-1"
                         >
                             <Label>Pohlaví</Label>
                             <Select.Trigger>
@@ -374,7 +372,7 @@ export const ClientForm = React.forwardRef(({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                     {isReadOnly ? (
                         <ReadOnlyField
                             label="Středisko"
@@ -555,20 +553,23 @@ export const ClientForm = React.forwardRef(({
                     {isReadOnly ? (
                         <ReadOnlyField label="Svéprávný" value={legallyCompetent ? 'Ano' : 'Ne'} />
                     ) : (
-                        <div className="flex items-center h-14">
-                            <Checkbox
-                                id="legallyCompetent"
-                                isSelected={legallyCompetent}
-                                onChange={setLegallyCompetent}
-                                isDisabled={isLoading}
-                            >
-                                <Checkbox.Control>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Control>
-                                <Checkbox.Content>
-                                    <Label htmlFor="legallyCompetent">Svéprávný</Label>
-                                </Checkbox.Content>
-                            </Checkbox>
+                        <div className="flex flex-col gap-1">
+                            <Label className="invisible pointer-events-none select-none" aria-hidden="true">&nbsp;</Label>
+                            <div className="flex items-center h-9">
+                                <Checkbox
+                                    id="legallyCompetent"
+                                    isSelected={legallyCompetent}
+                                    onChange={setLegallyCompetent}
+                                    isDisabled={isLoading}
+                                >
+                                    <Checkbox.Control>
+                                        <Checkbox.Indicator />
+                                    </Checkbox.Control>
+                                    <Checkbox.Content>
+                                        <Label htmlFor="legallyCompetent">Svéprávný</Label>
+                                    </Checkbox.Content>
+                                </Checkbox>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -599,6 +600,8 @@ export const ClientForm = React.forwardRef(({
                         <ReadOnlyField label="Osobní číslo" value={personalNumber} />
                     ) : (
                         <NumberField
+                            fullWidth
+                            minValue={0}
                             name="personalNumber"
                             isDisabled={isLoading}
                             value={personalNumber}
@@ -606,7 +609,7 @@ export const ClientForm = React.forwardRef(({
                         >
                             <Label>Osobní číslo</Label>
                             <NumberField.Group>
-                                <NumberField.Input />
+                                <NumberField.Input className="w-64" />
                             </NumberField.Group>
                             <FieldError />
                         </NumberField>
@@ -691,49 +694,46 @@ export const ClientForm = React.forwardRef(({
                 </div>
 
                 {isReadOnly ? (
-                    <ReadOnlyField label="Kontakt na příbuzné" value={relativesContact} />
+                    <ReadOnlyField multiline label="Kontakt na příbuzné" value={relativesContact} />
                 ) : (
                     <div className="flex flex-col gap-1 w-full">
-                        <label className="text-sm font-medium text-foreground/70">Kontakt na příbuzné</label>
-                        <textarea
+                        <Label>Kontakt na příbuzné</Label>
+                        <TextArea
                             disabled={isLoading}
                             name="relativesContact"
                             value={relativesContact}
                             onChange={(e) => setRelativesContact(e.target.value)}
-                            rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="field-sizing-content"
                         />
                     </div>
                 )}
 
                 {isReadOnly ? (
-                    <ReadOnlyField label="Praktický lékař" value={generalPractitioner} />
+                    <ReadOnlyField multiline label="Praktický lékař" value={generalPractitioner} />
                 ) : (
                     <div className="flex flex-col gap-1 w-full">
-                        <label className="text-sm font-medium text-foreground/70">Praktický lékař</label>
-                        <textarea
+                        <Label>Praktický lékař</Label>
+                        <TextArea
                             disabled={isLoading}
                             name="generalPractitioner"
                             value={generalPractitioner}
                             onChange={(e) => setGeneralPractitioner(e.target.value)}
-                            rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="field-sizing-content"
                         />
                     </div>
                 )}
 
                 {isReadOnly ? (
-                    <ReadOnlyField label="Poznámky" value={notes} />
+                    <ReadOnlyField multiline label="Poznámky" value={notes} />
                 ) : (
                     <div className="flex flex-col gap-1 w-full">
-                        <label className="text-sm font-medium text-foreground/70">Poznámky</label>
-                        <textarea
+                        <Label>Poznámky</Label>
+                        <TextArea
                             disabled={isLoading}
                             name="notes"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            rows={2}
-                            className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="field-sizing-content"
                         />
                     </div>
                 )}

@@ -78,6 +78,8 @@ function PerformedTasks() {
         return { month, year };
     };
 
+    const [isPending, startTransition] = React.useTransition();
+
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
     const [caregiverFilter, setCaregiverFilter] = React.useState(getInitialCaregiverFilter);
@@ -176,38 +178,40 @@ function PerformedTasks() {
 
     const handleDepartmentFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !departmentFilter.has("all")) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setDepartmentFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else {
-            setDepartmentFilter(newKeys);
-        }
+        startTransition(() => {
+            if (newKeys.has("all") && !departmentFilter.has("all")) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else if (newKeys.size > 1 && newKeys.has("all")) {
+                newKeys.delete("all");
+                setDepartmentFilter(newKeys);
+            }
+            else if (newKeys.size === 0) {
+                setDepartmentFilter(new Set(["all"]));
+            }
+            else {
+                setDepartmentFilter(newKeys);
+            }
+        });
     }, [departmentFilter]);
 
     const handleCaregiverFilterChange = React.useCallback((keys) => {
         const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !caregiverFilter.has("all")) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setCaregiverFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else {
-            setCaregiverFilter(newKeys);
-        }
+        startTransition(() => {
+            if (newKeys.has("all") && !caregiverFilter.has("all")) {
+                setCaregiverFilter(new Set(["all"]));
+            }
+            else if (newKeys.size > 1 && newKeys.has("all")) {
+                newKeys.delete("all");
+                setCaregiverFilter(newKeys);
+            }
+            else if (newKeys.size === 0) {
+                setCaregiverFilter(new Set(["all"]));
+            }
+            else {
+                setCaregiverFilter(newKeys);
+            }
+        });
     }, [caregiverFilter]);
 
 
@@ -442,9 +446,11 @@ function PerformedTasks() {
     }
 
     const handleFiltersChange = React.useCallback((filters) => {
-        setDepartmentFilter(filters.departmentFilter);
-        setCaregiverFilter(filters.caregiverFilter);
-        setMonthYearFilter(filters.monthYearFilter);
+        startTransition(() => {
+            setDepartmentFilter(filters.departmentFilter);
+            setCaregiverFilter(filters.caregiverFilter);
+            setMonthYearFilter(filters.monthYearFilter);
+        });
     }, []);
 
     const topContent = React.useMemo(() => {
@@ -475,7 +481,7 @@ function PerformedTasks() {
                         </Button>
 
                         <MonthYearPicker
-                            onChange={setMonthYearFilter}
+                            onChange={(value) => startTransition(() => setMonthYearFilter(value))}
                             className="hidden sm:flex"
                             isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                         />
@@ -607,7 +613,7 @@ function PerformedTasks() {
             case "client":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-sm">
+                        <p className="text-sm font-bold">
                             {performedTask.clientName}
                         </p>
                     </div>
@@ -684,7 +690,7 @@ function PerformedTasks() {
 
     const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
     const isLoadingMetadata = departments.length === 0 || employees.length === 0;
-    const isLoading = !isSuperadminWithoutOrg && (loading || isLoadingMetadata || !hasLoadedData.current);
+    const isLoading = !isSuperadminWithoutOrg && (loading || isPending || isLoadingMetadata || !hasLoadedData.current);
 
     return (
         <>

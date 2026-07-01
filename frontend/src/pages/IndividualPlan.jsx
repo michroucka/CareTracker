@@ -369,38 +369,38 @@ function IndividualPlan() {
                     <h4>Obecné informace</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Jméno" value={client ? client.firstName : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Příjmení" value={client ? client.lastName : "-"} />
+                    <ReadOnlyField label="Jméno" value={client ? client.firstName : "-"} />
+                    <ReadOnlyField label="Příjmení" value={client ? client.lastName : "-"} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Datum narození" value={client ? formatDate(client.dateOfBirth) : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Od kdy využívá službu" value={client ? formatDate(client.created) : "-"} />
+                    <ReadOnlyField label="Datum narození" value={client ? formatDate(client.dateOfBirth) : "-"} />
+                    <ReadOnlyField label="Od kdy využívá službu" value={client ? formatDate(client.created) : "-"} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Středisko" value={client ? client.department?.city : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Klíčový pracovník" value={client?.caregiver?.fullName || "-"} />
+                    <ReadOnlyField label="Středisko" value={client ? client.department?.city : "-"} />
+                    <ReadOnlyField label="Klíčový pracovník" value={client?.caregiver?.fullName || "-"} />
                 </div>
                 <div className="flex flex-row gap-2 w-full items-center mt-2">
                     <House size={20}/>
                     <h4>Adresa bydliště</h4>
                 </div>
-                <ReadOnlyField labelPlacement="outside" label="Ulice a číslo popisné" value={client ? client.street : "-"} />
+                <ReadOnlyField label="Ulice a číslo popisné" value={client ? client.street : "-"} />
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Město" value={client ? client.city : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="PSČ" value={client ? client.postalCode : "-"} />
+                    <ReadOnlyField label="Město" value={client ? client.city : "-"} />
+                    <ReadOnlyField label="PSČ" value={client ? client.postalCode : "-"} />
                 </div>
                 <div className="flex flex-row gap-2 w-full items-center mt-2">
                     <Phone size={20}/>
                     <h4>Kontakt na příbuzné</h4>
                 </div>
-                <ReadOnlyField labelPlacement="outside" value={client && client.relativesContact ? client.relativesContact : "-"} multiline={true} />
+                <ReadOnlyField value={client && client.relativesContact ? client.relativesContact : "-"} multiline={true} />
                 <div className="flex flex-row gap-2 w-full items-center mt-2">
                     <Info size={20}/>
                     <h4>Doplňující informace</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Příspěvek na péči" value={client ? benefitsOptions.find(b => b.key === client.benefits)?.name : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Omezení ve svéprávnosti" value={client ? client.legallyCompetent ? 'Ano' : 'Ne' : "-"} />
+                    <ReadOnlyField label="Příspěvek na péči" value={client ? benefitsOptions.find(b => b.key === client.benefits)?.name : "-"} />
+                    <ReadOnlyField label="Omezení ve svéprávnosti" value={client ? client.legallyCompetent ? 'Ano' : 'Ne' : "-"} />
                 </div>
             </div>
 
@@ -423,7 +423,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={likes} multiline={true} />
+                            <ReadOnlyField value={likes} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center mt-2">
@@ -440,7 +440,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={dislikes} multiline={true} />
+                            <ReadOnlyField value={dislikes} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -457,7 +457,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={strengths} multiline={true} />
+                            <ReadOnlyField value={strengths} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -474,7 +474,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={aspirations} multiline={true} />
+                            <ReadOnlyField value={aspirations} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -491,7 +491,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={lifePath} multiline={true} />
+                            <ReadOnlyField value={lifePath} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -508,7 +508,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={additionalInfo} multiline={true} />
+                            <ReadOnlyField value={additionalInfo} multiline={true} />
                         )}
                     </div>
 
@@ -528,7 +528,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={hygiene} multiline={true} />
+                            <ReadOnlyField value={hygiene} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -545,7 +545,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={selfCare} multiline={true} />
+                            <ReadOnlyField value={selfCare} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -562,7 +562,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={mobility} multiline={true} />
+                            <ReadOnlyField value={mobility} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -579,7 +579,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={diet} multiline={true} />
+                            <ReadOnlyField value={diet} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -596,7 +596,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={homeCare} multiline={true} />
+                            <ReadOnlyField value={homeCare} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -613,7 +613,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={socialContact} multiline={true} />
+                            <ReadOnlyField value={socialContact} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -630,7 +630,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={activities} multiline={true} />
+                            <ReadOnlyField value={activities} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -647,7 +647,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={health} multiline={true} />
+                            <ReadOnlyField value={health} multiline={true} />
                         )}
 
                         <div className="flex flex-row gap-2 w-full items-center">
@@ -664,7 +664,7 @@ function IndividualPlan() {
                                 className="w-full rounded-md border border-default px-3 py-2 text-sm bg-default outline-none focus:ring-1 focus:ring-accent transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                         ) : (
-                            <ReadOnlyField labelPlacement="outside" value={exercisingRights} multiline={true} />
+                            <ReadOnlyField value={exercisingRights} multiline={true} />
                         )}
                     </div>
 
@@ -672,8 +672,8 @@ function IndividualPlan() {
                         <div className="flex flex-col gap-4 w-full mb-4">
                             <h2>Doplňující informace</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <ReadOnlyField labelPlacement="outside" label="Datum zpracování" value={formatDate(processedDate)}></ReadOnlyField>
-                                <ReadOnlyField labelPlacement="outside" label="Datum plánované aktualizace" value={formatDate(plannedUpdateDate)}></ReadOnlyField>
+                                <ReadOnlyField label="Datum zpracování" value={formatDate(processedDate)}></ReadOnlyField>
+                                <ReadOnlyField label="Datum plánované aktualizace" value={formatDate(plannedUpdateDate)}></ReadOnlyField>
                             </div>
                         </div>
                     ) : null}

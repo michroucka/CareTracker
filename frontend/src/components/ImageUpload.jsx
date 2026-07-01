@@ -142,7 +142,7 @@ export function ImageUpload({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-default">
+                        <div className="w-full h-full flex items-center justify-center bg-field">
                             <Camera size={actualIconSize} className="text-muted" />
                         </div>
                     )}
@@ -198,7 +198,7 @@ export function ImageUpload({
                     ) : (
                         <div className={`
                             w-full h-full flex items-center justify-center
-                            ${dragActive ? 'bg-accent/10' : 'bg-default'}
+                            ${dragActive ? 'bg-accent/10' : 'bg-field'}
                             transition-colors
                         `}>
                             <Camera size={actualIconSize} className="text-muted" />
