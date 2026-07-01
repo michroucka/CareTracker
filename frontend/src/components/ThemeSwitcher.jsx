@@ -17,7 +17,7 @@ export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
             disableRipple
         >
             <div className={`relative ${iconSize}`}>
-                {isDark ? (
+                {!isDark ? (
                     <>
                         <Moon className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />
                         <Moon className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} fill="currentColor" />

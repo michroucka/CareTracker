@@ -50,7 +50,6 @@ function MonthlyReport() {
         column: "date",
         direction: "descending",
     });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const isMobile = useIsMobile();
 
     const getInitialMonthYearFilter = () => {
@@ -97,9 +96,6 @@ function MonthlyReport() {
         setQrCodeUrl(null);
     }, [monthYearFilter]);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     const totalPrice = React.useMemo(() => {
         return performedTasks.reduce((sum, task) => sum + (task.price || 0), 0);
@@ -193,8 +189,8 @@ function MonthlyReport() {
 
                 <Table
                     isHeaderSticky
-                    aria-label="Měsíční přehled úkonů"
-                    maxTableHeight={maxTableHeight}
+                    removeWrapper
+                                        aria-label="Měsíční přehled úkonů"
                     sortDescriptor={sortDescriptor}
                     topContent={topContent}
                     topContentPlacement="outside"
@@ -212,7 +208,7 @@ function MonthlyReport() {
                     </TableHeader>
                     <TableBody
                         isLoading={loading}
-                        loadingContent={<Spinner label="Načítání přehledu..." />}
+                        loadingContent={<Spinner className="mt-72" label="Načítání přehledu..." />}
                         emptyContent="V tomto měsíci nebyly provedeny žádné úkony"
                         items={performedTasks}
                     >

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import logo from "../assets/ct_icon.svg"
-import {Divider, Card, CardHeader, CardBody, Button, Spinner} from "@heroui/react"
+import {Card, CardHeader, CardBody, Button, Spinner, Divider} from "@heroui/react"
 import {
-    User, Edit, FileText, Plus, Clock, Users, Activity, CloudAlert, TrendingUp, Briefcase, CalendarClock,
+    Plus, Clock, Users, Activity, CloudAlert, TrendingUp, Briefcase, CalendarClock,
     ClipboardPenLine, Smile, ArrowRight, Construction
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
@@ -26,63 +25,6 @@ function getLast6MonthLabels() {
 
 const MONTH_LABELS = getLast6MonthLabels();
 
-function LandingPageContent() {
-    return (
-        <div className="flex flex-col justify-center items-center text-center cursor-default">
-            <img
-                src={logo}
-                alt="CareTracker Logo"
-                className="size-48 select-none"
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-            />
-            <h1 className="text-center mb-6">CareTracker</h1>
-            <Divider className="w-1/2"/>
-            <p className="text-xl text-primary font-medium text-center mt-6 mb-4">"Pomáháme pečovat s přehledem a jistotou"</p>
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-10 text-start">
-                <Card className="">
-                    <CardHeader className="flex items-center gap-2">
-                        <User className="w-5 h-5" />
-                        <h3 className="font-semibold text-lg">Evidence klientů</h3>
-                    </CardHeader>
-                    <Divider />
-                    <CardBody>
-                        <p>
-                            Umožňuje vést přehled o klientech, jejich potřebách a historii
-                            poskytované péče — vše bezpečně a přehledně na jednom místě.
-                        </p>
-                    </CardBody>
-                </Card>
-                <Card className="">
-                    <CardHeader className="flex items-center gap-2">
-                        <Edit className="w-5 h-5" />
-                        <h3 className="font-semibold text-lg">Záznam poskytnuté péče</h3>
-                    </CardHeader>
-                    <Divider />
-                    <CardBody>
-                        <p>
-                            Pečovatelé snadno zapisují provedené úkony a čas strávený u klientů,
-                            bez nutnosti papírových výkazů.
-                        </p>
-                    </CardBody>
-                </Card>
-                <Card className="">
-                    <CardHeader className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        <h3 className="font-semibold text-lg">Přehledy a reporty</h3>
-                    </CardHeader>
-                    <Divider />
-                    <CardBody>
-                        <p>
-                            Koordinátoři a vedoucí mají k dispozici měsíční souhrny a vyúčtování,
-                            které lze exportovat do PDF nebo CSV.
-                        </p>
-                    </CardBody>
-                </Card>
-            </div>
-        </div>
-    );
-}
 
 function DashboardContent() {
     const { user } = useAuth();
@@ -443,8 +385,9 @@ function DashboardContent() {
 
 function Home() {
     const { user } = useAuth();
-    if (user?.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
-    return user ? <DashboardContent /> : <LandingPageContent />;
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
+    return <DashboardContent />;
 }
 
 export default Home;

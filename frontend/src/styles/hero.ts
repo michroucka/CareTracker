@@ -210,11 +210,11 @@ export default heroui ({
                 "background": "#18181b",
                 "foreground": "#ffffff",
                 "content1": {
-                    "DEFAULT": "#18181b",
+                    "DEFAULT": "#1c1c1e",
                     "foreground": "#fff"
                 },
                 "content2": {
-                    "DEFAULT": "#27272a",
+                    "DEFAULT": "#1f1f22",
                     "foreground": "#fff"
                 },
                 "content3": {

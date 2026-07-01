@@ -53,7 +53,6 @@ function Employees() {
         column: "fullName",
         direction: "ascending",
     });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const {
         employees,
         setEmployees,
@@ -154,9 +153,6 @@ function Employees() {
         }
     }, [departmentFilter]);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     React.useEffect(() => {
         if (!user || hasLoadedMetadata.current) return;
@@ -391,6 +387,7 @@ function Employees() {
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                     />
                     <div className="flex gap-3">
                         <Button
@@ -467,6 +464,7 @@ function Employees() {
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                             >
                                 Přidat
                             </Button>
@@ -586,10 +584,9 @@ function Employees() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
-                aria-label="Employees table"
-                maxTableHeight={maxTableHeight}
+                removeWrapper
+                                aria-label="Employees table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -608,7 +605,7 @@ function Employees() {
                 </TableHeader>
                 <TableBody
                     isLoading={shouldShowLoading}
-                    loadingContent={<Spinner label="Načítání zaměstnanců..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání zaměstnanců..." />}
                     emptyContent={
                         isSuperadminWithoutOrg
                             ? "Vyberte prosím organizaci v navigační liště" : "Žádní zaměstnanci nenalezeni"

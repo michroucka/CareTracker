@@ -74,7 +74,6 @@ function Clients() {
         column: "fullName",
         direction: "ascending",
     });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const { user, superadminOrg } = useAuth();
     const {
         clients,
@@ -211,11 +210,7 @@ function Clients() {
         else {
             setCaregiverFilter(newKeys);
         }
-    }, [caregiverFilter]);
-
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
+}, [caregiverFilter]);
 
     React.useEffect(() => {
         if (!user || hasLoadedMetadata.current) return;
@@ -506,6 +501,7 @@ function Clients() {
                         value={filterValue}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                     />
                     <div className="flex gap-3">
                         <Button
@@ -611,6 +607,7 @@ function Clients() {
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
                                     onPress={handleOpenCreateModal}
+                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                             >
                                 Přidat
                             </Button>
@@ -781,10 +778,9 @@ function Clients() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
+                removeWrapper
                 aria-label="Clients table"
-                maxTableHeight={maxTableHeight}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -803,7 +799,7 @@ function Clients() {
                 </TableHeader>
                 <TableBody
                     isLoading={isLoading}
-                    loadingContent={<Spinner label="Načítání klientů..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání klientů..." />}
                     emptyContent={
                         isSuperadminWithoutOrg
                             ? "Vyberte prosím organizaci v navigační liště" : "Žádní klienti nenalezeni"

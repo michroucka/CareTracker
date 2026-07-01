@@ -64,7 +64,6 @@ function Departments() {
     const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
     const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
     const [sortDescriptor, setSortDescriptor] = React.useState({ column: "city", direction: "ascending" });
-    const [maxTableHeight, setMaxTableHeight] = React.useState("calc(100dvh - 16rem)");
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
     const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
@@ -115,9 +114,6 @@ function Departments() {
     const onSearchChange = React.useCallback((value) => setFilterValue(value || ""), []);
     const onClear = React.useCallback(() => setFilterValue(""), []);
 
-    React.useEffect(() => {
-        setMaxTableHeight(isMobile ? "calc(100dvh - 13rem)" : "calc(100dvh - 16rem)");
-    }, [isMobile]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -195,6 +191,7 @@ function Departments() {
                     value={filterValue}
                     onClear={onClear}
                     onValueChange={onSearchChange}
+                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                 />
                 <div className="flex gap-3">
                     <Button isIconOnly variant="flat" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
@@ -225,7 +222,12 @@ function Departments() {
                             ))}
                         </DropdownMenu>
                     </Dropdown>
-                    <Button color="primary" endContent={<Plus className="size-4" />} onPress={() => setIsCreateModalOpen(true)}>
+                    <Button
+                        color="primary"
+                        endContent={<Plus className="size-4" />}
+                        onPress={() => setIsCreateModalOpen(true)}
+                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
+                    >
                         Přidat
                     </Button>
                 </div>
@@ -301,10 +303,9 @@ function Departments() {
     return (
         <>
             <Table
-                isVirtualized
                 isHeaderSticky
-                aria-label="Departments table"
-                maxTableHeight={maxTableHeight}
+                removeWrapper
+                                aria-label="Departments table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -326,7 +327,7 @@ function Departments() {
                 </TableHeader>
                 <TableBody
                     isLoading={shouldShowLoading}
-                    loadingContent={<Spinner label="Načítání středisek..." />}
+                    loadingContent={<Spinner className="mt-72" label="Načítání středisek..." />}
                     emptyContent={isSuperadminWithoutOrg ? "Vyberte prosím organizaci v navigační liště" : "Žádná střediska nenalezena"}
                     items={sortedItems}
                 >
