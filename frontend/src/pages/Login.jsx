@@ -196,7 +196,7 @@ function Login() {
             </div>
 
             {/* Formulář */}
-            <div className="flex-1 flex items-center justify-center py-8">
+            <div className="flex-1 flex items-center justify-center py-8 overflow-y-auto">
                 <div className="w-full max-w-sm flex flex-col gap-6">
                     <div className="sm:hidden flex items-center gap-3">
                         <CareTrackerLogo size="size-14" />
@@ -357,6 +357,31 @@ function Login() {
                             </Link>
                         </div>
                     </Form>
+                )}
+                {import.meta.env.VITE_DEMO_MODE === 'true' && (
+                    <div className="border border-default-200 rounded-xl p-4 bg-default-50 dark:bg-default-100/50">
+                        <div className="flex items-baseline justify-between mb-3">
+                            <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wide">Demo přihlašovací údaje</p>
+                            <p className="text-xs text-foreground/35 italic">data se resetují každou noc</p>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            {[
+                                { username: "superadmin", role: "Superadmin" },
+                                { username: "admin",       role: "Admin" },
+                                { username: "coordinator", role: "Koordinátor" },
+                                { username: "caregiver",   role: "Pečovatel" },
+                                { username: "client",      role: "Klient" },
+                            ].map(({ username, role }) => (
+                                <div key={username} className="flex justify-between items-baseline gap-2 text-sm">
+                                    <span className="font-mono font-medium">{username}</span>
+                                    <span className="text-foreground/40 text-xs">{role}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-default-200 text-xs text-foreground/40">
+                            Heslo u všech účtů: <span className="font-mono text-foreground/60">heslo</span>
+                        </div>
+                    </div>
                 )}
                 </div>
             </div>
