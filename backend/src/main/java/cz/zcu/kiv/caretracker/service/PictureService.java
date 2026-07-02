@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,8 +44,6 @@ public class PictureService {
      */
     @Transactional
     public Picture savePicture(Long clientId, MultipartFile file) throws IOException {
-        validateFile(file);
-
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nenalezen"));
 
