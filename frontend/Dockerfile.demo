@@ -9,6 +9,7 @@ COPY . .
 
 ARG VITE_DEMO_MODE=true
 ENV VITE_DEMO_MODE=$VITE_DEMO_MODE
+ENV VITE_API_URL=/api
 
 RUN npm run build
 
