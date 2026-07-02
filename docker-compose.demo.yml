@@ -6,6 +6,7 @@ services:
     image: caretracker-backend:demo
     build:
       context: ./backend
+      dockerfile: Dockerfile.demo
     environment:
       - SPRING_PROFILES_ACTIVE=demo
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
