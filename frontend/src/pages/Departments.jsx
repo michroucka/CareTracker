@@ -332,7 +332,7 @@ function Departments() {
                     items={sortedItems}
                 >
                     {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
+                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""} onClick={() => handleOpenDetailModal(item.id)}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                         </TableRow>
                     )}
