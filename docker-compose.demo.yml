@@ -49,7 +49,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel run --token eyJhIjoiZjEyMWFlZWYyYjY2NmNkY2JhZGZmMzU0ZDQ1N2RkNzgiLCJ0IjoiOTBiY2FhOTUtYThlMC00ZTgxLTliYTQtOWFhMDVkYWYxMTExIiwicyI6IlltTTRObUV6WkdVdFlUTmxNUzAwT1RJd0xUazVNall0TVdWaU5tRmtOamc1WVRBeCJ9
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - frontend
 
