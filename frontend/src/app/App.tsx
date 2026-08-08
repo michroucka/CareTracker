@@ -18,16 +18,18 @@ import ResetPassword from "../pages/ResetPassword";
 import MonthlyReport from "../pages/MonthlyReport";
 import Departments from "../pages/Departments";
 import Organizations from "../pages/Organizations";
+import {ClientCreate} from "../pages/ClientCreate";
+import {ClientDetail} from "../pages/ClientDetail";
 
 export default function App() {
     const { user, loading } = useAuth();
     const showNav = !loading && !!user;
 
     return (
-        <div className="flex-1 sm:flex-none flex flex-col sm:flex-row sm:h-screen sm:overflow-hidden">
+        <div className="flex-1 lg:flex-none flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden">
             {showNav && <Navbar />}
-            <main className={`flex-1 flex flex-col sm:overflow-hidden ${showNav ? "sm:p-6 sm:pl-2" : "sm:p-6"}`}>
-                <div className="bg-background sm:rounded-2xl sm:shadow-lg p-4 sm:p-8 flex-1 sm:overflow-y-auto">
+            <main className={`flex-1 flex flex-col lg:overflow-hidden ${showNav ? "lg:p-6 lg:pl-2" : "lg:p-6"}`}>
+                <div className="bg-background lg:rounded-2xl lg:shadow-lg p-4 lg:p-8 flex-1 lg:overflow-y-auto">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route
@@ -44,6 +46,24 @@ export default function App() {
                             element={
                                 <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
                                     <Clients />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/clients/new"
+                            element={
+                                <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR]}>
+                                    <ClientCreate />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/clients/:clientId"
+                            element={
+                                <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER]}>
+                                    <ClientDetail />
                                 </ProtectedRoute>
                             }
                         />

@@ -457,7 +457,7 @@ function PerformedTasks() {
                 <div className="flex justify-between gap-3 items-end">
                     <Input
                         isClearable
-                        className="w-full sm:max-w-[44%]"
+                        className="w-full lg:max-w-[44%]"
                         placeholder="Hledat podle klienta..."
                         startContent={<Search className="size-5" />}
                         value={filterValue}
@@ -469,7 +469,7 @@ function PerformedTasks() {
                         <Button
                             isIconOnly
                             variant="flat"
-                            className="sm:hidden"
+                            className="lg:hidden"
                             onPress={handleOpenFiltersModal}
                         >
                             <Funnel className="size-4" />
@@ -477,13 +477,13 @@ function PerformedTasks() {
 
                         <MonthYearPicker
                             onChange={setMonthYearFilter}
-                            className="hidden sm:flex"
+                            className="hidden lg:flex"
                             isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                         />
 
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
+                                <DropdownTrigger className="hidden lg:flex">
                                     <Button
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
@@ -513,7 +513,7 @@ function PerformedTasks() {
                         )}
 
                         <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
+                            <DropdownTrigger className="hidden lg:flex">
                                 <Button
                                     endContent={<ChevronDown className="size-4" />}
                                     variant="flat"

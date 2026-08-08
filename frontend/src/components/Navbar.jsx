@@ -95,7 +95,7 @@ export default function AppNavbar() {
     return (
         <>
             {/* ── Desktop sidebar ───────────────────────────────────────── */}
-            <aside className="hidden sm:flex flex-col w-60 shrink-0 p-3 gap-1 overflow-y-auto">
+            <aside className="hidden lg:flex flex-col w-60 shrink-0 p-3 gap-1 overflow-y-auto">
 
                 {/* Logo */}
                 <button
@@ -181,7 +181,7 @@ export default function AppNavbar() {
                 shouldHideOnScroll
                 onMenuOpenChange={setIsMenuOpen}
                 maxWidth="full"
-                className="sm:hidden px-0 shadow-md"
+                className="lg:hidden px-0 shadow-md"
             >
                 <NavbarContent>
                     <NavbarBrand className="cursor-pointer" onClick={() => navigate("/")}>

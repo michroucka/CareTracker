@@ -246,7 +246,7 @@ export const ClientForm = React.forwardRef(({
 
     return (
         <Form
-            className="w-full space-y-4"
+            className="w-full max-w-xl mx-auto space-y-4 "
             validationErrors={errors}
             onReset={resetForm}
             onSubmit={handleSubmit}
