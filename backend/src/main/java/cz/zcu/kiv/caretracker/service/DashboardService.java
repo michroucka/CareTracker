@@ -56,12 +56,12 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         Long deptId = user.getEmployee().getDepartment().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime monthEnd = monthStart.plusMonths(1);
-        LocalDateTime sixMonthsStart = YearMonth.now().minusMonths(5).atDay(1).atStartOfDay();
+        LocalDateTime twelveMonthsStart = YearMonth.now().minusMonths(11).atDay(1).atStartOfDay();
 
         List<PerformedTask> monthTasks = performedTaskRepository
                 .findByCaregivers_IdAndDateBetween(caregiverId, monthStart, monthEnd);
         List<PerformedTask> historyTasks = performedTaskRepository
-                .findByCaregivers_IdAndDateBetween(caregiverId, sixMonthsStart, monthEnd);
+                .findByCaregivers_IdAndDateBetween(caregiverId, twelveMonthsStart, monthEnd);
 
         DashboardDTO dto = new DashboardDTO();
         dto.setTasksPerformedCount(monthTasks.size());
@@ -81,12 +81,12 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         Long deptId = user.getEmployee().getDepartment().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime monthEnd = monthStart.plusMonths(1);
-        LocalDateTime sixMonthsStart = YearMonth.now().minusMonths(5).atDay(1).atStartOfDay();
+        LocalDateTime twelveMonthsStart = YearMonth.now().minusMonths(11).atDay(1).atStartOfDay();
 
         List<PerformedTask> monthTasks = performedTaskRepository
                 .findByDepartmentIdAndDateBetween(deptId, monthStart, monthEnd);
         List<PerformedTask> historyTasks = performedTaskRepository
-                .findByDepartmentIdAndDateBetween(deptId, sixMonthsStart, monthEnd);
+                .findByDepartmentIdAndDateBetween(deptId, twelveMonthsStart, monthEnd);
 
         DashboardDTO dto = new DashboardDTO();
         dto.setClientCount((int) clientRepository.countByActiveTrueAndDepartmentId(deptId));
@@ -106,12 +106,12 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         Long orgId = user.getEmployee().getOrganization().getId();
         LocalDateTime monthStart = YearMonth.now().atDay(1).atStartOfDay();
         LocalDateTime monthEnd = monthStart.plusMonths(1);
-        LocalDateTime sixMonthsStart = YearMonth.now().minusMonths(5).atDay(1).atStartOfDay();
+        LocalDateTime twelveMonthsStart = YearMonth.now().minusMonths(11).atDay(1).atStartOfDay();
 
         List<PerformedTask> monthTasks = performedTaskRepository
                 .findByOrganizationIdAndDateBetween(orgId, monthStart, monthEnd);
         List<PerformedTask> historyTasks = performedTaskRepository
-                .findByOrganizationIdAndDateBetween(orgId, sixMonthsStart, monthEnd);
+                .findByOrganizationIdAndDateBetween(orgId, twelveMonthsStart, monthEnd);
 
         DashboardDTO dto = new DashboardDTO();
         dto.setClientCount((int) clientRepository.countByActiveTrueAndOrganizationId(orgId));
@@ -136,10 +136,10 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 .sum();
     }
 
-    /** Returns a 6-element list of monthly task counts, oldest month first (current month last). */
+    /** Returns a 12-element list of monthly task counts, oldest month first (current month last). */
     private List<Integer> buildCountHistory(List<PerformedTask> tasks) {
         List<Integer> history = new ArrayList<>();
-        for (int i = 5; i >= 0; i--) {
+        for (int i = 11; i >= 0; i--) {
             YearMonth month = YearMonth.now().minusMonths(i);
             int count = (int) tasks.stream()
                     .filter(t -> YearMonth.from(t.getDate()).equals(month))
@@ -149,10 +149,10 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return history;
     }
 
-    /** Returns a 6-element list of monthly income totals (in CZK), oldest month first (current month last). */
+    /** Returns a 12-element list of monthly income totals (in CZK), oldest month first (current month last). */
     private List<Integer> buildIncomeHistory(List<PerformedTask> tasks) {
         List<Integer> history = new ArrayList<>();
-        for (int i = 5; i >= 0; i--) {
+        for (int i = 11; i >= 0; i--) {
             YearMonth month = YearMonth.now().minusMonths(i);
             int income = tasks.stream()
                     .filter(t -> YearMonth.from(t.getDate()).equals(month))
