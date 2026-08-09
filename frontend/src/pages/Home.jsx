@@ -6,8 +6,8 @@ import {
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate, Navigate} from "react-router-dom";
-import {getLocalTimeZone, today} from "@internationalized/date";
-import {formatDate, formatTime} from "../utils/formatters.js";
+import {getLocalTimeZone, now, today} from "@internationalized/date";
+import {formatDate, formatDateTime, formatTime} from "../utils/formatters.js";
 import {getJSON} from "../api/api.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
 import {BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line} from "recharts";
@@ -69,6 +69,17 @@ function DashboardContent() {
         fetchDashboard();
     }, []);
 
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+        const msToNextMinute = 60000 - (Date.now() % 60000);
+        const timeout = setTimeout(() => {
+            setNow(new Date());
+            const interval = setInterval(() => setNow(new Date()), 60000);
+            return () => clearInterval(interval);
+        }, msToNextMinute);
+        return () => clearTimeout(timeout);
+    }, []);
+
     const isCaregiver = role === ROLES.CAREGIVER;
     const isCoordinator = role === ROLES.COORDINATOR;
     const isAdmin = role === ROLES.ADMIN;
@@ -84,7 +95,7 @@ function DashboardContent() {
                     </p>
                 </div>
                 <div className="flex gap-1 items-center">
-                    <p className="text-lg font-semibold">{formatDate(today(getLocalTimeZone()).toString())}</p>
+                    <p className="text-lg font-semibold">{formatDateTime(now)}</p>
                 </div>
             </div>
 
@@ -412,7 +423,14 @@ function DashboardContent() {
 }
 
 function Home() {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner size="lg" variant="gradient" label="Načítání..." />
+            </div>
+        );
+    }
     if (!user) return <Navigate to="/login" replace />;
     if (user.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
     return <DashboardContent />;

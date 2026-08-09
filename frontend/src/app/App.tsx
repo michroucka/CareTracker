@@ -28,8 +28,8 @@ export default function App() {
     return (
         <div className="flex-1 lg:flex-none flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden">
             {showNav && <Navbar />}
-            <main className={`flex-1 flex flex-col lg:overflow-hidden ${showNav ? "lg:p-6 lg:pl-2" : "lg:p-6"}`}>
-                <div className="bg-background lg:rounded-2xl lg:shadow-lg p-4 lg:p-8 flex-1 lg:overflow-y-auto">
+            <main className={`flex-1 flex flex-col lg:overflow-hidden lg:p-4 ${showNav ? " lg:pl-2" : ""}`}>
+                <div className="bg-background lg:rounded-2xl lg:shadow-lg p-8 lg:p-4 flex-1 lg:overflow-y-auto">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route
