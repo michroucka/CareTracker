@@ -104,7 +104,7 @@ export function ClientDetail() {
                     Zpět
                 </Button>
 
-                {!isEditMode &&
+                {!isEditMode && canEdit &&
                     <Button
                         color="primary"
                         startContent={<Pencil size={16} />}
