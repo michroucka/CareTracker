@@ -310,6 +310,8 @@ function Departments() {
                 topContent={topContent}
                 topContentPlacement="outside"
                 onSortChange={setSortDescriptor}
+                classNames={{ table: "clickable-rows" }}
+                onRowAction={(key) => handleOpenDetailModal(key)}
             >
                 <TableHeader columns={visibleColumns}>
                     {(column) => (

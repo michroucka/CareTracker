@@ -27,3 +27,12 @@ table tbody tr[aria-selected="true"] td::before {
 tr:first-of-type {
     box-shadow: none !important;
 }
+
+.clickable-rows tbody tr:not(:has(td[colspan])):hover {
+    cursor: pointer;
+}
+
+.clickable-rows tbody tr:hover td::before {
+    background-color: hsl(var(--heroui-content2)) !important;
+    opacity: 1 !important;
+}

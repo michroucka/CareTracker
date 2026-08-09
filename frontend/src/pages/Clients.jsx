@@ -729,6 +729,8 @@ function Clients() {
                 topContent={topContent}
                 topContentPlacement="outside"
                 onSortChange={setSortDescriptor}
+                classNames={{ table: "clickable-rows" }}
+                onRowAction={(key) => navigate(`/clients/${key}`)}
             >
                 <TableHeader columns={visibleColumns}>
                     {(column) => (
