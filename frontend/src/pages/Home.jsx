@@ -6,7 +6,6 @@ import {
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate, Navigate} from "react-router-dom";
-import {getLocalTimeZone, now, today} from "@internationalized/date";
 import {formatDate, formatDateTime, formatTime} from "../utils/formatters.js";
 import {getJSON} from "../api/api.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
@@ -25,7 +24,6 @@ function getLast12MonthLabels() {
 }
 
 const MONTH_LABELS = getLast12MonthLabels();
-
 
 function DashboardContent() {
     const { user } = useAuth();

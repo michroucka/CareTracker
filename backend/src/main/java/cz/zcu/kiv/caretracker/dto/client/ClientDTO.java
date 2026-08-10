@@ -26,6 +26,8 @@ public class ClientDTO {
     private String street;
     private String city;
     private String postalCode;
+    private Double latitude;
+    private Double longitude;
     private Boolean legallyCompetent;
     private String benefits;
     private String relativesContact;

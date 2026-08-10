@@ -49,6 +49,8 @@ public class ClientMapper {
         dto.setStreet(client.getStreet());
         dto.setCity(client.getCity());
         dto.setPostalCode(client.getPostalCode());
+        dto.setLatitude(client.getLatitude());
+        dto.setLongitude(client.getLongitude());
         dto.setLegallyCompetent(client.getLegallyCompetent());
         dto.setBenefits(client.getBenefits() != null ? client.getBenefits().name() : null);
         dto.setRelativesContact(client.getRelativesContact());

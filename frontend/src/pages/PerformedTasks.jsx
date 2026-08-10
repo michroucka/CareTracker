@@ -251,20 +251,38 @@ function PerformedTasks() {
         }
     }, [user, departments]);
 
+    // Tracks whether we already know if a default department needs to be injected.
+    // Starts resolved if the URL already had an explicit selection (bookmarked/returning state),
+    // so the URL-sync effect below never overwrites it with a premature "all".
+    const [departmentDefaultResolved, setDepartmentDefaultResolved] = React.useState(
+        () => !!searchParams.get("departments")
+    );
+
     React.useEffect(() => {
-        // Set default department filter for COORDINATOR/CAREGIVER only once, and only when the URL
-        // does not already contain a specific department selection (to preserve bookmarked state)
-        const urlDepartments = searchParams.get("departments");
-        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
-            const userDepartment = departments.find(dept => dept.id === user.departmentId);
-            if (userDepartment) {
-                setDepartmentFilter(new Set([userDepartment.city]));
-            }
+        // Set default department filter once, and only when the URL does not already contain
+        // a specific department selection (to preserve bookmarked/returning state)
+        if (departmentDefaultResolved) return;
+        if (!user) return; // wait for auth-status to resolve before deciding
+
+        if (!user.departmentId) {
+            setDepartmentDefaultResolved(true);
+            return;
         }
-    }, [user, departments]);
+
+        if (departments.length === 0) return; // wait for departments to load before deciding
+
+        const userDepartment = departments.find(dept => dept.id === user.departmentId);
+        if (userDepartment) {
+            setDepartmentFilter(new Set([userDepartment.city]));
+        }
+        setDepartmentDefaultResolved(true);
+    }, [user, departments, departmentDefaultResolved]);
 
     React.useEffect(() => {
         if (!user) return;
+        // Hold off writing to the URL until we know whether a default department needs to be
+        // injected first - otherwise this would prematurely persist "all" and starve the effect above.
+        if (!departmentDefaultResolved) return;
 
         const params = new URLSearchParams();
         const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
@@ -295,7 +313,7 @@ function PerformedTasks() {
         params.set("year", monthYearFilter.year);
 
         setSearchParams(params, { replace: true });
-    }, [filterValue, departmentFilter, caregiverFilter, monthYearFilter, user, superadminOrg]);
+    }, [filterValue, departmentFilter, caregiverFilter, monthYearFilter, user, superadminOrg, departmentDefaultResolved]);
 
     const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
@@ -477,6 +495,7 @@ function PerformedTasks() {
 
                         <MonthYearPicker
                             onChange={setMonthYearFilter}
+                            defaultValue={monthYearFilter}
                             className="hidden lg:flex"
                             isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                         />
