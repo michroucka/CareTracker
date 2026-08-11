@@ -771,7 +771,7 @@ function Clients() {
                     items={sortedItems}
                 >
                     {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""} onClick={() => handleOpenDetailModal(item.id)}>
+                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                         </TableRow>
                     )}
