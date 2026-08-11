@@ -1,31 +1,17 @@
-/* HeroUI Table custom styles */
-
-/* Disable all default HeroUI hover/transition effects on table rows */
-table tbody tr,
-table tbody tr td,
-table tbody tr td:hover {
-    background-color: transparent !important;
-    transition: none !important;
-}
-
-/* Default transparent background for ::before pseudo-element */
-table tbody tr td::before {
-    background-color: transparent !important;
-    transition: background-color 150ms ease;
-}
-
-/* Hover state — only when row is not selected */
-table tbody tr[data-hover="true"]:not([aria-selected="true"]) td::before {
+tbody:not([data-empty="true"]) tr:hover td {
     background-color: hsl(var(--heroui-content2)) !important;
+    transition: background-color 150ms ease;
+    cursor: pointer;
 }
 
-/* Selected state */
-table tbody tr[aria-selected="true"] td::before {
-    background-color: hsl(var(--heroui-content3)) !important;
+tbody:not([data-empty="true"]) tr:hover td:first-child {
+    border-top-left-radius: var(--radius-lg);
+    border-bottom-left-radius: var(--radius-lg);
 }
 
-tr:first-of-type {
-    box-shadow: none !important;
+tbody:not([data-empty="true"]) tr:hover td:last-child {
+    border-top-right-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
 }
 
 .clickable-rows tbody tr:not(:has(td[colspan])):hover {

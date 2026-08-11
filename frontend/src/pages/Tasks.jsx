@@ -456,7 +456,7 @@ function Tasks() {
             <Table
                 isHeaderSticky
                 removeWrapper
-                                aria-label="Tasks table"
+                aria-label="Tasks table"
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -487,7 +487,7 @@ function Tasks() {
                     }
                     items={sortedItems}>
                     {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""}>
+                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""} onClick={() => handleOpenDetailModal(item.id)}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                         </TableRow>
                     )}

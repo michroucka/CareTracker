@@ -1,4 +1,4 @@
-.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend
+.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend demo-up demo-down demo-build demo-reset demo-logs
 
 # Start všech služeb
 up:
@@ -52,3 +52,20 @@ test-backend:
 
 test-frontend:
 	docker exec caretracker-frontend npm test -- --run
+
+# Demo commands
+demo-up:
+	docker compose -f docker-compose.demo.yml up -d
+
+demo-down:
+	docker compose -f docker-compose.demo.yml down
+
+demo-build:
+	docker compose -f docker-compose.demo.yml build --no-cache
+
+demo-reset:
+	docker compose -f docker-compose.demo.yml down -v
+	docker compose -f docker-compose.demo.yml up --build -d
+
+demo-logs:
+	docker compose -f docker-compose.demo.yml logs -f $(service)

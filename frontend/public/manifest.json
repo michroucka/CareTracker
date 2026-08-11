@@ -1,0 +1,17 @@
+{
+  "name": "CareTracker",
+  "short_name": "CareTracker",
+  "description": "Systém pro koordinaci pečovatelských služeb",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/ct_icon_pwa.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

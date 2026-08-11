@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,11 +22,8 @@ import java.util.List;
 public class PictureService {
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-    private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "image/webp"
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp"
     );
 
     @Autowired
@@ -48,25 +44,27 @@ public class PictureService {
      */
     @Transactional
     public Picture savePicture(Long clientId, MultipartFile file) throws IOException {
-        validateFile(file);
-
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nenalezen"));
 
         Picture picture = pictureRepository.findByClientId(clientId).orElse(null);
 
+        byte[] data = file.getBytes();
+        String detectedContentType = validateFile(file, data);
+        String safeFilename = sanitizeFilename(file.getOriginalFilename());
+
         if (picture != null) {
-            picture.setData(file.getBytes());
-            picture.setContentType(file.getContentType());
-            picture.setFilename(file.getOriginalFilename());
+            picture.setData(data);
+            picture.setContentType(detectedContentType);
+            picture.setFilename(safeFilename);
             picture.setSize(file.getSize());
             picture.setUploadedAt(LocalDateTime.now());
         } else {
             picture = Picture.builder()
                     .client(client)
-                    .data(file.getBytes())
-                    .contentType(file.getContentType())
-                    .filename(file.getOriginalFilename())
+                    .data(data)
+                    .contentType(detectedContentType)
+                    .filename(safeFilename)
                     .size(file.getSize())
                     .uploadedAt(LocalDateTime.now())
                     .build();
@@ -103,23 +101,61 @@ public class PictureService {
     }
 
     /**
-     * Validates the uploaded file against size and content-type constraints.
+     * Validates size and detects the real MIME type from magic bytes (ignores the
+     * client-supplied Content-Type header, which is trivially forgeable).
      *
-     * @throws ValidationException if the file is empty, exceeds {@value #MAX_FILE_SIZE} bytes,
-     *                             or has an unsupported MIME type
+     * @return the detected MIME type to store
+     * @throws ValidationException if the file is empty, too large, or not a recognised image format
      */
-    private void validateFile(MultipartFile file) {
+    private String validateFile(MultipartFile file, byte[] data) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new ValidationException("Soubor je prázdný");
         }
-
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new ValidationException("Soubor je příliš velký. Maximální velikost je 5 MB");
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+        String detected = detectMimeType(data);
+        if (detected == null) {
             throw new ValidationException("Nepovolený formát souboru. Povolené formáty: JPEG, PNG, GIF, WEBP");
         }
+        return detected;
+    }
+
+    /** Detects MIME type from file magic bytes, returns null if not a supported image. */
+    private String detectMimeType(byte[] data) {
+        if (data.length >= 3
+                && (data[0] & 0xFF) == 0xFF
+                && (data[1] & 0xFF) == 0xD8
+                && (data[2] & 0xFF) == 0xFF) {
+            return "image/jpeg";
+        }
+        if (data.length >= 8
+                && (data[0] & 0xFF) == 0x89
+                && data[1] == 'P' && data[2] == 'N' && data[3] == 'G'
+                && data[4] == '\r' && data[5] == '\n'
+                && (data[6] & 0xFF) == 0x1A && data[7] == '\n') {
+            return "image/png";
+        }
+        if (data.length >= 6
+                && data[0] == 'G' && data[1] == 'I' && data[2] == 'F'
+                && data[3] == '8'
+                && (data[4] == '7' || data[4] == '9')
+                && data[5] == 'a') {
+            return "image/gif";
+        }
+        if (data.length >= 12
+                && data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F'
+                && data[8] == 'W' && data[9] == 'E' && data[10] == 'B' && data[11] == 'P') {
+            return "image/webp";
+        }
+        return null;
+    }
+
+    /** Strips path separators and header-injection characters from the original filename. */
+    private String sanitizeFilename(String filename) {
+        if (filename == null || filename.isBlank()) return "image";
+        String name = filename.replaceAll("[/\\\\]", "_").replaceAll("[\\r\\n\"']", "");
+        return name.length() > 255 ? name.substring(0, 255) : name;
     }
 }

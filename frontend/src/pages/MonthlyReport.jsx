@@ -213,7 +213,7 @@ function MonthlyReport() {
                         items={performedTasks}
                     >
                         {(item) => (
-                            <TableRow key={item.id}>
+                            <TableRow key={item.id} onClick={() => handleOpenDetailModal(item.id)}>
                                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                             </TableRow>
                         )}
