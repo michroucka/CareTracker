@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: [self-hosted, caretracker-demo]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Deploy demo stack
         run: docker compose -f docker-compose.demo.yml --env-file "$HOME/caretracker-secrets/.env.demo" up --build -d
