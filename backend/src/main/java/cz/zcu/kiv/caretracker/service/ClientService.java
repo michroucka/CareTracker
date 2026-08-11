@@ -21,10 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 
 @Service
 public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
@@ -46,6 +44,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private cz.zcu.kiv.caretracker.mapper.IndividualPlanContentMapper individualPlanContentMapper;
     @Autowired
     private DailyRecordRepository dailyRecordRepository;
+    @Autowired
+    private GeocodingService geocodingService;
 
     /**
      * Returns clients filtered by the current user's role and the supplied optional criteria.
@@ -197,7 +197,17 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             validateOrganizationAccess(task, t -> t.getOrganization().getId());
         }
 
+        boolean addressChanged = !Objects.equals(client.getStreet(), dto.getStreet())
+                || !Objects.equals(client.getCity(), dto.getCity())
+                || !Objects.equals(client.getPostalCode(), dto.getPostalCode());
+
         clientMapper.requestToClient(client, dto, department, caregiver, tasks);
+
+        if (addressChanged) {
+            Optional<GeocodingService.GeocodeResult> result = geocodingService.geocode(client.getStreet(), client.getCity(), client.getPostalCode());
+            client.setLatitude(result.map(GeocodingService.GeocodeResult::latitude).orElse(null));
+            client.setLongitude(result.map(GeocodingService.GeocodeResult::longitude).orElse(null));
+        }
 
         if (dto.getPersonalNumber() != null) {
             client.setPersonalNumber(dto.getPersonalNumber());

@@ -1,0 +1,17 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, caretracker-demo]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy demo stack
+        run: docker compose -f docker-compose.demo.yml --env-file "$HOME/caretracker-secrets/.env.demo" up --build -d
+
+      - name: Clean up dangling images
+        run: docker image prune -f

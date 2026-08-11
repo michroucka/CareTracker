@@ -6,30 +6,30 @@ import {
 } from 'lucide-react'
 import {useAuth} from "../contexts/AuthContext.tsx";
 import {useNavigate, Navigate} from "react-router-dom";
-import {getLocalTimeZone, today} from "@internationalized/date";
-import {formatDate, formatTime} from "../utils/formatters.js";
+import {formatDate, formatDateTime, formatTime} from "../utils/formatters.js";
 import {getJSON} from "../api/api.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
-import {BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid} from "recharts";
+import {BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line} from "recharts";
 import {ROLES} from "../constants/roles.js";
 import {MONTHS} from "../constants/globalConstants.js";
 import {unitTypeTranslations} from "../constants/performedTaskConstants.js";
+import {useIsDesktop} from "../hooks/useMediaQuery.js";
 
-function getLast6MonthLabels() {
+function getLast12MonthLabels() {
     const now = new Date();
-    return Array.from({ length: 6 }, (_, i) => {
-        const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
         return MONTHS[d.getMonth()];
     });
 }
 
-const MONTH_LABELS = getLast6MonthLabels();
-
+const MONTH_LABELS = getLast12MonthLabels();
 
 function DashboardContent() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const role = user?.role;
+    const isDesktop = useIsDesktop();
 
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -39,8 +39,10 @@ function DashboardContent() {
             ? dashboard?.tasksPerformedCountHistory
             : dashboard?.monthlyIncomeHistory;
         if (!history?.length) return null;
-        return history.map((value, i) => ({ month: MONTH_LABELS[i], value }));
-    }, [dashboard, role]);
+        const labels = isDesktop ? MONTH_LABELS : MONTH_LABELS.slice(-6);
+        const values = isDesktop ? history : history.slice(-6);
+        return values.map((value, i) => ({ month: labels[i], value }));
+    }, [dashboard, role, isDesktop]);
 
     const deptChartData = useMemo(() => {
         const counts = dashboard?.tasksPerformedByDepartment;
@@ -65,6 +67,17 @@ function DashboardContent() {
         fetchDashboard();
     }, []);
 
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+        const msToNextMinute = 60000 - (Date.now() % 60000);
+        const timeout = setTimeout(() => {
+            setNow(new Date());
+            const interval = setInterval(() => setNow(new Date()), 60000);
+            return () => clearInterval(interval);
+        }, msToNextMinute);
+        return () => clearTimeout(timeout);
+    }, []);
+
     const isCaregiver = role === ROLES.CAREGIVER;
     const isCoordinator = role === ROLES.COORDINATOR;
     const isAdmin = role === ROLES.ADMIN;
@@ -76,11 +89,11 @@ function DashboardContent() {
                 <div>
                     <h1>Nástěnka</h1>
                     <p className="text-default-500 mt-1">
-                        Vítejte zpět, {user?.fullName || user?.username}
+                        Vítejte zpět, {user?.fullName || user?.username}!
                     </p>
                 </div>
                 <div className="flex gap-1 items-center">
-                    <p className="text-lg font-semibold">{formatDate(today(getLocalTimeZone()).toString())}</p>
+                    <p className="text-lg font-semibold">{formatDateTime(now)}</p>
                 </div>
             </div>
 
@@ -262,23 +275,47 @@ function DashboardContent() {
                                 <Card>
                                     <CardHeader>
                                         <h2 className="text-xl font-semibold">
-                                            {isCaregiver ? "Provedené úkony za posledních 6 měsíců" : "Příjmy za posledních 6 měsíců"}
+                                            {isCaregiver ? `Provedené úkony za posledních ${isDesktop ? "12" : "6"} měsíců` : `Příjmy za posledních ${isDesktop ? "12" : "6"} měsíců`}
                                         </h2>
                                     </CardHeader>
                                     <Divider />
                                     <CardBody>
                                         <ResponsiveContainer width="100%" height={200}>
-                                            <BarChart data={historyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.2)" />
-                                                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
-                                                <YAxis tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} width={40} />
+                                            <LineChart
+                                                data={historyChartData}
+                                                margin={{ top: 8, right: 8, left: 8, bottom: 0 }}
+                                            >
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
+                                                    vertical={false}
+                                                    stroke="rgba(128,128,128,0.2)"
+                                                />
+                                                <XAxis
+                                                    dataKey="month"
+                                                    tick={{ fontSize: 12, fill: "currentColor" }}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                />
+                                                <YAxis
+                                                    tick={{ fontSize: 12, fill: "currentColor" }}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    width="auto"
+                                                    tickFormatter={(v) => isCaregiver ? `${v}` : `${v.toLocaleString("cs-CZ")} Kč`}
+                                                />
                                                 <Tooltip
                                                     contentStyle={{ borderRadius: "8px", border: "none", padding: "8px 12px 0 12px", backgroundColor: "hsl(var(--heroui-background) / 0.5)" }}
                                                     formatter={(v) => [isCaregiver ? `${v}` : `${v.toLocaleString("cs-CZ")} Kč`]}
                                                     cursor={false}
                                                 />
-                                                <Bar dataKey="value" fill="hsl(var(--heroui-primary))" radius={[4, 4, 0, 0]} />
-                                            </BarChart>
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="value"
+                                                    stroke="hsl(var(--heroui-primary))"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 3 }}
+                                                />
+                                            </LineChart>
                                         </ResponsiveContainer>
                                     </CardBody>
                                 </Card>
@@ -384,7 +421,14 @@ function DashboardContent() {
 }
 
 function Home() {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner size="lg" variant="gradient" label="Načítání..." />
+            </div>
+        );
+    }
     if (!user) return <Navigate to="/login" replace />;
     if (user.role === ROLES.CLIENT) return <Navigate to="/monthly-report" replace />;
     return <DashboardContent />;

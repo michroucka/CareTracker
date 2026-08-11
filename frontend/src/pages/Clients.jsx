@@ -35,10 +35,8 @@ import {useIsMobile} from "../hooks/useMediaQuery.js";
 import {columns, genderOptions, genderTranslations} from "../constants/clientConstants.js";
 import {activeOptions} from "../constants/globalConstants.js";
 import {useAuth} from "../contexts/AuthContext.tsx";
-import {ClientCreateModal} from "../components/modals/client/ClientCreateModal.jsx";
 import {removeDiacritics} from "../utils/formatters.js";
 import {sortByKey} from "../utils/sorting.js";
-import {ClientDetailModal} from "../components/modals/client/ClientDetailModal.jsx";
 import {ClientTerminateModal} from "../components/modals/client/ClientTerminateModal.jsx";
 import {FiltersModal} from "../components/modals/FiltersModal.jsx";
 import {ClientCreateAccountModal} from "../components/modals/client/ClientCreateAccountModal.jsx";
@@ -81,8 +79,6 @@ function Clients() {
         loading,
         fetchClients,
         fetchClient,
-        createClient,
-        updateClient,
         terminateClient,
         activateClient,
         createClientAccount,
@@ -91,13 +87,9 @@ function Clients() {
     } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { employees, fetchEmployees } = useEmployees();
-    const { tasks, fetchTasks } = useTasks();
     const hasLoadedMetadata = React.useRef(false);
-    const [ isCreateModalOpen, setIsCreateModalOpen ] = React.useState(false);
-    const [ isDetailModalOpen, setIsDetailModalOpen ] = React.useState(false);
     const [ isTerminateModalOpen, setIsTerminateModalOpen ] = React.useState(false);
     const [ selectedClient, setSelectedClient ] = React.useState(null);
-    const [ isLoadingDetail, setIsLoadingDetail ] = React.useState(false);
     const [ isFiltersModalOpen, setIsFiltersModalOpen ] = React.useState(false);
     const [ isCreateAccountModalOpen, setIsCreateAccountModalOpen ] = React.useState(false);
     const [ isDeactivateAccountModalOpen, setIsDeactivateAccountModalOpen ] = React.useState(false);
@@ -219,7 +211,6 @@ function Clients() {
         hasLoadedMetadata.current = true;
         fetchDepartments({ status: "true" });
         fetchEmployees({ status: "true" });
-        fetchTasks({ status: "true" });
     }, [user]);
 
     React.useEffect(() => {
@@ -230,24 +221,41 @@ function Clients() {
         }
         fetchDepartments({ organizationId: superadminOrg.id, status: "true" });
         fetchEmployees({ organizationId: superadminOrg.id, status: "true" });
-        fetchTasks({ organizationId: superadminOrg.id, status: "true" });
     }, [user, superadminOrg]);
 
 
+    // Tracks whether we already know if a default department needs to be injected.
+    // Starts resolved if the URL already had an explicit selection (bookmarked/returning state),
+    // so the URL-sync effect below never overwrites it with a premature "all".
+    const [departmentDefaultResolved, setDepartmentDefaultResolved] = React.useState(
+        () => !!searchParams.get("departments")
+    );
+
     React.useEffect(() => {
-        // Set default department filter for COORDINATOR/CAREGIVER only once, and only when the URL
+        // Set default department filter for ADMIN/COORDINATOR/CAREGIVER only once, and only when the URL
         // does not already contain a specific department selection (to preserve bookmarked state)
-        const urlDepartments = searchParams.get("departments");
-        if (user?.departmentId && departments.length > 0 && departmentFilter.has("all") && (!urlDepartments || urlDepartments === "all")) {
-            const userDepartment = departments.find(dept => dept.id === user.departmentId);
-            if (userDepartment) {
-                setDepartmentFilter(new Set([userDepartment.city]));
-            }
+        if (departmentDefaultResolved) return;
+        if (!user) return; // wait for auth-status to resolve before deciding
+
+        if (!['ADMIN', 'COORDINATOR', 'CAREGIVER'].includes(user.role)) {
+            setDepartmentDefaultResolved(true);
+            return;
         }
-    }, [user, departments]);
+
+        if (departments.length === 0) return; // wait for departments to load before deciding
+
+        const userDepartment = departments.find(dept => dept.id === user.departmentId);
+        if (userDepartment) {
+            setDepartmentFilter(new Set([userDepartment.city]));
+        }
+        setDepartmentDefaultResolved(true);
+    }, [user, departments, departmentDefaultResolved]);
 
     React.useEffect(() => {
         if (!user) return;
+        // Hold off writing to the URL until we know whether a default department needs to be
+        // injected first - otherwise this would prematurely persist "all" and starve the effect above.
+        if (!departmentDefaultResolved) return;
 
         const params = new URLSearchParams();
         const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
@@ -283,7 +291,7 @@ function Clients() {
         }
 
         setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, departmentFilter, caregiverFilter, user, superadminOrg]);
+    }, [filterValue, activeFilter, departmentFilter, caregiverFilter, user, superadminOrg, departmentDefaultResolved]);
 
     const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
     React.useEffect(() => {
@@ -353,51 +361,6 @@ function Clients() {
             console.error("Failed to load client:", error);
             throw error;
         }
-    }
-
-    const handleOpenCreateModal = () => {
-        setIsCreateModalOpen(true);
-    };
-
-    const handleCloseCreateModal = () => {
-        setIsCreateModalOpen(false);
-    }
-
-    const handleCreateClient = async (clientData) => {
-        try {
-            await createClient(clientData);
-            handleCloseCreateModal();
-        } catch (error) {
-            console.error("Failed to create client: ", error);
-            throw error;
-        }
-    }
-
-    const handleUpdateClient = async (clientId, clientData) => {
-        try {
-            return await updateClient(clientId, clientData);
-        } catch (error) {
-            console.error("Failed to update client:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenDetailModal = async (clientId) => {
-        setIsLoadingDetail(true);
-        setIsDetailModalOpen(true);
-
-        try {
-            await handleSelectClient(clientId);
-        } catch {
-            setIsDetailModalOpen(false);
-        }
-
-        setIsLoadingDetail(false);
-    }
-
-    const handleCloseDetailModal = () => {
-        setSelectedClient(null);
-        setIsDetailModalOpen(false);
     }
 
     const handleOpenTerminateModal = async (clientId) => {
@@ -495,7 +458,7 @@ function Clients() {
                 <div className="flex justify-between gap-3 items-end">
                     <Input
                         isClearable
-                        className="w-full sm:max-w-[44%]"
+                        className="w-full lg:max-w-[44%]"
                         placeholder="Hledat podle jména..."
                         startContent={<Search className="size-5" />}
                         value={filterValue}
@@ -507,14 +470,14 @@ function Clients() {
                         <Button
                             isIconOnly
                             variant="flat"
-                            className="sm:hidden"
+                            className="lg:hidden"
                             onPress={handleOpenFiltersModal}
                         >
                             <Funnel className="size-4" />
                         </Button>
                         {user?.role !== "CLIENT" && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
+                                <DropdownTrigger className="hidden lg:flex">
                                     <Button
                                         endContent={<ChevronDown
                                             className="size-4" />}
@@ -545,7 +508,7 @@ function Clients() {
 
                         {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
+                                <DropdownTrigger className="hidden lg:flex">
                                     <Button
                                         endContent={<ChevronDown className="size-4" />}
                                         variant="flat"
@@ -575,7 +538,7 @@ function Clients() {
                         )}
 
                         <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
+                            <DropdownTrigger className="hidden lg:flex">
                                 <Button
                                     endContent={<ChevronDown className="size-4" />}
                                     variant="flat"
@@ -606,7 +569,7 @@ function Clients() {
                         {canAlterClient && (
                             <Button color="primary"
                                     endContent={<Plus className="size-4" />}
-                                    onPress={handleOpenCreateModal}
+                                    onPress={() => navigate("/clients/new")}
                                     isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                             >
                                 Přidat
@@ -690,10 +653,9 @@ function Clients() {
                                     <DropdownItem key="view"
                                                   startContent={<UserRound />}
                                                   variant="light"
-                                                  isLoading={isLoadingDetail}
-                                                  onPress={() => handleOpenDetailModal(client.id)}
+                                                  onPress={() => navigate(`/clients/${client.id}`)}
                                     >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
+                                        Detail
                                     </DropdownItem>
                                     <DropdownItem key="view-ip"
                                                   startContent={<FileText />}
@@ -785,6 +747,8 @@ function Clients() {
                 topContent={topContent}
                 topContentPlacement="outside"
                 onSortChange={setSortDescriptor}
+                classNames={{ table: "clickable-rows" }}
+                onRowAction={(key) => navigate(`/clients/${key}`)}
             >
                 <TableHeader columns={visibleColumns}>
                     {(column) => (
@@ -813,28 +777,6 @@ function Clients() {
                     )}
                 </TableBody>
             </Table>
-
-            <ClientCreateModal
-                isOpen={isCreateModalOpen}
-                onClose={handleCloseCreateModal}
-                onSubmit={handleCreateClient}
-                userDept={user?.departmentId}
-                departments={departments}
-                caregivers={employees}
-                tasks={tasks}
-            />
-
-            <ClientDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseDetailModal}
-                onSubmit={handleUpdateClient}
-                canEdit={canAlterClient}
-                client={selectedClient}
-                isLoading={isLoadingDetail}
-                departments={departments}
-                caregivers={employees}
-                tasks={tasks}
-            />
 
             <ClientTerminateModal
                 isOpen={isTerminateModalOpen}

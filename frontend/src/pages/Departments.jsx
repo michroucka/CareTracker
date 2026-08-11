@@ -185,7 +185,7 @@ function Departments() {
             <div className="flex justify-between gap-3 items-end">
                 <Input
                     isClearable
-                    className="w-full sm:max-w-[44%]"
+                    className="w-full lg:max-w-[44%]"
                     placeholder="Hledat podle názvu..."
                     startContent={<Search className="size-5" />}
                     value={filterValue}
@@ -194,11 +194,11 @@ function Departments() {
                     isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
                 />
                 <div className="flex gap-3">
-                    <Button isIconOnly variant="flat" className="sm:hidden" onPress={() => setIsFiltersModalOpen(true)}>
+                    <Button isIconOnly variant="flat" className="lg:hidden" onPress={() => setIsFiltersModalOpen(true)}>
                         <Funnel className="size-4" />
                     </Button>
                     <Dropdown>
-                        <DropdownTrigger className="hidden sm:flex">
+                        <DropdownTrigger className="hidden lg:flex">
                             <Button
                                 endContent={<ChevronDown className="size-4" />}
                                 variant="flat"
@@ -310,6 +310,8 @@ function Departments() {
                 topContent={topContent}
                 topContentPlacement="outside"
                 onSortChange={setSortDescriptor}
+                classNames={{ table: "clickable-rows" }}
+                onRowAction={(key) => handleOpenDetailModal(key)}
             >
                 <TableHeader columns={visibleColumns}>
                     {(column) => (

@@ -60,6 +60,12 @@ public class Client {
     @Column(name = "postal_code", nullable = false, length = 6)
     private String postalCode;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @Column(name = "legally_competent", nullable = false)
     private Boolean legallyCompetent;
 

@@ -287,7 +287,7 @@ function Tasks() {
                 <div className="flex justify-between gap-3 items-end">
                     <Input
                         isClearable
-                        className="w-full sm:max-w-[44%]"
+                        className="w-full lg:max-w-[44%]"
                         placeholder="Hledat podle názvu..."
                         startContent={<Search className="size-5" />}
                         value={filterValue}
@@ -300,7 +300,7 @@ function Tasks() {
                             <Button
                                 isIconOnly
                                 variant="flat"
-                                className="sm:hidden"
+                                className="lg:hidden"
                                 onPress={handleOpenFiltersModal}
                             >
                                 <Funnel className="size-4" />
@@ -308,7 +308,7 @@ function Tasks() {
                         )}
                         {canAlterTask && (
                             <Dropdown>
-                                <DropdownTrigger className="hidden sm:flex">
+                                <DropdownTrigger className="hidden lg:flex">
                                     <Button
                                         endContent={<ChevronDown
                                             className="size-4" />}
@@ -461,6 +461,8 @@ function Tasks() {
                 topContent={topContent}
                 topContentPlacement="outside"
                 onSortChange={setSortDescriptor}
+                classNames={{ table: "clickable-rows" }}
+                onRowAction={(key) => handleOpenDetailModal(key)}
             >
                 <TableHeader columns={visibleColumns}>
                     {(column) => (

@@ -13,3 +13,12 @@ tbody:not([data-empty="true"]) tr:hover td:last-child {
     border-top-right-radius: var(--radius-lg);
     border-bottom-right-radius: var(--radius-lg);
 }
+
+.clickable-rows tbody tr:not(:has(td[colspan])):hover {
+    cursor: pointer;
+}
+
+.clickable-rows tbody tr:hover td::before {
+    background-color: hsl(var(--heroui-content2)) !important;
+    opacity: 1 !important;
+}

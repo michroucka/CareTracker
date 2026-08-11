@@ -1,4 +1,5 @@
 import {
+    Button,
     Input,
     Checkbox,
     Select,
@@ -10,13 +11,14 @@ import {
     Autocomplete,
     AutocompleteItem,
 } from "@heroui/react";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Map as MapIcon } from "lucide-react";
 import React, {useState} from "react";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { formatPostalCode, formatPhoneNumber } from "../../utils/formatters.js";
 import { benefitsOptions, terminationReasonOptions } from "../../constants/clientConstants.js";
 import { ReadOnlyField } from "../ReadOnlyField.jsx";
 import { ImageUpload } from "../ImageUpload.jsx";
+import { MapModal } from "../modals/MapModal.jsx";
 import {MIN_YEAR} from "../../constants/globalConstants.js";
 
 /**
@@ -68,6 +70,7 @@ export const ClientForm = React.forwardRef(({
     const [terminationReason, setTerminationReason] = React.useState("");
 
     const [errors, setErrors] = React.useState({});
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
     // Initialize form with initial data
     React.useEffect(() => {
@@ -245,8 +248,9 @@ export const ClientForm = React.forwardRef(({
     }));
 
     return (
+        <>
         <Form
-            className="w-full space-y-4"
+            className="w-full max-w-xl mx-auto space-y-4 "
             validationErrors={errors}
             onReset={resetForm}
             onSubmit={handleSubmit}
@@ -444,7 +448,23 @@ export const ClientForm = React.forwardRef(({
 
                 {/* Address */}
                 {isReadOnly ? (
-                    <ReadOnlyField label="Ulice a číslo popisné" value={street} />
+                    <ReadOnlyField
+                        label="Ulice a číslo popisné"
+                        value={street}
+                        endContent={
+                            initialData?.latitude != null && initialData?.longitude != null ? (
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="light"
+                                    onPress={() => setIsMapModalOpen(true)}
+                                    className="ms-2"
+                                >
+                                    <MapIcon className="size-5" />
+                                </Button>
+                            ) : null
+                        }
+                    />
                 ) : (
                     <Input
                         isRequired
@@ -763,6 +783,15 @@ export const ClientForm = React.forwardRef(({
                 )}
             </div>
         </Form>
+        {isReadOnly && initialData?.latitude != null && initialData?.longitude != null && (
+            <MapModal
+                isOpen={isMapModalOpen}
+                onClose={() => setIsMapModalOpen(false)}
+                latitude={initialData.latitude}
+                longitude={initialData.longitude}
+            />
+        )}
+        </>
     );
 });
 
