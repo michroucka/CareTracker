@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareTracker Brand Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one long brand sheet; each section is a labelled band on a 12-col grid that collapses to one column on phones. */
+:root {
+  --plum: #4A2B5E;
+  --apricot: #E26A35;
+  --ink: #1E1A24;
+  --paper: #F7F5F9;
+  --lavender: #ECE3F2;
+  --night: #17131C;
+
+  --bg: var(--paper);
+  --surface: #FFFFFF;
+  --fg: var(--ink);
+  --muted: #645C6E;
+  --line: #E2DCE8;
+  --brand: var(--plum);
+  --mark-sq: var(--plum);
+  --mark-ci: var(--apricot);
+  --word: var(--ink);
+
+  --font-display: "Bricolage Grotesque", "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --s-1: 0.8rem; --s0: 1rem; --s1: 1.25rem; --s2: 1.563rem; --s3: 1.953rem; --s4: 2.441rem; --s5: 3.052rem;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--night); --surface: #211B28; --fg: #F1EDF5; --muted: #A79EB2; --line: #352D3E;
+    --brand: #C2A4D6; --mark-sq: #F7F5F9; --word: #F7F5F9; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: var(--night); --surface: #211B28; --fg: #F1EDF5; --muted: #A79EB2; --line: #352D3E;
+  --brand: #C2A4D6; --mark-sq: #F7F5F9; --word: #F7F5F9; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--s0); line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: var(--s3); font-weight: 600; }
+h3 { font-size: var(--s1); font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font-size: var(--s-1); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.85em; }
+
+section { padding-block: clamp(40px, 7vw, 80px); border-top: 1px solid var(--line); }
+.section-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; margin-bottom: 32px; align-items: end; }
+@media (max-width: 760px) { .section-head { grid-template-columns: 1fr; } }
+
+.mark-sq { fill: var(--mark-sq); }
+.mark-ci { fill: var(--mark-ci); }
+.word { fill: var(--word); }
+
+/* hero */
+.hero { padding-block: clamp(40px, 8vw, 96px) clamp(32px, 6vw, 64px); display: grid; gap: 40px; }
+.hero-lockup { width: min(640px, 100%); height: auto; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 40px; align-items: end; }
+.hero-grid p { font-size: var(--s1); }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: var(--s-1); }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+@media (max-width: 760px) { .hero-grid { grid-template-columns: 1fr; } }
+
+/* idea */
+.idea { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+.construct { width: 100%; max-width: 420px; height: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.construct .guide { stroke: var(--brand); stroke-width: 0.8; fill: none; stroke-dasharray: 3 3; opacity: 0.7; }
+.construct .dim { fill: var(--muted); font: 600 7px var(--font-body); }
+.idea ul { margin: 16px 0 0; padding-left: 1.1em; display: grid; gap: 8px; }
+@media (max-width: 760px) { .idea { grid-template-columns: 1fr; } }
+
+/* variants */
+.variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tile { border-radius: var(--radius); padding: 28px; min-height: 180px; display: grid; place-items: center; position: relative; border: 1px solid var(--line); }
+.tile svg { max-width: 100%; height: auto; }
+.tile .cap { position: absolute; left: 16px; bottom: 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+.on-paper { background: #F7F5F9; --mark-sq: #4A2B5E; --mark-ci: #E26A35; --word: #1E1A24; color: #645C6E; }
+.on-night { background: #17131C; --mark-sq: #F7F5F9; --mark-ci: #E26A35; --word: #F7F5F9; color: #A79EB2; border-color: #17131C; }
+.on-plum { background: #4A2B5E; --mark-sq: #FFFFFF; --mark-ci: #FFFFFF; --word: #FFFFFF; color: #DAC7E6; border-color: #4A2B5E; }
+.on-white-mono { background: #FFFFFF; --mark-sq: #4A2B5E; --mark-ci: #4A2B5E; --word: #4A2B5E; color: #645C6E; }
+.on-white-black { background: #FFFFFF; --mark-sq: #000; --mark-ci: #000; --word: #000; color: #645C6E; }
+.on-apricot { background: #E26A35; --mark-sq: #1E1A24; --mark-ci: #FFFFFF; --word: #1E1A24; color: #1E1A24; border-color: #E26A35; }
+.sizes { display: flex; gap: 20px; align-items: end; flex-wrap: wrap; }
+.sizes figure { margin: 0; display: grid; gap: 6px; justify-items: center; font-size: 11px; }
+@media (max-width: 860px) { .variants { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .variants { grid-template-columns: 1fr; } }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 12px; align-content: start; }
+.rule svg { width: 100%; height: auto; border-radius: 10px; background: #F7F5F9; }
+.dont .tag { color: #C9364F; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); }
+@media (max-width: 860px) { .rules { grid-template-columns: 1fr; } }
+
+/* colour */
+.swatches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.swatch { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--surface); display: grid; grid-template-rows: 140px auto; }
+.swatch .chip { padding: 14px; display: flex; align-items: end; font-family: var(--font-display); font-weight: 600; font-size: var(--s1); }
+.swatch .meta { padding: 14px; display: grid; gap: 6px; font-size: 13px; }
+.swatch .hex { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+.ratio { font-variant-numeric: tabular-nums; color: var(--muted); }
+.scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+.scale div { height: 44px; display: grid; place-items: end start; padding: 6px; font-size: 10px; font-family: var(--font-mono); }
+@media (max-width: 900px) { .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* type */
+.type { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.specimen { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; display: grid; gap: 14px; align-content: start; }
+.specimen .big { font-size: clamp(2.6rem, 6vw, 4.2rem); line-height: 1; }
+.ladder { display: grid; gap: 10px; margin-top: 16px; }
+.ladder div { display: grid; grid-template-columns: 64px 1fr; align-items: baseline; gap: 12px; }
+.ladder span:first-child { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ladder span:last-child { font-family: var(--font-display); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) { .type { grid-template-columns: 1fr; } }
+
+/* mockups (always in the brand's light look) */
+.mock-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.mock { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: #FFFFFF; color: #1E1A24; --mark-sq: #4A2B5E; --mark-ci: #E26A35; --word: #1E1A24; font-family: "Figtree", ui-sans-serif, system-ui, sans-serif; }
+.mock-label { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.span-12 { grid-column: span 12; } .span-7 { grid-column: span 7; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; } .span-8 { grid-column: span 8; }
+@media (max-width: 860px) { .span-7, .span-5, .span-4, .span-8 { grid-column: span 12; } }
+
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 420px; }
+.app aside { background: #F7F5F9; border-right: 1px solid #E2DCE8; padding: 18px 12px; display: grid; gap: 4px; align-content: start; }
+.app aside .brand { display: flex; align-items: center; padding: 4px 8px 18px; }
+.nav { padding: 8px 12px; border-radius: 10px; font-size: 14px; color: #4D4557; display: flex; align-items: center; gap: 10px; }
+.nav i { width: 14px; height: 14px; border-radius: 4px; border: 2px solid currentColor; opacity: 0.6; }
+.nav.active { background: #ECE3F2; color: #4A2B5E; font-weight: 600; }
+.nav.active i { background: #E26A35; border-color: #E26A35; border-radius: 50%; opacity: 1; }
+.app main { padding: 22px 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.app-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.app-top h4 { margin: 0; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; font-weight: 600; }
+.btn { border: 0; border-radius: 10px; padding: 9px 14px; font: 600 14px "Figtree", sans-serif; background: #4A2B5E; color: #FFFFFF; }
+.btn.ghost { background: #ECE3F2; color: #4A2B5E; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-f { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: #F7F5F9; border: 1px solid #E2DCE8; color: #4D4557; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 520px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #645C6E; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid #E2DCE8; }
+td { padding: 10px; border-bottom: 1px solid #F0ECF3; font-variant-numeric: tabular-nums; }
+tr.sel td { background: #F7F3F9; }
+.pill { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+.pill.ok { background: #E3F0E9; color: #145835; }
+.pill.wait { background: #FCEFE9; color: #A54318; }
+@media (max-width: 640px) { .app { grid-template-columns: 1fr; } .app aside { display: none; } }
+
+.login { min-height: 420px; background: #4A2B5E; display: grid; place-items: center; padding: 24px; position: relative; overflow: hidden; }
+.login .pattern { position: absolute; inset: 0; opacity: 0.12; --mark-sq: #FFFFFF; --mark-ci: #E26A35; }
+.login-card { position: relative; background: #FFFFFF; border-radius: 18px; padding: 28px; width: min(320px, 100%); display: grid; gap: 14px; }
+.field { display: grid; gap: 4px; font-size: 12px; color: #645C6E; font-weight: 600; }
+.field span.input { display: block; border: 1px solid #E2DCE8; border-radius: 10px; padding: 9px 12px; font-size: 14px; color: #1E1A24; font-weight: 400; background: #F7F5F9; }
+
+.pdf { background: #EDEAF0; padding: 24px; display: grid; place-items: center; min-height: 340px; }
+.page { background: #FFFFFF; width: min(520px, 100%); aspect-ratio: 210 / 150; max-width: 100%; box-shadow: 0 10px 30px rgba(30, 26, 36, 0.12); padding: 24px 26px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 12px; font-size: 10.5px; }
+.page-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; border-bottom: 2px solid #4A2B5E; padding-bottom: 10px; }
+.page h5 { margin: 0; font: 600 15px "Bricolage Grotesque", sans-serif; }
+.page table { min-width: 0; font-size: 10px; }
+.page th { font-size: 8.5px; padding: 4px 6px; }
+.page td { padding: 5px 6px; }
+.page .sum { display: flex; justify-content: space-between; font-weight: 700; font-size: 12px; border-top: 1px solid #E2DCE8; padding-top: 8px; }
+.page .sum b { color: #4A2B5E; }
+
+.cards { background: #E8E3EC; padding: 24px; display: grid; gap: 16px; place-items: center; min-height: 340px; }
+.bcard { width: min(320px, 100%); aspect-ratio: 85 / 55; border-radius: 10px; padding: 18px; display: grid; box-shadow: 0 8px 22px rgba(30, 26, 36, 0.14); }
+.bcard.front { background: #4A2B5E; --mark-sq: #F7F5F9; --mark-ci: #E26A35; --word: #F7F5F9; place-items: center; }
+.bcard.back { background: #FFFFFF; align-content: space-between; font-size: 11px; color: #645C6E; }
+.bcard.back strong { display: block; font: 600 15px "Bricolage Grotesque", sans-serif; color: #1E1A24; }
+
+.social { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 22px; min-height: 160px; }
+.avatar { width: 88px; height: 88px; border-radius: 50%; background: #4A2B5E; display: grid; place-items: center; --mark-sq: #F7F5F9; --mark-ci: #E26A35; }
+.social strong { font: 600 18px "Bricolage Grotesque", sans-serif; }
+.social p { font-size: 13px; color: #645C6E; }
+
+/* spec */
+.spec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+.copy { justify-self: start; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 8px 14px; font: 600 13px var(--font-body); cursor: pointer; }
+.copy:focus-visible, .btn:focus-visible { outline: 2px solid var(--apricot); outline-offset: 2px; }
+.spec-col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+@media (max-width: 860px) { .spec { grid-template-columns: 1fr; } }
+footer { padding-block: 32px 56px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark" viewBox="0 0 256 256">
+      <rect class="mark-sq" x="24" y="24" width="96" height="96" rx="28"/>
+      <circle class="mark-ci" cx="184" cy="72" r="50"/>
+      <rect class="mark-sq" x="24" y="136" width="96" height="96" rx="28"/>
+      <rect class="mark-sq" x="136" y="136" width="96" height="96" rx="28"/>
+    </symbol>
+    <symbol id="mark-small" viewBox="0 0 256 256">
+      <rect class="mark-sq" x="16" y="16" width="100" height="100" rx="30"/>
+      <circle class="mark-ci" cx="190" cy="66" r="52"/>
+      <rect class="mark-sq" x="16" y="140" width="100" height="100" rx="30"/>
+      <rect class="mark-sq" x="140" y="140" width="100" height="100" rx="30"/>
+    </symbol>
+    <symbol id="lockup" viewBox="0 0 954 256">
+      <use href="#mark" x="0" y="32" width="192" height="192"/>
+      <path class="word" transform="translate(230,168)" d="M40.4 1.7Q31.4 1.7 24.9-0.9Q18.3-3.6 14.1-8.4Q9.8-13.2 7.7-19.7Q5.5-26.1 5.5-33.7Q5.5-41.7 7.7-48.4Q9.9-55.2 14.3-60.2Q18.6-65.2 25-68Q31.4-70.8 39.7-70.8Q48-70.8 54.2-68Q60.3-65.2 64.2-60.3Q68-55.3 69.3-48.7L53.7-43.8Q53.5-47.8 51.6-50.9Q49.8-54 46.6-55.7Q43.4-57.4 39.1-57.4Q34.8-57.4 31.7-55.8Q28.6-54.1 26.6-51.1Q24.6-48 23.4-43.8Q22.3-39.5 22.3-34.2Q22.3-26.9 24.3-21.8Q26.3-16.6 30.4-13.8Q34.5-11 40.5-11Q45.9-11 49.3-13Q52.7-15 54.5-18.3Q56.2-21.6 56.6-25.6L71.4-22.3Q70.6-16.9 68.4-12.5Q66.1-8.2 62.2-5Q58.3-1.7 52.9 0Q47.5 1.7 40.4 1.7M96.3 1.7Q90.6 1.7 86.1-0.5Q81.6-2.6 79-7Q76.5-11.4 76.5-17.8Q76.5-23.2 78.5-27.1Q80.6-30.9 84.6-33.3Q88.7-35.8 94.8-37.4Q100.9-39.1 109.1-40.3Q113.6-40.9 116.4-41.6Q119.2-42.2 120.6-43.6Q121.9-45 121.9-47.8Q121.9-51.9 119-54.8Q116.2-57.8 109.9-57.8Q106-57.8 102.5-56.5Q99-55.2 96.5-52.3Q94-49.5 93.1-44.9L78.2-49.5Q79.6-54.8 82.4-58.7Q85.2-62.6 89.3-65.3Q93.4-68.1 98.6-69.4Q103.9-70.8 110.3-70.8Q119.9-70.8 126.1-67.7Q132.3-64.5 135.3-58Q138.4-51.5 138.4-41.2L138.4-28.2Q138.4-23.8 138.6-18.9Q138.8-14.1 139.1-9.3Q139.4-4.5 140 0L125 0Q124.5-3.7 124.1-7.9Q123.7-12.1 123.5-16.5L121.3-16.5Q119.5-11.5 116.1-7.3Q112.6-3.2 107.7-0.7Q102.7 1.7 96.3 1.7M102.9-10.6Q105.5-10.6 108.2-11.5Q110.9-12.4 113.6-14.3Q116.2-16.1 118.4-18.8Q120.7-21.5 122.3-25.2L122-37L125.2-36.4Q122.9-34.6 119.6-33.5Q116.3-32.5 112.7-31.9Q109.1-31.4 105.4-30.7Q101.8-30 98.9-28.8Q96-27.7 94.3-25.7Q92.6-23.6 92.6-20.1Q92.6-15.6 95.5-13.1Q98.4-10.6 102.9-10.6M170 0L153.3 0L153.3-34.6L153.3-69L167.3-69L167.1-45.3L169.4-45.3Q170.6-53.7 173.1-59.3Q175.6-64.9 180.1-67.8Q184.6-70.6 191.2-70.6Q192.5-70.6 194-70.5Q195.6-70.4 197.4-69.8L196.8-52.3Q194.6-53.1 192.5-53.4Q190.3-53.7 188.4-53.7Q183.3-53.7 179.5-51.1Q175.8-48.4 173.5-43.6Q171.1-38.8 170-32.2M237.2 1.7Q228.9 1.7 222.3-0.7Q215.8-3 211.3-7.6Q206.8-12.1 204.4-18.6Q202.1-25.1 202.1-33.3Q202.1-41.4 204.4-48.3Q206.7-55.2 211-60.2Q215.4-65.2 221.7-68Q227.9-70.8 236-70.8Q243.5-70.8 249.5-68.2Q255.4-65.7 259.5-60.8Q263.6-55.8 265.6-48.5Q267.5-41.2 266.9-31.5L212.9-31.2L212.9-40.8L257.2-41.2L251.4-35.8Q252.2-43.3 250.2-48.1Q248.3-52.9 244.6-55.2Q240.9-57.6 236.1-57.6Q230.7-57.6 226.6-54.7Q222.5-51.9 220.4-46.5Q218.2-41.2 218.2-33.5Q218.2-22 223.3-16.4Q228.3-10.7 237.2-10.7Q241.1-10.7 243.8-11.7Q246.6-12.7 248.4-14.3Q250.2-16 251.4-18.1Q252.5-20.2 253.2-22.6L267.7-19.3Q266.6-14.4 264.2-10.6Q261.9-6.7 258.1-4Q254.3-1.2 249.2 0.3Q244 1.7 237.2 1.7M303.2 1.6Q292.3 1.6 287.1-4.3Q282-10.2 282-22.6L282-55.7L271.8-55.7L272.1-68.9L278.8-68.9Q282.6-68.9 284.5-70.1Q286.3-71.3 286.7-74.3L288.3-84.3L297.9-84.3L297.9-69L316.2-69L316.2-55.2L297.9-55.2L297.9-23.2Q297.9-18.3 300.2-16.1Q302.6-13.9 307.2-13.9Q309.7-13.9 312.1-14.5Q314.6-15 316.7-16.5L316.7-0.7Q312.6 0.7 309.2 1.1Q305.9 1.6 303.2 1.6M344 0L327.4 0L327.4-34.6L327.4-69L341.4-69L341.1-45.3L343.5-45.3Q344.7-53.7 347.2-59.3Q349.7-64.9 354.2-67.8Q358.7-70.6 365.3-70.6Q366.6-70.6 368.1-70.5Q369.6-70.4 371.5-69.8L370.8-52.3Q368.7-53.1 366.5-53.4Q364.4-53.7 362.5-53.7Q357.4-53.7 353.6-51.1Q349.8-48.4 347.5-43.6Q345.2-38.8 344-32.2M396.1 1.7Q390.4 1.7 385.9-0.5Q381.4-2.6 378.9-7Q376.3-11.4 376.3-17.8Q376.3-23.2 378.3-27.1Q380.4-30.9 384.5-33.3Q388.6-35.8 394.6-37.4Q400.7-39.1 408.9-40.3Q413.4-40.9 416.2-41.6Q419.1-42.2 420.4-43.6Q421.7-45 421.7-47.8Q421.7-51.9 418.9-54.8Q416-57.8 409.7-57.8Q405.9-57.8 402.4-56.5Q398.9-55.2 396.3-52.3Q393.8-49.5 392.9-44.9L378-49.5Q379.5-54.8 382.2-58.7Q385-62.6 389.1-65.3Q393.2-68.1 398.5-69.4Q403.7-70.8 410.1-70.8Q419.7-70.8 425.9-67.7Q432.1-64.5 435.2-58Q438.2-51.5 438.2-41.2L438.2-28.2Q438.2-23.8 438.4-18.9Q438.6-14.1 438.9-9.3Q439.2-4.5 439.8 0L424.9 0Q424.3-3.7 423.9-7.9Q423.5-12.1 423.3-16.5L421.2-16.5Q419.3-11.5 415.9-7.3Q412.5-3.2 407.5-0.7Q402.6 1.7 396.1 1.7M402.7-10.6Q405.3-10.6 408-11.5Q410.7-12.4 413.4-14.3Q416-16.1 418.3-18.8Q420.5-21.5 422.1-25.2L421.8-37L425-36.4Q422.7-34.6 419.4-33.5Q416.1-32.5 412.5-31.9Q408.9-31.4 405.3-30.7Q401.6-30 398.7-28.8Q395.8-27.7 394.1-25.7Q392.4-23.6 392.4-20.1Q392.4-15.6 395.3-13.1Q398.2-10.6 402.7-10.6M484.2 1.7Q475.2 1.7 468.7-0.9Q462.1-3.6 457.8-8.4Q453.5-13.2 451.4-19.7Q449.3-26.1 449.3-33.7Q449.3-41.7 451.5-48.4Q453.7-55.2 458-60.2Q462.4-65.2 468.8-68Q475.2-70.8 483.5-70.8Q491.8-70.8 498-68Q504.1-65.2 507.9-60.3Q511.8-55.3 513.1-48.7L497.5-43.8Q497.2-47.8 495.4-50.9Q493.5-54 490.4-55.7Q487.2-57.4 482.8-57.4Q478.6-57.4 475.5-55.8Q472.4-54.1 470.4-51.1Q468.3-48 467.2-43.8Q466.1-39.5 466.1-34.2Q466.1-26.9 468.1-21.8Q470-16.6 474.1-13.8Q478.2-11 484.3-11Q489.7-11 493.1-13Q496.4-15 498.2-18.3Q500-21.6 500.4-25.6L515.2-22.3Q514.4-16.9 512.1-12.5Q509.9-8.2 506-5Q502.1-1.7 496.7 0Q491.3 1.7 484.2 1.7M540.4 0L524.1 0L524.1-93.9L540.4-93.9L540.4-41.2Q544.9-44 549-47.3Q553.1-50.7 556.5-54.4Q560-58.1 562.6-61.8Q565.2-65.6 567-69L586.1-69Q584-63.9 580.6-58.9Q577.1-53.9 572.6-49.6Q568-45.4 562.3-42.3Q556.7-39.2 550.2-38L550.2-36.2Q558.4-37.4 563.9-35.4Q569.5-33.4 573.3-29.4Q577.1-25.5 579.7-20.3Q582.3-15 584.5-9.6L588 0L569.6 0L567.5-6.3Q565-12.9 562.3-18Q559.6-23.1 555.5-25.9Q551.5-28.8 545.2-28.8L540.4-28.8M628.2 1.7Q619.9 1.7 613.4-0.7Q606.9-3 602.4-7.6Q597.9-12.1 595.5-18.6Q593.1-25.1 593.1-33.3Q593.1-41.4 595.4-48.3Q597.8-55.2 602.1-60.2Q606.5-65.2 612.7-68Q619-70.8 627.1-70.8Q634.6-70.8 640.5-68.2Q646.5-65.7 650.6-60.8Q654.6-55.8 656.6-48.5Q658.6-41.2 657.9-31.5L604-31.2L604-40.8L648.3-41.2L642.5-35.8Q643.3-43.3 641.3-48.1Q639.3-52.9 635.6-55.2Q631.9-57.6 627.2-57.6Q621.8-57.6 617.7-54.7Q613.6-51.9 611.4-46.5Q609.2-41.2 609.2-33.5Q609.2-22 614.3-16.4Q619.4-10.7 628.2-10.7Q632.2-10.7 634.9-11.7Q637.6-12.7 639.5-14.3Q641.3-16 642.4-18.1Q643.6-20.2 644.2-22.6L658.7-19.3Q657.7-14.4 655.3-10.6Q652.9-6.7 649.2-4Q645.4-1.2 640.3 0.3Q635.1 1.7 628.2 1.7M686.8 0L670.1 0L670.1-34.6L670.1-69L684.1-69L683.9-45.3L686.2-45.3Q687.4-53.7 689.9-59.3Q692.4-64.9 696.9-67.8Q701.4-70.6 708-70.6Q709.3-70.6 710.9-70.5Q712.4-70.4 714.2-69.8L713.6-52.3Q711.4-53.1 709.3-53.4Q707.1-53.7 705.2-53.7Q700.1-53.7 696.3-51.1Q692.6-48.4 690.3-43.6Q687.9-38.8 686.8-32.2"/>
+    </symbol>
+    <symbol id="stacked" viewBox="0 0 732 440">
+      <use href="#mark" x="238" y="0" width="256" height="256"/>
+      <path class="word" transform="translate(8,392)" d="M40.4 1.7Q31.4 1.7 24.9-0.9Q18.3-3.6 14.1-8.4Q9.8-13.2 7.7-19.7Q5.5-26.1 5.5-33.7Q5.5-41.7 7.7-48.4Q9.9-55.2 14.3-60.2Q18.6-65.2 25-68Q31.4-70.8 39.7-70.8Q48-70.8 54.2-68Q60.3-65.2 64.2-60.3Q68-55.3 69.3-48.7L53.7-43.8Q53.5-47.8 51.6-50.9Q49.8-54 46.6-55.7Q43.4-57.4 39.1-57.4Q34.8-57.4 31.7-55.8Q28.6-54.1 26.6-51.1Q24.6-48 23.4-43.8Q22.3-39.5 22.3-34.2Q22.3-26.9 24.3-21.8Q26.3-16.6 30.4-13.8Q34.5-11 40.5-11Q45.9-11 49.3-13Q52.7-15 54.5-18.3Q56.2-21.6 56.6-25.6L71.4-22.3Q70.6-16.9 68.4-12.5Q66.1-8.2 62.2-5Q58.3-1.7 52.9 0Q47.5 1.7 40.4 1.7M96.3 1.7Q90.6 1.7 86.1-0.5Q81.6-2.6 79-7Q76.5-11.4 76.5-17.8Q76.5-23.2 78.5-27.1Q80.6-30.9 84.6-33.3Q88.7-35.8 94.8-37.4Q100.9-39.1 109.1-40.3Q113.6-40.9 116.4-41.6Q119.2-42.2 120.6-43.6Q121.9-45 121.9-47.8Q121.9-51.9 119-54.8Q116.2-57.8 109.9-57.8Q106-57.8 102.5-56.5Q99-55.2 96.5-52.3Q94-49.5 93.1-44.9L78.2-49.5Q79.6-54.8 82.4-58.7Q85.2-62.6 89.3-65.3Q93.4-68.1 98.6-69.4Q103.9-70.8 110.3-70.8Q119.9-70.8 126.1-67.7Q132.3-64.5 135.3-58Q138.4-51.5 138.4-41.2L138.4-28.2Q138.4-23.8 138.6-18.9Q138.8-14.1 139.1-9.3Q139.4-4.5 140 0L125 0Q124.5-3.7 124.1-7.9Q123.7-12.1 123.5-16.5L121.3-16.5Q119.5-11.5 116.1-7.3Q112.6-3.2 107.7-0.7Q102.7 1.7 96.3 1.7M102.9-10.6Q105.5-10.6 108.2-11.5Q110.9-12.4 113.6-14.3Q116.2-16.1 118.4-18.8Q120.7-21.5 122.3-25.2L122-37L125.2-36.4Q122.9-34.6 119.6-33.5Q116.3-32.5 112.7-31.9Q109.1-31.4 105.4-30.7Q101.8-30 98.9-28.8Q96-27.7 94.3-25.7Q92.6-23.6 92.6-20.1Q92.6-15.6 95.5-13.1Q98.4-10.6 102.9-10.6M170 0L153.3 0L153.3-34.6L153.3-69L167.3-69L167.1-45.3L169.4-45.3Q170.6-53.7 173.1-59.3Q175.6-64.9 180.1-67.8Q184.6-70.6 191.2-70.6Q192.5-70.6 194-70.5Q195.6-70.4 197.4-69.8L196.8-52.3Q194.6-53.1 192.5-53.4Q190.3-53.7 188.4-53.7Q183.3-53.7 179.5-51.1Q175.8-48.4 173.5-43.6Q171.1-38.8 170-32.2M237.2 1.7Q228.9 1.7 222.3-0.7Q215.8-3 211.3-7.6Q206.8-12.1 204.4-18.6Q202.1-25.1 202.1-33.3Q202.1-41.4 204.4-48.3Q206.7-55.2 211-60.2Q215.4-65.2 221.7-68Q227.9-70.8 236-70.8Q243.5-70.8 249.5-68.2Q255.4-65.7 259.5-60.8Q263.6-55.8 265.6-48.5Q267.5-41.2 266.9-31.5L212.9-31.2L212.9-40.8L257.2-41.2L251.4-35.8Q252.2-43.3 250.2-48.1Q248.3-52.9 244.6-55.2Q240.9-57.6 236.1-57.6Q230.7-57.6 226.6-54.7Q222.5-51.9 220.4-46.5Q218.2-41.2 218.2-33.5Q218.2-22 223.3-16.4Q228.3-10.7 237.2-10.7Q241.1-10.7 243.8-11.7Q246.6-12.7 248.4-14.3Q250.2-16 251.4-18.1Q252.5-20.2 253.2-22.6L267.7-19.3Q266.6-14.4 264.2-10.6Q261.9-6.7 258.1-4Q254.3-1.2 249.2 0.3Q244 1.7 237.2 1.7M303.2 1.6Q292.3 1.6 287.1-4.3Q282-10.2 282-22.6L282-55.7L271.8-55.7L272.1-68.9L278.8-68.9Q282.6-68.9 284.5-70.1Q286.3-71.3 286.7-74.3L288.3-84.3L297.9-84.3L297.9-69L316.2-69L316.2-55.2L297.9-55.2L297.9-23.2Q297.9-18.3 300.2-16.1Q302.6-13.9 307.2-13.9Q309.7-13.9 312.1-14.5Q314.6-15 316.7-16.5L316.7-0.7Q312.6 0.7 309.2 1.1Q305.9 1.6 303.2 1.6M344 0L327.4 0L327.4-34.6L327.4-69L341.4-69L341.1-45.3L343.5-45.3Q344.7-53.7 347.2-59.3Q349.7-64.9 354.2-67.8Q358.7-70.6 365.3-70.6Q366.6-70.6 368.1-70.5Q369.6-70.4 371.5-69.8L370.8-52.3Q368.7-53.1 366.5-53.4Q364.4-53.7 362.5-53.7Q357.4-53.7 353.6-51.1Q349.8-48.4 347.5-43.6Q345.2-38.8 344-32.2M396.1 1.7Q390.4 1.7 385.9-0.5Q381.4-2.6 378.9-7Q376.3-11.4 376.3-17.8Q376.3-23.2 378.3-27.1Q380.4-30.9 384.5-33.3Q388.6-35.8 394.6-37.4Q400.7-39.1 408.9-40.3Q413.4-40.9 416.2-41.6Q419.1-42.2 420.4-43.6Q421.7-45 421.7-47.8Q421.7-51.9 418.9-54.8Q416-57.8 409.7-57.8Q405.9-57.8 402.4-56.5Q398.9-55.2 396.3-52.3Q393.8-49.5 392.9-44.9L378-49.5Q379.5-54.8 382.2-58.7Q385-62.6 389.1-65.3Q393.2-68.1 398.5-69.4Q403.7-70.8 410.1-70.8Q419.7-70.8 425.9-67.7Q432.1-64.5 435.2-58Q438.2-51.5 438.2-41.2L438.2-28.2Q438.2-23.8 438.4-18.9Q438.6-14.1 438.9-9.3Q439.2-4.5 439.8 0L424.9 0Q424.3-3.7 423.9-7.9Q423.5-12.1 423.3-16.5L421.2-16.5Q419.3-11.5 415.9-7.3Q412.5-3.2 407.5-0.7Q402.6 1.7 396.1 1.7M402.7-10.6Q405.3-10.6 408-11.5Q410.7-12.4 413.4-14.3Q416-16.1 418.3-18.8Q420.5-21.5 422.1-25.2L421.8-37L425-36.4Q422.7-34.6 419.4-33.5Q416.1-32.5 412.5-31.9Q408.9-31.4 405.3-30.7Q401.6-30 398.7-28.8Q395.8-27.7 394.1-25.7Q392.4-23.6 392.4-20.1Q392.4-15.6 395.3-13.1Q398.2-10.6 402.7-10.6M484.2 1.7Q475.2 1.7 468.7-0.9Q462.1-3.6 457.8-8.4Q453.5-13.2 451.4-19.7Q449.3-26.1 449.3-33.7Q449.3-41.7 451.5-48.4Q453.7-55.2 458-60.2Q462.4-65.2 468.8-68Q475.2-70.8 483.5-70.8Q491.8-70.8 498-68Q504.1-65.2 507.9-60.3Q511.8-55.3 513.1-48.7L497.5-43.8Q497.2-47.8 495.4-50.9Q493.5-54 490.4-55.7Q487.2-57.4 482.8-57.4Q478.6-57.4 475.5-55.8Q472.4-54.1 470.4-51.1Q468.3-48 467.2-43.8Q466.1-39.5 466.1-34.2Q466.1-26.9 468.1-21.8Q470-16.6 474.1-13.8Q478.2-11 484.3-11Q489.7-11 493.1-13Q496.4-15 498.2-18.3Q500-21.6 500.4-25.6L515.2-22.3Q514.4-16.9 512.1-12.5Q509.9-8.2 506-5Q502.1-1.7 496.7 0Q491.3 1.7 484.2 1.7M540.4 0L524.1 0L524.1-93.9L540.4-93.9L540.4-41.2Q544.9-44 549-47.3Q553.1-50.7 556.5-54.4Q560-58.1 562.6-61.8Q565.2-65.6 567-69L586.1-69Q584-63.9 580.6-58.9Q577.1-53.9 572.6-49.6Q568-45.4 562.3-42.3Q556.7-39.2 550.2-38L550.2-36.2Q558.4-37.4 563.9-35.4Q569.5-33.4 573.3-29.4Q577.1-25.5 579.7-20.3Q582.3-15 584.5-9.6L588 0L569.6 0L567.5-6.3Q565-12.9 562.3-18Q559.6-23.1 555.5-25.9Q551.5-28.8 545.2-28.8L540.4-28.8M628.2 1.7Q619.9 1.7 613.4-0.7Q606.9-3 602.4-7.6Q597.9-12.1 595.5-18.6Q593.1-25.1 593.1-33.3Q593.1-41.4 595.4-48.3Q597.8-55.2 602.1-60.2Q606.5-65.2 612.7-68Q619-70.8 627.1-70.8Q634.6-70.8 640.5-68.2Q646.5-65.7 650.6-60.8Q654.6-55.8 656.6-48.5Q658.6-41.2 657.9-31.5L604-31.2L604-40.8L648.3-41.2L642.5-35.8Q643.3-43.3 641.3-48.1Q639.3-52.9 635.6-55.2Q631.9-57.6 627.2-57.6Q621.8-57.6 617.7-54.7Q613.6-51.9 611.4-46.5Q609.2-41.2 609.2-33.5Q609.2-22 614.3-16.4Q619.4-10.7 628.2-10.7Q632.2-10.7 634.9-11.7Q637.6-12.7 639.5-14.3Q641.3-16 642.4-18.1Q643.6-20.2 644.2-22.6L658.7-19.3Q657.7-14.4 655.3-10.6Q652.9-6.7 649.2-4Q645.4-1.2 640.3 0.3Q635.1 1.7 628.2 1.7M686.8 0L670.1 0L670.1-34.6L670.1-69L684.1-69L683.9-45.3L686.2-45.3Q687.4-53.7 689.9-59.3Q692.4-64.9 696.9-67.8Q701.4-70.6 708-70.6Q709.3-70.6 710.9-70.5Q712.4-70.4 714.2-69.8L713.6-52.3Q711.4-53.1 709.3-53.4Q707.1-53.7 705.2-53.7Q700.1-53.7 696.3-51.1Q692.6-48.4 690.3-43.6Q687.9-38.8 686.8-32.2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="hero-lockup" viewBox="0 0 954 256" role="img" aria-label="CareTracker"><use href="#lockup"/></svg>
+    <div class="hero-grid">
+      <p>Pro pečovatelské služby je CareTracker evidence péče, která z návštěv v terénu udělá přesné záznamy, výkazy a vyúčtování bez papírování.</p>
+      <dl class="facts">
+        <dt>Charakter</dt><dd>klidný · lidský · přesný</dd>
+        <dt>Uživatelé</dt><dd>koordinátorky, pečovatelky, vedení služby, klienti</dd>
+        <dt>Verze</dt><dd>Brand board 1.0 · říjen 2026</dd>
+      </dl>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Značka</div><h2>Buňka</h2></div>
+      <p class="muted">Mřížka evidence, ve které je jedna buňka člověk. Tři zaoblené čtverce nesou administrativu: úkony, plány, výkazy. Kruh je klient, kvůli kterému se to celé eviduje.</p>
+    </div>
+    <div class="idea">
+      <svg class="construct" viewBox="0 0 256 256" role="img" aria-label="Konstrukce značky na mřížce 256 jednotek">
+        <use href="#mark"/>
+        <rect class="guide" x="24" y="24" width="208" height="208"/>
+        <line class="guide" x1="120" y1="8" x2="120" y2="248"/><line class="guide" x1="136" y1="8" x2="136" y2="248"/>
+        <line class="guide" x1="8" y1="120" x2="248" y2="120"/><line class="guide" x1="8" y1="136" x2="248" y2="136"/>
+        <circle class="guide" cx="184" cy="72" r="48"/>
+        <text class="dim" x="62" y="16">96</text><text class="dim" x="122" y="16">16</text><text class="dim" x="196" y="16">r 50</text>
+      </svg>
+      <div>
+        <h3>Konstrukce</h3>
+        <ul>
+          <li>Plátno 256 jednotek, buňka 96, mezera 16, zaoblení rohů 28.</li>
+          <li>Kruh má poloměr 50 místo 48. Kruh vedle čtverce opticky působí menší, takže o pár jednotek přetahuje.</li>
+          <li>Pro velikosti 32 px a menší existuje zesílený řez: buňka 100, mezera 24. Mezery se tak v malém nezalijí.</li>
+          <li>Barvou je zvýrazněný jen kruh. V jedné barvě nese myšlenku samotný tvar.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Varianty</div><h2>Logo na různých podkladech</h2></div>
+      <p class="muted">Primární je barevná verze na světlém podkladu. Na tmavém se čtverce mění na papírovou, kruh zůstává meruňkový. Jednobarevné verze slouží pro razítka, fax, gravírování a PDF v černobílém tisku.</p>
+    </div>
+    <div class="variants">
+      <div class="tile on-paper"><svg viewBox="0 0 954 256" width="300" role="img" aria-label="Logo barevně"><use href="#lockup"/></svg><span class="cap">Primární</span></div>
+      <div class="tile on-night"><svg viewBox="0 0 954 256" width="300" role="img" aria-label="Logo inverzně"><use href="#lockup"/></svg><span class="cap">Inverzní</span></div>
+      <div class="tile on-plum"><svg viewBox="0 0 954 256" width="300" role="img" aria-label="Logo bílé na švestkové"><use href="#lockup"/></svg><span class="cap">Bílá na švestkové</span></div>
+      <div class="tile on-white-mono"><svg viewBox="0 0 732 440" width="190" role="img" aria-label="Logo jednobarevné, na výšku"><use href="#stacked"/></svg><span class="cap">Na výšku · jedna barva</span></div>
+      <div class="tile on-white-black"><svg viewBox="0 0 256 256" width="110" role="img" aria-label="Symbol černě"><use href="#mark"/></svg><span class="cap">Symbol · černá</span></div>
+      <div class="tile on-paper">
+        <div class="sizes">
+          <figure><svg viewBox="0 0 256 256" width="64" height="64" aria-hidden="true"><use href="#mark"/></svg>64</figure>
+          <figure><svg viewBox="0 0 256 256" width="32" height="32" aria-hidden="true"><use href="#mark-small"/></svg>32</figure>
+          <figure><svg viewBox="0 0 256 256" width="24" height="24" aria-hidden="true"><use href="#mark-small"/></svg>24</figure>
+          <figure><svg viewBox="0 0 256 256" width="16" height="16" aria-hidden="true"><use href="#mark-small"/></svg>16</figure>
+          <figure><svg viewBox="0 0 256 256" width="64" height="64" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#4A2B5E"/><use href="#mark-small" x="40" y="40" width="176" height="176" style="--mark-sq:#F7F5F9"/></svg>ikona</figure>
+        </div>
+        <span class="cap">Malé velikosti a ikona aplikace</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Pravidla</div><h2>Ochranná zóna a co nedělat</h2></div>
+      <p class="muted">Kolem loga nechávej volné místo aspoň o velikosti jedné buňky symbolu. Horizontální logo nepoužívej užší než 96 px, pod tím použij samotný symbol.</p>
+    </div>
+    <div class="rules">
+      <div class="rule">
+        <span class="tag">Ochranná zóna = 1 buňka</span>
+        <svg viewBox="0 0 400 180" aria-hidden="true">
+          <rect x="56" y="48" width="288" height="84" fill="none" stroke="#C2A4D6" stroke-dasharray="4 4"/>
+          <rect x="56" y="48" width="25" height="25" rx="7" fill="#DAC7E6"/>
+          <svg x="81" y="56" width="238" height="64" viewBox="0 0 954 256"><use href="#lockup"/></svg>
+        </svg>
+        <p class="muted">Měřítkem je jedna buňka symbolu v aktuální velikosti loga.</p>
+      </div>
+      <div class="rule dont">
+        <span class="tag">Neobarvovat jinak</span>
+        <svg viewBox="0 0 400 180" aria-hidden="true" style="--mark-sq:#2176b8;--mark-ci:#21a35e"><svg x="140" y="30" width="120" height="120" viewBox="0 0 256 256"><use href="#mark"/></svg></svg>
+        <p class="muted">Barevný je jen kruh. Žádné jiné odstíny, přechody ani stará modrozelená.</p>
+      </div>
+      <div class="rule dont">
+        <span class="tag">Neměnit tvar ani pořadí</span>
+        <svg viewBox="0 0 400 180" aria-hidden="true"><svg x="60" y="30" width="120" height="120" viewBox="0 0 256 256"><g transform="rotate(90 128 128)"><use href="#mark" width="256" height="256"/></g></svg><svg x="220" y="45" width="140" height="90" viewBox="0 0 256 256" preserveAspectRatio="none"><use href="#mark"/></svg></svg>
+        <p class="muted">Kruh je vždy vpravo nahoře. Logo neotáčej, nedeformuj a nepřidávej mu stín.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Barvy</div><h2>Švestka a meruňka</h2></div>
+      <p class="muted">Pět barev, každá má jeden úkol. Odklon od zdravotnické modrozelené, kterou používá většina softwaru pro sociální služby. Kontrasty jsou spočítané podle WCAG.</p>
+    </div>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#4A2B5E;color:#fff">Švestka</div><div class="meta"><span class="hex">#4A2B5E</span><span>Primární: značka, hlavní tlačítka, aktivní navigace.</span><span class="ratio">bílý text 11,7 : 1</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#E26A35;color:#1E1A24">Meruňka</div><div class="meta"><span class="hex">#E26A35</span><span>Akcent: kruh v logu, zvýraznění, stav „čeká“. Nikdy ne text na bílé.</span><span class="ratio">inkoustový text 5,2 : 1 · na bílé 3,3 : 1</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#ECE3F2;color:#4A2B5E">Levandule</div><div class="meta"><span class="hex">#ECE3F2</span><span>Měkká plocha: vybraný řádek, aktivní položka menu, štítky.</span><span class="ratio">švestkový text 9,4 : 1</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#1E1A24;color:#F7F5F9">Inkoust</div><div class="meta"><span class="hex">#1E1A24</span><span>Text a wordmark. V tmavém režimu pozadí #17131C.</span><span class="ratio">na papíře 15,8 : 1</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#F7F5F9;color:#1E1A24">Papír</div><div class="meta"><span class="hex">#F7F5F9</span><span>Pozadí aplikace s nádechem švestky. Karty a tabulky jsou čistě bílé.</span><span class="ratio">šedý text #645C6E 5,9 : 1</span></div></div>
+    </div>
+    <div class="scale" aria-label="Škála švestkové pro HeroUI primary">
+      <div style="background:#F7F3F9">50</div><div style="background:#ECE3F2">100</div><div style="background:#DAC7E6">200</div><div style="background:#C2A4D6">300</div><div style="background:#A679C3">400</div>
+      <div style="background:#8A4FB0;color:#fff">500</div><div style="background:#6E3F8D;color:#fff">600</div><div style="background:#4A2B5E;color:#fff">700 ●</div><div style="background:#372046;color:#fff">800</div><div style="background:#24152E;color:#fff">900</div>
+    </div>
+    <p class="mock-label">Škála pro HeroUI <code>primary</code>. ● = DEFAULT. V tmavém režimu je DEFAULT odstín 300 s inkoustovým textem.</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Písmo</div><h2>Bricolage Grotesque a Figtree</h2></div>
+      <p class="muted">Obě písma jsou zdarma pod licencí SIL Open Font License a mají plnou češtinu. Bricolage má lidský, mírně nepravidelný charakter na nadpisy a wordmark. Figtree je klidné a čitelné v tabulkách a formulářích.</p>
+    </div>
+    <div class="type">
+      <div class="specimen">
+        <span class="eyebrow">Nadpisy · Bricolage Grotesque 600</span>
+        <div class="big" style="font-family:var(--font-display);font-weight:600">Péče, která se dá doložit.</div>
+        <div class="ladder">
+          <div><span>39 px</span><span style="font-size:2.441rem">Měsíční výkaz</span></div>
+          <div><span>31 px</span><span style="font-size:1.953rem">Individuální plán</span></div>
+          <div><span>25 px</span><span style="font-size:1.563rem">Provedené úkony</span></div>
+          <div><span>20 px</span><span style="font-size:1.25rem">Klientka Marie Nováková</span></div>
+        </div>
+      </div>
+      <div class="specimen">
+        <span class="eyebrow">Text a UI · Figtree 400 / 600</span>
+        <p style="font-size:1.25rem;font-weight:600">Pomoc při osobní hygieně, 30 min</p>
+        <p>Pečovatelka zapíše úkon přímo u klienta. Koordinátorka ho na konci měsíce najde ve výkazu a vyúčtování se spočítá samo. Číslice jsou tabulkové, takže sloupce částek lícují: 1 240,00 Kč · 86,50 Kč · 12 h 30 min.</p>
+        <p class="muted" style="font-size:0.8rem">Fallback: ui-sans-serif, system-ui, -apple-system, „Segoe UI“, sans-serif. Velikostní škála s poměrem 1,25 od základu 16 px: 12,8 · 16 · 20 · 25 · 31 · 39.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Mockupy</div><h2>Značka v provozu</h2></div>
+      <p class="muted">Aplikace, přihlášení, PDF výkaz, vizitka a profilový obrázek. Všechno jen s pěti barvami a dvěma písmy.</p>
+    </div>
+    <div class="mock-grid">
+      <div class="span-12">
+        <div class="mock app">
+          <aside>
+            <div class="brand"><svg viewBox="0 0 954 256" width="150" aria-label="CareTracker"><use href="#lockup"/></svg></div>
+            <div class="nav"><i></i>Přehled</div>
+            <div class="nav"><i></i>Klienti</div>
+            <div class="nav active"><i></i>Provedené úkony</div>
+            <div class="nav"><i></i>Individuální plány</div>
+            <div class="nav"><i></i>Měsíční výkazy</div>
+            <div class="nav"><i></i>Zaměstnanci</div>
+          </aside>
+          <main>
+            <div class="app-top">
+              <h4>Provedené úkony</h4>
+              <div class="chips"><button class="btn ghost" type="button">Export PDF</button><button class="btn" type="button">Zapsat úkon</button></div>
+            </div>
+            <div class="chips"><span class="chip-f">Středisko Plzeň-sever</span><span class="chip-f">Říjen 2026</span><span class="chip-f">Všichni pečovatelé</span></div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Datum</th><th>Klient</th><th>Úkon</th><th>Množství</th><th>Pečovatel</th><th>Stav</th></tr></thead>
+                <tbody>
+                  <tr><td>24. 10.</td><td>Marie Nováková</td><td>Pomoc při osobní hygieně</td><td>0,5 h</td><td>J. Malá</td><td><span class="pill ok">Schváleno</span></td></tr>
+                  <tr class="sel"><td>24. 10.</td><td>Josef Král</td><td>Dovoz oběda</td><td>1×</td><td>P. Dvořák</td><td><span class="pill wait">Čeká</span></td></tr>
+                  <tr><td>23. 10.</td><td>Anna Veselá</td><td>Nákup a pochůzky</td><td>1,0 h</td><td>J. Malá</td><td><span class="pill ok">Schváleno</span></td></tr>
+                  <tr><td>23. 10.</td><td>Marie Nováková</td><td>Praní a žehlení prádla</td><td>3,5 kg</td><td>L. Horáková</td><td><span class="pill ok">Schváleno</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </main>
+        </div>
+        <p class="mock-label">Aplikace: postranní menu na papírovém podkladu, aktivní položka v levanduli, meruňkový kruh jako ozvěna loga.</p>
+      </div>
+
+      <div class="span-5">
+        <div class="mock login">
+          <svg class="pattern" viewBox="0 0 400 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <svg x="-30" y="-20" width="180" height="180" viewBox="0 0 256 256"><use href="#mark"/></svg>
+            <svg x="270" y="300" width="200" height="200" viewBox="0 0 256 256"><use href="#mark"/></svg>
+          </svg>
+          <div class="login-card">
+            <svg viewBox="0 0 954 256" width="170" aria-label="CareTracker"><use href="#lockup"/></svg>
+            <div class="field">E-mail<span class="input">j.mala@pecovatelska.cz</span></div>
+            <div class="field">Heslo<span class="input">••••••••••</span></div>
+            <button class="btn" type="button">Přihlásit se</button>
+          </div>
+        </div>
+        <p class="mock-label">Přihlášení: švestkové pozadí, symbol jako vodoznak.</p>
+      </div>
+
+      <div class="span-7">
+        <div class="mock pdf">
+          <div class="page">
+            <div class="page-head">
+              <div><h5>Měsíční výkaz a vyúčtování</h5><div style="color:#645C6E">Říjen 2026 · Marie Nováková · č. smlouvy 2024/118</div></div>
+              <svg viewBox="0 0 954 256" width="110" aria-label="CareTracker"><use href="#lockup"/></svg>
+            </div>
+            <div style="color:#645C6E">Pečovatelská služba Plzeň · středisko Plzeň-sever</div>
+            <table>
+              <thead><tr><th>Úkon</th><th>Množství</th><th>Sazba</th><th style="text-align:right">Částka</th></tr></thead>
+              <tbody>
+                <tr><td>Pomoc při osobní hygieně</td><td>6,5 h</td><td>155 Kč/h</td><td style="text-align:right">1 007,50 Kč</td></tr>
+                <tr><td>Dovoz oběda</td><td>21×</td><td>30 Kč</td><td style="text-align:right">630,00 Kč</td></tr>
+                <tr><td>Praní a žehlení prádla</td><td>3,5 kg</td><td>75 Kč/kg</td><td style="text-align:right">262,50 Kč</td></tr>
+              </tbody>
+            </table>
+            <div class="sum"><span>Celkem k úhradě</span><b>1 900,00 Kč</b></div>
+          </div>
+        </div>
+        <p class="mock-label">PDF výkaz: švestková linka pod hlavičkou, logo vpravo, částky v tabulkových číslicích.</p>
+      </div>
+
+      <div class="span-8">
+        <div class="mock cards">
+          <div class="bcard front"><svg viewBox="0 0 954 256" width="230" aria-label="CareTracker"><use href="#lockup"/></svg></div>
+          <div class="bcard back">
+            <div><strong>Jana Malá</strong>koordinátorka péče · středisko Plzeň-sever</div>
+            <div style="display:flex;justify-content:space-between;align-items:end;gap:8px"><span>+420 777 123 456<br>j.mala@pecovatelska.cz</span><svg viewBox="0 0 256 256" width="28" height="28" aria-hidden="true"><use href="#mark-small"/></svg></div>
+          </div>
+        </div>
+        <p class="mock-label">Vizitka 85 × 55 mm: líc inverzně na švestkové, rub bílý.</p>
+      </div>
+
+      <div class="span-4">
+        <div class="mock social">
+          <div class="avatar"><svg viewBox="0 0 256 256" width="52" height="52" aria-hidden="true"><use href="#mark-small"/></svg></div>
+          <div><strong>CareTracker</strong><p>Evidence péče pro pečovatelské služby</p></div>
+        </div>
+        <p class="mock-label">Profilový obrázek: symbol v kruhu, zesílený řez.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><div class="eyebrow">Implementace</div><h2>Téma pro HeroUI</h2></div>
+      <p class="muted">Návrh barev pro <code>frontend/src/styles/hero.ts</code>. Primary je švestka, secondary meruňka s inkoustovým textem. Danger se posouvá do malinové, aby se nepletla s akcentem. Success a warning zůstávají.</p>
+    </div>
+    <div class="spec">
+      <div class="spec-col">
+        <span class="tag">Světlé téma · colors</span>
+<pre id="theme-light">primary: {
+  50: "#F7F3F9", 100: "#ECE3F2", 200: "#DAC7E6",
+  300: "#C2A4D6", 400: "#A679C3", 500: "#8A4FB0",
+  600: "#6E3F8D", 700: "#4A2B5E", 800: "#372046",
+  900: "#24152E",
+  DEFAULT: "#4A2B5E", foreground: "#FFFFFF",
+},
+secondary: {
+  50: "#FCEFE9", 100: "#F8DBCE", 200: "#F2BDA6",
+  300: "#EDA07E", 400: "#E78255", 500: "#E26A35",
+  600: "#CD531D", 700: "#A54318", 800: "#783111",
+  900: "#4C1F0B",
+  DEFAULT: "#E26A35", foreground: "#1E1A24",
+},
+danger: {
+  50: "#FAEBED", 100: "#F3D3D8", 200: "#E9AAB5",
+  300: "#DE8292", 400: "#D35A6F", 500: "#C9364F",
+  600: "#A92D42", 700: "#892436", 800: "#651B27",
+  900: "#401119",
+  DEFAULT: "#C9364F", foreground: "#FFFFFF",
+},
+background: "#F7F5F9",
+foreground: "#1E1A24",
+content1: { DEFAULT: "#FFFFFF", foreground: "#1E1A24" },
+focus: "#E26A35",</pre>
+        <button class="copy" type="button" data-copy="theme-light">Kopírovat světlé téma</button>
+      </div>
+      <div class="spec-col">
+        <span class="tag">Tmavé téma · colors</span>
+<pre id="theme-dark">primary: {
+  // stejná škála, jen DEFAULT je světlejší
+  DEFAULT: "#C2A4D6", foreground: "#1E1A24",
+},
+secondary: { DEFAULT: "#E78255", foreground: "#1E1A24" },
+danger: { DEFAULT: "#DE8292", foreground: "#1E1A24" },
+background: "#17131C",
+foreground: "#F1EDF5",
+content1: { DEFAULT: "#211B28", foreground: "#F1EDF5" },
+content2: { DEFAULT: "#2A2332", foreground: "#F1EDF5" },
+focus: "#E78255",</pre>
+        <button class="copy" type="button" data-copy="theme-dark">Kopírovat tmavé téma</button>
+        <span class="tag" style="margin-top:12px">Písmo · index.css</span>
+<pre id="theme-font">--font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+--font-display: "Bricolage Grotesque", "Figtree", sans-serif;
+/* h1–h4 → font-family: var(--font-display) */</pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    CareTracker · brand board 1.0 · písma Bricolage Grotesque a Figtree (SIL OFL 1.1) · ochranná známka neověřena
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(function (button) {
+  button.addEventListener("click", function () {
+    var source = document.getElementById(button.dataset.copy);
+    var label = button.textContent;
+    function done(text) { button.textContent = text; setTimeout(function () { button.textContent = label; }, 1600); }
+    function selectFallback() {
+      var range = document.createRange(); range.selectNodeContents(source);
+      var selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+      done("Označeno, zkopíruj Ctrl+C");
+    }
+    try {
+      navigator.clipboard.writeText(source.textContent).then(function () { done("Zkopírováno"); }, selectFallback);
+    } catch (error) { selectFallback(); }
+  });
+});
+</script>
+</body>
+</html>
