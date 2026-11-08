@@ -392,15 +392,17 @@ Rychlá viditelná změna, žádné riziko.
 ### Fáze 2 – Tokeny a přebarvení HeroUI (most mezi starým a novým)
 Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent, takže během migrace nebude vypadat napůl.
 
-- [ ] `index.css`: přidat tokeny ze sekce 3 (sémantické + škály + písma + radius + stíny). `--font-sans` na Figtree.
-- [ ] `hero.ts`: přebarvit podle brand boardu (sekce „Téma pro HeroUI“):
+- [x] `index.css`: přidat tokeny ze sekce 3 (škály + písma + radius + stíny + easing). `--font-sans` na Figtree.
+  - Sémantické tokeny (`--primary`, `--secondary`, …) se přidají až ve fázi 3 se shadcn: utility `bg-primary`, `bg-secondary`, `text-foreground` teď generuje HeroUI plugin a `secondary` má v obou knihovnách jiný význam (sekce 3).
+  - Pozor: `--radius-xl` (18px) je teď větší než výchozí `rounded-2xl` (16px).
+- [x] `hero.ts`: přebarvit podle brand boardu (sekce „Téma pro HeroUI“):
   - `primary` = škála švestky, `DEFAULT: #4A2B5E`, v dark `DEFAULT: #C2A4D6` + `foreground: #1E1A24`
   - `secondary` = škála meruňky, `foreground: #1E1A24`
   - `danger` = malinová škála (`#C9364F`)
   - `background`, `foreground`, `content1–4`, `default` škála do švestkově tónovaných neutrálů
   - `focus: #E26A35`
-- [ ] Projít použití `bg-secondary` / `text-secondary` (dnes modrá, nově meruňka) – na bílé nesmí být meruňkový text.
-- [ ] Nadpisy h1–h4 na `font-display`.
+- [x] Projít použití `bg-secondary` / `text-secondary` (dnes modrá, nově meruňka) – na bílé nesmí být meruňkový text.
+- [x] Nadpisy h1–h4 na `font-display`.
 - [ ] Kontrola obou režimů na všech stránkách.
 
 ### Fáze 3 – Setup shadcn/ui
@@ -532,3 +534,4 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-10-25 | Typografická studie (7 variant, https://claude.ai/artifact/ViUmMKLE4DSua5oJ8KQapf): potvrzeno Bricolage + Figtree. Atkinson Hyperlegible zamítnut kvůli přeškrtnuté nule. |
 | 2026-11-08 | Fáze 1 hotová: favicony, PWA ikony (+ maskable), Google Fonts (Bricolage + Figtree), `CareTrackerLogo` jako inline SVG (malý řez přes prop `small`), loga v README, e-maily přebarvené s PNG logem (`email-logo.png` z frontendu), PDF s Figtree a švestkovou linkou. `--font-sans` už je Figtree. Staré `ct_icon*`, `logo_*` a Nunito smazány. |
 | 2026-11-08 | Rozhodnuto: detaily záznamů jako sheet se stavem v URL a úpravou uvnitř (klient a plán zůstávají stránky), vrstvy animací (CSS / tw-animate-css / motion / View Transitions). Nové sekce 2.6 a „Co čím animovat“. |
+| 2026-11-08 | Fáze 2 (bez vizuální kontroly): `hero.ts` přebarvené (švestka / meruňka / malinová, neutrály tónované do švestky, focus meruňkový, radius 8/10/14), škály `plum-*` a `apricot-*`, `font-display`, stíny a easing v `@theme`, nadpisy Bricolage. Tlačítka „Záznamy péče“ na Home z `secondary` na `primary` + `flat`. |

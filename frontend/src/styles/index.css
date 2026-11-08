@@ -6,6 +6,41 @@
 
 @theme {
     --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Bricolage Grotesque", "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+    --color-plum-50: #F7F3F9;
+    --color-plum-100: #ECE3F2;
+    --color-plum-200: #DAC7E6;
+    --color-plum-300: #C2A4D6;
+    --color-plum-400: #A679C3;
+    --color-plum-500: #8A4FB0;
+    --color-plum-600: #6E3F8D;
+    --color-plum-700: #4A2B5E;
+    --color-plum-800: #372046;
+    --color-plum-900: #24152E;
+
+    --color-apricot-50: #FCEFE9;
+    --color-apricot-100: #F8DBCE;
+    --color-apricot-200: #F2BDA6;
+    --color-apricot-300: #EDA07E;
+    --color-apricot-400: #E78255;
+    --color-apricot-500: #E26A35;
+    --color-apricot-600: #CD531D;
+    --color-apricot-700: #A54318;
+    --color-apricot-800: #783111;
+    --color-apricot-900: #4C1F0B;
+
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+
+    --shadow-sm: 0 1px 2px rgb(30 26 36 / 0.06);
+    --shadow-md: 0 8px 24px rgb(30 26 36 / 0.10);
+    --shadow-lg: 0 20px 50px rgb(30 26 36 / 0.18);
+
+    --ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* hides the internal bottom-right toast provider — workaround until fixed upstream */
@@ -42,19 +77,19 @@ div[role="alertdialog"][data-placement="bottom-right"] {
 }
 
 h1 {
-    @apply text-4xl font-bold text-foreground leading-tight;
+    @apply font-display text-4xl font-semibold tracking-tight text-balance text-foreground leading-tight;
 }
 
 h2 {
-    @apply text-3xl font-bold text-foreground leading-tight;
+    @apply font-display text-3xl font-semibold tracking-tight text-balance text-foreground leading-tight;
 }
 
 h3 {
-    @apply text-2xl font-semibold text-foreground leading-tight;
+    @apply font-display text-2xl font-semibold tracking-tight text-balance text-foreground leading-tight;
 }
 
 h4 {
-    @apply text-xl font-semibold text-foreground leading-tight;
+    @apply font-display text-xl font-semibold tracking-tight text-balance text-foreground leading-tight;
 }
 
 .recharts-wrapper * {

@@ -243,7 +243,7 @@ function DashboardContent() {
                                 )}
                                 {isCoordinator && (
                                     <>
-                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
+                                        <Button color="primary" variant="flat" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
                                             Záznamy péče
                                         </Button>
                                         <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>
@@ -253,7 +253,7 @@ function DashboardContent() {
                                 )}
                                 {isAdmin && (
                                     <>
-                                        <Button color="secondary" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
+                                        <Button color="primary" variant="flat" startContent={<Activity className="w-4 h-4" />} onPress={() => navigate("/performed-tasks")}>
                                             Záznamy péče
                                         </Button>
                                         <Button color="default" variant="bordered" startContent={<Users className="w-4 h-4" />} onPress={() => navigate("/clients")}>

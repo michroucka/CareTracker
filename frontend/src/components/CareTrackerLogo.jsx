@@ -16,12 +16,12 @@ export function CareTrackerLogo({ className = "", size = "size-8", small = false
             aria-label="CareTracker"
             className={`select-none shrink-0 me-1.5 ${size} ${className}`}
         >
-            <g className="fill-[#4A2B5E] dark:fill-[#F7F5F9]">
+            <g className="fill-plum-700 dark:fill-plum-50">
                 <rect x={offset} y={offset} width={cell} height={cell} rx={radius} />
                 <rect x={offset} y={secondColumn} width={cell} height={cell} rx={radius} />
                 <rect x={secondColumn} y={secondColumn} width={cell} height={cell} rx={radius} />
             </g>
-            <circle cx={circleCenter} cy={offset + cell / 2} r={circleRadius} fill="#E26A35" />
+            <circle cx={circleCenter} cy={offset + cell / 2} r={circleRadius} className="fill-apricot-500" />
         </svg>
     );
 }
