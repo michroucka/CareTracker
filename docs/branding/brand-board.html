@@ -186,6 +186,34 @@ tr.sel td { background: #F7F3F9; }
 .social strong { font: 600 18px "Bricolage Grotesque", sans-serif; }
 .social p { font-size: 13px; color: #645C6E; }
 
+
+/* motion */
+.motion { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.track { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 16px; align-items: center; }
+.track-name { display: grid; gap: 2px; font-size: 13px; }
+.track-name b { font-family: var(--font-mono); font-size: 12.5px; }
+.track-name span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail { position: relative; height: 28px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.lane { position: absolute; inset: 3px; }
+.runner { width: calc(100% - 20px); height: 20px; transform: translateX(0); transition: transform var(--d) cubic-bezier(0.4, 0, 1, 1); }
+.runner i { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--mark-ci); }
+.panel.is-on .runner { transform: translateX(100%); transition-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+.curves { width: 100%; height: auto; max-width: 320px; }
+.curves .axis { stroke: var(--line); stroke-width: 1; fill: none; }
+.curves .out { stroke: var(--brand); stroke-width: 3; fill: none; stroke-linecap: round; }
+.curves .in { stroke: var(--mark-ci); stroke-width: 3; fill: none; stroke-linecap: round; }
+.curves text { font: 600 7px var(--font-body); fill: var(--muted); }
+.legend { display: grid; gap: 6px; font-size: 13px; }
+.legend span { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; }
+.motion-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.motion-rules .rule p { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .runner, .panel.is-on .runner { transition: none; } }
+@media (max-width: 860px) { .motion, .motion-rules { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .track { grid-template-columns: 1fr; gap: 6px; } }
+
 /* spec */
 .spec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 pre { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
@@ -231,7 +259,7 @@ footer { padding-block: 32px 56px; border-top: 1px solid var(--line); font-size:
       <dl class="facts">
         <dt>Charakter</dt><dd>klidný · lidský · přesný</dd>
         <dt>Uživatelé</dt><dd>koordinátorky, pečovatelky, vedení služby, klienti</dd>
-        <dt>Verze</dt><dd>Brand board 1.0 · říjen 2026</dd>
+        <dt>Verze</dt><dd>Brand board 1.1 · listopad 2026</dd>
       </dl>
     </div>
   </header>
@@ -360,6 +388,64 @@ footer { padding-block: 32px 56px; border-top: 1px solid var(--line); font-size:
 
   <section>
     <div class="section-head">
+      <div><div class="eyebrow">Pohyb</div><h2>Tři délky, dvě křivky</h2></div>
+      <p class="muted">Aplikace má působit živě, ale klidně. Pohyb je krátký, všude stejný a nikdy nečeká na uživatele. V kódu se nepíší čísla, jen tokeny: <code>duration-fast</code>, <code>duration-base</code>, <code>duration-slow</code> v Tailwindu a <code>DURATION</code>, <code>EASE_OUT</code> pro motion.</p>
+    </div>
+    <div class="motion">
+      <div class="panel" id="motion-demo">
+        <div class="panel-head">
+          <span class="tag">Délky</span>
+          <button class="copy" type="button" id="motion-play" aria-pressed="false">Přehrát</button>
+        </div>
+        <div class="track">
+          <div class="track-name"><b>duration-fast</b><span>150 ms</span></div>
+          <div class="rail"><div class="lane"><div class="runner" style="--d:150ms"><i></i></div></div></div>
+        </div>
+        <p class="muted" style="font-size:13px">Focus ring, rámeček inputu, barva labelu, stisk tlačítka, odkreslení fajfky.</p>
+        <div class="track">
+          <div class="track-name"><b>duration-base</b><span>200 ms</span></div>
+          <div class="rail"><div class="lane"><div class="runner" style="--d:200ms"><i></i></div></div></div>
+        </div>
+        <p class="muted" style="font-size:13px">Hover tlačítek, dropdown, select, tooltip, toast, chybová hláška, zavření dialogu.</p>
+        <div class="track">
+          <div class="track-name"><b>duration-slow</b><span>300 ms</span></div>
+          <div class="rail"><div class="lane"><div class="runner" style="--d:300ms"><i></i></div></div></div>
+        </div>
+        <p class="muted" style="font-size:13px">Otevření dialogu a sheetu, přechod mezi stránkami, zatřesení pole s chybou.</p>
+      </div>
+      <div class="panel">
+        <span class="tag">Křivky</span>
+        <svg class="curves" viewBox="0 0 120 120" role="img" aria-label="Průběh křivek ease-out a ease-in">
+          <path class="axis" d="M10 10V110H110"/>
+          <path class="out" d="M10 110C30 110 10 10 110 10"/>
+          <path class="in" d="M10 110C50 110 110 10 110 10"/>
+          <text x="10" y="118">čas</text>
+          <text x="2" y="8">průběh</text>
+        </svg>
+        <div class="legend">
+          <span><i style="background:var(--brand)"></i><span><code>ease-out</code> · cubic-bezier(0.2, 0, 0, 1) · výchozí pro všechno</span></span>
+          <span><i style="background:var(--mark-ci)"></i><span><code>ease-in</code> · cubic-bezier(0.4, 0, 1, 1) · jen odchody, které mají odjet</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="motion-rules">
+      <div class="rule">
+        <span class="tag">Co se hýbe</span>
+        <p class="muted">Pohyb jen přes transform a opacity, u hoveru a focusu barvy. Nikdy šířka, výška ani pozice, ty přepočítávají layout a cukají.</p>
+      </div>
+      <div class="rule">
+        <span class="tag">Odchod je kratší</span>
+        <p class="muted">Dialog a sheet se otevírají za 300 ms a zavírají za 200 ms. Co uživatel zavřel, už nechce vidět.</p>
+      </div>
+      <div class="rule">
+        <span class="tag">Omezení pohybu</span>
+        <p class="muted">Když má uživatel v systému omezené animace, tranzice se vypnou a změny jsou okamžité. Funkce zůstávají stejné.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
       <div><div class="eyebrow">Mockupy</div><h2>Značka v provozu</h2></div>
       <p class="muted">Aplikace, přihlášení, PDF výkaz, vizitka a profilový obrázek. Všechno jen s pěti barvami a dvěma písmy.</p>
     </div>
@@ -459,7 +545,7 @@ footer { padding-block: 32px 56px; border-top: 1px solid var(--line); font-size:
   <section>
     <div class="section-head">
       <div><div class="eyebrow">Implementace</div><h2>Téma pro HeroUI</h2></div>
-      <p class="muted">Návrh barev pro <code>frontend/src/styles/hero.ts</code>. Primary je švestka, secondary meruňka s inkoustovým textem. Danger se posouvá do malinové, aby se nepletla s akcentem. Success a warning zůstávají.</p>
+      <p class="muted">Návrh barev pro <code>frontend/src/styles/hero.ts</code>. Primary je švestka, secondary levandule (stejný význam jako v shadcn). Meruňka nemá barvu tlačítka, v kódu je to token <code>--highlight</code> pro ikony, grafy a zvýraznění. Danger se posouvá do malinové, aby se nepletla s akcentem.</p>
     </div>
     <div class="spec">
       <div class="spec-col">
@@ -472,11 +558,8 @@ footer { padding-block: 32px 56px; border-top: 1px solid var(--line); font-size:
   DEFAULT: "#4A2B5E", foreground: "#FFFFFF",
 },
 secondary: {
-  50: "#FCEFE9", 100: "#F8DBCE", 200: "#F2BDA6",
-  300: "#EDA07E", 400: "#E78255", 500: "#E26A35",
-  600: "#CD531D", 700: "#A54318", 800: "#783111",
-  900: "#4C1F0B",
-  DEFAULT: "#E26A35", foreground: "#1E1A24",
+  // škála švestky, DEFAULT je levandule
+  DEFAULT: "#ECE3F2", foreground: "#4A2B5E",
 },
 danger: {
   50: "#FAEBED", 100: "#F3D3D8", 200: "#E9AAB5",
@@ -497,7 +580,7 @@ focus: "#E26A35",</pre>
   // stejná škála, jen DEFAULT je světlejší
   DEFAULT: "#C2A4D6", foreground: "#1E1A24",
 },
-secondary: { DEFAULT: "#E78255", foreground: "#1E1A24" },
+secondary: { DEFAULT: "#3B2D4A", foreground: "#F1EDF5" },
 danger: { DEFAULT: "#DE8292", foreground: "#1E1A24" },
 background: "#17131C",
 foreground: "#F1EDF5",
@@ -514,7 +597,7 @@ focus: "#E78255",</pre>
   </section>
 
   <footer>
-    CareTracker · brand board 1.0 · písma Bricolage Grotesque a Figtree (SIL OFL 1.1) · ochranná známka neověřena
+    CareTracker · brand board 1.1 · písma Bricolage Grotesque a Figtree (SIL OFL 1.1) · ochranná známka neověřena
   </footer>
 </div>
 
@@ -533,6 +616,13 @@ document.querySelectorAll(".copy").forEach(function (button) {
       navigator.clipboard.writeText(source.textContent).then(function () { done("Zkopírováno"); }, selectFallback);
     } catch (error) { selectFallback(); }
   });
+});
+var motionDemo = document.getElementById("motion-demo");
+var motionPlay = document.getElementById("motion-play");
+motionPlay.addEventListener("click", function () {
+  var isOn = motionDemo.classList.toggle("is-on");
+  motionPlay.textContent = isOn ? "Zpět" : "Přehrát";
+  motionPlay.setAttribute("aria-pressed", String(isOn));
 });
 </script>
 </body>
