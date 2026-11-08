@@ -107,6 +107,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         context.setVariable("tasks", taskRows);
         context.setVariable("totalPrice", totalPrice);
         context.setVariable("qrCode", fetchPaymentQrCode(client.getOrganization(), totalPrice, variableSymbol));
+        context.setVariable("logoUrl", getClass().getClassLoader().getResource("images/lockup-horizontal-color.png").toString());
 
         String html = templateEngine.process("receipt/performed-task-receipt", context);
 
@@ -114,12 +115,12 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
             ITextRenderer renderer = new ITextRenderer();
 
             renderer.getFontResolver().addFont(
-                    getClass().getClassLoader().getResource("fonts/Nunito-Regular.ttf").toURI().toString(),
+                    getClass().getClassLoader().getResource("fonts/Figtree-Regular.ttf").toURI().toString(),
                     "Identity-H",
                     true
             );
             renderer.getFontResolver().addFont(
-                    getClass().getClassLoader().getResource("fonts/Nunito-Bold.ttf").toURI().toString(),
+                    getClass().getClassLoader().getResource("fonts/Figtree-Bold.ttf").toURI().toString(),
                     "Identity-H",
                     true
             );

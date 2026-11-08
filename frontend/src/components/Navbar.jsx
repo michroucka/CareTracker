@@ -102,7 +102,7 @@ export default function AppNavbar() {
                     onClick={() => navigate("/")}
                     className="flex items-center px-2 py-3 mb-1 rounded-xl hover:bg-content2 transition-colors cursor-pointer"
                 >
-                    <CareTrackerLogo />
+                    <CareTrackerLogo small />
                     <span className="font-bold text-2xl">CareTracker</span>
                 </button>
 
@@ -185,7 +185,7 @@ export default function AppNavbar() {
             >
                 <NavbarContent>
                     <NavbarBrand className="cursor-pointer" onClick={() => navigate("/")}>
-                        <CareTrackerLogo />
+                        <CareTrackerLogo small />
                         <p className="font-bold text-xl">CareTracker</p>
                     </NavbarBrand>
                     <ThemeSwitcher className="mr-4" iconSize="size-6.5" />

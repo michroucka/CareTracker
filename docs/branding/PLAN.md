@@ -19,6 +19,8 @@
 | UI knihovna | **shadcn/ui** na Tailwind v4, postupně místo HeroUI v2 | Kód komponent je náš, styluje se přímo Tailwindem, menší bundle. HeroUI v2 se těžko přizpůsobuje (viz workaroundy v `table.css` a `index.css`). |
 | Animace | `motion` (už je v závislostech) | Jedna knihovna pro přechody stránek, layout animace a gesta. |
 | Postup | **Postupná migrace**, HeroUI a shadcn běží chvíli vedle sebe | Aplikace je funkční po každém kroku, žádný velký přepis naráz. |
+| Detaily záznamů | **Sheet zprava** (na mobilu přes celou obrazovku), stav v URL. Klient a individuální plán zůstávají jako stránky. | Seznam zůstává vidět, detail jde sdílet odkazem, tlačítko zpět ho zavře. Modal zakrývá kontext a vede k vnořeným modalům. Viz sekce 2.6. |
+| Úprava záznamu | **Přímo v sheetu** – přepnutí zobrazení na formulář | Žádný další modal nad detailem, uživatel neztratí kontext. |
 
 ---
 
@@ -170,6 +172,34 @@ Pravidla:
 - Přechod mezi stránkami: krátký fade + posun 8 px, žádné dlouhé efekty.
 - Vždy respektovat `prefers-reduced-motion` (`useReducedMotion()` z motion, `motion-reduce:` v Tailwindu).
 - Skeletony místo spinnerů tam, kde je známý tvar obsahu (tabulky, karty).
+
+**Co čím animovat:**
+
+| Vrstva | Nástroj | Na co |
+| --- | --- | --- |
+| Mikrointerakce | Tailwind `transition-*` + tokeny délek | hover, focus, stisk tlačítka (`active:scale-[0.98]`), změny barev |
+| Otevření / zavření overlayů | `tw-animate-css` přes Radix `data-[state=open/closed]` (shadcn ho přidává) | dialog, sheet, dropdown, popover, tooltip |
+| Odchody, layout, výška `auto`, gesta | `motion` (`AnimatePresence`, `layout`, `layoutId`, `drag`) | mazání řádku, přeskládání filtrované tabulky, posuvný indikátor aktivní položky v sidebaru, rozbalení sekce, stažení sheetu na mobilu, počítadla čísel na přehledu |
+| Přechod mezi stránkami | View Transitions API (`viewTransition` na `<Link>` / `navigate` v React Router 7) | krátké prolnutí stránek bez vlastního kódu |
+
+Cíl je, aby aplikace působila „živě“ díky konzistenci (všude stejné délky a křivky), ne díky efektům.
+
+### 2.6 Vzory zobrazení
+
+| Vzor | Kdy | Kde |
+| --- | --- | --- |
+| **Sheet zprava** (na mobilu přes celou obrazovku nebo zespodu) | Prohlížení a úprava záznamu ze seznamu | Detail provedeného úkonu, úkonu z katalogu, střediska, organizace, zaměstnance. Zápis nového úkonu (nejčastější akce, často z mobilu). |
+| **Stránka** | Bohatá entita s podsekcemi | Klient, individuální plán, měsíční výkaz |
+| **Dialog** | Krátká soustředěná akce | Vytvoření střediska / úkonu / organizace, generování výkazu, filtry na mobilu |
+| **Potvrzovací dialog (`alert-dialog`)** | Potvrzení nevratné akce | Smazání, ukončení, deaktivace |
+
+Pravidla pro sheet s detailem:
+
+- Stav v URL přes search param (`/performed-tasks?detail=123`). Otevření = `setSearchParams`, zavření = odebrání parametru, takže tlačítko zpět sheet zavře a odkaz jde sdílet.
+- Otevřený řádek je v tabulce zvýrazněný levandulí.
+- Klik na jiný řádek sheet nezavírá, jen prolne obsah (`AnimatePresence` s `key` podle id).
+- Úprava přímo v sheetu: tlačítko „Upravit“ přepne zobrazení na formulář, „Uložit“ / „Zrušit“ ho vrátí zpět. Žádný další modal.
+- Smazání z detailu otevře `alert-dialog` nad sheetem (jediný povolený vnořený overlay).
 
 ---
 
@@ -343,21 +373,21 @@ Dark mode se dál přepíná třídou `.dark` na `<html>` (stávající `ThemeCo
 Pracuj na větvi `feature/rebranding` z `develop`. Každá fáze končí funkční aplikací, dá se mergovat samostatně.
 
 ### Fáze 0 – Příprava
-- [ ] Větev `feature/rebranding`.
+- [x] Větev `feature/rebranding`.
 - [ ] Projít brand board a tenhle dokument, případně doladit otevřené otázky (sekce 7).
-- [ ] Udělat screenshoty klíčových stránek před změnou (pro porovnání a do README).
+- [x] Udělat screenshoty klíčových stránek před změnou (pro porovnání a do README).
 
 ### Fáze 1 – Statické body značky (bez změny UI knihovny)
 Rychlá viditelná změna, žádné riziko.
 
-- [ ] `frontend/public/`: nahradit `ct_icon*.svg`, `ct_icon_pwa.png` za `favicon.svg`, `favicon.ico`, `icon-180.png`, `icon-192.png`, `icon-512.png`.
-- [ ] `frontend/index.html`: favicon odkazy, `apple-touch-icon`, `theme-color` (`#F7F5F9` světlý, `#17131C` tmavý přes `media`), Google Fonts (sekce 2.3), `lang="cs"`.
-- [ ] `frontend/public/manifest.json`: ikony 192 a 512 (+ `"purpose": "maskable"` varianta), `theme_color`, `background_color`.
-- [ ] `frontend/src/assets/`: nové `logo_light.svg` / `logo_dark.svg` = `lockup-horizontal-color.svg` / `lockup-horizontal-reversed.svg`, `ct_icon.svg` = `symbol-color.svg`.
-- [ ] `CareTrackerLogo.jsx` a `Login.jsx`: přepnout na nové soubory, zvážit inline SVG komponentu s `currentColor`, aby se logo samo přebarvilo v dark mode (pak stačí jeden soubor).
-- [ ] `.github/assets/` + `README.md`, `README.en.md`: nová loga (`<picture>` se `prefers-color-scheme` pro světlé/tmavé GitHub téma).
-- [ ] E-maily `backend/src/main/resources/templates/email/*.html`: barvy (`#21a35e` → `#4A2B5E`, hover `#372046`, světlé pozadí `#F7F5F9`, text `#1E1A24`), písmo Figtree s fallbackem, logo jako PNG (absolutní URL).
-- [ ] PDF `templates/receipt/performed-task-receipt.html` + `ReceiptService.java`: Figtree TTF (Regular + Bold, případně Bricolage pro nadpis) do `backend/src/main/resources/fonts/`, registrace v `ReceiptService` místo Nunito. Hlavička se švestkovou linkou podle mockupu, logo jako SVG/PNG.
+- [x] `frontend/public/`: nahradit `ct_icon*.svg`, `ct_icon_pwa.png` za `favicon.svg`, `favicon.ico`, `icon-180.png`, `icon-192.png`, `icon-512.png`.
+- [x] `frontend/index.html`: favicon odkazy, `apple-touch-icon`, `theme-color` (`#F7F5F9` světlý, `#17131C` tmavý přes `media`), Google Fonts (sekce 2.3), `lang="cs"`.
+- [x] `frontend/public/manifest.json`: ikony 192 a 512 (+ `"purpose": "maskable"` varianta), `theme_color`, `background_color`.
+- [x] `frontend/src/assets/`: nové `logo_light.svg` / `logo_dark.svg` = `lockup-horizontal-color.svg` / `lockup-horizontal-reversed.svg`, `ct_icon.svg` = `symbol-color.svg`.
+- [x] `CareTrackerLogo.jsx` a `Login.jsx`: přepnout na nové soubory, zvážit inline SVG komponentu s `currentColor`, aby se logo samo přebarvilo v dark mode (pak stačí jeden soubor).
+- [x] `.github/assets/` + `README.md`, `README.en.md`: nová loga (`<picture>` se `prefers-color-scheme` pro světlé/tmavé GitHub téma).
+- [x] E-maily `backend/src/main/resources/templates/email/*.html`: barvy (`#21a35e` → `#4A2B5E`, hover `#372046`, světlé pozadí `#F7F5F9`, text `#1E1A24`), písmo Figtree s fallbackem, logo jako PNG (absolutní URL).
+- [x] PDF `templates/receipt/performed-task-receipt.html` + `ReceiptService.java`: Figtree TTF (Regular + Bold, případně Bricolage pro nadpis) do `backend/src/main/resources/fonts/`, registrace v `ReceiptService` místo Nunito. Hlavička se švestkovou linkou podle mockupu, logo jako SVG/PNG.
 
 ### Fáze 2 – Tokeny a přebarvení HeroUI (most mezi starým a novým)
 Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent, takže během migrace nebude vypadat napůl.
@@ -378,6 +408,7 @@ Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent,
 - [ ] `npx shadcn@latest init` – Vite, Tailwind v4, CSS proměnné. Projekt je většinou JSX, takže `"tsx": false` v `components.json` (nebo nové komponenty psát v TSX, rozhodnout jednou a držet).
 - [ ] Ověřit, že `init` nepřepsal tokeny ze sekce 3 (shadcn generuje vlastní `:root` – nahradit našimi).
 - [ ] Základní komponenty: `button`, `input`, `label`, `textarea`, `checkbox`, `select`, `dialog`, `alert-dialog`, `dropdown-menu`, `popover`, `tooltip`, `table`, `card`, `badge`, `separator`, `skeleton`, `sheet`, `sidebar`, `sonner`.
+- [ ] `FormField`: implementovat obě varianty labelu (plovoucí / nad polem s živým focusem, sekce 7) na zkušební stránce, vyzkoušet a jednu vybrat.
 - [ ] Doladit varianty v `src/components/ui/*` podle brandu (radius, výšky 40 px, focus ring meruňkový, `active:scale-[0.98]` u tlačítek).
 - [ ] HeroUI zatím nechat (`HeroUIProvider`, `@plugin`, `@source`). Obě knihovny čtou stejné tokeny.
 
@@ -428,7 +459,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | HeroUI | Počet | Náhrada | Poznámka |
 | --- | --- | --- | --- |
 | `Button` | 45 | shadcn `button` | Varianty: `default` (švestka), `secondary` (levandule), `outline`, `ghost`, `destructive`, `link`. `isLoading` → `disabled` + spinner ikona. `onPress` → `onClick`. |
-| `Modal`, `ModalContent/Header/Body/Footer` | 24 | shadcn `dialog` | Potvrzení mazání (`DeleteConfirmationModal`) → `alert-dialog`. Na mobilu zvážit `sheet` / `drawer`. |
+| `Modal`, `ModalContent/Header/Body/Footer` | 24 | shadcn `sheet` / `dialog` / `alert-dialog` | Podle sekce 2.6: `*DetailModal` a `PerformedTaskCreateModal` → `sheet` s úpravou uvnitř, ostatní `*CreateModal` a `GenerateReceiptModal` → `dialog`, `DeleteConfirmationModal` a `*TerminateModal` → `alert-dialog`. |
 | `Spinner` | 20 | `Loader2` z lucide + `animate-spin`, nebo `skeleton` | Kde je známý tvar obsahu, použít skeleton. |
 | `Input` | 17 | shadcn `input` + `label` | HeroUI má label a chybu v sobě, tady se skládá. Udělat si malou `FormField` komponentu. |
 | `Form` | 15 | nativní `<form>` (nebo shadcn `form` s react-hook-form) | Rozhodnout jednou (sekce 7). Validace dnes řeší HeroUI `validationErrors`. |
@@ -477,6 +508,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | Formuláře: nativní `<form>`, nebo react-hook-form + zod? | react-hook-form + zod: shadcn `form` na ně počítá, validace bude na jednom místě a sdílená mezi formuláři. |
 | Nové komponenty v JSX, nebo TSX? | Držet JSX jako zbytek projektu, pokud neplánuješ převod na TS. |
 | Datumy: react-day-picker, nebo React Aria? | react-day-picker (shadcn `calendar`), React Aria jen pokud bude potřeba psaní data z klávesnice po segmentech. |
+| Labely ve formulářích: plovoucí (jako HeroUI), nebo nad polem? | Nad polem s „živým focusem“ (plynulý rámeček + meruňkový ring, label při focusu do švestkové, chyba plynule vyjede) – čitelnější pro starší uživatele a husté formuláře. Plovoucí jde čistě v CSS (`peer` + `:placeholder-shown`, u Select/DatePicker přes `data-filled`), ale label je po vyplnění jen 12 px. Rozhodnutí zapouzdřit do jedné komponenty `FormField`. **Ve fázi 3 implementovat obě varianty vedle sebe na zkoušku, pak vybrat.** |
 | Ochranná známka / doména | Před veřejným spuštěním ověřit „CareTracker“ v databázích ÚPV a EUIPO. |
 
 ---
@@ -498,3 +530,5 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | --- | --- |
 | 2026-10-25 | Rozhodnutí o brandu (Buňka, švestka + meruňka, Bricolage + Figtree), plán migrace na shadcn/ui |
 | 2026-10-25 | Typografická studie (7 variant, https://claude.ai/artifact/ViUmMKLE4DSua5oJ8KQapf): potvrzeno Bricolage + Figtree. Atkinson Hyperlegible zamítnut kvůli přeškrtnuté nule. |
+| 2026-11-08 | Fáze 1 hotová: favicony, PWA ikony (+ maskable), Google Fonts (Bricolage + Figtree), `CareTrackerLogo` jako inline SVG (malý řez přes prop `small`), loga v README, e-maily přebarvené s PNG logem (`email-logo.png` z frontendu), PDF s Figtree a švestkovou linkou. `--font-sans` už je Figtree. Staré `ct_icon*`, `logo_*` a Nunito smazány. |
+| 2026-11-08 | Rozhodnuto: detaily záznamů jako sheet se stavem v URL a úpravou uvnitř (klient a plán zůstávají stránky), vrstvy animací (CSS / tw-animate-css / motion / View Transitions). Nové sekce 2.6 a „Co čím animovat“. |

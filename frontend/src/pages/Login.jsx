@@ -7,7 +7,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/MyToast";
 import { CareTrackerLogo } from "../components/CareTrackerLogo.jsx";
 import { ThemeSwitcher } from "../components/ThemeSwitcher.jsx";
-import ctIcon from "../assets/ct_icon.svg";
 
 const brandingFeatures = [
     {
@@ -166,7 +165,7 @@ function Login() {
             <div className="hidden lg:flex flex-col justify-between gap-8 w-3/5 bg-primary/5 dark:bg-content2/50 border border-primary/10 dark:border-default-100 rounded-2xl p-10 relative overflow-hidden">
                 <div aria-hidden="true" className="absolute -top-16 -right-16 w-64 h-64 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
                 <div aria-hidden="true" className="absolute -bottom-20 -left-10 w-72 h-72 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
-                <img src={ctIcon} alt="" aria-hidden="true" className="absolute right-6 bottom-6 w-48 opacity-[0.04] select-none pointer-events-none" draggable={false} />
+                <CareTrackerLogo size="size-48" className="absolute right-6 bottom-6 opacity-[0.04] pointer-events-none" />
 
                 <div className="relative flex items-center gap-2">
                     <CareTrackerLogo size="size-24" />

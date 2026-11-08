@@ -2,18 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
         <style>
-            body { font-family: Nunito, ui-sans-serif, system-ui, sans-serif; font-size: 12px; }
+            body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; font-size: 12px; color: #1E1A24; }
             table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+            th, td { border: 1px solid #E2DCE8; padding: 6px; text-align: left; }
+            th { background-color: #F7F3F9; }
             h1 { margin: 0; }
             h2, h3, h4 { margin: 6px 0; }
             .top-content { width: 100%; border-collapse: collapse; border: none; margin-bottom: 4px; }
             .top-content td { border: none; padding: 0; vertical-align: bottom; }
             .mt-2 { margin-top: 8px; }
+            .month { font-size: 13px; color: #645C6E; margin-top: 2px; }
+            .logo { width: 110px; height: 29.5px; }
+            .brand-rule { border-top: 2px solid #4A2B5E; margin: 6px 0 4px 0; }
             .client-table { margin-bottom: 0; border: none; table-layout: auto; }
             .client-table td { border: none; padding: 3px; }
             .client-name { font-size: 15px; font-weight: bold; }
-            .client-meta { font-size: 11px; color: #555; }
+            .client-meta { font-size: 11px; color: #645C6E; }
             .task-table td, th { padding: 2px 4px; }
             .signature-table { margin-top: 32px; border: none; }
             .signature-table td { border: none; width: 33%; padding: 0; }
@@ -26,11 +30,14 @@
     <body>
         <table class="top-content">
             <tr>
-                <td><h1 th:text="${organizationName}">Nazev organizace</h1></td>
-                <td style="text-align: right; white-space: nowrap;"><h3 style="margin-bottom: 0;" th:text="${monthYear}">Leden 2026</h3></td>
+                <td>
+                    <h1 th:text="${organizationName}">Nazev organizace</h1>
+                    <div class="month" th:text="${monthYear}">Leden 2026</div>
+                </td>
+                <td style="text-align: right;"><img class="logo" th:src="${logoUrl}" alt="CareTracker"/></td>
             </tr>
         </table>
-        <hr/>
+        <div class="brand-rule"></div>
         <table class="client-table">
             <tr>
                 <td style="padding-left: 0;"><span class="client-name" th:text="${clientName}">Jmeno Prijmeni</span></td>

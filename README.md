@@ -1,5 +1,8 @@
 <div align="center">
-  <img src=".github/assets/logo_light.svg" alt="CareTracker logo" width="400" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg" />
+    <img src=".github/assets/logo-light.svg" alt="CareTracker logo" width="400" />
+  </picture>
 </div>
 
 <div align="center">
