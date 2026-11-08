@@ -27,6 +27,7 @@
     --accent: #EFE9F3;
     --accent-foreground: #1E1A24;
     --highlight: #E26A35;
+    --brand-panel: #4A2B5E;
     --highlight-foreground: #1E1A24;
     --destructive: #C9364F;
     --destructive-foreground: #FFFFFF;
@@ -75,6 +76,7 @@
     --accent: #332A3D;
     --accent-foreground: #F1EDF5;
     --highlight: #E78255;
+    --brand-panel: #170F1D;
     --highlight-foreground: #1E1A24;
     --destructive: #DE8292;
     --destructive-foreground: #1E1A24;
@@ -123,6 +125,7 @@
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
     --color-highlight: var(--highlight);
+    --color-brand-panel: var(--brand-panel);
     --color-highlight-foreground: var(--highlight-foreground);
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);

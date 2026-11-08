@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import { IconBuildingCommunity, IconLogout, IconMoon, IconSelector, IconSun } from "@tabler/icons-react";
 import { CareTrackerLogo } from "@/components/CareTrackerLogo";
+import { CareTrackerWordmark } from "@/components/CareTrackerWordmark";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -166,8 +167,8 @@ export function AppSidebar() {
                     onClick={() => setOpenMobile(false)}
                     className="flex h-10 items-center overflow-hidden rounded-md px-1 whitespace-nowrap outline-none focus-visible:ring-[3px] focus-visible:ring-sidebar-ring/50"
                 >
-                    <CareTrackerLogo small />
-                    <span className="font-display text-xl font-semibold tracking-tight text-foreground transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0">CareTracker</span>
+                    <CareTrackerLogo small className="me-2.5" />
+                    <CareTrackerWordmark className="h-4 text-foreground transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0" />
                 </NavLink>
             </SidebarHeader>
 

@@ -16,8 +16,8 @@ export const ThemeSwitcher = ({ className = "" }) => {
             aria-label={isDark ? "Přepnout na světlý motiv" : "Přepnout na tmavý motiv"}
             className={cn("group relative", className)}
         >
-            <OutlineIcon className="transition-opacity duration-base ease-out group-hover:opacity-0" />
-            <FilledIcon className="absolute opacity-0 transition-opacity duration-base ease-out group-hover:opacity-100" />
+            <OutlineIcon className="size-5 transition-opacity duration-base ease-out group-hover:opacity-0" />
+            <FilledIcon className="absolute size-5 opacity-0 transition-opacity duration-base ease-out group-hover:opacity-100" />
         </Button>
     );
 };

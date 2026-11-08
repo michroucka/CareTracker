@@ -10,6 +10,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { AppSidebar } from "../components/layout/AppSidebar";
 import { AppHeader } from "../components/layout/AppHeader";
 import { SidebarInset, SidebarProvider } from "../components/ui/sidebar";
+import { PageLoader } from "../components/PageLoader";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Clients from "../pages/Clients";
@@ -26,6 +27,8 @@ import Organizations from "../pages/Organizations";
 import {ClientCreate} from "../pages/ClientCreate";
 import {ClientDetail} from "../pages/ClientDetail";
 import ComponentCatalog from "../pages/ComponentCatalog";
+
+const AUTH_PAGES = ["/login", "/activate", "/reset-password"];
 
 const PageTransition = motion.div;
 
@@ -48,7 +51,8 @@ export default function App() {
     const { user, loading } = useAuth();
     const { pathname } = useLocation();
     const contentRef = React.useRef<HTMLDivElement>(null);
-    const showShell = !loading && !!user;
+    const isAuthPage = AUTH_PAGES.includes(pathname);
+    const showShell = !loading && !!user && !isAuthPage;
 
     // The content area scrolls on its own (desktop), so reset it on navigation like a normal page
     React.useEffect(() => {
@@ -186,14 +190,12 @@ export default function App() {
         </Routes>
     );
 
+    if (loading && !isAuthPage) {
+        return <PageLoader />;
+    }
+
     if (!showShell) {
-        return (
-            <main className="flex-1 flex flex-col lg:p-4">
-                <div className="bg-background lg:rounded-2xl lg:shadow-lg p-8 lg:p-4 flex-1">
-                    {routes}
-                </div>
-            </main>
-        );
+        return routes;
     }
 
     return (

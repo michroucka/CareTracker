@@ -484,7 +484,7 @@ Nejvíc viditelná změna, nezávislá na formulářích.
 ### Fáze 5 – Migrace stránek
 Pořadí od nejjednodušší a nejsamostatnější:
 
-1. [ ] `Login.jsx`, `Activate.jsx`, `ResetPassword.jsx` – samostatné, vyzkouší se Form, Input, Button, toasty.
+1. [x] `Login.jsx`, `Activate.jsx`, `ResetPassword.jsx` – společný `AuthLayout` (karta na švestce s přepínačem motivu v rohu, pozadí = jemná mřížka buněk 44 × 26, kruh asi v každé 50. buňce, nikdy u okraje ani vedle sebe, ke středu mizí, kruhy při načtení naskočí ve vlně; v tmavém režimu hlubší `--brand-panel` a karta s obrysem; zvažováno i rozdělení panel/formulář a „mřížka buněk“ jako levý panel), `PasswordInput`, hook `useTokenValidation`, demo účty klikem vyplní přihlášení. Route guardy a odhlášení převedeny na Sonner a `PageLoader`.
 2. [ ] `Account.jsx`
 3. [ ] `Home.jsx` – **redesign nástěnky** (samostatný návrh až po kostře z fáze 4: obsah podle rolí, souhrnné dlaždice, grafy na tokenech), ne jen přebarvení
 4. [ ] `Organizations.jsx`, `Departments.jsx`, `Tasks.jsx` – jednodušší tabulky + formulářové modaly
@@ -601,3 +601,5 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-08 | Měkké stavové štítky: `Badge` varianty `success` (schváleno, aktivní), `pending` (čeká – meruňka), `warning`, `danger` (ukončený) + tokeny `--*-soft` / `--*-soft-foreground` (kontrast ≥ 4,7 : 1 v obou režimech). Plný `destructive` jen výjimečně. |
 | 2026-11-08 | Toasty: zaoblení `--radius-lg`, šířka 400 px, větší text, ikony v kroužcích stavových barev; vlastní `toast` z `@/components/ui/sonner` přidává ikonu i výchozímu toastu. Ikony: vybrán **Tabler** místo Lucide, `ui/` komponenty a katalog převedeny. |
 | 2026-11-08 | Fáze 4: nová kostra (sidebar A – plovoucí okno, sbalitelný na ikony, klouzající aktivní položka, drobečková navigace, motion přechod mezi stránkami), tokeny `--sidebar-*` + `--sidebar-active`. Nástěnka v plánu jako samostatný redesign. |
+| 2026-11-08 | Fáze 5, krok 1: přihlášení, aktivace účtu a reset hesla na nových komponentách (`AuthLayout`, `PasswordInput`, `useTokenValidation`), token `--brand-panel`. `ProtectedRoute`, `PublicOnlyRoute` a odhlášení v `AuthContext` na Sonner. |
+| 2026-11-08 | Wordmark: vedle symbolu vždy `CareTrackerWordmark` (křivky z oficiálního loga, `caretracker` malými písmeny, výška ≈ 0,6 a mezera ≈ 0,4 viditelné výšky symbolu) – sidebar, přihlašovací karta. V běžném textu dál „CareTracker“. |

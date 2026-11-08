@@ -2,9 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole } from "../../constants/roles";
-import { showToast } from "../MyToast";
-import { ShieldAlert, UserRoundX } from "lucide-react";
-import {Spinner} from "@heroui/react";
+import { toast } from "@/components/ui/sonner";
+import { PageLoader } from "@/components/PageLoader";
 
 /**
  * Route guard that requires authentication and optionally a specific role.
@@ -29,32 +28,18 @@ export function ProtectedRoute({ children, allowedRoles }) {
     useEffect(() => {
         if (!toastShownRef.current) {
             if (isNotAuthenticated && !wasAuthenticatedRef.current) {
-                showToast({
-                    title: "Přístup odepřen",
-                    description: "Pro zobrazení této stránky se musíte přihlásit",
-                    color: "warning",
-                    icon: <ShieldAlert />,
-                });
+                toast.warning("Přístup odepřen", { description: "Pro zobrazení této stránky se musíte přihlásit" });
                 toastShownRef.current = true;
             } else if (hasInsufficientPermissions) {
                 console.warn("User tried to access page with insufficient permissions:", user.role, " - ", location.pathname);
-                showToast({
-                    title: "Nedostatečná oprávnění",
-                    description: "Nemáte oprávnění pro zobrazení této stránky",
-                    color: "danger",
-                    icon: <UserRoundX />,
-                });
+                toast.error("Nedostatečná oprávnění", { description: "Nemáte oprávnění pro zobrazení této stránky" });
                 toastShownRef.current = true;
             }
         }
     }, [isNotAuthenticated, hasInsufficientPermissions]);
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <Spinner size="lg" variant="gradient" label="Načítání..." />
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (isNotAuthenticated) {
