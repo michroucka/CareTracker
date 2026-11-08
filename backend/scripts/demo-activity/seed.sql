@@ -1,4 +1,5 @@
--- Demo activity generator: realistic performed tasks for the last 12 months up to now.
+-- Demo activity generator: realistic performed tasks for the last 12 months up to now,
+-- plus individual plan update dates kept around today.
 --
 -- Safe to run repeatedly (e.g. once a month): a client-day that already has any performed task is skipped,
 -- so a new run only fills what is missing since the last one. Generated rows are tracked in
@@ -79,6 +80,16 @@ INSERT INTO caregiver_performed_task (caregiver_id, performed_task_id)
 SELECT c.caregiver_id, i.id
 FROM inserted i
 JOIN client c ON c.id = i.client_id;
+
+-- Keep individual plan update dates alive: a plan more than 14 days overdue gets a new date between
+-- 10 days ago and 45 days ahead (spread evenly by plan id), and its processed date half a year before it.
+-- Plans then drift towards "overdue" naturally and are renewed two weeks later.
+UPDATE individual_plan_content c
+SET planned_update_date = CURRENT_DATE + (ip.id * 7 % 56 - 10),
+    processed_date = CURRENT_DATE + (ip.id * 7 % 56 - 10) - INTERVAL '6 months'
+FROM individual_plan ip
+WHERE ip.current_content_id = c.id
+  AND c.planned_update_date < CURRENT_DATE - 14;
 
 SELECT COUNT(*) AS generated_total,
        MAX(pt.date) AS latest_generated
