@@ -477,7 +477,7 @@ Nejvíc viditelná změna, nezávislá na formulářích.
 - [x] `AppHeader`: přepínač menu + drobečková navigace (`getBreadcrumbs` v `navigation.js`), na mobilu logo. Lepkavá hlavička nad obsahem.
 - [x] Přechod mezi stránkami: `motion` – obsah je obalený `motion.div` s `key={pathname}`, při každé změně stránky se prolne a vyjede o 8 px (`DURATION.slow`), sidebar stojí. Jen vstup, bez odchodu, aby nová stránka nečekala. Pozor: `viewTransition` z React Routeru s `<BrowserRouter>` nefunguje (jen data router), proto ne View Transitions. Při změně stránky se obsah posune nahoru.
 - [x] `Navbar.jsx` a `Footer.jsx` smazány, `ThemeSwitcher` přepsaný na shadcn + Tabler.
-- [ ] Hledání `Ctrl+K` (paleta pro skok na klienta / zaměstnance / stránku, shadcn `command`) – zatím není, přidat jako samostatný krok.
+- [x] Hledání `Ctrl+K` / `⌘K` (`CommandPalette.jsx`, shadcn `command`): tlačítko „Hledat…“ v hlavičce, klienti a zaměstnanci (staff), organizace (SUPERADMIN, bez klientů), stránky podle role; hledání bez ohledu na diakritiku, data se načtou při prvním otevření.
 - [x] `PageHeader` (`src/components/layout/PageHeader.jsx`): nadpis Bricolage + popis + akce vpravo.
 - [ ] `BackToTopButton.jsx` (jen `IndividualPlan`) poslouchá scroll okna, na desktopu ale scrolluje obsah – vyřešit při migraci `IndividualPlan`.
 
@@ -606,3 +606,4 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-08 | Fáze 5, krok 2: `Account.jsx`, `PageHeader`. `MyToast.showToast` a `showErrorToast` jsou teď tenký obal nad Sonnerem (barva → typ toastu, ikony ignoruje), HeroUI `ToastProvider` a CSS obezličky pro toasty odstraněny. Karta (`ui/card`) na `rounded-lg`, nadpis karty v Bricolage. |
 | 2026-11-08 | Fáze 5, krok 3: nová nástěnka pro všechny role včetně SUPERADMINa, rozšířený backend nástěnky (nová DTO `ClientAttentionDTO`, `CaregiverWorkloadDTO`, `PlatformOverviewDTO`, `OrganizationOverviewDTO`). |
 | 2026-11-08 | Nástěnka: odhad na konec měsíce (tempo za uplynulé pracovní dny × pracovní dny v měsíci, svátky se nepočítají) v dlaždicích a grafech – rozpracovaný měsíc je přerušovaná čára k odhadu místo propadu. Dlaždice úkonů s historií i pro koordinátora/admina. Mock data: `make seed-activity` / `clear-activity` / `demo-seed-activity`, `make up` a `make clean` je spouští automaticky. |
+| 2026-11-08 | Otevřené body: migrace V22 (hodinové úkony z V18/V19 převedeny z hodin na minuty), generátor drží termíny individuálních plánů kolem dneška, součty nástěnky přesunuty do SQL (nástěnka 0,1–0,3 s místo až 1 s), hledání `Ctrl+K`. |

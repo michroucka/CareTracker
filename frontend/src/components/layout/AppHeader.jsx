@@ -5,6 +5,7 @@ import { CareTrackerLogo } from "@/components/CareTrackerLogo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CommandPalette } from "./CommandPalette";
 import { getBreadcrumbs } from "./navigation";
 
 function SidebarToggle() {
@@ -64,6 +65,7 @@ export function AppHeader() {
                 <CareTrackerLogo small size="size-7" />
             </Link>
             <Breadcrumbs />
+            <CommandPalette />
         </header>
     );
 }
