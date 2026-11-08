@@ -36,8 +36,13 @@ export function formatAmount(unitCount, unitType) {
     return `${formatNumber(unitCount)} ${UNIT_LABELS[unitType] ?? ""}`;
 }
 
+export const TIME_STEP = 5;
+
+/** Current time rounded down to the time picker's step, so a new record never starts in the future. */
 function currentTime() {
-    return new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const minutes = Math.floor(now.getMinutes() / TIME_STEP) * TIME_STEP;
+    return `${String(now.getHours()).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 export function emptyPerformedTask(caregiverId) {

@@ -36,7 +36,7 @@ export function Combobox({ options, value, onChange, placeholder = "Vyberte…",
                     role="combobox"
                     aria-expanded={isOpen}
                     disabled={disabled}
-                    className={cn("w-full justify-between bg-card px-3 text-base font-normal active:scale-100", !selected && "text-muted-foreground", className)}
+                    className={cn("w-full min-w-0 justify-between bg-card px-3 text-base font-normal active:scale-100", !selected && "text-muted-foreground", className)}
                 >
                     <span className="truncate">{selected ? selected.label : placeholder}</span>
                     <IconSelector className="text-muted-foreground" />

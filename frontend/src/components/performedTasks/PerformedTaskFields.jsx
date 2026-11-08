@@ -3,15 +3,15 @@ import { Combobox } from "@/components/Combobox";
 import { DatePicker } from "@/components/DatePicker";
 import { FormField } from "@/components/FormField";
 import { MultiCombobox } from "@/components/MultiCombobox";
-import { TimePicker } from "@/components/TimePicker";
-import { formatCurrency } from "@/components/dashboard/dashboardFormat";
+import { TimePicker } from "@/components/ui/time-picker";
+import { formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
 import { formatTaskPrice } from "@/components/tasks/taskForm";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { todayIsoDate } from "@/lib/dates";
-import { allowsDecimals, amountLabel, MIN_DATE, personName, previewPrice } from "./performedTaskForm";
+import { allowsDecimals, amountLabel, MIN_DATE, personName, previewPrice, TIME_STEP } from "./performedTaskForm";
 
 const clientTaskIds = (client) => client?.tasks?.map((task) => task.id) ?? [];
 
@@ -102,7 +102,20 @@ export function PerformedTaskFields({ idPrefix, values, errors, onChange, disabl
                 </FormField>
                 <FormField id={`${idPrefix}-time`} label="Čas" required error={errors.time} shakeSignal={shakeSignal}>
                     {(controlProps) => (
-                        <TimePicker {...controlProps} value={values.time} onChange={(time) => onChange("time", time)} disabled={disabled} />
+                        <TimePicker
+                            id={controlProps.id}
+                            aria-invalid={controlProps["aria-invalid"]}
+                            value={values.time}
+                            onChange={(time) => onChange("time", time)}
+                            step={TIME_STEP}
+                            max="23:55"
+                            allowTyping
+                            fullWidth
+                            iconPosition="end"
+                            loop
+                            commitDelay={700}
+                            disabled={disabled}
+                        />
                     )}
                 </FormField>
             </div>
@@ -135,6 +148,7 @@ export function PerformedTaskFields({ idPrefix, values, errors, onChange, disabl
                         options={caregivers}
                         value={values.caregiverIds}
                         onChange={(caregiverIds) => onChange("caregiverIds", caregiverIds)}
+                        formatCount={(count) => `${count} ${pluralize(count, ["pečovatel", "pečovatelé", "pečovatelů"])}`}
                         placeholder="Vyberte pečovatele"
                         searchPlaceholder="Hledat pečovatele…"
                         disabled={disabled}
