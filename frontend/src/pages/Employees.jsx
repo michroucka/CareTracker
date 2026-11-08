@@ -1,5 +1,5 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconMailForward, IconPlus } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconMailForward, IconPlus } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
@@ -218,7 +218,7 @@ function Employees() {
                                                 <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${fullName(employee)}`}><IconDots /></Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onSelect={() => openDetail(employee.id)}>Otevřít detail</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => openDetail(employee.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
                                                 {employee.email && !employee.isActivated && (
                                                     <DropdownMenuItem onSelect={() => resendActivationEmail(employee.id)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
                                                 )}

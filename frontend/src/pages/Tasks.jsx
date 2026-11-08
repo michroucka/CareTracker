@@ -1,5 +1,5 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPlus } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useTasks } from "../hooks/useTasks.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
@@ -151,7 +151,7 @@ function Tasks() {
                                             <Button size="icon-sm" variant="ghost" aria-label={`Akce pro úkon ${task.name}`}><IconDots /></Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onSelect={() => openDetail(task.id)}>Otevřít detail</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => openDetail(task.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
                                             {task.active ? (
                                                 <DropdownMenuItem variant="destructive" onSelect={() => askTerminate(task)}><IconBan /> Deaktivovat</DropdownMenuItem>
                                             ) : (

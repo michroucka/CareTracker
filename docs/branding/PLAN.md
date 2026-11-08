@@ -488,7 +488,7 @@ Pořadí od nejjednodušší a nejsamostatnější:
 2. [x] `Account.jsx` – karty Profil / Přihlašovací údaje (úprava na místě) / Heslo, skeleton při načítání
 3. [x] `Home.jsx` – redesign nástěnky: pozdrav + „Zapsat úkon“, 3 dlaždice s minigrafem a minulým měsícem, „Individuální plány“ (štítky po termínu / za X dní) a „Klienti bez záznamu 14+ dní“, graf vývoje za 12 měsíců, nedávné záznamy, vytížení pečovatelů (koordinátor), střediska s příjmem (admin). SUPERADMIN má vlastní „Přehled aplikace“ jen se souhrnnými čísly (organizace, účty podle rolí, pozvánky, úkony napříč aplikací) – žádné údaje o klientech. Backend: `DashboardService` rozšířen (dnešní úkony, klienti bez záznamu, vytížení, příjem středisek, přehled pro SUPERADMINa); opravena chyba, kdy admin viděl plány jen svého střediska.
 4. [x] `Organizations.jsx`, `Departments.jsx`, `Tasks.jsx` – tabulka + `ListToolbar` (hledání, stav, počet), detail v `RecordSheet` s úpravou na místě (`?detail=ID`), vytvoření v dialogu, (de)aktivace přes `ConfirmDialog`. Společné: `useListFilters`, `useDetailParam`, `useRecordForm`, `Combobox`, `StatusBadge`. Opraveno: úprava organizace mazala bankovní účet (nově se dá zadat), výběr vedoucího nabízel zaměstnance všech organizací a bez jmen, hledání úkonů nefungovalo.
-5. [ ] `Employees.jsx` hotovo (filtr středisek `MultiSelectFilter` + `useMultiSelectParam`, stav účtu v tabulce, detail se zařazením a účtem, znovu poslání aktivace), `Clients.jsx` zbývá
+5. [x] `Employees.jsx` hotovo (filtr středisek `MultiSelectFilter` + `useMultiSelectParam`, stav účtu v tabulce, detail se zařazením a účtem, znovu poslání aktivace), `Clients.jsx` hotovo (filtry středisek a pečovatelů, stav účtu, dialogy ukončení smlouvy a účtu klienta; klik vede na stránku detailu)
 6. [ ] `PerformedTasks.jsx` – hlavní obrazovka, tabulka, filtry, nejvíc dialogů
 7. [ ] `ClientDetail.jsx`, `ClientCreate.jsx`, `IndividualPlan.jsx`, `MonthlyReport.jsx`
 8. [ ] Sdílené: `components/forms/*`, `components/modals/*`, `MonthYearPicker.jsx`, `ImageUpload.jsx`, `ReadOnlyField.jsx`, `MyToast.jsx`
@@ -568,7 +568,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | ~~Horní navbar, nebo sidebar?~~ | **Rozhodnuto: sidebar, varianta A (plovoucí okno)** – viz fáze 4. |
 | Formuláře: nativní `<form>`, nebo react-hook-form + zod? | react-hook-form + zod: shadcn `form` na ně počítá, validace bude na jednom místě a sdílená mezi formuláři. |
 | ~~Nové komponenty v JSX, nebo TSX?~~ | **Rozhodnuto: JSX** (`components.json` → `"tsx": false`). |
-| Datumy: react-day-picker, nebo React Aria? | react-day-picker (shadcn `calendar`), React Aria jen pokud bude potřeba psaní data z klávesnice po segmentech. |
+| ~~Datumy: react-day-picker, nebo React Aria?~~ | **Rozhodnuto:** shadcn `calendar` (= react-day-picker s českou lokalizací, týden od pondělí) v `DatePicker.jsx` (popover s tlačítkem, hodnoty jako ISO `2026-11-08`, převody v `lib/dates.js`). |
 | ~~Labely ve formulářích: plovoucí, nebo nad polem?~~ | **Rozhodnuto: nad polem s živým focusem** (obě varianty vyzkoušené, plovoucí smazaná). |
 | Ochranná známka / doména | Před veřejným spuštěním ověřit „CareTracker“ v databázích ÚPV a EUIPO. |
 
@@ -609,3 +609,5 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-08 | Otevřené body: migrace V22 (hodinové úkony z V18/V19 převedeny z hodin na minuty), generátor drží termíny individuálních plánů kolem dneška, součty nástěnky přesunuty do SQL (nástěnka 0,1–0,3 s místo až 1 s), hledání `Ctrl+K`. |
 | 2026-11-08 | Fáze 5, krok 4: Organizace, Střediska, Úkony na nových komponentách se sheetem detailu; staré modaly a formuláře smazány. |
 | 2026-11-08 | Fáze 5: Zaměstnanci na nových komponentách (filtr středisek, stav účtu, detail v sheetu); paleta hledání otevírá detail zaměstnance. |
+| 2026-11-08 | Fáze 5: seznam Klientů (filtry středisek a pečovatelů v URL přes ID, stav účtu, ukončení smlouvy s datem a důvodem, účet klienta), nepoužívaný `ClientCreateModal` smazán. |
+| 2026-11-08 | `DatePicker` (shadcn calendar) místo nativního data: měsíc a rok přes vlastní `Select` s plnými názvy a fade okrajů (`scroll-fade`), neaktivní šipky bez hoveru, `table.css` už nezvýrazňuje týdny kalendáře. Ikona „Otevřít detail“: panel vpravo (`IconLayoutSidebarRightExpand`) u sheetů, šipka u Klientů (vede na stránku). Položky menu a selectů a trigger selectu mají plynulý hover. |

@@ -219,6 +219,34 @@
     transition-duration: var(--duration-slow);
 }
 
+/* Fades the edges of a scroll container where more content is hidden; driven by its own scroll position */
+@property --scroll-fade-top {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --scroll-fade-bottom {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes scroll-fade {
+    0% { --scroll-fade-top: 0px; --scroll-fade-bottom: 2rem; }
+    10% { --scroll-fade-top: 2rem; }
+    90% { --scroll-fade-bottom: 2rem; }
+    100% { --scroll-fade-top: 2rem; --scroll-fade-bottom: 0px; }
+}
+
+@utility scroll-fade {
+    @supports (animation-timeline: scroll()) {
+        mask-image: linear-gradient(to bottom, transparent, #000 var(--scroll-fade-top), #000 calc(100% - var(--scroll-fade-bottom)), transparent);
+        animation: scroll-fade linear both;
+        animation-timeline: scroll(self);
+    }
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;

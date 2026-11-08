@@ -1,12 +1,3 @@
-export const columns = [
-    {name: "JMÉNO", key: "fullName", sortable: true},
-    {name: "POHLAVÍ", key: "gender"},
-    {name: "ADRESA", key: "address"},
-    {name: "STŘEDISKO", key: "department"},
-    {name: "PEČOVATEL", key: "caregiver"},
-    {name: "AKCE", key: "actions"},
-];
-
 export const genderOptions = [
     {name: "Muž", key: "MALE"},
     {name: "Žena", key: "FEMALE"},

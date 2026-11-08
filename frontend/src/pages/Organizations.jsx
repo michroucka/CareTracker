@@ -1,5 +1,5 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPlus } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
 import { useOrganizations } from "../hooks/useOrganizations.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
@@ -146,7 +146,7 @@ function Organizations() {
                                         <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${organization.name}`}><IconDots /></Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onSelect={() => openDetail(organization.id)}>Otevřít detail</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => openDetail(organization.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
                                         {organization.active ? (
                                             <DropdownMenuItem variant="destructive" onSelect={() => askTerminate(organization)}><IconBan /> Deaktivovat</DropdownMenuItem>
                                         ) : (

@@ -1,5 +1,5 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPlus } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
@@ -168,7 +168,7 @@ function Departments() {
                                         <Button size="icon-sm" variant="ghost" aria-label={`Akce pro středisko ${department.city}`}><IconDots /></Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onSelect={() => openDetail(department.id)}>Otevřít detail</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => openDetail(department.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
                                         {department.active ? (
                                             <DropdownMenuItem variant="destructive" onSelect={() => askTerminate(department)}><IconBan /> Deaktivovat</DropdownMenuItem>
                                         ) : (
