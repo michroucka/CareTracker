@@ -36,3 +36,26 @@ export function useListFilters() {
 
     return { search, setSearch, statusFilter, setStatusFilter, apiStatus };
 }
+
+/**
+ * Multi-select filter kept in the URL as a comma separated list (`?departments=1,4`).
+ * An empty Set means "all". `initialValue` is used when the URL has no such param.
+ */
+export function useMultiSelectParam(key, initialValue = []) {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [selected, setSelected] = React.useState(() => {
+        const param = searchParams.get(key);
+        if (param === null) return new Set(initialValue.map(String));
+        return param === "all" ? new Set() : new Set(param.split(",").filter(Boolean));
+    });
+
+    React.useEffect(() => {
+        setSearchParams((previous) => {
+            const next = new URLSearchParams(previous);
+            next.set(key, selected.size === 0 ? "all" : [...selected].join(","));
+            return next;
+        }, { replace: true });
+    }, [key, selected, setSearchParams]);
+
+    return [selected, setSelected];
+}

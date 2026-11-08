@@ -106,7 +106,8 @@ function Organizations() {
                 searchPlaceholder="Hledat podle názvu…"
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                countLabel={loading ? null : `${count} ${pluralize(count, ["organizace", "organizace", "organizací"])}`}
+                isLoading={loading}
+                countLabel={`${count} ${pluralize(count, ["organizace", "organizace", "organizací"])}`}
             />
 
             <Table>

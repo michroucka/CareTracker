@@ -130,7 +130,8 @@ function Departments() {
                 searchPlaceholder="Hledat podle města nebo ulice…"
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                countLabel={loading || needsOrganization ? null : `${count} ${pluralize(count, ["středisko", "střediska", "středisek"])}`}
+                isLoading={loading && !needsOrganization}
+                countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["středisko", "střediska", "středisek"])}`}
             />
 
             <Table>

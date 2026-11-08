@@ -146,7 +146,7 @@ export function CommandPalette() {
                                     key={`employee-${employee.id}`}
                                     value={`employee-${employee.id}`}
                                     keywords={[`${employee.firstName} ${employee.lastName}`]}
-                                    onSelect={() => go(`/employees?search=${encodeURIComponent(`${employee.firstName} ${employee.lastName}`)}`)}
+                                    onSelect={() => go(`/employees?detail=${employee.id}`)}
                                 >
                                     <IconUser />
                                     <span className="flex-1 truncate">{employee.firstName} {employee.lastName}</span>

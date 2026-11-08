@@ -49,9 +49,10 @@ function StatusFilter({ value, onChange }) {
 }
 
 /**
- * Search + status filter row above a list, with the total count underneath.
+ * Search + status filter row above a list, with the total count underneath. The count line is always
+ * rendered ("Načítám…" while loading) so the table below does not jump when filters change.
  */
-export function ListToolbar({ search, onSearchChange, searchPlaceholder, statusFilter, onStatusFilterChange, countLabel, children }) {
+export function ListToolbar({ search, onSearchChange, searchPlaceholder, statusFilter, onStatusFilterChange, countLabel, isLoading = false, children }) {
     return (
         <div className="grid gap-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -78,7 +79,7 @@ export function ListToolbar({ search, onSearchChange, searchPlaceholder, statusF
                 {statusFilter && <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />}
                 {children}
             </div>
-            {countLabel && <p className="text-sm text-muted-foreground">{countLabel}</p>}
+            <p className="min-h-5 text-sm text-muted-foreground" aria-live="polite">{isLoading ? "Načítám…" : countLabel ?? "\u00a0"}</p>
         </div>
     );
 }

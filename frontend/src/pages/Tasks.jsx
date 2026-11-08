@@ -106,7 +106,8 @@ function Tasks() {
                 searchPlaceholder="Hledat podle názvu…"
                 statusFilter={canEdit ? statusFilter : null}
                 onStatusFilterChange={setStatusFilter}
-                countLabel={loading || needsOrganization ? null : `${count} ${pluralize(count, ["úkon", "úkony", "úkonů"])}`}
+                isLoading={loading && !needsOrganization}
+                countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["úkon", "úkony", "úkonů"])}`}
             />
 
             <Table>
