@@ -265,13 +265,15 @@ Cílový stav (fáze 3):
   --ring: #E26A35;
   --radius: 10px;
 
-  --sidebar: #F7F5F9;
+  --sidebar: #EDE8F1;
   --sidebar-foreground: #4D4557;
   --sidebar-primary: #4A2B5E;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #ECE3F2;
-  --sidebar-accent-foreground: #4A2B5E;
-  --sidebar-border: #E2DCE8;
+  --sidebar-accent: #E2DAE9;
+  --sidebar-accent-foreground: #1E1A24;
+  --sidebar-active: #FFFFFF;
+  --sidebar-active-foreground: #4A2B5E;
+  --sidebar-border: #DDD5E4;
   --sidebar-ring: #E26A35;
 }
 
@@ -311,13 +313,15 @@ Cílový stav (fáze 3):
   --input: #352D3E;
   --ring: #E78255;
 
-  --sidebar: #1C1722;
+  --sidebar: #110D15;
   --sidebar-foreground: #C9C0D3;
   --sidebar-primary: #C2A4D6;
   --sidebar-primary-foreground: #1E1A24;
-  --sidebar-accent: #2A2332;
+  --sidebar-accent: #211B28;
   --sidebar-accent-foreground: #F1EDF5;
-  --sidebar-border: #352D3E;
+  --sidebar-active: #2A2332;
+  --sidebar-active-foreground: #F1EDF5;
+  --sidebar-border: #2A2332;
   --sidebar-ring: #E78255;
 }
 
@@ -365,6 +369,8 @@ Cílový stav (fáze 3):
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
@@ -465,18 +471,22 @@ Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent,
 ### Fáze 4 – Kostra aplikace (app shell)
 Nejvíc viditelná změna, nezávislá na formulářích.
 
-- [ ] Rozhodnout layout (doporučení: **sidebar na desktopu**, na mobilu horní lišta + `Sheet` s menu, viz sekce 7).
-- [ ] Nový `AppLayout` se shadcn `Sidebar`: logo nahoře, položky podle role (stávající logika z `Navbar.jsx` a `ProtectedRoute`), aktivní položka levandule + meruňková tečka, dole účet a `ThemeSwitcher`.
-- [ ] Hlavička stránky: nadpis (Bricolage) + akce vpravo (primární tlačítko „Zapsat úkon“ atd.).
-- [ ] Přechod mezi stránkami přes `motion` (sekce 2.5).
-- [ ] Nahradit `Navbar.jsx`, `Footer.jsx`, `BackToTopButton.jsx` (zvážit, jestli jsou v novém layoutu potřeba).
+- [x] Layout: **A – plovoucí okno** (shadcn `Sidebar variant="inset"`): sidebar na tónovaném podkladu `--sidebar`, obsah jako papírové okno se zaoblením. Zvažováno i C (švestkový sidebar) a plochý layout; A vybráno kvůli klidu při celodenní práci a tomu, že švestka zůstává vyhrazená pro hlavní akce.
+- [x] `AppSidebar` (`src/components/layout/`): logo, položky podle role (`navigation.js`), aktivní položka = bílá dlaždice (`--sidebar-active`) s meruňkovou tečkou, která mezi položkami klouže (`motion` `layoutId`). Dole přepínač organizace (SUPERADMIN), účet, `ThemeSwitcher`, odhlášení.
+- [x] Sbalení na lištu ikon (`collapsible="icon"`, tlačítko v hlavičce nebo `Ctrl+B`, stav v cookie `sidebar_state`). Na mobilu se menu otevírá jako sheet.
+- [x] `AppHeader`: přepínač menu + drobečková navigace (`getBreadcrumbs` v `navigation.js`), na mobilu logo. Lepkavá hlavička nad obsahem.
+- [x] Přechod mezi stránkami: `motion` – obsah je obalený `motion.div` s `key={pathname}`, při každé změně stránky se prolne a vyjede o 8 px (`DURATION.slow`), sidebar stojí. Jen vstup, bez odchodu, aby nová stránka nečekala. Pozor: `viewTransition` z React Routeru s `<BrowserRouter>` nefunguje (jen data router), proto ne View Transitions. Při změně stránky se obsah posune nahoru.
+- [x] `Navbar.jsx` a `Footer.jsx` smazány, `ThemeSwitcher` přepsaný na shadcn + Tabler.
+- [ ] Hledání `Ctrl+K` (paleta pro skok na klienta / zaměstnance / stránku, shadcn `command`) – zatím není, přidat jako samostatný krok.
+- [ ] `PageHeader` (nadpis Bricolage + popis + akce vpravo) – vytvořit spolu s první migrovanou stránkou ve fázi 5.
+- [ ] `BackToTopButton.jsx` (jen `IndividualPlan`) poslouchá scroll okna, na desktopu ale scrolluje obsah – vyřešit při migraci `IndividualPlan`.
 
 ### Fáze 5 – Migrace stránek
 Pořadí od nejjednodušší a nejsamostatnější:
 
 1. [ ] `Login.jsx`, `Activate.jsx`, `ResetPassword.jsx` – samostatné, vyzkouší se Form, Input, Button, toasty.
 2. [ ] `Account.jsx`
-3. [ ] `Home.jsx` (přehled, Recharts – jen přebarvit grafy na tokeny)
+3. [ ] `Home.jsx` – **redesign nástěnky** (samostatný návrh až po kostře z fáze 4: obsah podle rolí, souhrnné dlaždice, grafy na tokenech), ne jen přebarvení
 4. [ ] `Organizations.jsx`, `Departments.jsx`, `Tasks.jsx` – jednodušší tabulky + formulářové modaly
 5. [ ] `Employees.jsx`, `Clients.jsx` – tabulky s filtry (`useFilterMetadata`, `useRoleBasedFilters` zůstávají, mění se jen UI)
 6. [ ] `PerformedTasks.jsx` – hlavní obrazovka, tabulka, filtry, nejvíc dialogů
@@ -555,7 +565,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 
 | Otázka | Doporučení |
 | --- | --- |
-| Horní navbar, nebo sidebar? | Sidebar na desktopu (mockup), na mobilu horní lišta + výsuvné menu. Aplikace má hodně sekcí a sidebar je škáluje líp. |
+| ~~Horní navbar, nebo sidebar?~~ | **Rozhodnuto: sidebar, varianta A (plovoucí okno)** – viz fáze 4. |
 | Formuláře: nativní `<form>`, nebo react-hook-form + zod? | react-hook-form + zod: shadcn `form` na ně počítá, validace bude na jednom místě a sdílená mezi formuláři. |
 | ~~Nové komponenty v JSX, nebo TSX?~~ | **Rozhodnuto: JSX** (`components.json` → `"tsx": false`). |
 | Datumy: react-day-picker, nebo React Aria? | react-day-picker (shadcn `calendar`), React Aria jen pokud bude potřeba psaní data z klávesnice po segmentech. |
@@ -590,3 +600,4 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-08 | Schválen vzor detailu záznamu (sheet: hlavička s akcemi, souhrnné dlaždice, sekce, úprava na místě) – sekce 2.6. Nadpisy h1–h4 přesunuty do `@layer base`, aby je šlo přebít třídami. |
 | 2026-11-08 | Měkké stavové štítky: `Badge` varianty `success` (schváleno, aktivní), `pending` (čeká – meruňka), `warning`, `danger` (ukončený) + tokeny `--*-soft` / `--*-soft-foreground` (kontrast ≥ 4,7 : 1 v obou režimech). Plný `destructive` jen výjimečně. |
 | 2026-11-08 | Toasty: zaoblení `--radius-lg`, šířka 400 px, větší text, ikony v kroužcích stavových barev; vlastní `toast` z `@/components/ui/sonner` přidává ikonu i výchozímu toastu. Ikony: vybrán **Tabler** místo Lucide, `ui/` komponenty a katalog převedeny. |
+| 2026-11-08 | Fáze 4: nová kostra (sidebar A – plovoucí okno, sbalitelný na ikony, klouzající aktivní položka, drobečková navigace, motion přechod mezi stránkami), tokeny `--sidebar-*` + `--sidebar-active`. Nástěnka v plánu jako samostatný redesign. |

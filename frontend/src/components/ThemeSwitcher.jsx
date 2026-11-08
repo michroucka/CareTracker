@@ -1,34 +1,23 @@
-import {useTheme} from "../contexts/ThemeContext";
-import {Button} from "@heroui/react";
-import {Moon, Sun} from 'lucide-react'
+import { IconMoon, IconMoonFilled, IconSun, IconSunFilled } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
-export const ThemeSwitcher = ({ className = "", iconSize = "size-5.5" }) => {
-    const { resolvedTheme, setTheme } = useTheme()
-
-    const isDark = resolvedTheme === "dark"
+export const ThemeSwitcher = ({ className = "" }) => {
+    const { resolvedTheme, setTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
+    const [OutlineIcon, FilledIcon] = isDark ? [IconSun, IconSunFilled] : [IconMoon, IconMoonFilled];
 
     return (
         <Button
-            isIconOnly
-            onPress={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`rounded-full group ${className}`}
-            size="sm"
-            variant="light"
-            disableRipple
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            aria-label={isDark ? "Přepnout na světlý motiv" : "Přepnout na tmavý motiv"}
+            className={cn("group relative", className)}
         >
-            <div className={`relative ${iconSize}`}>
-                {!isDark ? (
-                    <>
-                        <Moon className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />
-                        <Moon className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} fill="currentColor" />
-                    </>
-                ) : (
-                    <>
-                        <Sun className={`absolute inset-0 ${iconSize} group-hover:opacity-0 transition-opacity duration-200 ease-in-out`} fill="none" />
-                        <Sun className={`absolute inset-0 ${iconSize} opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out`} fill="currentColor" />
-                    </>
-                )}
-            </div>
+            <OutlineIcon className="transition-opacity duration-base ease-out group-hover:opacity-0" />
+            <FilledIcon className="absolute opacity-0 transition-opacity duration-base ease-out group-hover:opacity-100" />
         </Button>
-    )
+    );
 };
