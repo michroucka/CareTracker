@@ -20,6 +20,7 @@ import Departments from "../pages/Departments";
 import Organizations from "../pages/Organizations";
 import {ClientCreate} from "../pages/ClientCreate";
 import {ClientDetail} from "../pages/ClientDetail";
+import ComponentCatalog from "../pages/ComponentCatalog";
 
 export default function App() {
     const { user, loading } = useAuth();
@@ -155,6 +156,7 @@ export default function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        {import.meta.env.DEV && <Route path="/dev/components" element={<ComponentCatalog />} />}
                     </Routes>
                 </div>
             </main>

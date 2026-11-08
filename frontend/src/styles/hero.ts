@@ -43,18 +43,18 @@ export default heroui ({
                     "DEFAULT": "#4A2B5E"
                 },
                 "secondary": {
-                    "50": "#FCEFE9",
-                    "100": "#F8DBCE",
-                    "200": "#F2BDA6",
-                    "300": "#EDA07E",
-                    "400": "#E78255",
-                    "500": "#E26A35",
-                    "600": "#CD531D",
-                    "700": "#A54318",
-                    "800": "#783111",
-                    "900": "#4C1F0B",
-                    "foreground": "#1E1A24",
-                    "DEFAULT": "#E26A35"
+                    "50": "#F7F3F9",
+                    "100": "#ECE3F2",
+                    "200": "#DAC7E6",
+                    "300": "#C2A4D6",
+                    "400": "#A679C3",
+                    "500": "#8A4FB0",
+                    "600": "#6E3F8D",
+                    "700": "#4A2B5E",
+                    "800": "#372046",
+                    "900": "#24152E",
+                    "foreground": "#4A2B5E",
+                    "DEFAULT": "#ECE3F2"
                 },
                 "success": {
                     "50": "#e3f0e9",
@@ -154,18 +154,18 @@ export default heroui ({
                     "DEFAULT": "#C2A4D6"
                 },
                 "secondary": {
-                    "50": "#4C1F0B",
-                    "100": "#783111",
-                    "200": "#A54318",
-                    "300": "#CD531D",
-                    "400": "#E26A35",
-                    "500": "#E78255",
-                    "600": "#EDA07E",
-                    "700": "#F2BDA6",
-                    "800": "#F8DBCE",
-                    "900": "#FCEFE9",
-                    "foreground": "#1E1A24",
-                    "DEFAULT": "#E78255"
+                    "50": "#24152E",
+                    "100": "#372046",
+                    "200": "#4A2B5E",
+                    "300": "#6E3F8D",
+                    "400": "#8A4FB0",
+                    "500": "#A679C3",
+                    "600": "#C2A4D6",
+                    "700": "#DAC7E6",
+                    "800": "#ECE3F2",
+                    "900": "#F7F3F9",
+                    "foreground": "#F1EDF5",
+                    "DEFAULT": "#3B2D4A"
                 },
                 "success": {
                     "50": "#092919",
@@ -178,8 +178,8 @@ export default heroui ({
                     "700": "#94c6ad",
                     "800": "#bcdbcb",
                     "900": "#e3f0e9",
-                    "foreground": "#fff",
-                    "DEFAULT": "#1e8752"
+                    "foreground": "#1E1A24",
+                    "DEFAULT": "#6DB18F"
                 },
                 "warning": {
                     "50": "#45360b",
@@ -193,7 +193,7 @@ export default heroui ({
                     "800": "#f8e8be",
                     "900": "#fcf6e4",
                     "foreground": "#000",
-                    "DEFAULT": "#e6b325"
+                    "DEFAULT": "#EFCE71"
                 },
                 "danger": {
                     "50": "#49212F",

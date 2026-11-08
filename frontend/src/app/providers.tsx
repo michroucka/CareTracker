@@ -6,6 +6,9 @@ import React from "react";
 import {AuthProvider} from "../contexts/AuthContext";
 import {ThemeProvider} from "../contexts/ThemeContext";
 import {I18nProvider} from "@react-aria/i18n";
+import {MotionConfig} from "motion/react";
+import {TooltipProvider} from "@/components/ui/tooltip";
+import {Toaster} from "@/components/ui/sonner";
 
 declare module "@react-types/shared" {
     interface RouterConfig {
@@ -21,8 +24,13 @@ export function Providers({children}: {children: React.ReactNode}) {
             <HeroUIProvider navigate={navigate} useHref={useHref}>
                 <I18nProvider locale="cs-CZ-u-ca-gregory">
                     <AuthProvider>
-                        <ToastProvider placement="top-center" toastOffset={70} />
-                        {children}
+                        <MotionConfig reducedMotion="user">
+                            <TooltipProvider>
+                                <ToastProvider placement="top-center" toastOffset={70} />
+                                <Toaster position="top-center" />
+                                {children}
+                            </TooltipProvider>
+                        </MotionConfig>
                     </AuthProvider>
                 </I18nProvider>
             </HeroUIProvider>

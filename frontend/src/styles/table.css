@@ -1,15 +1,16 @@
-tbody:not([data-empty="true"]) tr:hover td {
+/* HeroUI tables only; shadcn tables (data-slot="table-body") style their own rows */
+tbody:not([data-empty="true"]):not([data-slot="table-body"]) tr:hover td {
     background-color: hsl(var(--heroui-content2)) !important;
     transition: background-color 150ms ease;
     cursor: pointer;
 }
 
-tbody:not([data-empty="true"]) tr:hover td:first-child {
+tbody:not([data-empty="true"]):not([data-slot="table-body"]) tr:hover td:first-child {
     border-top-left-radius: var(--radius-lg);
     border-bottom-left-radius: var(--radius-lg);
 }
 
-tbody:not([data-empty="true"]) tr:hover td:last-child {
+tbody:not([data-empty="true"]):not([data-slot="table-body"]) tr:hover td:last-child {
     border-top-right-radius: var(--radius-lg);
     border-bottom-right-radius: var(--radius-lg);
 }

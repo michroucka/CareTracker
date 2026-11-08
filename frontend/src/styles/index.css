@@ -1,8 +1,150 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 @import "./table.css";
 @plugin "./hero.ts";
 @source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
 @custom-variant dark (&:is(.dark *));
+
+/*
+ * Semantic tokens follow shadcn naming. HeroUI (hero.ts) is themed with the same values,
+ * so shared utilities like bg-primary or bg-secondary look identical in both libraries.
+ */
+:root {
+    --background: #F7F5F9;
+    --foreground: #1E1A24;
+    --card: #FFFFFF;
+    --card-foreground: #1E1A24;
+    --popover: #FFFFFF;
+    --popover-foreground: #1E1A24;
+    --primary: #4A2B5E;
+    --primary-foreground: #FFFFFF;
+    --primary-hover: #372046;
+    --secondary: #ECE3F2;
+    --secondary-foreground: #4A2B5E;
+    --secondary-hover: #DAC7E6;
+    --muted: #F7F3F9;
+    --muted-foreground: #645C6E;
+    --accent: #EFE9F3;
+    --accent-foreground: #1E1A24;
+    --highlight: #E26A35;
+    --highlight-foreground: #1E1A24;
+    --destructive: #C9364F;
+    --destructive-foreground: #FFFFFF;
+    --destructive-hover: #AF3249;
+    --success: #1E8752;
+    --warning: #E6B325;
+    --success-soft: #E3F0E9;
+    --success-soft-foreground: #145835;
+    --warning-soft: #FCF6E4;
+    --warning-soft-foreground: #6D5512;
+    --danger-soft: #FAEBED;
+    --danger-soft-foreground: #892436;
+    --pending-soft: #FCEFE9;
+    --pending-soft-foreground: #A54318;
+    --border: #E2DCE8;
+    --input: #E2DCE8;
+    --ring: #E26A35;
+
+    --sidebar: #F7F5F9;
+    --sidebar-foreground: #4D4557;
+    --sidebar-primary: #4A2B5E;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #ECE3F2;
+    --sidebar-accent-foreground: #4A2B5E;
+    --sidebar-border: #E2DCE8;
+    --sidebar-ring: #E26A35;
+}
+
+.dark {
+    --background: #17131C;
+    --foreground: #F1EDF5;
+    --card: #211B28;
+    --card-foreground: #F1EDF5;
+    --popover: #211B28;
+    --popover-foreground: #F1EDF5;
+    --primary: #C2A4D6;
+    --primary-foreground: #1E1A24;
+    --primary-hover: #DAC7E6;
+    --secondary: #3B2D4A;
+    --secondary-foreground: #F1EDF5;
+    --secondary-hover: #4A3A5C;
+    --muted: #2A2332;
+    --muted-foreground: #A79EB2;
+    --accent: #332A3D;
+    --accent-foreground: #F1EDF5;
+    --highlight: #E78255;
+    --highlight-foreground: #1E1A24;
+    --destructive: #DE8292;
+    --destructive-foreground: #1E1A24;
+    --destructive-hover: #E7A5B0;
+    --success: #6DB18F;
+    --warning: #EFCE71;
+    --success-soft: #2D3338;
+    --success-soft-foreground: #6DB18F;
+    --warning-soft: #423834;
+    --warning-soft-foreground: #EFCE71;
+    --danger-soft: #3F2B39;
+    --danger-soft-foreground: #DE8292;
+    --pending-soft: #412B2F;
+    --pending-soft-foreground: #E78255;
+    --border: #352D3E;
+    --input: #352D3E;
+    --ring: #E78255;
+
+    --sidebar: #1C1722;
+    --sidebar-foreground: #C9C0D3;
+    --sidebar-primary: #C2A4D6;
+    --sidebar-primary-foreground: #1E1A24;
+    --sidebar-accent: #2A2332;
+    --sidebar-accent-foreground: #F1EDF5;
+    --sidebar-border: #352D3E;
+    --sidebar-ring: #E78255;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary-hover: var(--secondary-hover);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-highlight: var(--highlight);
+    --color-highlight-foreground: var(--highlight-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-destructive-hover: var(--destructive-hover);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-success-soft: var(--success-soft);
+    --color-success-soft-foreground: var(--success-soft-foreground);
+    --color-warning-soft: var(--warning-soft);
+    --color-warning-soft-foreground: var(--warning-soft-foreground);
+    --color-danger-soft: var(--danger-soft);
+    --color-danger-soft-foreground: var(--danger-soft-foreground);
+    --color-pending-soft: var(--pending-soft);
+    --color-pending-soft-foreground: var(--pending-soft-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
 
 @theme {
     --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -43,6 +185,31 @@
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
 }
 
+/*
+ * Motion tokens (PLAN.md section 2.5). Keep in sync with src/lib/motion.js.
+ * --tw-duration is also read by tw-animate-css, so these work for enter/exit animations too.
+ */
+:root {
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+    --duration-slow: 300ms;
+}
+
+@utility duration-fast {
+    --tw-duration: var(--duration-fast);
+    transition-duration: var(--duration-fast);
+}
+
+@utility duration-base {
+    --tw-duration: var(--duration-base);
+    transition-duration: var(--duration-base);
+}
+
+@utility duration-slow {
+    --tw-duration: var(--duration-slow);
+    transition-duration: var(--duration-slow);
+}
+
 /* hides the internal bottom-right toast provider — workaround until fixed upstream */
 div[role="alertdialog"][data-placement="bottom-right"] {
     display: none !important;
@@ -68,6 +235,11 @@ div[role="alertdialog"][data-placement="bottom-right"] {
     transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+}
 
 :root {
     font-synthesis: none;
@@ -76,20 +248,22 @@ div[role="alertdialog"][data-placement="bottom-right"] {
     -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-    @apply font-display text-4xl font-semibold tracking-tight text-balance text-foreground leading-tight;
-}
+@layer base {
+    h1 {
+        @apply font-display text-4xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h2 {
-    @apply font-display text-3xl font-semibold tracking-tight text-balance text-foreground leading-tight;
-}
+    h2 {
+        @apply font-display text-3xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h3 {
-    @apply font-display text-2xl font-semibold tracking-tight text-balance text-foreground leading-tight;
-}
+    h3 {
+        @apply font-display text-2xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h4 {
-    @apply font-display text-xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    h4 {
+        @apply font-display text-xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 }
 
 .recharts-wrapper * {

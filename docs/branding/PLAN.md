@@ -17,6 +17,7 @@
 | Barvy | **Švestka + meruňka** místo modrozelené | Odklon od zdravotnického klišé, kterým mluví celá kategorie. |
 | Písma | **Bricolage Grotesque** (nadpisy) + **Figtree** (text, UI) | Obě SIL OFL, plná čeština. Nahrazují Nunito. |
 | UI knihovna | **shadcn/ui** na Tailwind v4, postupně místo HeroUI v2 | Kód komponent je náš, styluje se přímo Tailwindem, menší bundle. HeroUI v2 se těžko přizpůsobuje (viz workaroundy v `table.css` a `index.css`). |
+| Ikony | **Tabler** (`@tabler/icons-react`) místo Lucide | Vybráno 2026-11-08 po srovnání v katalogu. Nové komponenty v `ui/` už ho používají, stránky přejdou ve fázi 5, Lucide se odinstaluje ve fázi 6. Pozor: tloušťka čáry je prop `stroke`, ne `strokeWidth`. Plné varianty (`…Filled`) nejsou u všech ikon, aktivní stav proto dělat barvou, ne výplní. |
 | Animace | `motion` (už je v závislostech) | Jedna knihovna pro přechody stránek, layout animace a gesta. |
 | Postup | **Postupná migrace**, HeroUI a shadcn běží chvíli vedle sebe | Aplikace je funkční po každém kroku, žádný velký přepis naráz. |
 | Detaily záznamů | **Sheet zprava** (na mobilu přes celou obrazovku), stav v URL. Klient a individuální plán zůstávají jako stránky. | Seznam zůstává vidět, detail jde sdílet odkazem, tlačítko zpět ho zavře. Modal zakrývá kontext a vede k vnořeným modalům. Viz sekce 2.6. |
@@ -156,13 +157,17 @@ Stíny jsou jemné a tónované do inkoustu, ne šedé. Karty oddělovat spíš 
 
 ### 2.5 Pohyb
 
-| Token | Hodnota | Použití |
-| --- | --- | --- |
-| `--duration-fast` | 120ms | hover, barva, focus |
-| `--duration-base` | 200ms | dropdown, tooltip, toast |
-| `--duration-slow` | 320ms | dialog, sheet, přechod stránky |
-| `--ease-out` | `cubic-bezier(0.2, 0, 0, 1)` | vstupy |
-| `--ease-in` | `cubic-bezier(0.4, 0, 1, 1)` | odchody (kratší než vstup) |
+Jediný zdroj pravdy: CSS proměnné v `index.css` (`--duration-*`, `--ease-*`) a stejné hodnoty pro `motion` v `src/lib/motion.js` (`DURATION`, `EASE_OUT`, `EASE_IN`). V kódu **nikdy** `duration-150`, `duration-[250ms]` ani vlastní `cubic-bezier`, jen tokeny.
+
+| Token | Hodnota | Tailwind / motion | Použití |
+| --- | --- | --- | --- |
+| `--duration-fast` | 150ms | `duration-fast` / `DURATION.fast` | focus ring a rámeček inputu, barva labelu, stisk, odchod drobností (odkreslení checkboxu) |
+| `--duration-base` | 200ms | `duration-base` / `DURATION.base` | hover barvy tlačítek, dropdown, select, popover, tooltip, toast, chybová hláška, zavření dialogu a sheetu, kreslení checkboxu |
+| `--duration-slow` | 300ms | `duration-slow` / `DURATION.slow` | otevření dialogu a sheetu, přechod stránky, zatřesení pole |
+| `--ease-out` | `cubic-bezier(0.2, 0, 0, 1)` | `ease-out` / `EASE_OUT` | výchozí pro všechno: vstupy, hover, změny stavu |
+| `--ease-in` | `cubic-bezier(0.4, 0, 1, 1)` | `ease-in` / `EASE_IN` | jen odchody, které mají „odjet“ (odkreslení fajfky, mizení prvku) |
+
+Overlaye (dialog, sheet): `data-[state=open]:duration-slow data-[state=closed]:duration-base` – odchod je vždy kratší než vstup.
 
 Pravidla:
 
@@ -201,13 +206,21 @@ Pravidla pro sheet s detailem:
 - Úprava přímo v sheetu: tlačítko „Upravit“ přepne zobrazení na formulář, „Uložit“ / „Zrušit“ ho vrátí zpět. Žádný další modal.
 - Smazání z detailu otevře `alert-dialog` nad sheetem (jediný povolený vnořený overlay).
 
+**Rozložení detailu (schválený vzor: `src/components/catalog/TaskDetailSheetExample.jsx`, v katalogu „Sheet – detail úkonu“):**
+
+- Šířka `sm:max-w-md`, na mobilu celá šířka. Hlavička stojí, tělo se posouvá.
+- Hlavička: štítek s typem záznamu + tlumená meta (datum, středisko), velký nadpis `font-display`, akce **hned pod nadpisem** („Upravit“ + menu „⋯“ se smazáním), nikdy dole.
+- Nahoře souhrn: 2 tlumené dlaždice s klíčovými čísly (množství, cena) v `tabular-nums`.
+- Pod tím sekce s malými uppercase popisky oddělené `Separator`. Lidé jako iniciály + jméno + detail.
+- Úprava na místě: obsah se prolne na formulář z `FormField`, patička „Zrušit / Uložit změny“ jen v režimu úpravy.
+
 ---
 
 ## 3. Design tokeny v kódu
 
 Jediný zdroj pravdy budou CSS proměnné v `frontend/src/styles/index.css`. Názvy sémantických tokenů odpovídají konvenci shadcn (`--background`, `--primary`, …), takže komponenty ze shadcn fungují bez úprav. Brand barvy mají vlastní škály.
 
-> Pozor na rozdíl v názvosloví: v **shadcn** je `secondary` měkké sekundární tlačítko (u nás levandule) a `accent` je hover pozadí. Meruňka má vlastní token `--highlight`. V **HeroUI** tématu (fáze 2) je `secondary` meruňka. Až HeroUI zmizí, platí jen shadcn význam.
+> Pozor na rozdíl v názvosloví: v **shadcn** je `secondary` měkké sekundární tlačítko (u nás levandule) a `accent` je hover pozadí. Meruňka má vlastní token `--highlight`. Od fáze 3 má i **HeroUI** `secondary` levanduli: utility z `@theme inline` mají přednost před HeroUI pluginem, takže obě knihovny musí mít stejné hodnoty u sdílených názvů (`primary`, `secondary`, `background`, `foreground`, `success`, `warning`).
 
 Cílový stav (fáze 3):
 
@@ -224,18 +237,29 @@ Cílový stav (fáze 3):
   --popover-foreground: #1E1A24;
   --primary: #4A2B5E;
   --primary-foreground: #FFFFFF;
+  --primary-hover: #372046;
   --secondary: #ECE3F2;
   --secondary-foreground: #4A2B5E;
+  --secondary-hover: #DAC7E6;
   --muted: #F7F3F9;
   --muted-foreground: #645C6E;
-  --accent: #F7F3F9;
+  --accent: #EFE9F3;
   --accent-foreground: #1E1A24;
   --highlight: #E26A35;
   --highlight-foreground: #1E1A24;
   --destructive: #C9364F;
   --destructive-foreground: #FFFFFF;
+  --destructive-hover: #AF3249;
   --success: #1E8752;
   --warning: #E6B325;
+  --success-soft: #E3F0E9;
+  --success-soft-foreground: #145835;
+  --warning-soft: #FCF6E4;
+  --warning-soft-foreground: #6D5512;
+  --danger-soft: #FAEBED;
+  --danger-soft-foreground: #892436;
+  --pending-soft: #FCEFE9;
+  --pending-soft-foreground: #A54318;
   --border: #E2DCE8;
   --input: #E2DCE8;
   --ring: #E26A35;
@@ -260,18 +284,29 @@ Cílový stav (fáze 3):
   --popover-foreground: #F1EDF5;
   --primary: #C2A4D6;
   --primary-foreground: #1E1A24;
-  --secondary: #2A2332;
+  --primary-hover: #DAC7E6;
+  --secondary: #3B2D4A;
   --secondary-foreground: #F1EDF5;
+  --secondary-hover: #4A3A5C;
   --muted: #2A2332;
   --muted-foreground: #A79EB2;
-  --accent: #2A2332;
+  --accent: #332A3D;
   --accent-foreground: #F1EDF5;
   --highlight: #E78255;
   --highlight-foreground: #1E1A24;
   --destructive: #DE8292;
   --destructive-foreground: #1E1A24;
+  --destructive-hover: #E7A5B0;
   --success: #6DB18F;
   --warning: #EFCE71;
+  --success-soft: #2D3338;
+  --success-soft-foreground: #6DB18F;
+  --warning-soft: #423834;
+  --warning-soft-foreground: #EFCE71;
+  --danger-soft: #3F2B39;
+  --danger-soft-foreground: #DE8292;
+  --pending-soft: #412B2F;
+  --pending-soft-foreground: #E78255;
   --border: #352D3E;
   --input: #352D3E;
   --ring: #E78255;
@@ -298,8 +333,10 @@ Cílový stav (fáze 3):
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -308,8 +345,17 @@ Cílový stav (fáze 3):
   --color-highlight-foreground: var(--highlight-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-hover: var(--destructive-hover);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-soft-foreground: var(--danger-soft-foreground);
+  --color-pending-soft: var(--pending-soft);
+  --color-pending-soft-foreground: var(--pending-soft-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -406,13 +452,15 @@ Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent,
 - [ ] Kontrola obou režimů na všech stránkách.
 
 ### Fáze 3 – Setup shadcn/ui
-- [ ] Alias `@` → `src`: `resolve.alias` ve `vite.config` + `paths` v `tsconfig.json` (a `jsconfig.json` pro JSX soubory).
-- [ ] `npx shadcn@latest init` – Vite, Tailwind v4, CSS proměnné. Projekt je většinou JSX, takže `"tsx": false` v `components.json` (nebo nové komponenty psát v TSX, rozhodnout jednou a držet).
-- [ ] Ověřit, že `init` nepřepsal tokeny ze sekce 3 (shadcn generuje vlastní `:root` – nahradit našimi).
-- [ ] Základní komponenty: `button`, `input`, `label`, `textarea`, `checkbox`, `select`, `dialog`, `alert-dialog`, `dropdown-menu`, `popover`, `tooltip`, `table`, `card`, `badge`, `separator`, `skeleton`, `sheet`, `sidebar`, `sonner`.
-- [ ] `FormField`: implementovat obě varianty labelu (plovoucí / nad polem s živým focusem, sekce 7) na zkušební stránce, vyzkoušet a jednu vybrat.
-- [ ] Doladit varianty v `src/components/ui/*` podle brandu (radius, výšky 40 px, focus ring meruňkový, `active:scale-[0.98]` u tlačítek).
-- [ ] HeroUI zatím nechat (`HeroUIProvider`, `@plugin`, `@source`). Obě knihovny čtou stejné tokeny.
+- [x] Alias `@` → `src`: `resolve.alias` ve `vite.config` + `paths` v `tsconfig.json` (a `jsconfig.json` pro JSX soubory).
+- [x] `components.json` napsaný ručně (`"tsx": false`, styl new-york), `init` se nespouštěl, aby nepřepsal tokeny. Pozor: CLI `add` vložil `import { cn } from "cn"` a balíček `next-themes`; opraveno na `@/lib/utils` a náš `ThemeContext`. Po dalším `shadcn add` zkontrolovat importy.
+- [x] ~~`npx shadcn@latest init`~~ – Vite, Tailwind v4, CSS proměnné. Projekt je většinou JSX, takže `"tsx": false` v `components.json` (nebo nové komponenty psát v TSX, rozhodnout jednou a držet).
+- [x] Ověřit, že `init` nepřepsal tokeny ze sekce 3 (shadcn generuje vlastní `:root` – nahradit našimi).
+- [x] Základní komponenty: `button`, `input`, `label`, `textarea`, `checkbox`, `select`, `dialog`, `alert-dialog`, `dropdown-menu`, `popover`, `tooltip`, `table`, `card`, `badge`, `separator`, `skeleton`, `sheet`, `sidebar`, `sonner`.
+- [x] `FormField` (`src/components/FormField.jsx`): **label nad polem** s živým focusem, chyba plynule vyjede, po odeslání s chybou pole zatřese. Ovládací prvek přes `children(controlProps)`.
+- [x] Katalog komponent `/dev/components` (`src/pages/ComponentCatalog.jsx`, jen v dev režimu) – při úpravě komponent v `ui/` zkontrolovat tady.
+- [x] Doladit varianty v `src/components/ui/*` podle brandu (radius, výšky 40 px, focus ring meruňkový, `active:scale-[0.98]` u tlačítek).
+- [x] HeroUI zatím nechat (`HeroUIProvider`, `@plugin`, `@source`). Obě knihovny čtou stejné tokeny.
 
 ### Fáze 4 – Kostra aplikace (app shell)
 Nejvíc viditelná změna, nezávislá na formulářích.
@@ -439,6 +487,7 @@ Každou stránku dokončit podle checklistu v sekci 6.
 
 ### Fáze 6 – Odstranění HeroUI
 - [ ] `grep -r "@heroui" src` vrací nic.
+- [ ] Odebrat `lucide-react` (`grep -r lucide-react src` nic nevrací), v `components.json` přepnout `iconLibrary` a po každém `shadcn add` převést ikony na Tabler.
 - [ ] Odebrat `@heroui/react`, `@heroui/toast`, `@heroui/use-theme`, `framer-motion` (pokud ho nic jiného nepoužívá; `motion` zůstává).
 - [ ] `index.css`: smazat `@plugin "./hero.ts"`, `@source ../../node_modules/@heroui…`, workaroundy pro toasty. Smazat `hero.ts`, `table.css` (pokud už nic nepoužívá).
 - [ ] `providers.tsx`: odstranit `HeroUIProvider`.
@@ -489,7 +538,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 
 ## 6. Checklist „stránka hotová“
 
-- [ ] Žádný import z `@heroui/*`.
+- [ ] Žádný import z `@heroui/*` ani `lucide-react` (ikony z `@tabler/icons-react`).
 - [ ] Barvy jen přes tokeny (`bg-primary`, `text-muted-foreground`, `border-border`…), žádné HEX v JSX.
 - [ ] Nadpis stránky `font-display`, čísla `tabular-nums`, české formáty dat a částek.
 - [ ] Funguje ve světlém i tmavém režimu.
@@ -508,9 +557,9 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | --- | --- |
 | Horní navbar, nebo sidebar? | Sidebar na desktopu (mockup), na mobilu horní lišta + výsuvné menu. Aplikace má hodně sekcí a sidebar je škáluje líp. |
 | Formuláře: nativní `<form>`, nebo react-hook-form + zod? | react-hook-form + zod: shadcn `form` na ně počítá, validace bude na jednom místě a sdílená mezi formuláři. |
-| Nové komponenty v JSX, nebo TSX? | Držet JSX jako zbytek projektu, pokud neplánuješ převod na TS. |
+| ~~Nové komponenty v JSX, nebo TSX?~~ | **Rozhodnuto: JSX** (`components.json` → `"tsx": false`). |
 | Datumy: react-day-picker, nebo React Aria? | react-day-picker (shadcn `calendar`), React Aria jen pokud bude potřeba psaní data z klávesnice po segmentech. |
-| Labely ve formulářích: plovoucí (jako HeroUI), nebo nad polem? | Nad polem s „živým focusem“ (plynulý rámeček + meruňkový ring, label při focusu do švestkové, chyba plynule vyjede) – čitelnější pro starší uživatele a husté formuláře. Plovoucí jde čistě v CSS (`peer` + `:placeholder-shown`, u Select/DatePicker přes `data-filled`), ale label je po vyplnění jen 12 px. Rozhodnutí zapouzdřit do jedné komponenty `FormField`. **Ve fázi 3 implementovat obě varianty vedle sebe na zkoušku, pak vybrat.** |
+| ~~Labely ve formulářích: plovoucí, nebo nad polem?~~ | **Rozhodnuto: nad polem s živým focusem** (obě varianty vyzkoušené, plovoucí smazaná). |
 | Ochranná známka / doména | Před veřejným spuštěním ověřit „CareTracker“ v databázích ÚPV a EUIPO. |
 
 ---
@@ -535,3 +584,9 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-08 | Fáze 1 hotová: favicony, PWA ikony (+ maskable), Google Fonts (Bricolage + Figtree), `CareTrackerLogo` jako inline SVG (malý řez přes prop `small`), loga v README, e-maily přebarvené s PNG logem (`email-logo.png` z frontendu), PDF s Figtree a švestkovou linkou. `--font-sans` už je Figtree. Staré `ct_icon*`, `logo_*` a Nunito smazány. |
 | 2026-11-08 | Rozhodnuto: detaily záznamů jako sheet se stavem v URL a úpravou uvnitř (klient a plán zůstávají stránky), vrstvy animací (CSS / tw-animate-css / motion / View Transitions). Nové sekce 2.6 a „Co čím animovat“. |
 | 2026-11-08 | Fáze 2 (bez vizuální kontroly): `hero.ts` přebarvené (švestka / meruňka / malinová, neutrály tónované do švestky, focus meruňkový, radius 8/10/14), škály `plum-*` a `apricot-*`, `font-display`, stíny a easing v `@theme`, nadpisy Bricolage. Tlačítka „Záznamy péče“ na Home z `secondary` na `primary` + `flat`. |
+| 2026-11-08 | Fáze 3: alias `@`, shadcn komponenty v JSX naladěné na brand (výška 40 px, `active:scale`, bílé inputy, dialog `rounded-xl`, sheet 300/200 ms), sémantické tokeny + `tw-animate-css` v `index.css`, HeroUI `secondary` sjednocené na levanduli, meruňkové akcenty na Home/Login přes `highlight`. Provider: `MotionConfig reducedMotion="user"`, `TooltipProvider`, sonner `Toaster`. `FormField` se dvěma variantami na `/dev/form-field`. Oprava `theme-color` v `ThemeContext`. |
+| 2026-11-08 | Vybrán label nad polem, plovoucí varianta smazána. Zkušební stránka přejmenována na katalog komponent `/dev/components`. Fáze 3 hotová. |
+| 2026-11-08 | Úpravy komponent podle katalogu: animovaný checkbox (kreslená fajfka, 20 px), výraznější hover (`--primary-hover`, `--secondary-hover`, `--destructive-hover`, silnější `--accent`), tmavý `--secondary` `#3B2D4A`, outline v tmavém režimu průhledný. Pohybové tokeny sjednocené: `duration-fast/base/slow` (150/200/300 ms) v CSS i `src/lib/motion.js`, všechny `ui/` komponenty přepnuté na ně. |
+| 2026-11-08 | Schválen vzor detailu záznamu (sheet: hlavička s akcemi, souhrnné dlaždice, sekce, úprava na místě) – sekce 2.6. Nadpisy h1–h4 přesunuty do `@layer base`, aby je šlo přebít třídami. |
+| 2026-11-08 | Měkké stavové štítky: `Badge` varianty `success` (schváleno, aktivní), `pending` (čeká – meruňka), `warning`, `danger` (ukončený) + tokeny `--*-soft` / `--*-soft-foreground` (kontrast ≥ 4,7 : 1 v obou režimech). Plný `destructive` jen výjimečně. |
+| 2026-11-08 | Toasty: zaoblení `--radius-lg`, šířka 400 px, větší text, ikony v kroužcích stavových barev; vlastní `toast` z `@/components/ui/sonner` přidává ikonu i výchozímu toastu. Ikony: vybrán **Tabler** místo Lucide, `ui/` komponenty a katalog převedeny. |

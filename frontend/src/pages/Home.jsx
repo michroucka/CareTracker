@@ -135,8 +135,8 @@ function DashboardContent() {
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
                                     <CardBody className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-secondary/10 rounded-lg">
-                                            <Clock className="w-6 h-6 text-secondary" />
+                                        <div className="p-3 bg-highlight/10 rounded-lg">
+                                            <Clock className="w-6 h-6 text-highlight" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-default-500">Hodin tento měsíc</p>
@@ -174,8 +174,8 @@ function DashboardContent() {
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
                                     <CardBody className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-secondary/10 rounded-lg">
-                                            <TrendingUp className="w-6 h-6 text-secondary" />
+                                        <div className="p-3 bg-highlight/10 rounded-lg">
+                                            <TrendingUp className="w-6 h-6 text-highlight" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-default-500">Příjem tento měsíc</p>
@@ -211,8 +211,8 @@ function DashboardContent() {
                                 </Card>
                                 <Card className="col-span-2 lg:col-span-1">
                                     <CardBody className="flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-secondary/10 rounded-lg">
-                                            <TrendingUp className="w-6 h-6 text-secondary" />
+                                        <div className="p-3 bg-highlight/10 rounded-lg">
+                                            <TrendingUp className="w-6 h-6 text-highlight" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-default-500">Příjem tento měsíc</p>
@@ -337,7 +337,7 @@ function DashboardContent() {
                                                     formatter={(v) => [v, "Výkony"]}
                                                     cursor={false}
                                                 />
-                                                <Bar dataKey="value" fill="hsl(var(--heroui-secondary))" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="value" fill="var(--highlight)" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </CardBody>

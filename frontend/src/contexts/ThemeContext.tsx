@@ -31,10 +31,11 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 
     useEffect(() => {
         const updateThemeColor = (currentTheme: "light" | "dark") => {
-            const metaThemeColor = document.querySelector("meta[name='theme-color']");
-            if (metaThemeColor) {
-                metaThemeColor.setAttribute("content", currentTheme === "dark" ? "#000000" : "#ffffff");
-            }
+            // index.html has one tag per prefers-color-scheme; the user's choice overrides both
+            const themeColor = currentTheme === "dark" ? "#17131C" : "#F7F5F9";
+            document.querySelectorAll("meta[name='theme-color']").forEach((meta) => {
+                meta.setAttribute("content", themeColor);
+            });
         };
 
         const systemTheme = prefersDarkMode ? "dark" : "light";
