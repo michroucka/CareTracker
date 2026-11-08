@@ -1,5 +1,4 @@
 import {HeroUIProvider} from "@heroui/react";
-import {ToastProvider} from "@heroui/toast";
 import type {NavigateOptions} from "react-router-dom";
 import {useNavigate, useHref} from "react-router-dom";
 import React from "react";
@@ -26,7 +25,6 @@ export function Providers({children}: {children: React.ReactNode}) {
                     <AuthProvider>
                         <MotionConfig reducedMotion="user">
                             <TooltipProvider>
-                                <ToastProvider placement="top-center" toastOffset={70} />
                                 <Toaster position="top-center" />
                                 {children}
                             </TooltipProvider>

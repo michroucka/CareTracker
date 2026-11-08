@@ -1,71 +1,81 @@
-import {ReadOnlyField} from "../components/ReadOnlyField.jsx";
-import {useAccount} from "../hooks/useAccount.jsx";
-import {useAuth} from "../contexts/AuthContext.tsx";
-import {getRoleLabel} from "../constants/roles.js";
 import React from "react";
-import {Button, Divider, Form, Input, Spinner} from "@heroui/react";
-import {Pencil, Save, UserRound, X, RefreshCw} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { IconKey, IconLoader2, IconPencil } from "@tabler/icons-react";
+import { useAccount } from "../hooks/useAccount.jsx";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { getRoleLabel } from "../constants/roles.js";
+import { FormField } from "@/components/FormField";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
+const AnimatedPanel = motion.div;
 
-function Account() {
-    const [username, setUsername] = React.useState("");
-    const [email, setEmail] = React.useState("");
-    const [role, setRole] = React.useState("");
-    const [fullName, setFullName] = React.useState("");
+const MIN_USERNAME_LENGTH = 4;
+
+function initials(name) {
+    return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function validate({ username, email }) {
+    const errors = {};
+    if (!username) errors.username = "Prosím zadejte uživatelské jméno";
+    else if (username.length < MIN_USERNAME_LENGTH) errors.username = `Uživatelské jméno musí mít alespoň ${MIN_USERNAME_LENGTH} znaky`;
+    if (!email) errors.email = "Prosím zadejte e-mail";
+    return errors;
+}
+
+function ProfileCard({ fullName, role }) {
+    return (
+        <Card className="flex-row items-center gap-5 px-6">
+            <span className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-2xl font-semibold text-secondary-foreground">
+                {initials(fullName)}
+            </span>
+            <div className="grid min-w-0 gap-1.5">
+                <p className="truncate font-display text-2xl font-semibold tracking-tight">{fullName}</p>
+                <Badge variant="secondary">{getRoleLabel(role)}</Badge>
+            </div>
+        </Card>
+    );
+}
+
+function DetailRow({ label, value }) {
+    return (
+        <div className="grid gap-0.5">
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className="font-medium break-all">{value}</dd>
+        </div>
+    );
+}
+
+function CredentialsCard({ account, onSave }) {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [values, setValues] = React.useState(account);
     const [errors, setErrors] = React.useState({});
+    const [submitCount, setSubmitCount] = React.useState(0);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [isEditMode, setIsEditMode] = React.useState(false);
-    const [isLoading, setIsLoading] = React.useState(true);
 
-    // Snapshot of values at edit start — restored on cancel
-    const [savedUsername, setSavedUsername] = React.useState("");
-    const [savedEmail, setSavedEmail] = React.useState("");
-
-    const {fetchAccountDetails, updateAccountDetails, requestResetPasswordEmail, isSendingReset} = useAccount();
-    const {checkAuth} = useAuth();
-
-    React.useEffect(() => {
-        fetchAccountDetails().then(account => {
-            setUsername(account.username);
-            setEmail(account.email);
-            setRole(account.role);
-            setFullName(account.fullName);
-            setSavedUsername(account.username);
-            setSavedEmail(account.email);
-        }).finally(() => {
-            setIsLoading(false);
-        });
-    }, []);
-
-    const handleEnterEditMode = () => {
-        setSavedUsername(username);
-        setSavedEmail(email);
-        setIsEditMode(true);
-    };
-
-    const handleCancelEdit = () => {
-        setUsername(savedUsername);
-        setEmail(savedEmail);
+    const startEditing = () => {
+        setValues(account);
         setErrors({});
-        setIsEditMode(false);
+        setIsEditing(true);
     };
 
-    const onSubmit = async (e) => {
-        e.preventDefault();
+    const updateField = (field) => (event) => {
+        setValues((previous) => ({ ...previous, [field]: event.target.value }));
+        if (errors[field]) setErrors((previous) => ({ ...previous, [field]: undefined }));
+    };
 
-        const trimmedUsername = username.trim();
-        const trimmedEmail = email.trim();
+    const onSubmit = async (event) => {
+        event.preventDefault();
+        setSubmitCount((count) => count + 1);
 
-        const newErrors = {};
-        if (!trimmedUsername) {
-            newErrors.username = "Prosím zadejte uživatelské jméno";
-        } else if (trimmedUsername.length < 4) {
-            newErrors.username = "Uživatelské jméno musí obsahovat alespoň 4 znaky";
-        }
-        if (!trimmedEmail) {
-            newErrors.email = "Prosím zadejte email";
-        }
-
+        const trimmed = { username: values.username.trim(), email: values.email.trim() };
+        const newErrors = validate(trimmed);
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -73,133 +83,133 @@ function Account() {
 
         setIsSubmitting(true);
         try {
-            const updated = await updateAccountDetails({username: trimmedUsername, email: trimmedEmail});
-            setUsername(updated.username);
-            setEmail(updated.email);
-            setSavedUsername(updated.username);
-            setSavedEmail(updated.email);
-            setIsEditMode(false);
-            await checkAuth();
+            await onSave(trimmed);
+            setIsEditing(false);
+        } catch {
+            // the hook already shows an error toast; keep the form open so the user can fix it
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Přihlašovací údaje</CardTitle>
+                <CardDescription>Uživatelské jméno pro přihlášení a e-mail pro obnovení hesla.</CardDescription>
+                {!isEditing && (
+                    <CardAction>
+                        <Button variant="outline" size="sm" onClick={startEditing}>
+                            <IconPencil /> Upravit
+                        </Button>
+                    </CardAction>
+                )}
+            </CardHeader>
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100dvh-20rem)]">
-                <Spinner label="Načítání údajů..." />
-            </div>
-        );
-    }
+            <AnimatePresence mode="wait" initial={false}>
+                <AnimatedPanel
+                    key={isEditing ? "edit" : "view"}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: DURATION.base, ease: EASE_OUT }}
+                >
+                    {isEditing ? (
+                        <form noValidate onSubmit={onSubmit} className="grid gap-6">
+                            <CardContent className="grid gap-4 sm:grid-cols-2">
+                                <FormField id="account-username" label="Uživatelské jméno" required error={errors.username} shakeSignal={submitCount}>
+                                    {(controlProps) => (
+                                        <Input {...controlProps} autoComplete="username" autoFocus disabled={isSubmitting} value={values.username} onChange={updateField("username")} />
+                                    )}
+                                </FormField>
+                                <FormField id="account-email" label="E-mail" required error={errors.email} shakeSignal={submitCount}>
+                                    {(controlProps) => (
+                                        <Input {...controlProps} type="email" autoComplete="email" disabled={isSubmitting} value={values.email} onChange={updateField("email")} />
+                                    )}
+                                </FormField>
+                            </CardContent>
+                            <CardFooter className="justify-end gap-2 border-t">
+                                <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+                                    Zrušit
+                                </Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting && <IconLoader2 className="animate-spin" />}
+                                    {isSubmitting ? "Ukládám…" : "Uložit změny"}
+                                </Button>
+                            </CardFooter>
+                        </form>
+                    ) : (
+                        <CardContent>
+                            <dl className="grid gap-4 sm:grid-cols-2">
+                                <DetailRow label="Uživatelské jméno" value={account.username} />
+                                <DetailRow label="E-mail" value={account.email} />
+                            </dl>
+                        </CardContent>
+                    )}
+                </AnimatedPanel>
+            </AnimatePresence>
+        </Card>
+    );
+}
+
+function PasswordCard({ email, isSending, onRequestReset }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Heslo</CardTitle>
+                <CardDescription>Pošleme vám e-mail s odkazem, přes který si nastavíte nové heslo. Odkaz přijde na {email}.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+                <Button variant="outline" onClick={onRequestReset} disabled={isSending}>
+                    {isSending ? <IconLoader2 className="animate-spin" /> : <IconKey />}
+                    {isSending ? "Odesílám…" : "Poslat odkaz pro změnu hesla"}
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
+function AccountSkeleton() {
+    return (
+        <div className="grid gap-6" aria-busy="true" aria-label="Načítání údajů">
+            <Skeleton className="h-28 rounded-lg" />
+            <Skeleton className="h-44 rounded-lg" />
+            <Skeleton className="h-36 rounded-lg" />
+        </div>
+    );
+}
+
+function Account() {
+    const [account, setAccount] = React.useState(null);
+    const { fetchAccountDetails, updateAccountDetails, requestResetPasswordEmail, isSendingReset } = useAccount();
+    const { checkAuth } = useAuth();
+
+    React.useEffect(() => {
+        fetchAccountDetails().then(setAccount).catch(() => {});
+        // load once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const saveCredentials = async (credentials) => {
+        const updated = await updateAccountDetails(credentials);
+        setAccount((previous) => ({ ...previous, username: updated.username, email: updated.email }));
+        await checkAuth();
+    };
 
     return (
-        <Form
-            className="w-full justify-center items-center space-y-4"
-            validationErrors={errors}
-            onSubmit={onSubmit}
-        >
-            <div className="flex flex-col justify-center items-center gap-4 w-full sm:w-sm">
-                <div className="flex flex-col items-center gap-1">
-                    <UserRound className="size-14 text-default-400" />
-                    <h1 className="cursor-default">Můj účet</h1>
-                </div>
-                <Divider className="mb-3 w-5/6" />
+        <div className="mx-auto grid w-full max-w-3xl gap-6">
+            <PageHeader title="Můj účet" description="Vaše údaje a přihlášení do CareTrackeru." />
 
-                <div className="flex flex-row items-start gap-4 w-full">
-                    <ReadOnlyField label="Jméno" value={fullName} className="flex-1" />
-                    <ReadOnlyField label="Role" value={getRoleLabel(role)} className="w-fit! shrink-0" />
-                </div>
-
-                {isEditMode ? (
-                    <>
-                        <Input
-                            isRequired
-                            isDisabled={isSubmitting}
-                            isInvalid={!!errors.username}
-                            errorMessage={errors.username}
-                            label="Uživatelské jméno"
-                            labelPlacement="inside"
-                            name="username"
-                            value={username}
-                            onValueChange={(value) => {
-                                setUsername(value);
-                                if (errors.username) {
-                                    setErrors({...errors, username: undefined});
-                                }
-                            }}
-                        />
-
-                        <Input
-                            isRequired
-                            isDisabled={isSubmitting}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email}
-                            label="Email"
-                            labelPlacement="inside"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onValueChange={(value) => {
-                                setEmail(value);
-                                if (errors.email) {
-                                    setErrors({...errors, email: undefined});
-                                }
-                            }}
-                        />
-
-                        <div className="flex gap-3 w-full">
-                            <Button
-                                className="flex-1 text-base"
-                                variant="flat"
-                                type="button"
-                                isDisabled={isSubmitting}
-                                onPress={handleCancelEdit}
-                                startContent={<X className="size-4" />}
-                            >
-                                Zrušit
-                            </Button>
-                            <Button
-                                className="flex-1 text-base"
-                                color="primary"
-                                type="submit"
-                                isLoading={isSubmitting}
-                                isDisabled={isSubmitting}
-                                startContent={<Save className="size-4" />}
-                            >
-                                {isSubmitting ? "Ukládám..." : "Uložit změny"}
-                            </Button>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <ReadOnlyField label="Uživatelské jméno" value={username} />
-                        <ReadOnlyField label="Email" value={email} />
-
-                        <Button
-                            className="w-full"
-                            variant="flat"
-                            type="button"
-                            onPress={handleEnterEditMode}
-                            startContent={<Pencil className="size-4" />}
-                        >
-                            Upravit údaje
-                        </Button>
-                    </>
-                )}
-                <Button
-                    className="w-full"
-                    variant="flat"
-                    type="button"
-                    startContent={isSendingReset ? <Spinner size="sm" /> : <RefreshCw className="size-4" />}
-                    isDisabled={isSendingReset}
-                    onPress={requestResetPasswordEmail}
-                >
-                    Obnovit heslo
-                </Button>
-            </div>
-        </Form>
+            {account ? (
+                <>
+                    <ProfileCard fullName={account.fullName || account.username} role={account.role} />
+                    <CredentialsCard account={{ username: account.username, email: account.email }} onSave={saveCredentials} />
+                    <PasswordCard email={account.email} isSending={isSendingReset} onRequestReset={() => requestResetPasswordEmail().catch(() => {})} />
+                </>
+            ) : (
+                <AccountSkeleton />
+            )}
+        </div>
     );
 }
 

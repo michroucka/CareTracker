@@ -1,45 +1,26 @@
-import {addToast} from "@heroui/react";
-import {X} from "lucide-react";
-import React from "react";
+import { toast } from "@/components/ui/sonner";
+
+const TOAST_BY_COLOR = {
+    success: toast.success,
+    danger: toast.error,
+    warning: toast.warning,
+    primary: toast.info,
+    secondary: toast.info,
+};
 
 /**
- * Wrapper around {@link addToast} with sensible defaults and consistent close button positioning.
+ * Legacy toast API kept for pages that are not migrated yet; it now renders sonner toasts.
+ * New code should call `toast` from "@/components/ui/sonner" directly.
+ * The `icon`, `closeIcon` and `classNames` options are ignored, sonner picks the icon by type.
  *
  * @param {Object} options
  * @param {string} options.title toast title
  * @param {string} [options.description] toast body text
- * @param {string} [options.color="default"] color variant: default, primary, secondary, success, warning, danger
- * @param {ReactNode} [options.icon] custom left icon
- * @param {ReactNode} [options.closeIcon=<X />] close button icon
+ * @param {string} [options.color="default"] default, primary, secondary, success, warning, danger
  * @param {number} [options.timeout=5000] auto-dismiss delay in ms
- * @param {Object} [options.classNames] CSS class overrides for toast parts
- * @param {...any} otherProps additional props forwarded to addToast
- * @returns {string} the toast ID
+ * @returns {string|number} the toast ID
  */
-export const showToast = ({
-    title,
-    description,
-    color = "default",
-    icon,
-    closeIcon = <X />,
-    timeout = 5000,
-    classNames,
-    ...otherProps
-}) => {
-    return addToast({
-        title,
-        description,
-        color,
-        icon,
-        closeIcon,
-        timeout,
-        classNames: {
-            closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2 size-9 sm:size-7",
-            title: "text-lg sm:text-base pr-2",
-            description: "opacity-75 text-base sm:text-sm",
-            icon: "size-8 sm:size-7 fill-none",
-            ...classNames,
-        },
-        ...otherProps
-    });
+export const showToast = ({ title, description, color = "default", timeout = 5000 }) => {
+    const showByColor = TOAST_BY_COLOR[color] ?? toast;
+    return showByColor(title, { description, duration: timeout });
 };
