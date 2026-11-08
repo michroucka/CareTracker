@@ -22,4 +22,7 @@ public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecif
     long countByActiveTrueAndCaregiverId(Long caregiverId);
     long countByActiveTrueAndDepartmentId(Long departmentId);
     long countByActiveTrueAndOrganizationId(Long organizationId);
+
+    List<Client> findByActiveTrueAndCaregiverId(Long caregiverId);
+    long countByActiveTrue();
 }

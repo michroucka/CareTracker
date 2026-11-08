@@ -21,4 +21,6 @@ public interface IndividualPlanRepository extends JpaRepository<IndividualPlan, 
     @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.caregiver.id = :caregiverId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate <= :end ORDER BY ip.currentContent.plannedUpdateDate ASC")
     List<IndividualPlan> findUpcomingUpdatesByCaregiver(@Param("caregiverId") Long caregiverId, @Param("end") LocalDate end);
 
+    @Query("SELECT ip FROM IndividualPlan ip WHERE ip.client.organization.id = :organizationId AND ip.currentContent IS NOT NULL AND ip.client.active = true AND ip.currentContent.plannedUpdateDate <= :end ORDER BY ip.currentContent.plannedUpdateDate ASC")
+    List<IndividualPlan> findUpcomingUpdatesByOrganization(@Param("organizationId") Long organizationId, @Param("end") LocalDate end);
 }
