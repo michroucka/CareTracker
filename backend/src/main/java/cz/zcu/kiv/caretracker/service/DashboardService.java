@@ -7,7 +7,6 @@ import cz.zcu.kiv.caretracker.dto.dashboard.DepartmentPerformedTasksDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.OrganizationOverviewDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.PlatformOverviewDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
-import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
@@ -28,7 +27,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Builds role-specific dashboard data.
@@ -74,21 +72,19 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     /** Builds the CAREGIVER dashboard: their own tasks today and this month, their clients and plans. */
     private DashboardDTO buildCaregiverDashboard(User user) {
         Long caregiverId = user.getEmployee().getId();
+        List<MonthTotals> history = monthlyTotals(null, null, caregiverId);
+        List<PerformedTask> todayTasks = performedTaskRepository.findByCaregivers_IdAndDateBetween(
+                caregiverId, LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay());
         List<PerformedTask> monthTasks = performedTaskRepository
                 .findByCaregivers_IdAndDateBetween(caregiverId, monthStart(), monthEnd());
-        List<PerformedTask> historyTasks = performedTaskRepository
-                .findByCaregivers_IdAndDateBetween(caregiverId, twelveMonthsStart(), monthEnd());
-        List<PerformedTask> todayTasks = monthTasks.stream()
-                .filter(t -> t.getDate().toLocalDate().equals(LocalDate.now()))
-                .toList();
 
         DashboardDTO dto = new DashboardDTO();
         dto.setTodayTasksCount(todayTasks.size());
         dto.setTodayMinutes(calculateTotalMinutes(todayTasks));
-        dto.setTasksPerformedCount(monthTasks.size());
+        dto.setTasksPerformedCount(currentMonth(history).count());
         dto.setMyClientsCount((int) clientRepository.countByActiveTrueAndCaregiverId(caregiverId));
         dto.setTotalMonthMinutes(calculateTotalMinutes(monthTasks));
-        dto.setTasksPerformedCountHistory(buildCountHistory(historyTasks));
+        dto.setTasksPerformedCountHistory(counts(history));
         dto.setRecentPerformedTasks(performedTaskMapper.toSummaryDTOList(
                 performedTaskRepository.findTop5ByCaregivers_IdOrderByDateDesc(caregiverId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
@@ -100,18 +96,15 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     /** Builds the COORDINATOR dashboard: department income, tasks, caregiver workload and clients needing attention. */
     private DashboardDTO buildCoordinatorDashboard(User user) {
         Long deptId = user.getEmployee().getDepartment().getId();
-        List<PerformedTask> monthTasks = performedTaskRepository
-                .findByDepartmentIdAndDateBetween(deptId, monthStart(), monthEnd());
-        List<PerformedTask> historyTasks = performedTaskRepository
-                .findByDepartmentIdAndDateBetween(deptId, twelveMonthsStart(), monthEnd());
+        List<MonthTotals> history = monthlyTotals(null, deptId, null);
 
         DashboardDTO dto = new DashboardDTO();
         dto.setClientCount((int) clientRepository.countByActiveTrueAndDepartmentId(deptId));
-        dto.setTasksPerformedCount(monthTasks.size());
-        dto.setTotalMonthlyIncome(sumPrices(monthTasks));
-        dto.setMonthlyIncomeHistory(buildIncomeHistory(historyTasks));
-        dto.setTasksPerformedCountHistory(buildCountHistory(historyTasks));
-        dto.setCaregiverWorkload(buildCaregiverWorkload(deptId, monthTasks));
+        dto.setTasksPerformedCount(currentMonth(history).count());
+        dto.setTotalMonthlyIncome(currentMonth(history).income());
+        dto.setMonthlyIncomeHistory(incomes(history));
+        dto.setTasksPerformedCountHistory(counts(history));
+        dto.setCaregiverWorkload(buildCaregiverWorkload(deptId));
         dto.setRecentPerformedTasks(performedTaskMapper.toSummaryDTOList(
                 performedTaskRepository.findTop5ByDepartmentIdOrderByDateDesc(deptId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
@@ -123,22 +116,19 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     /** Builds the ADMIN dashboard: organization-wide income, counts, per-department breakdown and attention lists. */
     private DashboardDTO buildAdminDashboard(User user) {
         Long orgId = user.getEmployee().getOrganization().getId();
-        List<PerformedTask> monthTasks = performedTaskRepository
-                .findByOrganizationIdAndDateBetween(orgId, monthStart(), monthEnd());
-        List<PerformedTask> historyTasks = performedTaskRepository
-                .findByOrganizationIdAndDateBetween(orgId, twelveMonthsStart(), monthEnd());
+        List<MonthTotals> history = monthlyTotals(orgId, null, null);
 
         DashboardDTO dto = new DashboardDTO();
         dto.setClientCount((int) clientRepository.countByActiveTrueAndOrganizationId(orgId));
         dto.setEmployeeCount((int) employeeRepository.countByActiveTrueAndOrganizationId(orgId));
         dto.setDepartmentCount((int) departmentRepository.countByActiveTrueAndOrganizationId(orgId));
-        dto.setTasksPerformedCount(monthTasks.size());
-        dto.setTotalMonthlyIncome(sumPrices(monthTasks));
-        dto.setMonthlyIncomeHistory(buildIncomeHistory(historyTasks));
-        dto.setTasksPerformedCountHistory(buildCountHistory(historyTasks));
+        dto.setTasksPerformedCount(currentMonth(history).count());
+        dto.setTotalMonthlyIncome(currentMonth(history).income());
+        dto.setMonthlyIncomeHistory(incomes(history));
+        dto.setTasksPerformedCountHistory(counts(history));
         dto.setRecentPerformedTasks(performedTaskMapper.toSummaryDTOList(
                 performedTaskRepository.findTop5ByOrganizationIdOrderByDateDesc(orgId)));
-        dto.setTasksPerformedByDepartment(buildDepartmentTaskCounts(monthTasks));
+        dto.setTasksPerformedByDepartment(buildDepartmentTotals(orgId));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByOrganization(orgId, planUpdateHorizon())));
         fillClientsWithoutRecentRecords(dto, clientRepository.findByActiveTrueAndOrganizationId(orgId));
@@ -147,11 +137,11 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
 
     /** Builds the SUPERADMIN overview across all organizations. Only counts, never client names or details. */
     private DashboardDTO buildSuperadminDashboard() {
-        LocalDateTime monthStart = monthStart();
-        List<PerformedTask> historyTasks = performedTaskRepository.findByDateBetween(twelveMonthsStart(), monthEnd());
-        Map<Long, Long> tasksThisMonthByOrganization = historyTasks.stream()
-                .filter(t -> !t.getDate().isBefore(monthStart))
-                .collect(Collectors.groupingBy(t -> t.getOrganization().getId(), Collectors.counting()));
+        List<MonthTotals> history = monthlyTotals(null, null, null);
+        Map<Long, Integer> tasksThisMonthByOrganization = new HashMap<>();
+        for (Object[] row : performedTaskRepository.countByOrganization(monthStart(), monthEnd())) {
+            tasksThisMonthByOrganization.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
+        }
         Map<Long, LocalDateTime> lastActivityByOrganization = toDateMap(performedTaskRepository.findLastActivityByOrganization());
 
         List<OrganizationOverviewDTO> organizations = organizationRepository.findByActive(true).stream()
@@ -161,7 +151,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                         (int) departmentRepository.countByActiveTrueAndOrganizationId(org.getId()),
                         (int) employeeRepository.countByActiveTrueAndOrganizationId(org.getId()),
                         (int) clientRepository.countByActiveTrueAndOrganizationId(org.getId()),
-                        tasksThisMonthByOrganization.getOrDefault(org.getId(), 0L).intValue(),
+                        tasksThisMonthByOrganization.getOrDefault(org.getId(), 0),
                         lastActivityByOrganization.get(org.getId())))
                 .sorted(Comparator.comparing(OrganizationOverviewDTO::getTasksThisMonth).reversed())
                 .toList();
@@ -171,7 +161,6 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
             activeUsersByRole.put(role.name(), userRepository.countByRoleAndActiveTrue(role));
         }
 
-        List<Integer> tasksHistory = buildCountHistory(historyTasks);
         PlatformOverviewDTO platform = new PlatformOverviewDTO(
                 organizations.size(),
                 (int) departmentRepository.countByActiveTrue(),
@@ -180,8 +169,8 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 activeUsersByRole,
                 userRepository.countByActivationTokenIsNotNullAndPasswordIsNull(),
                 userRepository.countByActivationTokenIsNotNullAndPasswordIsNullAndTokenExpiryBefore(LocalDateTime.now()),
-                tasksHistory.get(tasksHistory.size() - 1),
-                tasksHistory,
+                currentMonth(history).count(),
+                counts(history),
                 organizations);
 
         DashboardDTO dto = new DashboardDTO();
@@ -214,21 +203,64 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     }
 
     /** Tasks and minutes per active caregiver of the department this month, busiest first. */
-    private List<CaregiverWorkloadDTO> buildCaregiverWorkload(Long deptId, List<PerformedTask> monthTasks) {
-        Map<Long, Integer> taskCounts = new HashMap<>();
-        Map<Long, Integer> minutes = new HashMap<>();
-        for (PerformedTask task : monthTasks) {
-            for (Employee caregiver : task.getCaregivers()) {
-                taskCounts.merge(caregiver.getId(), 1, Integer::sum);
-                minutes.merge(caregiver.getId(), minutesOf(task), Integer::sum);
-            }
+    private List<CaregiverWorkloadDTO> buildCaregiverWorkload(Long deptId) {
+        Map<Long, Object[]> totals = new HashMap<>();
+        for (Object[] row : performedTaskRepository.sumByCaregiver(deptId, monthStart(), monthEnd())) {
+            totals.put(((Number) row[0]).longValue(), row);
         }
         return employeeRepository.findByActiveTrueAndDepartmentId(deptId).stream()
                 .filter(e -> e.getRole() == EmployeeRole.CAREGIVER)
-                .map(e -> new CaregiverWorkloadDTO(
-                        e.getId(), e.getFullName(), taskCounts.getOrDefault(e.getId(), 0), minutes.getOrDefault(e.getId(), 0)))
+                .map(e -> {
+                    Object[] row = totals.get(e.getId());
+                    int tasks = row == null ? 0 : ((Number) row[1]).intValue();
+                    int minutes = row == null ? 0 : ((Number) row[2]).intValue();
+                    return new CaregiverWorkloadDTO(e.getId(), e.getFullName(), tasks, minutes);
+                })
                 .sorted(Comparator.comparing(CaregiverWorkloadDTO::getTasksCount).reversed())
                 .toList();
+    }
+
+    /** Task count and income per department of the organization this month, busiest first. */
+    private List<DepartmentPerformedTasksDTO> buildDepartmentTotals(Long orgId) {
+        return performedTaskRepository.sumByDepartment(orgId, monthStart(), monthEnd()).stream()
+                .map(row -> new DepartmentPerformedTasksDTO(
+                        (String) row[0], ((Number) row[1]).intValue(), ((Number) row[2]).intValue()))
+                .sorted(Comparator.comparing(DepartmentPerformedTasksDTO::getPerformedTasksCount).reversed())
+                .toList();
+    }
+
+    /** Task count and income of one month. */
+    private record MonthTotals(int count, int income) {
+    }
+
+    /**
+     * Returns 12 monthly totals, oldest month first (current month last), summed in the database.
+     * Scope parameters are optional; all null means the whole application.
+     */
+    private List<MonthTotals> monthlyTotals(Long organizationId, Long departmentId, Long caregiverId) {
+        Map<YearMonth, MonthTotals> byMonth = new HashMap<>();
+        for (Object[] row : performedTaskRepository.sumByMonth(
+                twelveMonthsStart(), monthEnd(), organizationId, departmentId, caregiverId)) {
+            YearMonth month = YearMonth.of(((Number) row[0]).intValue(), ((Number) row[1]).intValue());
+            byMonth.put(month, new MonthTotals(((Number) row[2]).intValue(), ((Number) row[3]).intValue()));
+        }
+        List<MonthTotals> history = new ArrayList<>();
+        for (int i = 11; i >= 0; i--) {
+            history.add(byMonth.getOrDefault(YearMonth.now().minusMonths(i), new MonthTotals(0, 0)));
+        }
+        return history;
+    }
+
+    private MonthTotals currentMonth(List<MonthTotals> history) {
+        return history.get(history.size() - 1);
+    }
+
+    private List<Integer> counts(List<MonthTotals> history) {
+        return history.stream().map(MonthTotals::count).toList();
+    }
+
+    private List<Integer> incomes(List<MonthTotals> history) {
+        return history.stream().map(MonthTotals::income).toList();
     }
 
     private LocalDateTime monthStart() {
@@ -256,10 +288,6 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         return result;
     }
 
-    private int sumPrices(List<PerformedTask> tasks) {
-        return tasks.stream().mapToInt(PerformedTask::calculatePrice).sum();
-    }
-
     /** Unit count of HOUR tasks is stored in minutes; other unit types do not count towards time. */
     private int minutesOf(PerformedTask task) {
         return task.getTask().getUnitType() == UnitType.HOUR ? task.getUnitCount().intValue() : 0;
@@ -267,47 +295,5 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
 
     private Integer calculateTotalMinutes(List<PerformedTask> tasks) {
         return tasks.stream().mapToInt(this::minutesOf).sum();
-    }
-
-    /** Returns a 12-element list of monthly task counts, oldest month first (current month last). */
-    private List<Integer> buildCountHistory(List<PerformedTask> tasks) {
-        List<Integer> history = new ArrayList<>();
-        for (int i = 11; i >= 0; i--) {
-            YearMonth month = YearMonth.now().minusMonths(i);
-            int count = (int) tasks.stream()
-                    .filter(t -> YearMonth.from(t.getDate()).equals(month))
-                    .count();
-            history.add(count);
-        }
-        return history;
-    }
-
-    /** Returns a 12-element list of monthly income totals (in CZK), oldest month first (current month last). */
-    private List<Integer> buildIncomeHistory(List<PerformedTask> tasks) {
-        List<Integer> history = new ArrayList<>();
-        for (int i = 11; i >= 0; i--) {
-            YearMonth month = YearMonth.now().minusMonths(i);
-            history.add(sumPrices(tasks.stream()
-                    .filter(t -> YearMonth.from(t.getDate()).equals(month))
-                    .toList()));
-        }
-        return history;
-    }
-
-    /** Task count and income per department, busiest first. */
-    private List<DepartmentPerformedTasksDTO> buildDepartmentTaskCounts(List<PerformedTask> tasks) {
-        Map<Long, String> deptNames = new HashMap<>();
-        Map<Long, Integer> deptCounts = new HashMap<>();
-        Map<Long, Integer> deptIncome = new HashMap<>();
-        for (PerformedTask t : tasks) {
-            Long id = t.getDepartment().getId();
-            deptNames.put(id, t.getDepartment().getCity());
-            deptCounts.merge(id, 1, Integer::sum);
-            deptIncome.merge(id, t.calculatePrice(), Integer::sum);
-        }
-        return deptCounts.keySet().stream()
-                .map(id -> new DepartmentPerformedTasksDTO(deptNames.get(id), deptCounts.get(id), deptIncome.get(id)))
-                .sorted(Comparator.comparing(DepartmentPerformedTasksDTO::getPerformedTasksCount).reversed())
-                .collect(Collectors.toList());
     }
 }
