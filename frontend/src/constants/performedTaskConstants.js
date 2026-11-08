@@ -1,12 +1,3 @@
-export const columns = [
-    {name: "KLIENT", key: "client"},
-    {name: "ÚKON", key: "task"},
-    {name: "POČET", key: "unitCount"},
-    {name: "DATUM", key: "date", sortable: true},
-    {name: "CENA", key: "price"},
-    {name: "AKCE", key: "actions"},
-];
-
 export const unitTypeTranslations = {
     "HOUR": "min",
     "OCCURRENCE": "úkon",

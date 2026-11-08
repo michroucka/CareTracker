@@ -114,4 +114,20 @@ public class PerformedTaskController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"stvrzenka-" + clientId + "-" + month + "-" + year + ".pdf\"")
                 .body(pdf);
     }
+
+    @GetMapping("/receipts")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<byte[]> getDepartmentReceipts(
+            @RequestParam Long departmentId,
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
+        log.info("Fetching receipts for department: {}, month: {}, year: {}", departmentId, month, year);
+        byte[] pdf = receiptService.generateDepartmentReceipts(departmentId, month, year);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"stvrzenky-" + departmentId + "-" + month + "-" + year + ".pdf\"")
+                .body(pdf);
+    }
 }

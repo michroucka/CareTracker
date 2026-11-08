@@ -174,7 +174,7 @@ function MonthlyReport() {
                 </span>
                 <MonthYearPicker
                     onChange={setMonthYearFilter}
-                    defaultValue={monthYearFilter}
+                    value={monthYearFilter}
                 />
             </div>
         )

@@ -105,7 +105,7 @@ export function TableExample() {
                                 <TableCell className="text-right font-medium tabular-nums">{row.price}</TableCell>
                                 <TableCell><Badge variant={status.variant}>{status.label}</Badge></TableCell>
                                 <TableCell>
-                                    <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${row.client}`} onClick={(event) => event.stopPropagation()}>
+                                    <Button size="icon-row" variant="ghost" aria-label={`Akce pro ${row.client}`} onClick={(event) => event.stopPropagation()}>
                                         <IconDots />
                                     </Button>
                                 </TableCell>

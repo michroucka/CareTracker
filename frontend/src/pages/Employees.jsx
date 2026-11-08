@@ -5,10 +5,12 @@ import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
 import { useListFilters, useMultiSelectParam } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
 import { getRoleLabel, ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
@@ -138,6 +140,7 @@ function Employees() {
         loadEmployees({ silent: true });
     };
 
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleEmployees, { resetKey: organizationId });
     const count = visibleEmployees.length;
     const columnCount = 4 + (canEdit ? 2 : 0);
     const departmentOptions = departments.map((department) => ({ value: department.id, label: department.city }));
@@ -153,10 +156,10 @@ function Employees() {
 
             <ListToolbar
                 search={search}
-                onSearchChange={setSearch}
+                onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle jména…"
                 statusFilter={canEdit ? statusFilter : null}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading && !needsOrganization}
                 countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["zaměstnanec", "zaměstnanci", "zaměstnanců"])}`}
             >
@@ -166,13 +169,13 @@ function Employees() {
                         allLabel="Všechna"
                         options={departmentOptions}
                         selected={departmentFilter}
-                        onChange={setDepartmentFilter}
+                        onChange={withPageReset(setDepartmentFilter)}
                         searchPlaceholder="Hledat středisko…"
                     />
                 )}
             </ListToolbar>
 
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Jméno</TableHead>
@@ -188,7 +191,7 @@ function Employees() {
                         <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
                         <MessageRow columnCount={columnCount}>{search ? "Žádný zaměstnanec neodpovídá hledání." : "Žádní zaměstnanci."}</MessageRow>
-                    ) : visibleEmployees.map((employee) => {
+                    ) : pageItems.map((employee) => {
                         const account = accountState(employee);
                         const isSelf = employee.id === user.employeeId;
                         return (
@@ -215,7 +218,7 @@ function Employees() {
                                     <TableCell onClick={(event) => event.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${fullName(employee)}`}><IconDots /></Button>
+                                                <Button size="icon-row" variant="ghost" aria-label={`Akce pro ${fullName(employee)}`}><IconDots /></Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onSelect={() => openDetail(employee.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
@@ -236,6 +239,7 @@ function Employees() {
                     })}
                 </TableBody>
             </Table>
+            {!needsOrganization && !loading && <TablePagination {...paginationProps} />}
 
             <EmployeeSheet
                 open={detailId != null}

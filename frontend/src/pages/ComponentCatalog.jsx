@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import MonthYearPicker from "@/components/MonthYearPicker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const EMPTY_FORM = { name: "", email: "", unit: "", note: "" };
@@ -154,6 +155,8 @@ function DemoForm() {
 }
 
 export default function ComponentCatalog() {
+    const [catalogMonth, setCatalogMonth] = React.useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
+
     return (
         <div className="mx-auto grid w-full max-w-5xl gap-6 py-4">
             <div className="flex items-start justify-between gap-4">
@@ -166,6 +169,10 @@ export default function ComponentCatalog() {
 
             <Section title="Formulář" description="FormField: label nad polem, chyba plynule vyjede, po odeslání s chybou pole zatřese.">
                 <DemoForm />
+            </Section>
+
+            <Section title="Výběr měsíce" description="Šipkami o měsíc vedle, klikem na název popover s měsíci roku.">
+                <MonthYearPicker value={catalogMonth} onChange={setCatalogMonth} className="w-fit" />
             </Section>
 
             <Section title="Tlačítka">

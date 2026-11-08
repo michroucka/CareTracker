@@ -4,9 +4,11 @@ import { useOrganizations } from "../hooks/useOrganizations.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
 import { useListFilters } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { OrganizationCreateDialog } from "@/components/organizations/OrganizationCreateDialog";
@@ -90,6 +92,7 @@ function Organizations() {
         setDetail(updated);
     };
 
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleOrganizations);
     const count = visibleOrganizations.length;
 
     return (
@@ -102,15 +105,15 @@ function Organizations() {
 
             <ListToolbar
                 search={search}
-                onSearchChange={setSearch}
+                onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle názvu…"
                 statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading}
                 countLabel={`${count} ${pluralize(count, ["organizace", "organizace", "organizací"])}`}
             />
 
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Název</TableHead>
@@ -127,7 +130,7 @@ function Organizations() {
                                 {search ? "Žádná organizace neodpovídá hledání." : "Zatím tu není žádná organizace."}
                             </TableCell>
                         </TableRow>
-                    ) : visibleOrganizations.map((organization) => (
+                    ) : pageItems.map((organization) => (
                         <TableRow
                             key={organization.id}
                             data-state={organization.id === detailId ? "selected" : undefined}
@@ -143,7 +146,7 @@ function Organizations() {
                             <TableCell onClick={(event) => event.stopPropagation()}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${organization.name}`}><IconDots /></Button>
+                                        <Button size="icon-row" variant="ghost" aria-label={`Akce pro ${organization.name}`}><IconDots /></Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onSelect={() => openDetail(organization.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
@@ -159,6 +162,7 @@ function Organizations() {
                     ))}
                 </TableBody>
             </Table>
+            {!loading && <TablePagination {...paginationProps} />}
 
             <OrganizationSheet
                 open={detailId != null}

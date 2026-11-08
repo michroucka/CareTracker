@@ -1,9 +1,9 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPencil } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck } from "@tabler/icons-react";
 import { RecordSheet } from "@/components/data/RecordSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useRecordForm } from "@/hooks/useRecordForm";
 import { TaskFields } from "./TaskFields";
 import { formatTaskPrice, toFormValues, toRequest, unitTypeLabel, validateTask } from "./taskForm";
@@ -53,21 +53,14 @@ export function TaskSheet({ open, onOpenChange, task, isLoading, canEdit, organi
         if (saved) setIsEditing(false);
     };
 
-    const actions = task && canEdit && !isEditing && (
+    const canAct = Boolean(task && canEdit && !isEditing);
+    const moreActions = canAct && (
         <>
-            <Button size="sm" variant="outline" onClick={startEditing}><IconPencil /> Upravit</Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon-sm" variant="outline" aria-label="Další akce"><IconDots /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    {task.active ? (
-                        <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat úkon</DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat úkon</DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {task.active ? (
+                <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat úkon</DropdownMenuItem>
+            ) : (
+                <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat úkon</DropdownMenuItem>
+            )}
         </>
     );
 
@@ -87,7 +80,8 @@ export function TaskSheet({ open, onOpenChange, task, isLoading, canEdit, organi
             title={isEditing ? "Úprava úkonu" : task?.name}
             description={task ? `Detail úkonu ${task.name}` : "Detail úkonu"}
             isLoading={isLoading || !task}
-            actions={actions}
+            onEdit={canAct ? startEditing : undefined}
+            moreActions={moreActions}
             footer={footer}
             contentKey={isEditing ? "edit" : "view"}
         >

@@ -1,795 +1,371 @@
 import React from "react";
-import {useSearchParams} from "react-router-dom";
-import {useAuth} from "../contexts/AuthContext.tsx";
-import {useClients} from "../hooks/useClients.jsx";
-import {useDepartments} from "../hooks/useDepartments.jsx";
-import {useEmployees} from "../hooks/useEmployees.jsx";
-import {useTasks} from "../hooks/useTasks.jsx";
-import {useIsMobile} from "../hooks/useMediaQuery.js";
-import {columns, unitTypeTranslations} from "../constants/performedTaskConstants.js"
-import {removeDiacritics, formatDateTime, formatNumber} from "../utils/formatters.js";
-import {sortByKey} from "../utils/sorting.js";
-import {MIN_YEAR} from "../constants/globalConstants.js";
-import {
-    Button,
-    Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
-    Spinner,
-    Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow, Tooltip
-} from "@heroui/react";
-import {
-    ChevronDown,
-    Funnel,
-    MoreVertical,
-    Plus,
-    Search,
-    Trash2,
-    Eye, Printer, ClipboardList
-} from "lucide-react";
-import {usePerformedTasks} from "../hooks/usePerformedTasks.jsx";
-import {PerformedTaskCreateModal} from "../components/modals/performedTask/PerformedTaskCreateModal.jsx";
-import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
-import {FiltersModal} from "../components/modals/FiltersModal.jsx";
-import MonthYearPicker from "../components/MonthYearPicker.jsx";
-import {GenerateReceiptModal} from "../components/modals/performedTask/GenerateReceiptModal.jsx";
-import {DeleteConfirmationModal} from "../components/modals/DeleteConfirmationModal.jsx";
+import { useSearchParams } from "react-router-dom";
+import { useSearchParamsUpdater } from "../hooks/useSearchParamsUpdater";
+import { IconArrowDown, IconArrowUp, IconDots, IconLayoutSidebarRightExpand, IconPlus, IconPrinter, IconTrash } from "@tabler/icons-react";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { useClients } from "../hooks/useClients.jsx";
+import { useDepartments } from "../hooks/useDepartments.jsx";
+import { useDetailParam } from "../hooks/useDetailParam";
+import { useEmployees } from "../hooks/useEmployees.jsx";
+import { useMonthParam, useMultiSelectParam, useTextParam } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
+import { usePerformedTasks } from "../hooks/usePerformedTasks.jsx";
+import { useTasks } from "../hooks/useTasks.jsx";
+import { ROLES } from "../constants/roles.js";
+import { formatTime, removeDiacritics } from "../utils/formatters.js";
+import MonthYearPicker from "@/components/MonthYearPicker";
+import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { ListToolbar } from "@/components/data/ListToolbar";
+import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
+import { TablePagination } from "@/components/data/TablePagination";
+import { formatCount, formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PerformedTaskCreateSheet } from "@/components/performedTasks/PerformedTaskCreateSheet";
+import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskSheet";
+import { ReceiptDialog } from "@/components/performedTasks/ReceiptDialog";
+import { formatAmount } from "@/components/performedTasks/performedTaskForm";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
+
+function LoadingRows({ columnCount }) {
+    return Array.from({ length: 8 }, (_, index) => (
+        <TableRow key={index} className="hover:bg-transparent">
+            {Array.from({ length: columnCount }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
+        </TableRow>
+    ));
+}
+
+function MessageRow({ columnCount, children }) {
+    return (
+        <TableRow className="hover:bg-transparent">
+            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">{children}</TableCell>
+        </TableRow>
+    );
+}
+
+/** Memoized so sorting and opening a detail move existing rows instead of re-rendering ~1500 of them. */
+const PerformedTaskRow = React.memo(function PerformedTaskRow({ performedTask, isSelected, canEdit, onOpen, onDelete }) {
+    return (
+        <TableRow data-state={isSelected ? "selected" : undefined} onClick={() => onOpen(performedTask.id)} className="cursor-pointer">
+            <TableCell className="w-14 text-muted-foreground tabular-nums sm:w-20">{formatTime(performedTask.date)}</TableCell>
+            <TableCell>
+                <span className="font-medium text-foreground">{performedTask.clientName}</span>
+                <span className="block text-xs text-muted-foreground md:hidden">{performedTask.taskName} · {formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
+            </TableCell>
+            <TableCell className="max-md:hidden">
+                {performedTask.taskName}
+                <span className="ml-2 text-muted-foreground tabular-nums">{formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
+            </TableCell>
+            <TableCell className="text-muted-foreground max-lg:hidden">
+                {performedTask.caregivers?.map((caregiver) => caregiver.fullName).join(", ") || "–"}
+            </TableCell>
+            <TableCell className="text-right font-medium tabular-nums">{formatCurrency(performedTask.price)}</TableCell>
+            <TableCell onClick={(event) => event.stopPropagation()}>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button size="icon-row" variant="ghost" aria-label={`Akce pro záznam ${performedTask.taskName} u klienta ${performedTask.clientName}`}><IconDots /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => onOpen(performedTask.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
+                        {canEdit && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem variant="destructive" onSelect={() => onDelete(performedTask)}><IconTrash /> Smazat záznam</DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </TableCell>
+        </TableRow>
+    );
+});
+
+const dayFormatter = new Intl.DateTimeFormat("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
+
+/** "2026-11-06T15:22:00" → "Pátek 6. listopadu"; the year is shown by the month picker. */
+function formatDay(date) {
+    const label = dayFormatter.format(new Date(date));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+const dayKey = (date) => date.slice(0, 10);
+
+/** Day heading inside the table with the day's record count and total on the right. */
+function DayRow({ date, summary, columnCount }) {
+    return (
+        <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableCell colSpan={columnCount} className="py-2">
+                <div className="flex items-baseline justify-between gap-4">
+                    <span className="font-medium">{formatDay(date)}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                        <span className="max-sm:hidden">{summary.count} {pluralize(summary.count, ["záznam", "záznamy", "záznamů"])} · </span>
+                        {formatCurrency(summary.price)}
+                    </span>
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+}
+
+const monthPrefix = ({ month, year }) => `${year}-${String(month + 1).padStart(2, "0")}`;
 
 function PerformedTasks() {
-    const [searchParams, setSearchParams] = useSearchParams();
     const { user, superadminOrg } = useAuth();
-    const {
-        performedTasks,
-        setPerformedTasks,
-        loading,
-        fetchPerformedTasks,
-        fetchPerformedTask,
-        createPerformedTask,
-        updatePerformedTask,
-        deletePerformedTask
-    } = usePerformedTasks();
+    const [searchParams] = useSearchParams();
+    const updateSearchParams = useSearchParamsUpdater();
+    // only admins choose departments; coordinators and caregivers see their own department
+    const canFilterDepartments = ADMIN_ROLES.includes(user.role);
+
+    const [search, setSearch] = useTextParam("search");
+    const [period, setPeriod] = useMonthParam();
+    const [departmentFilter, setDepartmentFilter] = useMultiSelectParam("departments", user.role !== ROLES.SUPERADMIN && user.departmentId ? [user.departmentId] : []);
+    const [caregiverFilter, setCaregiverFilter] = useMultiSelectParam("caregivers");
+    const [sortDirection, setSortDirection] = React.useState("descending");
+    const [isSorting, startSorting] = React.useTransition();
+    const { detailId, openDetail, closeDetail } = useDetailParam();
+    const [detail, setDetail] = React.useState(null);
+    const [isCreateOpen, setIsCreateOpen] = React.useState(() => searchParams.get("openCreate") === "true");
+    const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState(null);
+
+    const { performedTasks, setPerformedTasks, loading, fetchPerformedTasks, fetchPerformedTask, createPerformedTask, updatePerformedTask, deletePerformedTask } = usePerformedTasks();
     const { clients, fetchClients } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
 
-    const getInitialFilterValue = () => searchParams.get("search") || "";
-    const getInitialDepartmentFilter = () => {
-        const depts = searchParams.get("departments");
-        if (!depts) return new Set(["all"]);
-        return depts === "all" ? new Set(["all"]) : new Set(depts.split(","));
-    };
-    const getInitialCaregiverFilter = () => {
-        const caregivers = searchParams.get("caregivers");
-        if (!caregivers) return new Set(["all"]);
-        return caregivers === "all" ? new Set(["all"]) : new Set(caregivers.split(","));
-    };
-    const getInitialMonthYearFilter = () => {
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
-        const monthParam = Number(searchParams.get("month"));
-        const yearParam = Number(searchParams.get("year"));
-        const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
-        const year = (yearParam >= MIN_YEAR && yearParam <= currentYear) ? yearParam : currentYear;
-        return { month, year };
-    };
+    const needsOrganization = user.role === ROLES.SUPERADMIN && !superadminOrg;
+    const organizationId = superadminOrg?.id;
+    const departmentIds = canFilterDepartments ? [...departmentFilter].map(Number) : [user.departmentId];
+    const inSelectedDepartments = (record) => departmentIds.length === 0 || departmentIds.includes(record.department?.id);
 
-    const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
-    const [departmentFilter, setDepartmentFilter] = React.useState(getInitialDepartmentFilter);
-    const [caregiverFilter, setCaregiverFilter] = React.useState(getInitialCaregiverFilter);
-    const [sortDescriptor, setSortDescriptor] = React.useState({
-        column: "date",
-        direction: "descending",
-    });
-    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(() => searchParams.get("openCreate") === "true");
-    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-    const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
-    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
-    const [isReceiptModalOpen, setIsReceiptModalOpen] = React.useState(false);
-    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
-    const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
+    // caregivers and clients offered in filters and forms follow the department selection
+    const departmentEmployees = React.useMemo(() => employees.filter(inSelectedDepartments),
+    // departmentIds is derived from departmentFilter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [employees, departmentFilter, user.departmentId]);
+    const departmentClients = React.useMemo(() => clients.filter(inSelectedDepartments),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clients, departmentFilter, user.departmentId]);
 
-    const hasLoadedMetadata = React.useRef(false);
-
-    const isMobile = useIsMobile();
-
-    const visibleColumns = React.useMemo(() => {
-        if (isMobile) {
-            return columns.filter(col => ["client", "task", "actions"].includes(col.key));
-        }
-        return columns;
-    }, [isMobile]);
-
-    const hasSearchFilter = Boolean(filterValue);
-
-    const departmentOptions = React.useMemo(() => {
-        return departments.map(dept => ({
-            name: dept.city,
-            key: dept.city
-        }));
-    }, [departments]);
-
-    const filteredEmployees = React.useMemo(() => {
-        let filtered = [...employees];
-
-        if (!departmentFilter.has("all")) {
-            filtered = filtered.filter(employee =>
-                departmentFilter.has(employee.department?.city)
-            );
-        }
-
-        return filtered;
-    }, [employees, departmentFilter]);
-
-    const caregiverOptions = React.useMemo(() => {
-        return filteredEmployees.map(emp => {
-            const fullName = `${emp.firstName} ${emp.lastName}`;
-            return {
-                name: fullName,
-                key: fullName
-            };
-        });
-    }, [filteredEmployees]);
-
-    const filteredClients = React.useMemo(() => {
-        if (departmentFilter.has("all")) {
-            return clients;
-        }
-        return clients.filter(client =>
-            departmentFilter.has(client.department?.city)
-        );
-    }, [clients, departmentFilter]);
-
-    const filteredItems = React.useMemo(() => {
-        let filteredPerformedTasks = [...performedTasks];
-
-        if (hasSearchFilter) {
-            const normalizedSearchValue = removeDiacritics(filterValue);
-            filteredPerformedTasks = filteredPerformedTasks.filter((performedTask) =>
-                removeDiacritics(performedTask.clientName).includes(normalizedSearchValue)
-            );
-        }
-
-        return filteredPerformedTasks;
-    }, [performedTasks, filterValue, hasSearchFilter]);
-
-    const sortedItems = React.useMemo(() => {
-        return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
-    }, [sortDescriptor, filteredItems]);
-
-    const onSearchChange = React.useCallback((value) => {
-        if (value) {
-            setFilterValue(value);
-        } else {
-            setFilterValue("");
-        }
-    }, []);
-
-    const onClear = React.useCallback(() => {
-        setFilterValue("");
-    }, []);
-
-    const handleDepartmentFilterChange = React.useCallback((keys) => {
-        const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !departmentFilter.has("all")) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setDepartmentFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setDepartmentFilter(new Set(["all"]));
-        }
-        else {
-            setDepartmentFilter(newKeys);
-        }
-    }, [departmentFilter]);
-
-    const handleCaregiverFilterChange = React.useCallback((keys) => {
-        const newKeys = new Set(keys);
-
-        if (newKeys.has("all") && !caregiverFilter.has("all")) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else if (newKeys.size > 1 && newKeys.has("all")) {
-            newKeys.delete("all");
-            setCaregiverFilter(newKeys);
-        }
-        else if (newKeys.size === 0) {
-            setCaregiverFilter(new Set(["all"]));
-        }
-        else {
-            setCaregiverFilter(newKeys);
-        }
-    }, [caregiverFilter]);
-
+    const caregiverOptions = departmentEmployees.map((employee) => ({ value: employee.id, label: `${employee.firstName} ${employee.lastName}` }));
+    const caregiverIds = [...caregiverFilter].map(Number).filter((id) => caregiverOptions.some((option) => option.value === id));
+    const filterKey = `${departmentIds.join(",")}|${caregiverIds.join(",")}|${period.month}|${period.year}`;
 
     React.useEffect(() => {
-        if (!user || hasLoadedMetadata.current) return;
-        if (user.role === "SUPERADMIN") return;
+        if (searchParams.get("openCreate") === null) return;
+        updateSearchParams((next) => {
+            next.delete("openCreate");
+        }, { replace: true });
+        // only the link from the dashboard carries the flag
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        hasLoadedMetadata.current = true;
-        fetchClients({ status: "true" });
-        fetchDepartments({ status: "true" });
-        fetchEmployees({ status: "true" });
-        fetchTasks({ status: "true" });
-    }, [user]);
+    const previousOrganizationId = React.useRef(organizationId);
+    React.useEffect(() => {
+        if (previousOrganizationId.current !== organizationId) {
+            setDepartmentFilter(new Set());
+            setCaregiverFilter(new Set());
+        }
+        previousOrganizationId.current = organizationId;
+    }, [organizationId, setDepartmentFilter, setCaregiverFilter]);
 
     React.useEffect(() => {
-        if (user?.role !== "SUPERADMIN") return;
-        if (!superadminOrg) {
+        if (needsOrganization) return;
+        fetchDepartments({ organizationId, status: true });
+        fetchEmployees({ organizationId, status: true });
+        fetchClients({ organizationId, status: true });
+        fetchTasks({ organizationId, status: true });
+        // reload filter and form options when the organization changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [organizationId, needsOrganization]);
+
+    React.useEffect(() => {
+        if (needsOrganization) {
             setPerformedTasks([]);
             return;
         }
-        fetchClients({ organizationId: superadminOrg.id, status: "true" });
-        fetchDepartments({ organizationId: superadminOrg.id, status: "true" });
-        fetchEmployees({ organizationId: superadminOrg.id, status: "true" });
-        fetchTasks({ organizationId: superadminOrg.id, status: "true" });
-    }, [user, superadminOrg]);
+        fetchPerformedTasks({
+            organizationId,
+            departmentIds: departmentIds.length ? departmentIds : undefined,
+            caregiverIds: caregiverIds.length ? caregiverIds : undefined,
+            month: period.month,
+            year: period.year,
+        });
+        // filterKey stands for departmentIds, caregiverIds and the period
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [organizationId, filterKey, needsOrganization]);
 
     React.useEffect(() => {
-        if (!user) return;
+        setDetail(null);
+        if (!detailId) return;
+        fetchPerformedTask(detailId).then(setDetail).catch(closeDetail);
+        // load whenever another record is opened
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [detailId]);
 
-        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
+    const visibleTasks = React.useMemo(() => {
+        const query = removeDiacritics(search.trim());
+        // a record created for another month is added to the list by the hook; keep it out of this one
+        const inPeriod = performedTasks.filter((performedTask) => performedTask.date.startsWith(monthPrefix(period)));
+        const matching = query
+            ? inPeriod.filter((performedTask) => removeDiacritics(`${performedTask.clientName} ${performedTask.taskName}`).includes(query))
+            : inPeriod;
+        // days always go newest first; the "Čas" column only orders records within a day
+        const timeDirection = sortDirection === "ascending" ? 1 : -1;
+        return [...matching].sort((a, b) => dayKey(b.date).localeCompare(dayKey(a.date)) || timeDirection * a.date.localeCompare(b.date));
+    }, [performedTasks, search, period, sortDirection]);
 
-        if (!allowedToFilterDepartment && user.departmentId && departments.length > 0) {
-            const userDepartment = departments.find(dept => dept.id === user.departmentId);
-            if (userDepartment && !departmentFilter.has(userDepartment.city)) {
-                setDepartmentFilter(new Set([userDepartment.city]));
-            }
-        }
-    }, [user, departments]);
+    const canEditRecord = (performedTask) => user.role !== ROLES.CAREGIVER
+        || performedTask?.caregivers?.some((caregiver) => caregiver.id === user.employeeId);
 
-    // Tracks whether we already know if a default department needs to be injected.
-    // Starts resolved if the URL already had an explicit selection (bookmarked/returning state),
-    // so the URL-sync effect below never overwrites it with a premature "all".
-    const [departmentDefaultResolved, setDepartmentDefaultResolved] = React.useState(
-        () => !!searchParams.get("departments")
-    );
+    const saveDetail = async (id, request) => setDetail(await updatePerformedTask(id, request));
 
-    React.useEffect(() => {
-        // Set default department filter once, and only when the URL does not already contain
-        // a specific department selection (to preserve bookmarked/returning state)
-        if (departmentDefaultResolved) return;
-        if (!user) return; // wait for auth-status to resolve before deciding
-
-        if (!user.departmentId) {
-            setDepartmentDefaultResolved(true);
-            return;
-        }
-
-        if (departments.length === 0) return; // wait for departments to load before deciding
-
-        const userDepartment = departments.find(dept => dept.id === user.departmentId);
-        if (userDepartment) {
-            setDepartmentFilter(new Set([userDepartment.city]));
-        }
-        setDepartmentDefaultResolved(true);
-    }, [user, departments, departmentDefaultResolved]);
-
-    React.useEffect(() => {
-        if (!user) return;
-        // Hold off writing to the URL until we know whether a default department needs to be
-        // injected first - otherwise this would prematurely persist "all" and starve the effect above.
-        if (!departmentDefaultResolved) return;
-
-        const params = new URLSearchParams();
-        const allowedToFilterDepartment = !['CAREGIVER', 'COORDINATOR'].includes(user.role);
-
-        if (filterValue) {
-            params.set("search", filterValue);
-        }
-
-        const shouldSaveFilters = user.role !== "SUPERADMIN" || !!superadminOrg;
-
-        if (allowedToFilterDepartment && shouldSaveFilters) {
-            if (!departmentFilter.has("all")) {
-                params.set("departments", Array.from(departmentFilter).join(","));
-            } else {
-                params.set("departments", "all");
-            }
-        }
-
-        if (shouldSaveFilters) {
-            if (!caregiverFilter.has("all")) {
-                params.set("caregivers", Array.from(caregiverFilter).join(","));
-            } else {
-                params.set("caregivers", "all");
-            }
-        }
-
-        params.set("month", monthYearFilter.month + 1);
-        params.set("year", monthYearFilter.year);
-
-        setSearchParams(params, { replace: true });
-    }, [filterValue, departmentFilter, caregiverFilter, monthYearFilter, user, superadminOrg, departmentDefaultResolved]);
-
-    const prevSuperadminOrgId = React.useRef(superadminOrg?.id);
-    React.useEffect(() => {
-        if (user?.role !== "SUPERADMIN") return;
-
-        if (prevSuperadminOrgId.current !== superadminOrg?.id) {
-            setDepartmentFilter(new Set(["all"]));
-            setCaregiverFilter(new Set(["all"]));
-        }
-
-        prevSuperadminOrgId.current = superadminOrg?.id;
-    }, [user, superadminOrg]);
-
-    React.useEffect(() => {
-        if (user?.role === "SUPERADMIN") {
-            if (!superadminOrg) return;
-            if (departments.length === 0 || employees.length === 0) return;
-        } else {
-            if (departments.length === 0 || employees.length === 0) return;
-        }
-
-        let currentFilteredEmployees = [...employees];
-        if (!departmentFilter.has("all")) {
-            currentFilteredEmployees = currentFilteredEmployees.filter(emp => departmentFilter.has(emp.department?.city));
-        }
-
-        const filters = {
-            organizationId: superadminOrg?.id,
-            departmentIds: getDepartmentIdsFromFilter(departmentFilter, departments),
-            caregiverIds: getCaregiverIdsFromFilter(caregiverFilter, currentFilteredEmployees),
-            month: monthYearFilter.month,
-            year: monthYearFilter.year,
-        };
-
-        fetchPerformedTasks(filters);
-    }, [superadminOrg, departmentFilter, caregiverFilter, monthYearFilter, user, departments, employees]);
-
-    function getDepartmentIdsFromFilter(departmentFilter, departments) {
-        if (departmentFilter.has("all")) {
-            return undefined;
-        }
-        return departments
-            .filter(dept => departmentFilter.has(dept.city))
-            .map(dept => dept.id);
-    }
-
-    function getCaregiverIdsFromFilter(caregiverFilter, employees) {
-        if (caregiverFilter.has("all")) {
-            return undefined;
-        }
-        return employees
-            .filter(emp => caregiverFilter.has(emp.fullName))
-            .map(emp => emp.id);
-    }
-
-    async function handleSelectPerformedTask(performedTaskId) {
-        try {
-            const performedTaskData = await fetchPerformedTask(performedTaskId);
-            setSelectedPerformedTask(performedTaskData);
-        } catch (error) {
-            console.error("Failed to load performed task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenCreateModal = () => {
-        setIsCreateModalOpen(true);
-    }
-
-    const handleCloseCreateModal = () => {
-        setIsCreateModalOpen(false);
-    }
-
-    const handleCreatePerformedTask = async (performedTaskData) => {
-        try {
-            await createPerformedTask(performedTaskData);
-            handleCloseCreateModal();
-        } catch (error) {
-            console.error("Failed to create performed task: ", error);
-            throw error;
-        }
-    }
-
-    const handleUpdatePerformedTask = async (performedTaskId, performedTaskData) => {
-        try {
-            return await updatePerformedTask(performedTaskId, performedTaskData);
-        } catch (error) {
-            console.error("Failed to update performed task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenDetailModal = async (performedTaskId) => {
-        setIsLoadingDetail(true);
-        setIsDetailModalOpen(true);
-
-        try {
-            await handleSelectPerformedTask(performedTaskId);
-        } catch {
-            setIsDetailModalOpen(false);
-        }
-
-        setIsLoadingDetail(false);
-    }
-
-    const handleCloseDetailModal = () => {
-        setSelectedPerformedTask(null);
-        setIsDetailModalOpen(false);
-    }
-
-    const handleOpenDeleteModal = async (performedTaskId) => {
-        setIsDeleteModalOpen(true);
-
-        try {
-            await handleSelectPerformedTask(performedTaskId);
-        } catch {
-            setIsDeleteModalOpen(false);
-        }
-    }
-
-    const handleCloseDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-    }
-
-    const handleDeletePerformedTask = async (performedTaskId) => {
-        try {
-            return await deletePerformedTask(performedTaskId);
-        } catch (error) {
-            console.error("Failed to delete performed task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenReceiptModal = () => {
-        setIsReceiptModalOpen(true);
-    }
-
-    const handleCloseReceiptModal = () => {
-        setIsReceiptModalOpen(false);
-    }
-
-    const handleOpenFiltersModal = () => {
-        setIsFiltersModalOpen(true);
+    const confirmDelete = async () => {
+        await deletePerformedTask(deleteTarget.id);
+        if (detailId === deleteTarget.id) closeDetail();
     };
 
-    const handleCloseFiltersModal = () => {
-        setIsFiltersModalOpen(false);
-    }
-
-    const handleFiltersChange = React.useCallback((filters) => {
-        setDepartmentFilter(filters.departmentFilter);
-        setCaregiverFilter(filters.caregiverFilter);
-        setMonthYearFilter(filters.monthYearFilter);
-    }, []);
-
-    const topContent = React.useMemo(() => {
-        return (
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
-                        className="w-full lg:max-w-[44%]"
-                        placeholder="Hledat podle klienta..."
-                        startContent={<Search className="size-5" />}
-                        value={filterValue}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                    />
-                    <div className="flex gap-3">
-                        <Button
-                            isIconOnly
-                            variant="flat"
-                            className="lg:hidden"
-                            onPress={handleOpenFiltersModal}
-                        >
-                            <Funnel className="size-4" />
-                        </Button>
-
-                        <MonthYearPicker
-                            onChange={setMonthYearFilter}
-                            defaultValue={monthYearFilter}
-                            className="hidden lg:flex"
-                            isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                        />
-
-                        {!['CAREGIVER', 'COORDINATOR'].includes(user.role) && (
-                            <Dropdown>
-                                <DropdownTrigger className="hidden lg:flex">
-                                    <Button
-                                        endContent={<ChevronDown className="size-4" />}
-                                        variant="flat"
-                                        className="text-foreground"
-                                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                                    >
-                                        Středisko
-                                    </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                    disallowEmptySelection
-                                    aria-label="Department Filter"
-                                    closeOnSelect={false}
-                                    selectedKeys={departmentFilter}
-                                    selectionMode="multiple"
-                                    onSelectionChange={handleDepartmentFilterChange}
-                                    className="max-h-60 overflow-y-auto"
-                                >
-                                    <DropdownItem key="all">Všechny</DropdownItem>
-                                    {departmentOptions.map((dept) => (
-                                        <DropdownItem key={dept.key}>
-                                            {dept.name}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </Dropdown>
-                        )}
-
-                        <Dropdown>
-                            <DropdownTrigger className="hidden lg:flex">
-                                <Button
-                                    endContent={<ChevronDown className="size-4" />}
-                                    variant="flat"
-                                    className="text-foreground"
-                                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                                >
-                                    Pečovatel
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Caregiver Filter"
-                                closeOnSelect={false}
-                                selectedKeys={caregiverFilter}
-                                selectionMode="multiple"
-                                onSelectionChange={handleCaregiverFilterChange}
-                                className="max-h-60 overflow-y-auto"
-                            >
-                                <DropdownItem key="all">Všichni</DropdownItem>
-                                {caregiverOptions.map((caregiver) => (
-                                    <DropdownItem key={caregiver.key}>
-                                        {caregiver.name}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
-                        </Dropdown>
-
-                        <Button color="primary"
-                                endContent={<Plus className="size-4" />}
-                                onPress={handleOpenCreateModal}
-                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                        >
-                            Přidat
-                        </Button>
-                    </div>
-                </div>
-                <div className="flex flex-row justify-between items-center">
-                    <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "úkon" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "úkony" : "úkonů"}</span>
-
-                    <Tooltip content="Vygenerovat stvrzenku" placement="bottom">
-                        <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            className="rounded-full"
-                            onPress={handleOpenReceiptModal}
-                            isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                        >
-                            <Printer className="size-5" />
-                        </Button>
-                    </Tooltip>
-                </div>
-            </div>
-        );
-    }, [
-        filterValue,
-        departmentFilter,
-        caregiverFilter,
-        filteredItems.length,
-        performedTasks.length,
-        onSearchChange,
-        onClear,
-        departmentOptions,
-        caregiverOptions,
-        handleDepartmentFilterChange,
-        handleCaregiverFilterChange,
-        handleOpenFiltersModal,
-        user,
-        superadminOrg,
-    ]);
-
-    const renderCell = React.useCallback((performedTask, columnKey) => {
-        const cellValue = performedTask[columnKey];
-
-        switch (columnKey) {
-            case "date":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{formatDateTime(performedTask.date)}</p>
-                    </div>
-                );
-            case "task":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">{performedTask.taskName}</p>
-                    </div>
-                );
-            case "client":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">
-                            {performedTask.clientName}
-                        </p>
-                    </div>
-                );
-            case "unitCount":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">
-                            {formatNumber(cellValue)} {unitTypeTranslations[performedTask.unitType] || "-"}
-                        </p>
-                    </div>
-                );
-            case "price":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-small">
-                            {formatNumber(cellValue)} Kč
-                        </p>
-                    </div>
-                );
-            case "actions": {
-                const canEdit = user?.role !== 'CAREGIVER' ||
-                    performedTask.caregivers?.some(c => c.id === user.employeeId);
-                return (
-                    <div className="relative flex justify-end items-center gap-2">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider={canEdit}>
-                                    <DropdownItem key="view"
-                                                  startContent={<ClipboardList />}
-                                                  variant="light"
-                                                  onPress={() => handleOpenDetailModal(performedTask.id)}
-                                                  isLoading={isLoadingDetail}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
-                                {canEdit && (
-                                    <DropdownSection>
-                                        <DropdownItem key="delete"
-                                                      startContent={<Trash2 />}
-                                                      variant="light"
-                                                      color="danger"
-                                                      onPress={() => handleOpenDeleteModal(performedTask.id)}
-                                        >
-                                            Smazat
-                                        </DropdownItem>
-                                    </DropdownSection>
-                                )}
-                            </DropdownMenu>
-                        </Dropdown>
-                    </div>
-                );
-            }
-            default:
-                return cellValue || "-";
+    const count = visibleTasks.length;
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleTasks, { resetKey: organizationId });
+    const totalPrice = visibleTasks.reduce((sum, performedTask) => sum + (performedTask.price ?? 0), 0);
+    const columnCount = 6;
+    // count and price per day over the whole filtered list, so a day split across pages shows its full total
+    const daySummaries = React.useMemo(() => {
+        const summaries = new Map();
+        for (const performedTask of visibleTasks) {
+            const summary = summaries.get(dayKey(performedTask.date)) ?? { count: 0, price: 0 };
+            summary.count += 1;
+            summary.price += performedTask.price ?? 0;
+            summaries.set(dayKey(performedTask.date), summary);
         }
-    }, [user, isLoadingDetail]);
-
-    const hasLoadedData = React.useRef(false);
-
-    React.useEffect(() => {
-        if (!loading && departments.length > 0 && employees.length > 0) {
-            hasLoadedData.current = true;
-        }
-    }, [loading, departments.length, employees.length]);
-
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
-    const isLoadingMetadata = departments.length === 0 || employees.length === 0;
-    const isLoading = !isSuperadminWithoutOrg && (loading || isLoadingMetadata || !hasLoadedData.current);
+        return summaries;
+    }, [visibleTasks]);
+    const toggleSort = () => startSorting(() => withPageReset(setSortDirection)(sortDirection === "descending" ? "ascending" : "descending"));
+    const SortIcon = sortDirection === "descending" ? IconArrowDown : IconArrowUp;
 
     return (
-        <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Performed tasks table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-                classNames={{ table: "clickable-rows" }}
-                onRowAction={(key) => handleOpenDetailModal(key)}
+        <div className="grid gap-6">
+            <PageHeader
+                title="Provedené úkony"
+                description="Záznamy péče, ze kterých vznikají měsíční výkazy a stvrzenky."
+                actions={!needsOrganization && (
+                    <>
+                        <Button variant="outline" onClick={() => setIsReceiptOpen(true)}><IconPrinter /> Stvrzenka</Button>
+                        <Button onClick={() => setIsCreateOpen(true)}><IconPlus /> Zapsat úkon</Button>
+                    </>
+                )}
+            />
+
+            <ListToolbar
+                search={search}
+                onSearchChange={withPageReset(setSearch)}
+                searchPlaceholder="Hledat podle klienta nebo úkonu…"
+                isLoading={loading && !needsOrganization}
+                countLabel={needsOrganization ? null : `${formatCount(count)} ${pluralize(count, ["záznam", "záznamy", "záznamů"])} · ${formatCurrency(totalPrice)}`}
             >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ? "end" : "start"}
-                            allowsSorting={column.sortable}
-                        >
-                            {column.name}
-                        </TableColumn>
-                    )}
+                {!needsOrganization && (
+                    <>
+                        <MonthYearPicker value={period} onChange={withPageReset(setPeriod)} />
+                        {canFilterDepartments && (
+                            <MultiSelectFilter label="Středisko" allLabel="Všechna" options={departments.map((department) => ({ value: department.id, label: department.city }))} selected={departmentFilter} onChange={withPageReset(setDepartmentFilter)} searchPlaceholder="Hledat středisko…" />
+                        )}
+                        <MultiSelectFilter label="Pečovatel" allLabel="Všichni" options={caregiverOptions} selected={caregiverFilter} onChange={withPageReset(setCaregiverFilter)} searchPlaceholder="Hledat pečovatele…" />
+                    </>
+                )}
+            </ListToolbar>
+
+            <Table ref={tableRef}>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead aria-sort={sortDirection}>
+                            <button type="button" onClick={toggleSort} className="-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase transition-colors duration-fast ease-out hover:text-foreground">
+                                Čas <SortIcon className="size-3.5" />
+                            </button>
+                        </TableHead>
+                        <TableHead>Klient</TableHead>
+                        <TableHead className="max-md:hidden">Úkon</TableHead>
+                        <TableHead className="max-lg:hidden">Pečovatelé</TableHead>
+                        <TableHead className="text-right">Cena</TableHead>
+                        <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
+                    </TableRow>
                 </TableHeader>
-                <TableBody
-                    isLoading={isLoading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání úkonů..." />}
-                    emptyContent={
-                        isSuperadminWithoutOrg
-                            ? "Vyberte prosím organizaci v navigační liště" : "Žádné provedené úkony nenalezeny"
-                    }
-                    items={sortedItems}>
-                    {(item) => (
-                        <TableRow key={item.id} onClick={() => handleOpenDetailModal(item.id)}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
+                <TableBody className={cn("transition-opacity duration-base ease-out", isSorting && "opacity-50")} aria-busy={isSorting || undefined}>
+                    {needsOrganization ? (
+                        <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
+                    ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
+                        <MessageRow columnCount={columnCount}>{search ? "Žádný záznam neodpovídá hledání." : "V tomto měsíci zatím nejsou žádné záznamy."}</MessageRow>
+                    ) : pageItems.map((performedTask, index) => {
+                        const day = dayKey(performedTask.date);
+                        const startsDay = index === 0 || dayKey(pageItems[index - 1].date) !== day;
+                        return (
+                            <React.Fragment key={performedTask.id}>
+                                {startsDay && <DayRow date={performedTask.date} summary={daySummaries.get(day)} columnCount={columnCount} />}
+                                <PerformedTaskRow
+                                    performedTask={performedTask}
+                                    isSelected={performedTask.id === detailId}
+                                    canEdit={canEditRecord(performedTask)}
+                                    onOpen={openDetail}
+                                    onDelete={setDeleteTarget}
+                                />
+                            </React.Fragment>
+                        );
+                    })}
                 </TableBody>
             </Table>
 
-            <PerformedTaskCreateModal
-                isOpen={isCreateModalOpen}
-                onClose={handleCloseCreateModal}
-                onSubmit={handleCreatePerformedTask}
-                clients={filteredClients}
-                caregivers={filteredEmployees}
+            {!needsOrganization && !loading && (
+                <TablePagination {...paginationProps} />
+            )}
+
+            <PerformedTaskSheet
+                open={detailId != null}
+                onOpenChange={(open) => !open && closeDetail()}
+                performedTask={detail}
+                isLoading={detailId != null && !detail}
+                canEdit={canEditRecord(detail)}
+                clients={departmentClients}
                 tasks={tasks}
+                caregivers={departmentEmployees}
+                onSave={saveDetail}
+                onDelete={() => setDeleteTarget(detail)}
             />
 
-            <PerformedTaskDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseDetailModal}
-                onSubmit={handleUpdatePerformedTask}
-                isLoading={isLoadingDetail}
-                performedTask={selectedPerformedTask}
-                clients={filteredClients}
-                caregivers={filteredEmployees}
+            <PerformedTaskCreateSheet
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                onCreate={createPerformedTask}
+                clients={departmentClients}
                 tasks={tasks}
-                readOnly={user?.role === 'CAREGIVER' && !selectedPerformedTask?.caregivers?.some(c => c.id === user.employeeId)}
+                caregivers={departmentEmployees}
+                defaultCaregiverId={user.employeeId}
             />
 
-            <DeleteConfirmationModal
-                isOpen={isDeleteModalOpen}
-                onClose={handleCloseDeleteModal}
-                onSubmit={handleDeletePerformedTask}
-                itemId={selectedPerformedTask?.id}
-                title="Smazat vykonaný úkon"
-                message="Opravdu chcete smazat tento vykonaný úkon?"
+            <ReceiptDialog
+                open={isReceiptOpen}
+                onOpenChange={setIsReceiptOpen}
+                clients={departmentClients}
+                departments={canFilterDepartments ? departments : departments.filter((department) => department.id === user.departmentId)}
+                defaultDepartmentId={departmentIds.length === 1 ? departmentIds[0] : user.departmentId}
+                canChooseDepartment={canFilterDepartments}
+                initialMonth={period}
             />
 
-            <GenerateReceiptModal
-                isOpen={isReceiptModalOpen}
-                onClose={handleCloseReceiptModal}
-                clients={filteredClients}
+            <ConfirmDialog
+                open={deleteTarget != null}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title="Smazat záznam úkonu?"
+                description={deleteTarget ? `${deleteTarget.taskName ?? deleteTarget.task?.name} u klienta ${deleteTarget.clientName ?? deleteTarget.client?.fullName} se trvale odstraní a nebude ve výkazu ani na stvrzence.` : ""}
+                confirmLabel="Smazat"
+                destructive
+                onConfirm={confirmDelete}
             />
-
-            <FiltersModal
-                isOpen={isFiltersModalOpen}
-                onClose={handleCloseFiltersModal}
-                onSubmit={handleFiltersChange}
-                user={user}
-                superadminOrgSelected={!!superadminOrg}
-                initialDepartmentFilter={departmentFilter}
-                initialCaregiverFilter={caregiverFilter}
-                departmentOptions={departmentOptions}
-                caregiverOptions={caregiverOptions}
-                showMonthYearFilter={true}
-                initialMonthYearFilter={monthYearFilter}
-            />
-        </>
+        </div>
     );
 }
 

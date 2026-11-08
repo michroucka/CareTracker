@@ -1,9 +1,9 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconMailForward, IconPencil } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconMailForward } from "@tabler/icons-react";
 import { RecordSheet, SheetSection } from "@/components/data/RecordSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { getRoleLabel } from "@/constants/roles";
 import { useRecordForm } from "@/hooks/useRecordForm";
@@ -69,25 +69,18 @@ export function EmployeeSheet({ open, onOpenChange, employee, isLoading, canEdit
     const fullName = employee && `${employee.firstName} ${employee.lastName}`;
     const canResend = employee?.email && !employee.isActivated;
 
-    const actions = employee && canEdit && !isEditing && (
+    const canAct = Boolean(employee && canEdit && !isEditing);
+    const moreActions = canAct && (
         <>
-            <Button size="sm" variant="outline" onClick={startEditing}><IconPencil /> Upravit</Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon-sm" variant="outline" aria-label="Další akce"><IconDots /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    {canResend && <DropdownMenuItem onSelect={onResendActivation}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>}
-                    {canResend && <DropdownMenuSeparator />}
-                    {employee.active ? (
-                        <DropdownMenuItem variant="destructive" disabled={isSelf} onSelect={onTerminate}>
-                            <IconBan /> {isSelf ? "Sebe nelze deaktivovat" : "Deaktivovat zaměstnance"}
-                        </DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat zaměstnance</DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {canResend && <DropdownMenuItem onSelect={onResendActivation}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>}
+            {canResend && <DropdownMenuSeparator />}
+            {employee.active ? (
+                <DropdownMenuItem variant="destructive" disabled={isSelf} onSelect={onTerminate}>
+                    <IconBan /> {isSelf ? "Sebe nelze deaktivovat" : "Deaktivovat zaměstnance"}
+                </DropdownMenuItem>
+            ) : (
+                <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat zaměstnance</DropdownMenuItem>
+            )}
         </>
     );
 
@@ -114,7 +107,8 @@ export function EmployeeSheet({ open, onOpenChange, employee, isLoading, canEdit
             title={isEditing ? "Úprava zaměstnance" : fullName}
             description={employee ? `Detail zaměstnance ${fullName}` : "Detail zaměstnance"}
             isLoading={isLoading || !employee}
-            actions={actions}
+            onEdit={canAct ? startEditing : undefined}
+            moreActions={moreActions}
             footer={footer}
             contentKey={isEditing ? "edit" : "view"}
         >

@@ -6,6 +6,7 @@ import { useClients } from "../hooks/useClients.jsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useListFilters, useMultiSelectParam } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ClientAccountDialog } from "@/components/clients/ClientAccountDialog";
@@ -13,6 +14,7 @@ import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialo
 import { clientAccountState } from "@/components/clients/clientAccount";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
@@ -126,6 +128,7 @@ function Clients() {
     const openDialog = (type, client) => setDialog({ type, client });
     const closeDialog = (open) => !open && setDialog(null);
 
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleClients, { resetKey: organizationId });
     const count = visibleClients.length;
     const columnCount = 5 + (canEdit ? 1 : 0);
     const departmentOptions = departments.map((department) => ({ value: department.id, label: department.city }));
@@ -140,22 +143,22 @@ function Clients() {
 
             <ListToolbar
                 search={search}
-                onSearchChange={setSearch}
+                onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle jména nebo města…"
                 statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading && !needsOrganization}
                 countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["klient", "klienti", "klientů"])}`}
             >
                 {canFilterDepartments && !needsOrganization && (
-                    <MultiSelectFilter label="Středisko" allLabel="Všechna" options={departmentOptions} selected={departmentFilter} onChange={setDepartmentFilter} searchPlaceholder="Hledat středisko…" />
+                    <MultiSelectFilter label="Středisko" allLabel="Všechna" options={departmentOptions} selected={departmentFilter} onChange={withPageReset(setDepartmentFilter)} searchPlaceholder="Hledat středisko…" />
                 )}
                 {!needsOrganization && (
-                    <MultiSelectFilter label="Pečovatel" allLabel="Všichni" options={caregiverOptions} selected={caregiverFilter} onChange={setCaregiverFilter} searchPlaceholder="Hledat pečovatele…" />
+                    <MultiSelectFilter label="Pečovatel" allLabel="Všichni" options={caregiverOptions} selected={caregiverFilter} onChange={withPageReset(setCaregiverFilter)} searchPlaceholder="Hledat pečovatele…" />
                 )}
             </ListToolbar>
 
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Klient</TableHead>
@@ -171,7 +174,7 @@ function Clients() {
                         <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
                         <MessageRow columnCount={columnCount}>{search ? "Žádný klient neodpovídá hledání." : "Žádní klienti pro zvolené filtry."}</MessageRow>
-                    ) : visibleClients.map((client) => {
+                    ) : pageItems.map((client) => {
                         const account = clientAccountState(client);
                         return (
                             <TableRow
@@ -196,7 +199,7 @@ function Clients() {
                                     <TableCell onClick={(event) => event.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button size="icon-sm" variant="ghost" aria-label={`Akce pro ${client.fullName}`}><IconDots /></Button>
+                                                <Button size="icon-row" variant="ghost" aria-label={`Akce pro ${client.fullName}`}><IconDots /></Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onSelect={() => navigate(`/clients/${client.id}`)}><IconArrowRight /> Otevřít detail</DropdownMenuItem>
@@ -223,6 +226,7 @@ function Clients() {
                     })}
                 </TableBody>
             </Table>
+            {!needsOrganization && !loading && <TablePagination {...paginationProps} />}
 
             <ClientTerminateDialog open={dialog?.type === "terminate"} onOpenChange={closeDialog} client={dialog?.client} onTerminate={terminateClient} />
             <ClientAccountDialog open={dialog?.type === "createAccount"} onOpenChange={closeDialog} client={dialog?.client} onCreate={createClientAccount} />

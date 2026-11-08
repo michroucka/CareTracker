@@ -2,84 +2,135 @@
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
         <style>
-            body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; font-size: 12px; color: #1E1A24; }
+            @page { size: A4; margin: 18mm 16mm 16mm 16mm; }
+            body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; font-size: 12px; color: #1E1A24; line-height: 1.4; }
             table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #E2DCE8; padding: 6px; text-align: left; }
-            th { background-color: #F7F3F9; }
-            h1 { margin: 0; }
-            h2, h3, h4 { margin: 6px 0; }
-            .top-content { width: 100%; border-collapse: collapse; border: none; margin-bottom: 4px; }
-            .top-content td { border: none; padding: 0; vertical-align: bottom; }
-            .mt-2 { margin-top: 8px; }
-            .month { font-size: 13px; color: #645C6E; margin-top: 2px; }
+            td, th { padding: 0; vertical-align: top; text-align: left; }
+            .muted { color: #645C6E; }
+            .right { text-align: right; }
+            .nowrap { white-space: nowrap; }
+            .label { font-size: 11px; font-weight: bold; letter-spacing: 0.4px; text-transform: uppercase; color: #645C6E; }
+
+            .header td { vertical-align: bottom; }
+            .document-title { font-size: 20px; font-weight: bold; margin: 0; }
+            .organization { font-size: 12px; margin-top: 2px; }
             .logo { width: 110px; height: 29.5px; }
-            .brand-rule { border-top: 2px solid #4A2B5E; margin: 6px 0 4px 0; }
-            .client-table { margin-bottom: 0; border: none; table-layout: auto; }
-            .client-table td { border: none; padding: 3px; }
+            .brand-rule { border-top: 2px solid #4A2B5E; margin: 10px 0 14px 0; }
+
+            .facts { margin-bottom: 18px; }
+            .facts td { padding-right: 16px; }
+            .fact-value { font-size: 13px; margin-top: 2px; }
             .client-name { font-size: 15px; font-weight: bold; }
-            .client-meta { font-size: 11px; color: #645C6E; }
-            .task-table td, th { padding: 2px 4px; }
-            .signature-table { margin-top: 32px; border: none; }
-            .signature-table td { border: none; width: 33%; padding: 0; }
-            .signature-dots { font-size: 14px; letter-spacing: 2px; text-align: center; }
-            .signature-label { font-size: 11px; margin-top: 2px; text-align: center; }
-            .total-table { border: none; }
-            .total-table td { border: none; padding: 0; }
+
+            .tasks th { font-size: 11px; font-weight: bold; letter-spacing: 0.4px; text-transform: uppercase; color: #645C6E;
+                        background-color: #F7F3F9; padding: 6px 8px; border-bottom: 1px solid #E2DCE8; }
+            .tasks td { padding: 6px 8px; border-bottom: 1px solid #EEEAF2; }
+            .tasks .total td { border-bottom: none; border-top: 2px solid #4A2B5E; padding-top: 8px; font-size: 13px; font-weight: bold; }
+            .empty { padding: 14px 8px; text-align: center; color: #645C6E; }
+
+            .payment { margin-top: 22px; border: 1px solid #E2DCE8; }
+            .payment td { padding: 12px; vertical-align: middle; }
+            .qr { width: 110px; height: 110px; display: block; }
+            .payment-row td { padding: 2px 0; }
+            .payment-row .payment-label { width: 110px; color: #645C6E; }
+            .amount { font-size: 15px; font-weight: bold; }
+
+            .signatures { margin-top: 48px; }
+            .signatures td { width: 33%; padding: 0 12px; }
+            .signature-line { border-top: 1px solid #1E1A24; padding-top: 4px; font-size: 11px; color: #645C6E; text-align: center; }
+
+            .footer { margin-top: 28px; font-size: 10px; color: #645C6E; text-align: center; }
         </style>
     </head>
     <body>
-        <table class="top-content">
+        <table class="header">
             <tr>
                 <td>
-                    <h1 th:text="${organizationName}">Nazev organizace</h1>
-                    <div class="month" th:text="${monthYear}">Leden 2026</div>
+                    <h1 class="document-title">Stvrzenka za poskytnuté služby</h1>
+                    <div class="organization" th:text="${organizationName}">Pečovatelská služba</div>
                 </td>
-                <td style="text-align: right;"><img class="logo" th:src="${logoUrl}" alt="CareTracker"/></td>
+                <td class="right"><img class="logo" th:src="${logoUrl}" alt="CareTracker"/></td>
             </tr>
         </table>
         <div class="brand-rule"></div>
-        <table class="client-table">
+
+        <table class="facts">
             <tr>
-                <td style="padding-left: 0;"><span class="client-name" th:text="${clientName}">Jmeno Prijmeni</span></td>
-                <td style="text-align: center;"><span class="client-meta">Nar.: </span><span class="client-meta" th:text="${clientDateOfBirth}">1.1.1970</span></td>
-                <td style="text-align: right; padding-right: 0;"><span class="client-meta">Adresa: </span><span class="client-meta" th:text="${clientAddress}">Ulice, PSC, Mesto</span></td>
+                <td style="width: 31%;">
+                    <div class="label">Klient</div>
+                    <div class="fact-value client-name" th:text="${clientName}">Jméno Příjmení</div>
+                    <div class="muted">nar. <span th:text="${clientDateOfBirth}">1. 1. 1940</span></div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="label">Adresa</div>
+                    <div class="fact-value" th:text="${clientStreet}">Ulice 1</div>
+                    <div class="fact-value" th:text="${clientCity}">301 00 Plzeň</div>
+                </td>
+                <td style="width: 19%;">
+                    <div class="label">Období</div>
+                    <div class="fact-value nowrap" th:text="${monthYear}">Leden 2026</div>
+                </td>
+                <td style="width: 17%; padding-right: 0;">
+                    <div class="label">Vystaveno</div>
+                    <div class="fact-value nowrap" th:text="${issuedDate}">1. 2. 2026</div>
+                </td>
             </tr>
         </table>
-        <h4>Provedené úkony</h4>
-        <table class="task-table">
+
+        <table class="tasks">
             <thead>
                 <tr>
-                    <th style="width: 70%">Název úkonu</th>
-                    <th style="width: 15%">Počet</th>
-                    <th style="width: 15%">Cena</th>
+                    <th style="width: 40%;">Úkon</th>
+                    <th class="right" style="width: 12%;">Záznamů</th>
+                    <th class="right" style="width: 17%;">Množství</th>
+                    <th class="right" style="width: 15%;">Sazba</th>
+                    <th class="right" style="width: 16%;">Cena</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="task : ${tasks}">
-                    <td th:text="${task.taskName}">nazev</td>
-                    <td th:text="${task.unitCount + ' ' + task.unitType}">pocet</td>
-                    <td th:text="${task.price + ' Kč'}">cena</td>
+                    <td th:text="${task.taskName}">Hygiena</td>
+                    <td class="right" th:text="${task.recordCount}">4</td>
+                    <td class="right" th:text="${task.amount}">1 h 45 min</td>
+                    <td class="right muted" th:text="${task.rate}">120 Kč / h</td>
+                    <td class="right" th:text="${task.price}">210 Kč</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(tasks)}">
+                    <td colspan="5" class="empty">V tomto měsíci nebyly klientovi poskytnuty žádné služby.</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="4">Celkem k úhradě</td>
+                    <td class="right" th:text="${totalPrice}">0 Kč</td>
                 </tr>
             </tbody>
         </table>
-        <table class="total-table mt-2">
+
+        <table class="payment" th:if="${qrCode != null}">
             <tr>
-                <td style="width: 70%; vertical-align: top;">
-                    <div th:if="${qrCode != null}">
-                        <img th:src="${'data:image/png;base64,' + qrCode}" style="display: block; width: 120px; height: 120px;"/>
-                    </div>
+                <td style="width: 134px;">
+                    <img class="qr" th:src="${'data:image/png;base64,' + qrCode}" alt="QR platba"/>
                 </td>
-                <td style="text-align: right; vertical-align: top;">
-                    <h3 style="margin: 0;">Celkem: <span th:text="${totalPrice}">0</span> Kč</h3>
+                <td>
+                    <div class="label" style="margin-bottom: 6px;">Platba převodem nebo QR kódem</div>
+                    <table>
+                        <tr class="payment-row"><td class="payment-label">Číslo účtu</td><td th:text="${accountNumber}">123456789/0100</td></tr>
+                        <tr class="payment-row"><td class="payment-label">Variabilní symbol</td><td th:text="${variableSymbol}">2601000001</td></tr>
+                        <tr class="payment-row"><td class="payment-label">Částka</td><td class="amount" th:text="${totalPrice}">0 Kč</td></tr>
+                    </table>
                 </td>
             </tr>
         </table>
-        <table class="signature-table">
+
+        <table class="signatures">
             <tr>
-                <td><div class="signature-dots">....................................</div><div class="signature-label">Datum</div></td>
-                <td><div class="signature-dots">....................................</div><div class="signature-label">Převzal</div></td>
-                <td><div class="signature-dots">....................................</div><div class="signature-label">Podpis</div></td>
+                <td style="padding-left: 0;"><div class="signature-line">Datum převzetí</div></td>
+                <td><div class="signature-line">Převzal (klient nebo zástupce)</div></td>
+                <td style="padding-right: 0;"><div class="signature-line">Za poskytovatele</div></td>
             </tr>
         </table>
+
+        <div class="footer">
+            <span th:text="${organizationName}">Pečovatelská služba</span> · vygenerováno v aplikaci CareTracker
+        </div>
     </body>
 </html>

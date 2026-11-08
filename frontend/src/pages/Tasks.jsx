@@ -4,10 +4,12 @@ import { useAuth } from "../contexts/AuthContext.tsx";
 import { useTasks } from "../hooks/useTasks.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
 import { useListFilters } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -89,6 +91,7 @@ function Tasks() {
         setDetail(updated ?? await fetchTask(id));
     };
 
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleTasks, { resetKey: organizationId });
     const count = visibleTasks.length;
     const columnCount = canEdit ? 6 : 4;
 
@@ -102,15 +105,15 @@ function Tasks() {
 
             <ListToolbar
                 search={search}
-                onSearchChange={setSearch}
+                onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle názvu…"
                 statusFilter={canEdit ? statusFilter : null}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading && !needsOrganization}
                 countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["úkon", "úkony", "úkonů"])}`}
             />
 
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Název</TableHead>
@@ -132,7 +135,7 @@ function Tasks() {
                                 {search ? "Žádný úkon neodpovídá hledání." : "Katalog zatím neobsahuje žádné úkony."}
                             </TableCell>
                         </TableRow>
-                    ) : visibleTasks.map((task) => (
+                    ) : pageItems.map((task) => (
                         <TableRow
                             key={task.id}
                             data-state={task.id === detailId ? "selected" : undefined}
@@ -148,7 +151,7 @@ function Tasks() {
                                 <TableCell onClick={(event) => event.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button size="icon-sm" variant="ghost" aria-label={`Akce pro úkon ${task.name}`}><IconDots /></Button>
+                                            <Button size="icon-row" variant="ghost" aria-label={`Akce pro úkon ${task.name}`}><IconDots /></Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onSelect={() => openDetail(task.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
@@ -165,6 +168,7 @@ function Tasks() {
                     ))}
                 </TableBody>
             </Table>
+            {!needsOrganization && !loading && <TablePagination {...paginationProps} />}
 
             <TaskSheet
                 open={detailId != null}

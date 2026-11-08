@@ -1,9 +1,9 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPencil } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck } from "@tabler/icons-react";
 import { RecordSheet, SheetSection } from "@/components/data/RecordSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useRecordForm } from "@/hooks/useRecordForm";
 import { DepartmentFields } from "./DepartmentFields";
@@ -57,21 +57,14 @@ export function DepartmentSheet({ open, onOpenChange, department, isLoading, emp
         if (saved) setIsEditing(false);
     };
 
-    const actions = department && !isEditing && (
+    const canAct = Boolean(department && !isEditing);
+    const moreActions = canAct && (
         <>
-            <Button size="sm" variant="outline" onClick={startEditing}><IconPencil /> Upravit</Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon-sm" variant="outline" aria-label="Další akce"><IconDots /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    {department.active ? (
-                        <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat středisko</DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat středisko</DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {department.active ? (
+                <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat středisko</DropdownMenuItem>
+            ) : (
+                <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat středisko</DropdownMenuItem>
+            )}
         </>
     );
 
@@ -100,7 +93,8 @@ export function DepartmentSheet({ open, onOpenChange, department, isLoading, emp
             title={isEditing ? "Úprava střediska" : department?.city}
             description={department ? `Detail střediska ${department.city}` : "Detail střediska"}
             isLoading={isLoading || !department}
-            actions={actions}
+            onEdit={canAct ? startEditing : undefined}
+            moreActions={moreActions}
             footer={footer}
             contentKey={isEditing ? "edit" : "view"}
         >

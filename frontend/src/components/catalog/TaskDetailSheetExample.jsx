@@ -169,31 +169,18 @@ export function TaskDetailSheetExample() {
                 <Button variant="outline">Sheet – detail úkonu</Button>
             </SheetTrigger>
             <SheetContent className="w-full gap-0 sm:max-w-md">
-                <SheetHeader className="gap-3 border-b p-5 pr-14">
-                    <div className="flex flex-wrap items-center gap-2">
+                <SheetHeader className="gap-0 p-0">
+                    <div className="flex h-15 items-center gap-2 border-b pr-14 pl-5">
                         <Badge variant="secondary">Provedený úkon</Badge>
                         <span className="text-sm text-muted-foreground tabular-nums">{task.dateLabel} · {task.department}</span>
                     </div>
-                    <SheetTitle className="font-display text-2xl font-semibold tracking-tight">
+                    <SheetTitle className="px-5 pt-5 font-display text-2xl font-semibold tracking-tight">
                         {isEditing ? "Úprava úkonu" : task.taskName}
                     </SheetTitle>
                     <SheetDescription className="sr-only">Detail provedeného úkonu u klienta {task.client.name}</SheetDescription>
-                    {!isEditing && (
-                        <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}><IconPencil /> Upravit</Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button size="icon-sm" variant="outline" aria-label="Další akce"><IconDots /></Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                    <DropdownMenuItem variant="destructive"><IconTrash /> Smazat úkon</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    )}
                 </SheetHeader>
 
-                <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex-1 overflow-y-auto p-5 pt-4">
                     <AnimatePresence mode="wait" initial={false}>
                         <AnimatedPanel
                             key={isEditing ? "edit" : "detail"}
@@ -207,10 +194,22 @@ export function TaskDetailSheetExample() {
                     </AnimatePresence>
                 </div>
 
-                {isEditing && (
+                {isEditing ? (
                     <SheetFooter className="flex-row justify-end border-t p-4">
                         <Button variant="outline" onClick={() => setIsEditing(false)}>Zrušit</Button>
                         <Button onClick={() => setIsEditing(false)}>Uložit změny</Button>
+                    </SheetFooter>
+                ) : (
+                    <SheetFooter className="flex-row items-center justify-between border-t p-4">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="outline" aria-label="Další akce"><IconDots /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent side="top" align="start">
+                                <DropdownMenuItem variant="destructive"><IconTrash /> Smazat úkon</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button onClick={() => setIsEditing(true)}><IconPencil /> Upravit</Button>
                     </SheetFooter>
                 )}
             </SheetContent>

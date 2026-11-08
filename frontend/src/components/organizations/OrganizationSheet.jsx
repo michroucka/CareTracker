@@ -1,9 +1,9 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconPencil } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck } from "@tabler/icons-react";
 import { RecordSheet, SheetSection } from "@/components/data/RecordSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useRecordForm } from "@/hooks/useRecordForm";
 import { OrganizationFields } from "./OrganizationFields";
@@ -71,21 +71,14 @@ export function OrganizationSheet({ open, onOpenChange, organization, isLoading,
         description: employee.department?.city,
     }));
 
-    const actions = organization && !isEditing && (
+    const canAct = Boolean(organization && !isEditing);
+    const moreActions = canAct && (
         <>
-            <Button size="sm" variant="outline" onClick={startEditing}><IconPencil /> Upravit</Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon-sm" variant="outline" aria-label="Další akce"><IconDots /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    {organization.active ? (
-                        <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat organizaci</DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat organizaci</DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {organization.active ? (
+                <DropdownMenuItem variant="destructive" onSelect={onTerminate}><IconBan /> Deaktivovat organizaci</DropdownMenuItem>
+            ) : (
+                <DropdownMenuItem onSelect={onActivate}><IconCircleCheck /> Aktivovat organizaci</DropdownMenuItem>
+            )}
         </>
     );
 
@@ -107,7 +100,8 @@ export function OrganizationSheet({ open, onOpenChange, organization, isLoading,
             title={isEditing ? "Úprava organizace" : organization?.name}
             description={organization ? `Detail organizace ${organization.name}` : "Detail organizace"}
             isLoading={isLoading || !organization}
-            actions={actions}
+            onEdit={canAct ? startEditing : undefined}
+            moreActions={moreActions}
             footer={footer}
             contentKey={isEditing ? "edit" : "view"}
         >

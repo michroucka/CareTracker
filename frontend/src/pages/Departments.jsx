@@ -5,10 +5,12 @@ import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
 import { useListFilters } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { DepartmentCreateDialog } from "@/components/departments/DepartmentCreateDialog";
 import { DepartmentSheet } from "@/components/departments/DepartmentSheet";
@@ -114,6 +116,7 @@ function Departments() {
         fetchEmployees({ organizationId, status: true }, { silent: true });
     };
 
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleDepartments, { resetKey: organizationId });
     const count = visibleDepartments.length;
 
     return (
@@ -126,15 +129,15 @@ function Departments() {
 
             <ListToolbar
                 search={search}
-                onSearchChange={setSearch}
+                onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle města nebo ulice…"
                 statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading && !needsOrganization}
                 countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["středisko", "střediska", "středisek"])}`}
             />
 
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Město</TableHead>
@@ -150,7 +153,7 @@ function Departments() {
                         <MessageRow>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
                     ) : loading ? <LoadingRows /> : count === 0 ? (
                         <MessageRow>{search ? "Žádné středisko neodpovídá hledání." : "Zatím tu není žádné středisko."}</MessageRow>
-                    ) : visibleDepartments.map((department) => (
+                    ) : pageItems.map((department) => (
                         <TableRow
                             key={department.id}
                             data-state={department.id === detailId ? "selected" : undefined}
@@ -165,7 +168,7 @@ function Departments() {
                             <TableCell onClick={(event) => event.stopPropagation()}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button size="icon-sm" variant="ghost" aria-label={`Akce pro středisko ${department.city}`}><IconDots /></Button>
+                                        <Button size="icon-row" variant="ghost" aria-label={`Akce pro středisko ${department.city}`}><IconDots /></Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onSelect={() => openDetail(department.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
@@ -181,6 +184,7 @@ function Departments() {
                     ))}
                 </TableBody>
             </Table>
+            {!needsOrganization && !loading && <TablePagination {...paginationProps} />}
 
             <DepartmentSheet
                 open={detailId != null}

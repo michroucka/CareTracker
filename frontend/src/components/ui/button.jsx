@@ -27,6 +27,8 @@ const buttonVariants = cva(
         icon: "size-10",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-9",
+        // row actions in tables, keeps single-line rows at ~52 px
+        "icon-row": "size-8",
         "icon-lg": "size-11",
       },
     },
