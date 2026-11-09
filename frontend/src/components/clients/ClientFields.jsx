@@ -88,9 +88,9 @@ export function ClientFields({ idPrefix, values, errors, onChange, disabled, sha
                             <DatePicker {...controlProps} minDate={OLDEST_BIRTH_DATE} maxDate={todayIsoDate()} disabled={disabled} value={values.dateOfBirth} onChange={(date) => onChange("dateOfBirth", date)} />
                         )}
                     </FormField>
-                    <FormField {...field("personalNumber", "Osobní číslo", { hint: "Číslo klienta v evidenci organizace." })}>
+                    <FormField {...field("personalNumber", "Osobní číslo", { hint: "Číslo klienta v evidenci organizace, nejvýš 6 číslic." })}>
                         {(controlProps) => (
-                            <Input {...controlProps} inputMode="numeric" className="tabular-nums" disabled={disabled} value={values.personalNumber} onChange={(event) => onChange("personalNumber", event.target.value.replace(/\D/g, ""))} />
+                            <Input {...controlProps} inputMode="numeric" maxLength={6} className="tabular-nums" disabled={disabled} value={values.personalNumber} onChange={(event) => onChange("personalNumber", event.target.value.replace(/\D/g, ""))} />
                         )}
                     </FormField>
                     <div className="flex items-center gap-3 sm:pt-7">

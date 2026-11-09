@@ -54,6 +54,8 @@ export function validateClient(values, { withTermination = false } = {}) {
     if (values.email.trim() && !EMAIL.test(values.email.trim())) errors.email = "Zadejte platnou e-mailovou adresu";
     if (values.phone && !PHONE.test(values.phone)) errors.phone = "Telefon ve tvaru 123 456 789 nebo +420 123 456 789";
     if (values.personalNumber && !/^\d+$/.test(values.personalNumber)) errors.personalNumber = "Osobní číslo může obsahovat jen číslice";
+    // the number goes into the 10-digit payment variable symbol after year and month
+    else if (values.personalNumber && (Number(values.personalNumber) < 1 || values.personalNumber.length > 6)) errors.personalNumber = "Osobní číslo musí být mezi 1 a 999999";
     if (withTermination) {
         if (!values.terminationDate) errors.terminationDate = "Prosím zadejte datum ukončení";
         else if (values.terminationDate > todayIsoDate()) errors.terminationDate = "Datum ukončení nemůže být v budoucnosti";

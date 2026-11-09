@@ -57,12 +57,6 @@ class ReceiptFormattingTest {
     }
 
     @Test
-    void variableSymbolOfSevenDigitPersonalNumberHasElevenDigits() {
-        // a Czech variable symbol has at most 10 digits; personal numbers are generated from client IDs
-        assertEquals("26111234567", ReceiptFormatting.variableSymbol(1_234_567L, 11, 2026));
-    }
-
-    @Test
     void groupByTaskMakesOneRowPerTaskInOrderOfFirstAppearance() {
         Task walk = task(1, "Doprovod", UnitType.HOUR, 120);
         Task shopping = task(2, "Nákup", UnitType.OCCURRENCE, 50);
