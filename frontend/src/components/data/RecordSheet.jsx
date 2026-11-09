@@ -1,3 +1,4 @@
+import React from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconDots, IconLoader2, IconPencil } from "@tabler/icons-react";
 import { PersonAvatar } from "@/components/PersonAvatar";
@@ -34,9 +35,23 @@ export function RecordSheet({
     contentKey,
     children,
 }) {
+    // Sheets open from table rows (state in the URL), not from a trigger button, so Radix has nothing to
+    // return focus to; give it back to the row that opened the sheet, as long as that row is still there.
+    const openerRef = React.useRef(null);
+    const returnFocus = (event) => {
+        if (openerRef.current?.isConnected) {
+            event.preventDefault();
+            openerRef.current.focus();
+        }
+    };
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="w-full gap-0 sm:max-w-md">
+            <SheetContent
+                className="w-full gap-0 sm:max-w-md"
+                onOpenAutoFocus={() => { openerRef.current = document.activeElement; }}
+                onCloseAutoFocus={returnFocus}
+            >
                 <SheetHeader className="gap-0 p-0">
                     <div className="flex h-15 items-center gap-2 border-b pr-14 pl-5">
                         {badge && <Badge variant="secondary">{badge}</Badge>}

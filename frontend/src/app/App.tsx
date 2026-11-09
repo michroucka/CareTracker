@@ -202,10 +202,21 @@ export default function App() {
 
     return (
         <SidebarProvider defaultOpen={readSidebarOpenCookie()} className="md:h-svh md:overflow-hidden">
+            <a
+                href="#content"
+                onClick={(event) => {
+                    // move focus without adding #content to the URL
+                    event.preventDefault();
+                    contentRef.current?.focus();
+                }}
+                className="sr-only rounded-md bg-primary font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2"
+            >
+                Přeskočit na obsah
+            </a>
             <AppSidebar />
             <SidebarInset className="md:overflow-hidden">
                 <AppHeader />
-                <div ref={contentRef} data-scroll-root className="flex-1 md:overflow-y-auto">
+                <div ref={contentRef} id="content" tabIndex={-1} data-scroll-root className="flex-1 outline-none md:overflow-y-auto">
                     {/* keyed by pathname so every page change replays the short enter animation */}
                     <PageTransitionWrapper key={pathname} className="p-4 md:p-6">
                         {/* a page chunk loads in a fraction of a second; an empty area flickers less than a loader */}

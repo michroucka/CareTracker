@@ -533,7 +533,12 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 ### Fáze 7 – Doladění
 - [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.
 - [ ] Skeletony pro tabulky a karty.
-- [ ] Přístupnost: klávesnice ve všech dialozích a menu, viditelný focus, kontrast v obou režimech.
+- [x] Přístupnost:
+  - Kontrast tokenů změřen v obou režimech: vše ≥ 4,5:1 kromě `highlight` na kartě ve světlém režimu (3,31:1), použitý jen jako hvězdička povinného pole (`aria-hidden`, povinnost hlásí `aria-required`; jako grafický prvek stačí 3:1).
+  - Klikací řádky tabulek (`TableRow` s `onClick`) jdou Tabem, otevírají se Enterem / mezerníkem, mají viditelný fokus; klávesy na ovládacích prvcích v řádku (⋯) řádek neotevřou. Dřív šel detail klávesnicí otevřít jen přes menu ⋯, a to pečovatel u klientů ani klient v měsíčním přehledu neměl.
+  - `RecordSheet` po zavření vrací fokus na řádek, ze kterého se otevřel (dřív skončil na `body`).
+  - Odkaz „Přeskočit na obsah“ jako první prvek po Tabu.
+  - Ikonová tlačítka mají `aria-label`, pole bez viditelného popisku (hledání) taky.
 - [x] Responzivita: změřeno na 360 / 768 / 1024 / 1280 px – stránky nepřetékají. Tabulky skrývají sloupce podle své šířky (container queries: obal tabulky je `@container/table`, sloupce `@max-xl/table:hidden` (<576 px), `@max-3xl/table:hidden` (<768 px), `@max-4xl/table:hidden` (<896 px)), ne podle okna – s rozbaleným sidebarem na 768–1024 px dřív přetékaly až o 236 px. Hlavní sloupec (jméno) se zkracuje (`w-full max-w-0`), na mobilu tak zůstane vidět stav a menu ⋯.
 - [x] Hlavička na mobilu (<640 px): vnořené stránky místo drobečků ukazují odkaz zpět na nadřazenou stránku („‹ Klienti“ na detailu klienta, „‹ Detail klienta“ v plánu); stránky první úrovně dál jen svůj název. Od 640 px celé drobečky.
 - [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.

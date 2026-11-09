@@ -63,17 +63,31 @@ function TableFooter({
   )
 }
 
+// A row with onClick (opens a detail) is reachable with Tab and opens with Enter or Space;
+// keys pressed on controls inside the row (the "⋯" menu) are left to them.
 function TableRow({
   className,
+  onClick,
   ...props
 }) {
+  const keyboardProps = onClick && {
+    tabIndex: 0,
+    onKeyDown: (event) => {
+      if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return
+      event.preventDefault()
+      onClick(event)
+    },
+  }
+
   return (
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-border/70 transition-colors duration-base ease-out hover:bg-accent/60 has-aria-expanded:bg-accent/60 data-[state=selected]:bg-secondary/70 data-[state=selected]:shadow-[inset_3px_0_0_var(--primary)] data-[state=selected]:hover:bg-secondary",
+        "border-b border-border/70 transition-colors duration-base ease-out outline-none hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:shadow-[inset_0_0_0_2px_var(--ring)] has-aria-expanded:bg-accent/60 data-[state=selected]:bg-secondary/70 data-[state=selected]:shadow-[inset_3px_0_0_var(--primary)] data-[state=selected]:hover:bg-secondary",
         className
       )}
+      onClick={onClick}
+      {...keyboardProps}
       {...props}
     />
   )
