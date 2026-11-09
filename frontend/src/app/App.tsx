@@ -203,7 +203,7 @@ export default function App() {
             <AppSidebar />
             <SidebarInset className="md:overflow-hidden">
                 <AppHeader />
-                <div ref={contentRef} className="flex-1 md:overflow-y-auto">
+                <div ref={contentRef} data-scroll-root className="flex-1 md:overflow-y-auto">
                     {/* keyed by pathname so every page change replays the short enter animation */}
                     <PageTransitionWrapper key={pathname} className="p-4 md:p-6">
                         {routes}

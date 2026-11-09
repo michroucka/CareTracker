@@ -9,7 +9,8 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { unitTypeTranslations } from "@/constants/performedTaskConstants";
-import { daysFromToday, formatAgo, formatCount, formatRecordDate, pluralize, previousMonthDative } from "./dashboardFormat";
+import { planStatus } from "@/components/individualPlan/planForm";
+import { formatAgo, formatCount, formatRecordDate, pluralize, previousMonthDative } from "./dashboardFormat";
 
 function initials(name = "") {
     return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
@@ -174,14 +175,6 @@ function ListRowLink({ to, children }) {
             <IconChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-base ease-out group-hover:translate-x-0.5" />
         </Link>
     );
-}
-
-function planStatus(plannedUpdateDate) {
-    const days = daysFromToday(plannedUpdateDate);
-    if (days < 0) return { variant: "danger", label: `Po termínu ${-days} ${pluralize(days, ["den", "dny", "dní"])}` };
-    if (days === 0) return { variant: "pending", label: "Dnes" };
-    if (days <= 7) return { variant: "pending", label: `Za ${days} ${pluralize(days, ["den", "dny", "dní"])}` };
-    return { variant: "outline", label: `Za ${days} dní` };
 }
 
 export function PlanUpdatesCard({ plans = [] }) {
