@@ -1,0 +1,197 @@
+# Testy a CI – plán
+
+Rozhodnuto 2026-11-09. Cíl: aplikace pokrytá testy tak, aby šla dál rozvíjet bez strachu z regresí, a CI, které nepustí na `main` (a tím na demo) nic, co neprojde.
+
+Dnešní stav: 4 backendové testy (`PerformedTaskTest`, `ClientServiceTest`, `PerformedTaskServiceTest`, `ClientControllerTest`), 2 frontendové (`formatters.test.js`, `sorting.test.js`). Deploy na demo (`deploy-demo.yml`) běží po pushi na `main` bez jakékoli kontroly.
+
+---
+
+## 1. Rozhodnutí
+
+| Téma | Volba | Proč |
+| --- | --- | --- |
+| Databáze v testech | **Testcontainers + PostgreSQL 15** (stejná verze jako produkce) | Testy jdou přes skutečné Flyway migrace a skutečné SQL. H2 by schovala rozdíly (dotazy pro nástěnku, `bytea`, datumové funkce). |
+| Unit vs. integrační testy na backendu | Unit: `*Test` (Surefire, `mvn test`). Integrační se Springem a DB: `*IT` (Failsafe, `mvn verify`). | Rychlé testy běží zvlášť a hned, pomalé jen ve `verify`. |
+| Pokrytí backendu | JaCoCo, report v CI | Nejdřív jen report. Prahy až po fázi T2, pak se jen zvedají. |
+| Frontend | Vitest + Testing Library + `user-event` + `jest-dom`, API přes **MSW** | Testuje se chování z pohledu uživatele, ne implementace. MSW mockuje síť, ne `api.js`, takže se testuje i ten. |
+| E2E | Playwright, pár kritických toků | Proti skutečnému stacku (docker compose) s demo seedem. Jen to, co jinými testy nejde ověřit. |
+| CI | GitHub Actions na `ubuntu-latest` (má Docker pro Testcontainers) | Deploy dál na self-hosted runneru, ale až po zeleném CI. |
+| Nové funkce | Od teď test spolu s kódem (ideálně TDD) | Jinak dluh poroste znovu. |
+
+## 2. Kdo co dělá
+
+- **Ty:** první test každého druhu (označené **[ty]**). To je ten, kde se ustaví vzor – struktura, pojmenování, setup. Já dělám review, dokud vzor nesedí.
+- **Claude:** infrastruktura a CI (**[claude]**) a pak zbytek testů stejného druhu **podle tvého schváleného vzoru** (**[claude – podle vzoru]**). Ty to procházíš v PR jako review.
+- U každé fáze se nejdřív udělají položky **[ty]**, teprve potom ostatní.
+
+---
+
+## 3. Konvence
+
+- Struktura testů zrcadlí `main`: `service/ClientService` → `service/ClientServiceTest`.
+- Název testu popisuje chování, ne metodu: `caregiverCannotReadClientFromOtherDepartment`, ne `testGetClientById2`. Na frontendu `it("hides create button for caregiver")`.
+- Každý test má tři části: příprava → akce → ověření (Arrange / Act / Assert). Oddělit prázdným řádkem, žádné komentáře `// given`.
+- Jeden test = jeden důvod selhání. Víc `assert` je v pořádku, pokud ověřují tutéž věc.
+- Testovací data přes `TestData` (`testData.department(org)`, `testData.employee(dept, CAREGIVER)`), ne kopírovaný setup v každém testu. Metody vyplní povinná pole unikátními hodnotami, test mění jen to, na čem mu záleží.
+- Mockovat jen hranice systému (e-mail, geokódování, QR API, čas). Vlastní repozitáře a služby v integračních testech nemockovat.
+- Čas: kde logika závisí na „dnes“ (nástěnka, tento měsíc), injektovat `Clock` místo `LocalDate.now()`. Přidá se při psaní prvního takového testu.
+- Testy jsou nezávislé na pořadí. Integrační testy po sobě uklízí (`DatabaseCleaner` před každým testem vyprázdní všechny tabulky včetně dummy dat z migrací).
+- Na frontendu dotazy podle priority Testing Library: `getByRole` > `getByLabelText` > `getByText` > `getByTestId` (poslední možnost).
+
+## 4. Co čím testovat
+
+| Co | Typ testu | Nástroj |
+| --- | --- | --- |
+| Výpočty v entitách, formátování, čisté funkce | unit | JUnit / Vitest |
+| Oprávnění podle role a organizace/střediska | integrační přes HTTP | `@SpringBootTest` + MockMvc + Testcontainers |
+| Byznys pravidla služeb (životní cyklus, plány, tokeny) | integrační | `@SpringBootTest` + Testcontainers |
+| JPA specifikace a vlastní dotazy | integrační, jen JPA vrstva | `@DataJpaTest` + Testcontainers |
+| Validace vstupů, formát chyb, CSRF, login | web vrstva | `@WebMvcTest` nebo `@SpringBootTest` + MockMvc |
+| Hooky, komponenty, stránky | integrační na frontendu | Vitest + Testing Library + MSW |
+| Kritické toky přes celou aplikaci | E2E | Playwright |
+
+---
+
+## 5. Fáze
+
+### Fáze T0 – CI kostra
+Hned začne hlídat to, co už existuje.
+
+- [x] **[claude]** Větev `feature/testing` z `main`.
+- [x] **[claude]** `.github/workflows/ci.yml`: spouští se na `pull_request` a `push` do `main`. Dva paralelní joby:
+  - backend: Java 21 (Temurin), cache Maven, `mvn -B verify`;
+  - frontend: Node 22, cache npm, `npm ci`, `npm run lint`, `npm run coverage`, `npm run build`.
+  - Reporty (Surefire, Failsafe, JaCoCo, Vitest coverage) jako artefakty běhu.
+- [x] **[claude]** Frontend skripty `test:run` (`vitest run` – bez watch módu, jinak by CI viselo) a `coverage`.
+- [x] **[claude]** `deploy-demo.yml`: spustí se až po úspěšném CI pro push na `main` (`workflow_run`), navíc ručně (`workflow_dispatch`). `workflow_run` se bere z výchozí větve, takže začne platit až po merge.
+- [x] **[ty]** Na GitHubu ruleset `main`: merge jen přes PR, povinné checky Backend a Frontend, větev aktuální vůči `main`, zákaz force push a smazání, bez výjimek.
+- [ ] Ověřit: PR s rozbitým testem nejde mergnout a nespustí deploy.
+- [ ] **[ty]** Volitelně: Dockerfily frontendu jsou na `node:20`, CI na Node 22 (jsdom a jest-dom chtějí ≥ 22). Build v Dockeru funguje, jen hlásí varování o `engines` – zvážit přechod na `node:22`.
+
+### Fáze T1 – Infrastruktura testů
+Celé **[claude]**, ty review. Po této fázi jde napsat jakýkoli druh testu bez dalšího nastavování.
+
+Backend:
+- [x] Závislosti: `spring-boot-testcontainers`, `testcontainers:postgresql`, `testcontainers:junit-jupiter`. Failsafe plugin pro `*IT`. JaCoCo plugin (report z unit i IT testů dohromady, `target/site/jacoco/index.html`). Testcontainers přepnutý na 1.21.4 – verze ze Spring Boot 3.5.6 nefunguje s Docker Engine 29+.
+- [x] `src/test/resources/application-test.properties`: profil `test`, Flyway zapnutý (migrace se tím testují), hodnoty ze `secrets.properties` nahrazené testovacími. `ApplicationContextIT` ověřuje, že kontext nastartuje.
+- [ ] **[ty]** `ddl-auto=validate` v testech (kontrola, že entity sedí na schéma) zatím nejde: všechny sloupce `id` a `*_id` jsou v migracích `integer`, entity mají `Long` (Hibernate čeká `bigint`). Za běhu to nevadí, JDBC hodnoty převede. Rozhodnout: migrace na `bigint` (doporučeno, jedna Flyway migrace `ALTER COLUMN ... TYPE bigint` pro ID i cizí klíče), nebo `Integer` v entitách. Pak přepnout na `validate` – může odhalit další rozdíly.
+- [x] Sdílený kontejner Postgresu pro všechny IT (`@ServiceConnection`), aby se nestartoval pro každou třídu zvlášť.
+- [x] Základní třída `support/AbstractIntegrationTest` (Spring kontext, MockMvc, profil `test`, `DatabaseCleaner` před každým testem). Kontext je sdílený pro všechny IT – v podtřídách nepřidávat `@MockitoBean`, jinak vznikne nový kontext.
+- [x] Hranice systému v testech: `JavaMailSender` a `GeocodingService` jako `@MockitoBean` v základní třídě. QR platba v `ReceiptService` volá externí API přímo přes `RestClient.create()` – vyřešit v T2b (vytáhnout klienta do beanu, který jde mockovat).
+- [x] Pomocník na přihlášení: `.with(loggedInAs(employee))` – načte uživatele z DB stejně jako skutečný login (`MyUserDetails` s `userId`, `organizationId`), ne jen `@WithMockUser`, protože služby čtou organizaci a středisko z přihlášeného uživatele.
+- [x] `support/TestData`: `organization()`, `department(org)`, `employee(dept, role)` (včetně přihlašovacího účtu, heslo `TestData.PASSWORD`), `superadmin()`. Klient, úkon, provedený úkon atd. se doplní, jak je testy budou potřebovat.
+- [ ] Rozhodnout s tebou: přejmenovat/přesunout existující 4 testy podle konvencí (sekce 3), nebo je nechat.
+
+Frontend:
+- [x] Závislosti: `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`, `msw`, `@vitest/coverage-v8`.
+- [x] `vitest.config.js`: prostředí `jsdom` (existující `node` testy dál fungují), setup soubor (jest-dom matchery, MSW server start/reset/stop, úklid po testu).
+- [x] `src/test/`: `server.js` (MSW server, `apiUrl()`, `authStatusHandler()`; výchozí je nepřihlášený uživatel, neošetřený request test shodí), `render.jsx` (`renderWithProviders(ui, { authStatus, route })` – router, skutečný `AuthProvider` nad mockovaným `/auth-status`, téma, tooltipy, toasty; vrací i `user` z `user-event`), `users.js` (`caregiver()`, `coordinator()`, `admin()`, `superadmin()`, `client()`).
+- [x] Polyfilly pro jsdom, které Radix/shadcn potřebují (`matchMedia`, `ResizeObserver`, `scrollIntoView`, pointer capture).
+- [x] Skript `coverage`.
+
+### Fáze T2 – Backend
+
+Pořadí podle rizika: nejdřív oprávnění (únik dat mezi organizacemi je nejhorší chyba, co aplikace může mít), pak byznys logika, pak zbytek.
+
+#### T2a – Oprávnění (nejvyšší priorita)
+Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášený) × záznam (vlastní středisko / jiné středisko stejné organizace / jiná organizace) × akce (číst seznam, číst detail, vytvořit, upravit, ukončit, smazat). Očekávání: 200 / 403 / 404 a hlavně **seznam neobsahuje cizí záznamy**.
+
+- [ ] **[ty]** Vzor: `ClientAuthorizationIT` – detail klienta (`GET /api/clients/{id}`) pro pečovatele ze stejného a z jiného střediska a z jiné organizace. Naučí: Testcontainers, buildery, přihlášení jako konkrétní uživatel, parametrizovaný test (`@ParameterizedTest` + `@MethodSource`).
+- [ ] **[ty]** Seznam klientů (`GET /api/clients`) pro koordinátora – vrací jen jeho středisko, i když v parametru pošle cizí `departmentIds` / `organizationId`.
+- [ ] **[claude – podle vzoru]** Zbytek klientů: zápisy, ukončení/aktivace, účet klienta, fotka (čtení, nahrání, smazání), individuální plán (čtení, historie, verze, úpravy, denní záznamy).
+- [ ] **[claude – podle vzoru]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
+- [ ] **[claude]** Nepřihlášený na každý chráněný endpoint → 401 (jeden parametrizovaný test přes všechny URL).
+
+#### T2b – Doménová logika (unit)
+- [ ] **[ty]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.
+- [ ] **[claude – podle vzoru]** `ReceiptService`: součet ceny, variabilní symbol, seskupení podle úkonu, formáty částek a množství. Jsou to privátní metody – rozhodnout spolu: testovat přes `generateReceipt` (PDF → text), nebo je vytáhnout do malé čisté třídy (doporučeno, test pak nepotřebuje PDF).
+- [ ] **[claude]** `PictureService`: zmenšení na 512/128, ořez na čtverec, otočení podle EXIF, limit 5 MB a 30 Mpx, neplatný soubor → 400, WebP vstup. Testovací obrázky do `src/test/resources/pictures/`.
+- [ ] **[claude]** `DashboardService`: dostupné a výchozí pohledy podle role, součty za měsíc a 12 měsíců (s pevným `Clock`).
+
+#### T2c – Služby a byznys pravidla (integrační)
+- [ ] **[ty]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.
+- [ ] **[claude – podle vzoru]** Individuální plán: vytvoření, úprava = nová verze, historie verzí, přidání a smazání denního záznamu, pečovatel jen u svého klienta.
+- [ ] **[claude – podle vzoru]** Provedené úkony: vytvoření a úprava (`validateCaregiverAssignment`), mazání, filtry měsíc/den.
+- [ ] **[claude – podle vzoru]** Zaměstnanci, střediska, organizace, úkony: vytvoření, úprava, ukončení, aktivace a jejich vedlejší efekty (uživatelský účet zaměstnance).
+- [ ] **[ty]** Vzor: aktivační token – platný, prošlý, použitý podruhé. Naučí: testy s časem (`Clock`).
+- [ ] **[claude – podle vzoru]** Zbytek `UserService`: reset hesla (stejná odpověď pro existující i neexistující e-mail – žádné zjišťování účtů), dokončení aktivace, úprava vlastního účtu, opětovné odeslání aktivace.
+
+#### T2d – Specifikace a dotazy (JPA na Postgresu)
+- [ ] **[ty]** Vzor: `PerformedTaskSpecifications.hasDateInMonth` – první a poslední den měsíce, přelom roku (prosinec/leden), záznam o půlnoci. Naučí: `@DataJpaTest` s Testcontainers.
+- [ ] **[claude – podle vzoru]** `withFilters` u klientů, zaměstnanců a provedených úkonů – kombinace filtrů, prázdné filtry, neaktivní záznamy.
+- [ ] **[claude]** Vlastní dotazy v repozitářích (agregace pro nástěnku – zaokrouhlení ceny stejné jako `calculatePrice`).
+
+#### T2e – Web vrstva
+- [ ] **[ty]** Vzor: neplatný vstup při vytvoření klienta → 400 a JSON s `.message`. Naučí: `@WebMvcTest`, ověření JSON odpovědi (`jsonPath`).
+- [ ] **[claude – podle vzoru]** `GlobalExceptionHandler`: každá výjimka → správný status a `.message` (404, 400, prošlý token, neočekávaná chyba bez úniku stack trace).
+- [ ] **[claude]** Přihlášení formulářem (úspěch, špatné heslo, neaktivní účet), odhlášení, `auth-status`, remember-me cookie.
+- [ ] **[ty]** Rozhodnout o CSRF: v `SecurityConfig` je `csrf.disable()`, přitom autentizace stojí na session cookie. Patří spíš do sekce 7b brandingového plánu (před produkcí), testy pak ověří, že zápis bez tokenu neprojde.
+- [ ] **[claude]** E-mailové šablony: aktivace a reset hesla se vyrenderují a obsahují správný odkaz.
+
+#### T2f – Prahy pokrytí
+- [ ] **[claude]** Po T2 změřit pokrytí a nastavit JaCoCo práh těsně pod aktuální hodnotu (balíčky `service`, `controller`, `specification`). Práh se pak jen zvedá.
+
+### Fáze T3 – Frontend
+
+#### T3a – Čisté funkce
+- [ ] **[ty]** Vzor: `lib/dates.js` (`fromIsoDate`, `toIsoDate` – přelom měsíce, časová zóna, neplatný vstup). Existující `formatters.test.js` a `sorting.test.js` jsou dobrý vzor struktury.
+- [ ] **[claude – podle vzoru]** `lib/pagination.js`, `lib/pictures.js` (`pictureUrl`; `shrinkPhoto` přes mock `canvas`), doplnit chybějící případy ve `formatters`.
+
+#### T3b – API vrstva
+- [ ] **[ty]** Vzor: `api/api.js` – odpověď 401 vyvolá událost `auth:unauthorized`, chybová odpověď vyhodí chybu s `.message` ze serveru. Naučí: MSW (`server.use(...)` pro jeden test).
+- [ ] **[claude – podle vzoru]** Zbytek funkcí v `api.js` (`postJSON`, `putJSON`, `deleteJSON`, `uploadFile`, prázdné tělo odpovědi, chyba sítě).
+
+#### T3c – Hooky
+- [ ] **[ty]** Vzor: `useListFilters` – změna měsíce vynuluje den a stránku, hodnoty se čtou z URL. Naučí: `renderHook` s `MemoryRouter`.
+- [ ] **[claude – podle vzoru]** `useSearchParamsUpdater`, `usePagedList` (reset stránky při změně `resetKey`), `useRecordForm`, `useDetailParam`, `useTokenValidation`, datové hooky (`useClients` apod.) proti MSW.
+
+#### T3d – Komponenty
+- [ ] **[ty]** Vzor: `ProtectedRoute` – nepřihlášený → přesměrování na login, nepovolená role → přesměrování, povolená → obsah. Naučí: `renderWithProviders` s rolí.
+- [ ] **[ty]** Vzor interakce: `DayFilter` – vybrat jde jen den se záznamy, šipky skáčou mezi dny se záznamy, křížek vrátí celý měsíc. Naučí: `user-event`, klávesnice, `getByRole`.
+- [ ] **[claude – podle vzoru]** `DatePicker`, `MonthYearPicker`, `Combobox`, `MultiCombobox`, `PhotoInput` (neznámý formát → hláška), `PasswordInput`, `EmptyState`.
+- [ ] **[claude – podle vzoru]** `Table` – roving tabindex (Tab vstoupí na naposledy aktivní řádek, šipky, Home/End, → na ⋯), Enter otevře detail. `RecordSheet` – po zavření vrátí fokus na řádek.
+- [ ] **[claude]** `AuthContext` – načtení `auth-status`, odhlášení po `auth:unauthorized`.
+
+#### T3e – Stránky (integrační s MSW)
+- [ ] **[ty]** Vzor: `Login` – úspěšné přihlášení přesměruje, špatné heslo ukáže chybu. Naučí: celá stránka proti MSW, ověření navigace.
+- [ ] **[claude – podle vzoru]** Pro každou seznamovou stránku (Klienti, Zaměstnanci, Provedené úkony, Úkony, Střediska, Organizace, Měsíční přehled): filtry → správné parametry v requestu, prázdný stav, chyba → toast, viditelnost akcí podle role (pečovatel nevidí „Nový klient“ atd.).
+- [ ] **[claude – podle vzoru]** Formuláře: vytvoření klienta, provedeného úkonu, zaměstnance – validace, odeslání, chyba ze serveru.
+- [ ] **[claude]** Detail klienta, individuální plán, účet, aktivace a reset hesla, nástěnka (přepínač pohledů podle role).
+
+### Fáze T4 – E2E (Playwright)
+Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
+
+- [ ] **[claude]** Setup: Playwright ve `frontend/e2e/` (nebo samostatně `e2e/`), spuštění proti `docker-compose.yml` s demo seedem, job v CI (jen na PR do `main`, je pomalejší), screenshoty a trace při selhání jako artefakt.
+- [ ] **[ty]** Vzor: přihlášení koordinátora a vytvoření provedeného úkonu, který se pak objeví v seznamu. Naučí: Playwright lokátory, `expect` s čekáním, page objects jen pokud se opakují.
+- [ ] **[claude – podle vzoru]** Přihlášení za každou roli a co vidí v sidebaru; stažení stvrzenky (PDF se stáhne a není prázdné); úprava individuálního plánu; nahrání fotky; odhlášení po vypršení session.
+
+### Fáze T5 – Dotažení CI
+- [ ] **[claude]** Pokrytí do souhrnu PR (JaCoCo + Vitest coverage v `$GITHUB_STEP_SUMMARY`).
+- [ ] **[claude]** Prahy pokrytí na frontendu (stejně jako T2f: těsně pod aktuální stav, pak jen nahoru).
+- [ ] **[claude]** Dependabot pro Maven, npm a GitHub Actions (týdně, seskupené PR).
+- [ ] **[claude]** Volitelně CodeQL (Java + JS) – zdarma pro veřejné repo.
+- [ ] **[ty]** Branch protection doplnit o E2E check.
+- [ ] Do checklistu „stránka/funkce hotová“ přidat: „má testy, CI je zelené“.
+
+---
+
+## 6. Odkazy
+
+- Spring Boot – Testing: https://docs.spring.io/spring-boot/reference/testing/index.html (sekce „Testing Spring Boot Applications“ a „Testcontainers“)
+- Spring Security – Testing: https://docs.spring.io/spring-security/reference/servlet/test/index.html (sekce „Testing Method Security“ a „MockMvc Support“)
+- Testcontainers – PostgreSQL modul: https://java.testcontainers.org/modules/databases/postgres/
+- JUnit 5 – Parameterized Tests: https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests
+- AssertJ: https://assertj.github.io/doc/
+- Vitest: https://vitest.dev/guide/
+- Testing Library – priorita dotazů: https://testing-library.com/docs/queries/about#priority
+- user-event: https://testing-library.com/docs/user-event/intro
+- MSW: https://mswjs.io/docs/
+- Playwright: https://playwright.dev/docs/intro
+- GitHub Actions – `workflow_run`: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_run
+
+---
+
+## Log změn
+
+- 2026-11-09: T0 a T1 hotové na `feature/testing` (kromě branch protection a rozhodnutí o existujících testech). Lokálně ověřeno: `mvnw verify` (19 unit + 1 IT), `npm run coverage`, `npm run build`, lint.
+- 2026-11-09: plán založen. Testy píše uživatel jen jako vzor u každého druhu ([ty]), zbytek Claude podle schváleného vzoru.
