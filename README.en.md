@@ -7,6 +7,7 @@
   <p><strong>Care records, monthly reports and billing for home care services – in one place, without paper.</strong></p>
 
   <p>
+    <a href="https://caretracker.cz"><img alt="Website" src="https://img.shields.io/badge/website-caretracker.cz-4A2B5E?style=for-the-badge" /></a>
     <a href="https://demo.caretracker.cz"><img alt="Live demo" src="https://img.shields.io/badge/live_demo-demo.caretracker.cz-E26A35?style=for-the-badge" /></a>
   </p>
 
@@ -88,10 +89,14 @@ cd CareTracker
 
 cp .env.example .env
 # set POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB in .env;
-# e-mail and the Mapy.com key go into backend/src/main/resources/secrets.properties
+# e-mail, the Mapy.com key and the "Remember me" key go into
+# backend/src/main/resources/secrets.properties (template in .env.example)
+echo "app.remember-me.key=$(openssl rand -base64 32)" >> backend/src/main/resources/secrets.properties
 
 make up
 ```
+
+The backend does not start without `app.remember-me.key`. On the demo it comes from the `REMEMBER_ME_KEY` variable (template in `.env.demo.example`).
 
 | Service | Address |
 |---|---|

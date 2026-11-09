@@ -7,6 +7,7 @@
   <p><strong>Evidence péče, výkazy a vyúčtování pro pečovatelské služby – na jednom místě, bez papírů.</strong></p>
 
   <p>
+    <a href="https://caretracker.cz"><img alt="Web" src="https://img.shields.io/badge/web-caretracker.cz-4A2B5E?style=for-the-badge" /></a>
     <a href="https://demo.caretracker.cz"><img alt="Živé demo" src="https://img.shields.io/badge/%C5%BEiv%C3%A9_demo-demo.caretracker.cz-E26A35?style=for-the-badge" /></a>
   </p>
 
@@ -85,10 +86,14 @@ cd CareTracker
 
 cp .env.example .env
 # v .env nastav POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB;
-# e-mail a klíč k Mapy.com patří do backend/src/main/resources/secrets.properties
+# e-mail, klíč k Mapy.com a klíč pro „Zapamatovat si mě“ patří do
+# backend/src/main/resources/secrets.properties (vzor v .env.example)
+echo "app.remember-me.key=$(openssl rand -base64 32)" >> backend/src/main/resources/secrets.properties
 
 make up
 ```
+
+Bez `app.remember-me.key` backend nenastartuje. Na demu ho nastavuje proměnná `REMEMBER_ME_KEY` (vzor v `.env.demo.example`).
 
 | Služba | Adresa |
 |---|---|
