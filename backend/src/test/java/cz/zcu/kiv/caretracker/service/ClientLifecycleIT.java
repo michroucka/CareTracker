@@ -165,9 +165,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend vytvoří klientovi druhý účet, i když už jeden má (frontend nabízí vytvoření jen bez účtu). "
-            + "Sloupec app_user.client_id není unikátní; pak detail klienta, seznam klientů i blokování účtu "
-            + "vrací 400 \"Duplicate row was found\" / \"More than one row with the given identifier\".")
     void secondAccountForSameClientIsRejected() throws Exception {
         testData.clientAccount(client);
 

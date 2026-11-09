@@ -200,9 +200,13 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param client the client to create an account for
      * @param email the email address for the account and activation message
+     * @throws ValidationException if the client already has an account or the e-mail belongs to another account
      */
     @Transactional
     public void createUserForClient(Client client, String email) {
+        if (userRepository.existsByClientId(client.getId())) {
+            throw new ValidationException("Klient už má v aplikaci účet");
+        }
         validateEmailAvailable(email, null);
         User user = new User();
         user.setClient(client);
