@@ -1,8 +1,12 @@
 package cz.zcu.kiv.caretracker.support;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.service.GeocodingService;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 /**
@@ -35,6 +40,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected TestData testData;
 
+    @Autowired
+    protected ObjectMapper objectMapper;
+
     @MockitoBean
     protected JavaMailSender mailSender;
 
@@ -52,6 +60,11 @@ public abstract class AbstractIntegrationTest {
         databaseCleaner.clean();
     }
 
+    @BeforeEach
+    void stubMailSender() {
+        when(mailSender.createMimeMessage()).thenAnswer(invocation -> new MimeMessage((Session) null));
+    }
+
     /** Authenticates the request as the given user, loaded the same way as on a real login. */
     protected RequestPostProcessor loggedInAs(User account) {
         return user(userDetailsService.loadUserByUsername(account.getUsername()));
@@ -59,5 +72,13 @@ public abstract class AbstractIntegrationTest {
 
     protected RequestPostProcessor loggedInAs(Employee employee) {
         return loggedInAs(employee.getUser());
+    }
+
+    protected String json(Object body) {
+        try {
+            return objectMapper.writeValueAsString(body);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }
