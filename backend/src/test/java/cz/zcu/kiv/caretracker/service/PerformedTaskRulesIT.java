@@ -310,7 +310,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme úkon s datem v budoucnosti (formulář ho odmítne)")
     void recordCannotBeInFuture() throws Exception {
         clock.fixAt(LocalDateTime.of(2026, 11, 3, 9, 0));
 

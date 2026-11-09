@@ -15,6 +15,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,8 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     private TaskRepository taskRepository;
     @Autowired
     private EmployeeRepository employeeRepository;
+    @Autowired
+    private Clock clock;
 
     /**
      * Returns performed tasks filtered by the current user's role and the supplied optional criteria.
@@ -146,6 +150,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         }
         validateCaregivers(performedTask, client, caregivers);
         validateAmount(dto.getUnitCount(), task);
+        validateDate(dto.getDate());
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
         return performedTaskRepository.save(performedTask);
@@ -224,6 +229,15 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         if (currentUser.getRole() == UserRole.CAREGIVER
                 && caregivers.stream().noneMatch(c -> c.getId().equals(currentUser.getEmployee().getId()))) {
             throw new ValidationException("Mezi pečovateli musíte být i vy");
+        }
+    }
+
+    private void validateDate(LocalDateTime date) {
+        if (date == null) {
+            throw new ValidationException("Datum úkonu je povinné");
+        }
+        if (date.isAfter(LocalDateTime.now(clock))) {
+            throw new ValidationException("Úkon nemůže být v budoucnosti");
         }
     }
 
