@@ -17,6 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
     Optional<User> findByActivationToken(String activationToken);
+    Optional<User> findByResetToken(String resetToken);
     Optional<User> findByClientId(Long clientId);
     boolean existsByClientId(Long clientId);
     List<User> findByEmployee_OrganizationId(Long organizationId);

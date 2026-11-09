@@ -59,7 +59,7 @@ class PasswordResetIT extends AbstractIntegrationTest {
 
         String token = currentToken();
         assertThat(token).isNotNull();
-        assertThat(userRepository.findById(account.getId()).orElseThrow().getTokenExpiry()).isEqualTo(EXPIRY);
+        assertThat(userRepository.findById(account.getId()).orElseThrow().getResetTokenExpiry()).isEqualTo(EXPIRY);
         List<MimeMessage> mails = sentMails();
         assertThat(mails).hasSize(1);
         assertThat(recipientOf(mails.getFirst())).isEqualTo(account.getEmail());
@@ -101,7 +101,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: reset hesla u neaktivovaného účtu přepíše aktivační token; po resetu má účet heslo, ale žádné uživatelské jméno ani token, a nejde aktivovat ani se přihlásit")
     void resetRequestDoesNotReplaceActivationToken() throws Exception {
         User pending = testData.withPendingAccount(testData.employee(department, EmployeeRole.CAREGIVER)).getUser();
 
@@ -113,7 +112,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: aktivační token jde použít i pro reset hesla; účet pak má heslo bez uživatelského jména a token zmizí, takže aktivaci nejde dokončit")
     void activationTokenCannotResetPassword() throws Exception {
         User pending = testData.withPendingAccount(testData.employee(department, EmployeeRole.CAREGIVER)).getUser();
 
@@ -134,8 +132,8 @@ class PasswordResetIT extends AbstractIntegrationTest {
 
         User changed = userRepository.findById(account.getId()).orElseThrow();
         assertThat(passwordEncoder.matches(NEW_PASSWORD, changed.getPassword())).isTrue();
-        assertThat(changed.getActivationToken()).isNull();
-        assertThat(changed.getTokenExpiry()).isNull();
+        assertThat(changed.getResetToken()).isNull();
+        assertThat(changed.getResetTokenExpiry()).isNull();
     }
 
     @Test
@@ -217,7 +215,7 @@ class PasswordResetIT extends AbstractIntegrationTest {
     @Disabled("Nález: reset bez tokenu volá findByActivationToken(null), což najde účet s prázdným tokenem; "
             + "heslo dnes chrání jen NullPointerException na prázdném tokenExpiry, ne kontrola tokenu")
     void missingTokenChangesNoPasswordEvenWithLeftoverExpiry() throws Exception {
-        account.setTokenExpiry(EXPIRY);
+        account.setResetTokenExpiry(EXPIRY);
         userRepository.save(account);
 
         resetPasswordWithoutToken()
@@ -249,7 +247,7 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     private String currentToken() {
-        return userRepository.findById(account.getId()).orElseThrow().getActivationToken();
+        return userRepository.findById(account.getId()).orElseThrow().getResetToken();
     }
 
     private void assertPasswordUnchanged(User user) {

@@ -90,11 +90,11 @@ class UserAccountIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         User withToken = userRepository.findById(account.getId()).orElseThrow();
-        assertThat(withToken.getTokenExpiry()).isEqualTo(NOW.plusHours(24));
+        assertThat(withToken.getResetTokenExpiry()).isEqualTo(NOW.plusHours(24));
         List<MimeMessage> mails = sentMails();
         assertThat(mails).hasSize(1);
         assertThat(recipientOf(mails.getFirst())).isEqualTo(account.getEmail());
-        assertThat(mailText(mails.getFirst())).contains("/reset-password?token=" + withToken.getActivationToken());
+        assertThat(mailText(mails.getFirst())).contains("/reset-password?token=" + withToken.getResetToken());
     }
 
     @Test

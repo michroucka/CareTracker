@@ -55,7 +55,7 @@ public class ActivationController {
      */
     @GetMapping("/validate-reset")
     public ResponseEntity<MessageResponseDTO> validateResetToken(@RequestParam String token) {
-        boolean isValid = userService.validateToken(token);
+        boolean isValid = userService.validateResetToken(token);
 
         MessageResponseDTO response = new MessageResponseDTO(
                 isValid,
