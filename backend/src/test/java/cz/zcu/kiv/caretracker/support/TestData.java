@@ -10,12 +10,15 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Creates and saves valid entities for integration tests. Every method fills required fields
  * with unique defaults; the test then changes only what matters for it.
- * Add methods here (client, task, performed task...) as tests need them.
+ * Add methods here (task, performed task...) as tests need them.
  */
 @TestComponent
 public class TestData {
@@ -29,19 +32,28 @@ public class TestData {
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
+    private final IndividualPlanRepository individualPlanRepository;
+    private final DailyRecordRepository dailyRecordRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
+    private String encodedPassword;
 
     public TestData(OrganizationRepository organizationRepository,
                     DepartmentRepository departmentRepository,
                     EmployeeRepository employeeRepository,
                     UserRepository userRepository,
                     ClientRepository clientRepository,
+                    IndividualPlanRepository individualPlanRepository,
+                    DailyRecordRepository dailyRecordRepository,
                     PasswordEncoder passwordEncoder) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.clientRepository = clientRepository;
+        this.individualPlanRepository = individualPlanRepository;
+        this.dailyRecordRepository = dailyRecordRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -76,10 +88,11 @@ public class TestData {
         return employee;
     }
 
+    /** Client in the caregiver's department and organization. */
     public Client client(Employee caregiver) {
         Client client = new Client();
         client.setFirstName("Petr");
-        client.setLastName("Test " +  next());
+        client.setLastName("Test " + next());
         client.setGender(Gender.MALE);
         client.setDateOfBirth(LocalDate.of(1950, 6, 24));
         client.setStreet("Testovací");
@@ -90,9 +103,54 @@ public class TestData {
         client.setDepartment(caregiver.getDepartment());
         client.setOrganization(caregiver.getOrganization());
         client.setCaregiver(caregiver);
+        return clientRepository.save(client);
+    }
 
-        client = clientRepository.save(client);
-        return client;
+    /** Active login account of the client itself (role CLIENT). */
+    public User clientAccount(Client client) {
+        User user = account(UserRole.CLIENT);
+        user.setClient(client);
+        return userRepository.save(user);
+    }
+
+    /** Sets a small JPEG profile picture (both sizes already generated). */
+    public Client withPicture(Client client) {
+        byte[] image = TestImages.jpeg(16, 16);
+        Picture picture = new Picture();
+        picture.setData(image);
+        picture.setThumbnail(image);
+        picture.setContentType("image/jpeg");
+        picture.setSize((long) image.length);
+        picture.setUploadedAt(LocalDateTime.now());
+        client.setPicture(picture);
+        return clientRepository.save(client);
+    }
+
+    /** Individual plan with one content version (version 1). */
+    public IndividualPlan individualPlan(Client client) {
+        IndividualPlan plan = new IndividualPlan();
+        plan.setClient(client);
+        plan.setOrganization(client.getOrganization());
+
+        IndividualPlanContent firstVersion = new IndividualPlanContent();
+        firstVersion.setIndividualPlan(plan);
+        firstVersion.setVersionNumber(1);
+        firstVersion.setProcessedDate(LocalDate.of(2026, 1, 15));
+        firstVersion.setPlannedUpdateDate(LocalDate.of(2026, 12, 31));
+
+        plan.setCurrentContent(firstVersion);
+        plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
+        plan.setDailyRecords(new ArrayList<>());
+        return individualPlanRepository.save(plan);
+    }
+
+    public DailyRecord dailyRecord(IndividualPlan plan, Employee author) {
+        DailyRecord dailyRecord = new DailyRecord();
+        dailyRecord.setIndividualPlan(plan);
+        dailyRecord.setCreatedBy(author);
+        dailyRecord.setDate(LocalDate.of(2026, 11, 2));
+        dailyRecord.setContent("Záznam " + next());
+        return dailyRecordRepository.save(dailyRecord);
     }
 
     public User superadmin() {
@@ -104,9 +162,16 @@ public class TestData {
         User user = new User();
         user.setUsername(username);
         user.setEmail(username);
-        user.setPassword(passwordEncoder.encode(PASSWORD));
+        user.setPassword(encodedPassword());
         user.setRole(role);
         return user;
+    }
+
+    private String encodedPassword() {
+        if (encodedPassword == null) {
+            encodedPassword = passwordEncoder.encode(PASSWORD);
+        }
+        return encodedPassword;
     }
 
     private int next() {
