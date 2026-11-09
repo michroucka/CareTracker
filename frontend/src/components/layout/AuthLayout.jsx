@@ -23,12 +23,12 @@ function createRandom(seed) {
     };
 }
 
-function buildGrid() {
+/** Positions of the circles; the squares are one repeating SVG pattern. */
+function buildCircles() {
     const random = createRandom(7);
     const step = CELL_SIZE + CELL_GAP;
     const center = { x: (GRID_COLUMNS * step) / 2, y: (GRID_ROWS * step) / 2 };
     const maxDistance = Math.hypot(center.x, center.y);
-    const squares = [];
     const circles = [];
     const circleCells = new Set();
     // Circles never touch each other (incl. diagonally), otherwise they form clusters
@@ -37,21 +37,20 @@ function buildGrid() {
 
     for (let row = 0; row < GRID_ROWS; row++) {
         for (let column = 0; column < GRID_COLUMNS; column++) {
-            const x = column * step;
-            const y = row * step;
             const isNearEdge = column < CIRCLE_EDGE_MARGIN || row < CIRCLE_EDGE_MARGIN || column >= GRID_COLUMNS - CIRCLE_EDGE_MARGIN || row >= GRID_ROWS - CIRCLE_EDGE_MARGIN;
+            // one random draw per cell keeps the circles where they were before the grid became a pattern
             if (random() < CIRCLE_RATIO && !isNearEdge && !hasCircleNeighbour(column, row)) {
                 circleCells.add(`${column}:${row}`);
+                const x = column * step;
+                const y = row * step;
                 const cx = x + CELL_SIZE / 2;
                 const cy = y + CELL_SIZE / 2;
                 const delay = (Math.hypot(cx - center.x, cy - center.y) / maxDistance) * WAVE_DURATION_MS;
-                circles.push({ cx, cy, delay });
-            } else {
-                squares.push({ x, y });
+                circles.push({ x, y, cx, cy, delay });
             }
         }
     }
-    return { squares, circles, width: GRID_COLUMNS * step, height: GRID_ROWS * step };
+    return { circles, step, width: GRID_COLUMNS * step, height: GRID_ROWS * step };
 }
 
 /**
@@ -59,7 +58,8 @@ function buildGrid() {
  * Fades out towards the middle so the card stays on a clean surface.
  */
 function BrandGrid() {
-    const { squares, circles, width, height } = React.useMemo(buildGrid, []);
+    const patternId = React.useId();
+    const { circles, step, width, height } = React.useMemo(buildCircles, []);
 
     return (
         <svg
@@ -68,10 +68,15 @@ function BrandGrid() {
             preserveAspectRatio="xMidYMid slice"
             className="pointer-events-none absolute inset-0 size-full [mask-image:radial-gradient(ellipse_at_center,transparent_32%,black_95%)]"
         >
-            <g className="fill-white/[0.02]">
-                {squares.map(({ x, y }) => (
-                    <rect key={`${x}-${y}`} x={x} y={y} width={CELL_SIZE} height={CELL_SIZE} rx={CELL_RADIUS} />
-                ))}
+            <defs>
+                <pattern id={patternId} width={step} height={step} patternUnits="userSpaceOnUse">
+                    <rect width={CELL_SIZE} height={CELL_SIZE} rx={CELL_RADIUS} className="fill-white/[0.02]" />
+                </pattern>
+            </defs>
+            <rect width={width} height={height} fill={`url(#${patternId})`} />
+            {/* the pattern also has a square under each circle; cover it, the circle is not opaque */}
+            <g className="fill-brand-panel">
+                {circles.map(({ x, y }) => <rect key={`${x}-${y}`} x={x} y={y} width={CELL_SIZE} height={CELL_SIZE} />)}
             </g>
             <g className="fill-highlight/18">
                 {circles.map(({ cx, cy, delay }) => (
@@ -95,7 +100,7 @@ function BrandGrid() {
  */
 export function AuthLayout({ children }) {
     return (
-        <div className="relative grid min-h-svh place-items-center overflow-hidden bg-brand-panel px-4 py-12">
+        <main className="relative grid min-h-svh place-items-center overflow-hidden bg-brand-panel px-4 py-12">
             <BrandGrid />
 
             <div className="relative grid w-full max-w-md gap-8 rounded-2xl bg-card p-7 text-card-foreground shadow-lg ring-1 ring-black/5 sm:p-10 dark:ring-white/10">
@@ -106,7 +111,7 @@ export function AuthLayout({ children }) {
                 </div>
                 {children}
             </div>
-        </div>
+        </main>
     );
 }
 

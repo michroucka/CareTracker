@@ -547,6 +547,7 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 - [x] Hlavička na mobilu (<640 px): vnořené stránky místo drobečků ukazují odkaz zpět na nadřazenou stránku („‹ Klienti“ na detailu klienta, „‹ Detail klienta“ v plánu); stránky první úrovně dál jen svůj název. Od 640 px celé drobečky.
 - [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.
 - [ ] Lighthouse (výkon, přístupnost) na Login a PerformedTasks.
+  - Login, mobil (2026-11-09): výkon 99, přístupnost 98, best practices 100. Opraveno: přihlašovací stránky bez `<main>` (`AuthLayout`); mřížka na pozadí jako jeden SVG `<pattern>` místo 1 126 obdélníků (DOM 1 204 → 84 prvků, nejdelší úloha 181 ms). Bezpečnostní hlavičky zapsané v sekci 7b.
 - [ ] Nové screenshoty do README.
 
 ---
@@ -611,6 +612,18 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | Ochranná známka / doména | Před veřejným spuštěním ověřit „CareTracker“ v databázích ÚPV a EUIPO. |
 
 ---
+
+## 7b. Před produkčním nasazením
+
+Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, který servíruje frontend (`frontend/nginx.demo.conf`, případně produkční nginx), a pro API v Spring Security (`SecurityConfig` → `http.headers(...)`).
+
+- [ ] `Content-Security-Policy`: `default-src 'self'`; `connect-src` s adresou API; `font-src` a `style-src` pro Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`); `img-src 'self' data: blob:` + dlaždice Mapy.com (`api.mapy.com`); `frame-ancestors 'none'`. Otestovat přihlášení, mapu, fotky a PDF stvrzenky.
+- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains` (až běží HTTPS; začít s nižším `max-age`).
+- [ ] `X-Frame-Options: DENY` (pro starší prohlížeče vedle `frame-ancestors`).
+- [ ] `Cross-Origin-Opener-Policy: same-origin`.
+- [ ] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
+- [ ] Zvážit Trusted Types (`require-trusted-types-for 'script'`) – jen pokud nic nepoužívá `innerHTML` (pozor na `LogoControl` v `ClientMapDialog`).
+- [ ] Source mapy do produkčního buildu nedávat veřejně (Lighthouse je hlásí jako chybějící – to je v pořádku).
 
 ## 8. Odkazy
 
