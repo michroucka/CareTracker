@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,9 +22,6 @@ public class ActivationController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     /**
      * Validates an activation token, checking expiry and whether the account is already activated.
@@ -69,7 +65,6 @@ public class ActivationController {
 
     /**
      * Completes account activation by setting the username and password.
-     * The password is hashed here before being passed to the service.
      *
      * @param request contains the token, chosen username, and plaintext password
      * @return 200 OK on success; exceptions propagate to {@link cz.zcu.kiv.caretracker.exception.GlobalExceptionHandler}
@@ -80,8 +75,7 @@ public class ActivationController {
             return ResponseEntity.badRequest().body(new MessageResponseDTO(false, "Chybí povinné parametry"));
         }
 
-        String hashedPassword = passwordEncoder.encode(request.getPassword());
-        userService.completeActivation(request.getToken(), request.getUsername(), hashedPassword);
+        userService.completeActivation(request.getToken(), request.getUsername(), request.getPassword());
 
         log.info("Account activation completed successfully for user: {}", request.getUsername());
 

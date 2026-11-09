@@ -8,7 +8,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.TestData;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -225,7 +224,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend nekontroluje délku nového hesla při resetu, pravidlo (alespoň 6 znaků) je jen ve frontendu")
     void tooShortPasswordIsRejected() throws Exception {
         String token = requestedToken();
 

@@ -108,6 +108,16 @@ class UserAccountIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void ownUsernameShorterThanFourCharactersIsRejected() throws Exception {
+        User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
+
+        updateOwnAccount(account, "abc", account.getEmail())
+                .andExpect(status().isBadRequest());
+
+        assertThat(userRepository.findById(account.getId()).orElseThrow().getUsername()).isEqualTo(account.getUsername());
+    }
+
+    @Test
     void cannotClearOwnEmail() throws Exception {
         User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
 

@@ -31,6 +31,8 @@ import java.util.UUID;
 @Service
 public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final int MIN_USERNAME_LENGTH = 4;
+    private static final int MIN_PASSWORD_LENGTH = 6;
     private static final String RESET_REQUESTED_MESSAGE =
             "Pokud účet s tímto e-mailem existuje, poslali jsme na něj odkaz pro nastavení nového hesla";
 
@@ -64,17 +66,35 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param dto updated user data
      * @return the updated user entity
-     * @throws ValidationException if the username is empty or the e-mail belongs to another account
+     * @throws ValidationException if the username is empty or too short, or the e-mail belongs to another account
      */
     @Transactional
     public User updateCurrentUser(UserRequestDTO dto) {
         User user = getCurrentUser();
-        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
-            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
-        }
+        validateUsername(dto.getUsername());
         validateEmailAvailable(dto.getEmail(), user.getId());
         userMapper.requestToUser(user, dto);
         return userRepository.save(user);
+    }
+
+    /** Same rule as the activation and account forms in the frontend, which compare the trimmed value. */
+    private static void validateUsername(String username) {
+        if (isBlank(username)) {
+            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
+        }
+        if (username.trim().length() < MIN_USERNAME_LENGTH) {
+            throw new ValidationException("Uživatelské jméno musí mít alespoň " + MIN_USERNAME_LENGTH + " znaky");
+        }
+    }
+
+    /** Same rule as the activation and password reset forms in the frontend, which compare the trimmed value. */
+    private static void validatePassword(String password) {
+        if (isBlank(password)) {
+            throw new ValidationException("Heslo nesmí být prázdné");
+        }
+        if (password.trim().length() < MIN_PASSWORD_LENGTH) {
+            throw new ValidationException("Heslo musí mít alespoň " + MIN_PASSWORD_LENGTH + " znaků");
+        }
     }
 
     /**
@@ -103,7 +123,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * @return success message
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
-     * @throws ValidationException if the token is missing
+     * @throws ValidationException if the token is missing or the new password is too short
      */
     @Transactional
     public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
@@ -113,6 +133,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now(clock))) {
             throw new TokenExpiredException("Platnost odkazu pro reset hesla vypršela");
         }
+        validatePassword(dto.getPassword());
 
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
@@ -367,11 +388,12 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param token the activation token from the email link
      * @param username the chosen username
-     * @param password the already-hashed password
+     * @param password the chosen password in plain text
      * @return the activated user entity
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
-     * @throws ValidationException if the token is missing, the account is already activated or the username is taken
+     * @throws ValidationException if the token is missing, the account is already activated, the username is taken
+     *         or the username or password does not meet the rules
      */
     @Transactional
     public User completeActivation(String token, String username, String password) {
@@ -387,18 +409,21 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             throw new ValidationException("Účet je již aktivován");
         }
 
-        if (userRepository.findByUsername(username).isPresent()) {
+        validateUsername(username);
+        validatePassword(password);
+        String trimmedUsername = username.trim();
+        if (userRepository.findByUsername(trimmedUsername).isPresent()) {
             throw new ValidationException("Uživatelské jméno je již použité");
         }
 
-        user.setUsername(username);
-        user.setPassword(password);
+        user.setUsername(trimmedUsername);
+        user.setPassword(passwordEncoder.encode(password));
         user.setActivationToken(null);
         user.setTokenExpiry(null);
         user.setActive(true);
 
         User savedUser = userRepository.save(user);
-        log.info("User activation completed for: {}", username);
+        log.info("User activation completed for: {}", trimmedUsername);
 
         return savedUser;
     }
