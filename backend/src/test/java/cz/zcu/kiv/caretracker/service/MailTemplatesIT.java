@@ -86,6 +86,20 @@ class MailTemplatesIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void mailHasPlainTextAlternativeWithTheLink() throws Exception {
+        Client client = testData.client(caregiver);
+
+        userService.createUserForClient(client, "klient@caretracker.test");
+
+        String token = userRepository.findByClientId(client.getId()).orElseThrow().getActivationToken();
+        String plainText = mailText(onlyMail()).replace(mailHtml(onlyMail()), "");
+        assertThat(plainText)
+                .contains("Dobrý den, " + client.getFullName())
+                .contains("/activate?token=" + token)
+                .doesNotContain("<");
+    }
+
+    @Test
     void newClientAccountGetsActivationMailWithClientName() {
         Client client = testData.client(caregiver);
 
@@ -148,7 +162,7 @@ class MailTemplatesIT extends AbstractIntegrationTest {
 
         userService.resendActivationEmail(userRepository.findById(employee.getUser().getId()).orElseThrow());
 
-        assertEscapedScriptName(mailText(onlyMail()));
+        assertEscapedScriptName(mailHtml(onlyMail()));
     }
 
     @Test
@@ -160,7 +174,7 @@ class MailTemplatesIT extends AbstractIntegrationTest {
 
         userService.sendResetPasswordEmailByEmail(account.getEmail());
 
-        assertEscapedScriptName(mailText(onlyMail()));
+        assertEscapedScriptName(mailHtml(onlyMail()));
     }
 
     private void assertActivationMail(MimeMessage mail, String token, String recipientName) {

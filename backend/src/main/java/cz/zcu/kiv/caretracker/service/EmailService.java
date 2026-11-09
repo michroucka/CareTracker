@@ -20,6 +20,9 @@ import jakarta.mail.internet.MimeMessage;
  */
 @Service
 public class EmailService {
+
+    private static final int ACTIVATION_EXPIRY_DAYS = 7;
+    private static final int RESET_EXPIRY_HOURS = 24;
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     @Autowired
@@ -54,11 +57,20 @@ public class EmailService {
             context.setVariable("activationLink", activationLink);
             context.setVariable("appName", appName);
             context.setVariable("logoUrl", frontendUrl + "/email-logo.png");
-            context.setVariable("expiryDays", 7);
+            context.setVariable("expiryDays", ACTIVATION_EXPIRY_DAYS);
 
             String htmlContent = templateEngine.process("email/activation-email", context);
 
-            sendHtmlEmail(recipientEmail, "Aktivace účtu - " + appName, htmlContent);
+            String plainText = """
+                    Dobrý den, %s,
+
+                    v aplikaci %s pro vás byl založen účet. Pro jeho aktivaci otevřete tento odkaz:
+                    %s
+
+                    Odkaz je platný %d dní.
+                    """.formatted(recipientName, appName, activationLink, ACTIVATION_EXPIRY_DAYS);
+
+            sendHtmlEmail(recipientEmail, "Aktivace účtu - " + appName, plainText, htmlContent);
 
             log.info("Activation email sent successfully to: {}", recipientEmail);
         } catch (Exception e) {
@@ -93,20 +105,22 @@ public class EmailService {
     }
 
     /**
-     * Sends a UTF-8 HTML email via MIME message.
+     * Sends a UTF-8 HTML email via MIME message with a plain-text alternative,
+     * which mail clients without HTML show and spam filters expect.
      *
      * @param to recipient email address
      * @param subject email subject
+     * @param plainText plain-text body
      * @param htmlContent rendered HTML body
      */
-    private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
+    private void sendHtmlEmail(String to, String subject, String plainText, String htmlContent) throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setFrom(sender);
         helper.setTo(to);
         helper.setSubject(subject);
-        helper.setText(htmlContent, true);
+        helper.setText(plainText, htmlContent);
 
         javaMailSender.send(message);
     }
@@ -128,11 +142,20 @@ public class EmailService {
             context.setVariable("resetLink", resetLink);
             context.setVariable("appName", appName);
             context.setVariable("logoUrl", frontendUrl + "/email-logo.png");
-            context.setVariable("expiryHours", 24);
+            context.setVariable("expiryHours", RESET_EXPIRY_HOURS);
 
             String htmlContent = templateEngine.process("email/password-reset-email", context);
 
-            sendHtmlEmail(email, "Reset hesla - " + appName, htmlContent);
+            String plainText = """
+                    Dobrý den, %s,
+
+                    pro nastavení nového hesla v aplikaci %s otevřete tento odkaz:
+                    %s
+
+                    Odkaz je platný %d hodin. Pokud jste o reset hesla nežádali, e-mail ignorujte.
+                    """.formatted(recipientName, appName, resetLink, RESET_EXPIRY_HOURS);
+
+            sendHtmlEmail(email, "Reset hesla - " + appName, plainText, htmlContent);
 
             log.info("Password reset email sent successfully to: {}", email);
         } catch (Exception e) {
