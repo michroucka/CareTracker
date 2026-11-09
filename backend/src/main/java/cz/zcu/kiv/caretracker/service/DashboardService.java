@@ -20,6 +20,7 @@ import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -53,6 +54,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     @Autowired private IndividualPlanRepository individualPlanRepository;
     @Autowired private PerformedTaskMapper performedTaskMapper;
     @Autowired private DashboardMapper dashboardMapper;
+    @Autowired private Clock clock;
 
     /**
      * Returns the dashboard for the current user. Staff can switch between the views their role allows
@@ -118,7 +120,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         Long caregiverId = user.getEmployee().getId();
         List<MonthTotals> history = monthlyTotals(null, null, caregiverId);
         List<PerformedTask> todayTasks = performedTaskRepository.findByCaregivers_IdAndDateBetween(
-                caregiverId, LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay());
+                caregiverId, LocalDate.now(clock).atStartOfDay(), LocalDate.now(clock).plusDays(1).atStartOfDay());
         List<PerformedTask> monthTasks = performedTaskRepository
                 .findByCaregivers_IdAndDateBetween(caregiverId, monthStart(), monthEnd());
 
@@ -212,7 +214,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 (int) clientRepository.countByActiveTrue(),
                 activeUsersByRole,
                 userRepository.countByActivationTokenIsNotNullAndPasswordIsNull(),
-                userRepository.countByActivationTokenIsNotNullAndPasswordIsNullAndTokenExpiryBefore(LocalDateTime.now()),
+                userRepository.countByActivationTokenIsNotNullAndPasswordIsNullAndTokenExpiryBefore(LocalDateTime.now(clock)),
                 currentMonth(history).count(),
                 counts(history),
                 organizations);
@@ -227,7 +229,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
      * longest without a record first. Clients created within that period are skipped.
      */
     private void fillClientsWithoutRecentRecords(DashboardDTO dto, List<Client> clients) {
-        LocalDate threshold = LocalDate.now().minusDays(RECENT_RECORD_DAYS);
+        LocalDate threshold = LocalDate.now(clock).minusDays(RECENT_RECORD_DAYS);
         List<Client> establishedClients = clients.stream()
                 .filter(c -> c.getCreated() == null || c.getCreated().isBefore(threshold))
                 .toList();
@@ -289,7 +291,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         }
         List<MonthTotals> history = new ArrayList<>();
         for (int i = 11; i >= 0; i--) {
-            history.add(byMonth.getOrDefault(YearMonth.now().minusMonths(i), new MonthTotals(0, 0)));
+            history.add(byMonth.getOrDefault(YearMonth.now(clock).minusMonths(i), new MonthTotals(0, 0)));
         }
         return history;
     }
@@ -307,7 +309,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     }
 
     private LocalDateTime monthStart() {
-        return YearMonth.now().atDay(1).atStartOfDay();
+        return YearMonth.now(clock).atDay(1).atStartOfDay();
     }
 
     private LocalDateTime monthEnd() {
@@ -315,11 +317,11 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     }
 
     private LocalDateTime twelveMonthsStart() {
-        return YearMonth.now().minusMonths(11).atDay(1).atStartOfDay();
+        return YearMonth.now(clock).minusMonths(11).atDay(1).atStartOfDay();
     }
 
     private LocalDate planUpdateHorizon() {
-        return LocalDate.now().plusDays(PLAN_UPDATE_HORIZON_DAYS);
+        return LocalDate.now(clock).plusDays(PLAN_UPDATE_HORIZON_DAYS);
     }
 
     /** Converts query rows of [id, date] into a map. */

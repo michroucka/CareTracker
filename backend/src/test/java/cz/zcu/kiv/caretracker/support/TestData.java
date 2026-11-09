@@ -144,6 +144,11 @@ public class TestData {
 
     /** Individual plan with one content version (version 1). */
     public IndividualPlan individualPlan(Client client) {
+        return individualPlan(client, LocalDate.of(2026, 12, 31));
+    }
+
+    /** Individual plan with one content version (version 1) due for an update on the given date. */
+    public IndividualPlan individualPlan(Client client, LocalDate plannedUpdateDate) {
         IndividualPlan plan = new IndividualPlan();
         plan.setClient(client);
         plan.setOrganization(client.getOrganization());
@@ -152,7 +157,7 @@ public class TestData {
         firstVersion.setIndividualPlan(plan);
         firstVersion.setVersionNumber(1);
         firstVersion.setProcessedDate(LocalDate.of(2026, 1, 15));
-        firstVersion.setPlannedUpdateDate(LocalDate.of(2026, 12, 31));
+        firstVersion.setPlannedUpdateDate(plannedUpdateDate);
 
         plan.setCurrentContent(firstVersion);
         plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
@@ -171,10 +176,15 @@ public class TestData {
 
     /** Active catalog entry of the organization, priced per hour. */
     public Task task(Organization organization) {
+        return task(organization, UnitType.HOUR, 150);
+    }
+
+    /** Active catalog entry of the organization; HOUR tasks are priced per hour and recorded in minutes. */
+    public Task task(Organization organization, UnitType unitType, int unitPrice) {
         Task task = new Task();
         task.setName("Úkon " + next());
-        task.setUnitPrice(150);
-        task.setUnitType(UnitType.HOUR);
+        task.setUnitPrice(unitPrice);
+        task.setUnitType(unitType);
         task.setDoubleMeeting(false);
         task.setActive(true);
         task.setOrganization(organization);
@@ -195,19 +205,35 @@ public class TestData {
         return performedTask(client, task, client.getCaregiver(), date);
     }
 
+    /**
+     * Given amount of the task (minutes for HOUR tasks) for the client on the given date, performed by the
+     * client's caregiver and the optional co-caregivers.
+     */
+    public PerformedTask performedTask(Client client, Task task, LocalDateTime date, double unitCount,
+                                       Employee... coCaregivers) {
+        List<Employee> caregivers = new ArrayList<>(List.of(client.getCaregiver()));
+        caregivers.addAll(List.of(coCaregivers));
+        return performedTask(client, task, caregivers, date, unitCount);
+    }
+
     private PerformedTask performedTask(Client client, Task task, Employee caregiver, LocalDateTime date) {
+        return performedTask(client, task, List.of(caregiver), date, 60.0);
+    }
+
+    private PerformedTask performedTask(Client client, Task task, List<Employee> caregivers, LocalDateTime date,
+                                        double unitCount) {
         PerformedTask performedTask = new PerformedTask();
         performedTask.setClient(client);
         performedTask.setTask(task);
         performedTask.setDepartment(client.getDepartment());
         performedTask.setOrganization(client.getOrganization());
         performedTask.setDate(date);
-        performedTask.setUnitCount(60.0);
+        performedTask.setUnitCount(unitCount);
         performedTask.setCaregivers(new ArrayList<>());
         performedTask = performedTaskRepository.save(performedTask);
 
         // caregivers cascade PERSIST, which rejects the detached employee; the second save merges instead
-        performedTask.getCaregivers().add(caregiver);
+        performedTask.getCaregivers().addAll(caregivers);
         return performedTaskRepository.save(performedTask);
     }
 
