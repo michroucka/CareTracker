@@ -1,14 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "./table.css";
-@plugin "./hero.ts";
-@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Semantic tokens follow shadcn naming. HeroUI (hero.ts) is themed with the same values,
- * so shared utilities like bg-primary or bg-secondary look identical in both libraries.
- */
+/* Semantic tokens follow shadcn naming. */
 :root {
     --background: #F7F5F9;
     --foreground: #1E1A24;

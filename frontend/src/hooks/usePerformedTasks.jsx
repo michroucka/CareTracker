@@ -2,8 +2,7 @@ import {useRef, useState} from "react";
 import {deleteJSON, get, getJSON, postJSON, putJSON} from "../api/api.js";
 import {sortByKey} from "../utils/sorting.js";
 import {showErrorToast} from "../utils/errorHandler.jsx";
-import {CircleCheck, ClipboardCheck, ClipboardX, CloudAlert, Trash2} from "lucide-react";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 import {calculatePrice} from "../constants/performedTaskConstants.js";
 
 export function usePerformedTasks() {
@@ -68,7 +67,7 @@ export function usePerformedTasks() {
             }
 
             console.error("Error fetching performed tasks: ", error);
-            showErrorToast(error, "Chyba při načítání provedených úkonů", { icon: <CloudAlert /> });
+            showErrorToast(error, "Chyba při načítání provedených úkonů");
             setLoading(false);
         }
     };
@@ -79,7 +78,7 @@ export function usePerformedTasks() {
             return performedTask;
         } catch (error) {
             console.error("Error fetching performed task: ", error);
-            showErrorToast(error, "Úkon nenalezen", { icon: <CloudAlert/>})
+            showErrorToast(error, "Úkon nenalezen")
             throw error;
         }
     };
@@ -92,16 +91,12 @@ export function usePerformedTasks() {
                 sortByKey([...prev, newPerformedTask], "date", "descending")
             );
 
-            showToast({
-                title: "Úkon úspěšně uložen",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně uložen");
 
             return newPerformedTask;
         } catch (err) {
             console.error("Error creating performed tasks: ", err);
-            showErrorToast(err, "Chyba při ukládání úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při ukládání úkonu");
             throw err;
         }
     }
@@ -128,16 +123,12 @@ export function usePerformedTasks() {
                 "date", "descending"
             ));
 
-            showToast({
-                title: "Úkon úspěšně aktualizován",
-                color: "success",
-                icon: <CircleCheck />
-            });
+            toast.success("Úkon úspěšně aktualizován");
 
             return updated;
         } catch (err) {
             console.error("Error updating performed task:", err);
-            showErrorToast(err, "Chyba při aktualizaci úkonu", { icon: <CloudAlert /> });
+            showErrorToast(err, "Chyba při aktualizaci úkonu");
             throw err;
         }
     };
@@ -148,16 +139,12 @@ export function usePerformedTasks() {
 
             setPerformedTasks(prev => prev.filter(task => task.id !== id));
 
-            showToast({
-                title: "Úkon úspěšně odstraněn",
-                color: "success",
-                icon: <Trash2 />
-            });
+            toast.success("Úkon úspěšně odstraněn");
 
             return true;
         } catch (err) {
             console.error("Error deleting performed task:", err);
-            showErrorToast(err, "Chyba při odstraňování úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při odstraňování úkonu");
             throw err;
         }
     }
@@ -174,7 +161,7 @@ export function usePerformedTasks() {
             return await response.blob();
         } catch (error) {
             console.error("Error fetching receipt: ", error);
-            showErrorToast(error, "Chyba při generování stvrzenky", { icon: <CloudAlert/>})
+            showErrorToast(error, "Chyba při generování stvrzenky")
             throw error;
         }
     }

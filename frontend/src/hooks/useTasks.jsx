@@ -1,9 +1,8 @@
 import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {ClipboardCheck, ClipboardX, CloudAlert, UserRoundCheck, UserRoundX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 
 export function useTasks() {
     const [tasks, setTasks] = useState([]);
@@ -51,7 +50,7 @@ export function useTasks() {
             }
 
             console.error("Error fetching tasks:", err);
-            showErrorToast(err, "Chyba při načítání úkolů", { icon: <CloudAlert /> });
+            showErrorToast(err, "Chyba při načítání úkolů");
             if (!silent) setLoading(false);
         }
     };
@@ -61,7 +60,7 @@ export function useTasks() {
             return await getJSON(`/tasks/${id}`);
         } catch (error) {
             console.error("Error fetching task: ", error);
-            showErrorToast(error, "Úkon nenalezen", { icon: <ClipboardX /> })
+            showErrorToast(error, "Úkon nenalezen")
             throw error;
         }
     };
@@ -74,16 +73,12 @@ export function useTasks() {
                 sortByKey([...prev, newTask], 'name', 'ascending')
             );
 
-            showToast({
-                title: "Úkon úspěšně vytvořen",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně vytvořen");
 
             return newTask;
         } catch (err) {
             console.error("Error creating task:", err);
-            showErrorToast(err, "Chyba při vytváření úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při vytváření úkonu");
             throw err;
         }
     };
@@ -94,16 +89,12 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně aktualizován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně aktualizován");
 
             return updated;
         } catch (err) {
             console.error("Error updating task:", err);
-            showErrorToast(err, "Chyba při aktualizaci úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při aktualizaci úkonu");
             throw err;
         }
     };
@@ -114,16 +105,12 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně deaktivován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně deaktivován");
 
             return updated;
         } catch (err) {
             console.error("Error terminating task:", err);
-            showErrorToast(err, "Chyba při deaktivaci úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při deaktivaci úkonu");
             throw err;
         }
     };
@@ -134,16 +121,12 @@ export function useTasks() {
 
             fetchTasks(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Úkon úspěšně aktivován",
-                color: "success",
-                icon: <ClipboardCheck />
-            });
+            toast.success("Úkon úspěšně aktivován");
 
             return updated;
         } catch (err) {
             console.error("Error activating task:", err);
-            showErrorToast(err, "Chyba při aktivaci úkonu", { icon: <ClipboardX /> });
+            showErrorToast(err, "Chyba při aktivaci úkonu");
             throw err;
         }
     };

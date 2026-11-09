@@ -13,7 +13,7 @@ function filterOptions(value, search, keywords = []) {
 }
 
 /**
- * Searchable single select (replacement for HeroUI Autocomplete).
+ * Searchable single select.
  * options: [{ value, label, description? }]; `clearLabel` adds an option that sets the value to null.
  * Extra props (id, aria-*) go to the trigger, so it works with FormField's controlProps.
  */

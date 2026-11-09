@@ -492,17 +492,17 @@ Pořadí od nejjednodušší a nejsamostatnější:
 5. [x] `Employees.jsx` hotovo (filtr středisek `MultiSelectFilter` + `useMultiSelectParam`, stav účtu v tabulce, detail se zařazením a účtem, znovu poslání aktivace), `Clients.jsx` hotovo (filtry středisek a pečovatelů, stav účtu, dialogy ukončení smlouvy a účtu klienta; klik vede na stránku detailu)
 6. [x] `PerformedTasks.jsx` – tabulka (datum s řazením, množství a cena `tabular-nums`, pečovatelé), filtry měsíc / středisko / pečovatel v URL (`useMonthParam`, `useMultiSelectParam` s ID, hledání přes `useTextParam`), počet a součet ceny nad tabulkou. Detail v `PerformedTaskSheet` (`?detail=ID`, dlaždice množství a ceny, klient s odkazem, pečovatelé, poznámka, úprava na místě), zápis v `PerformedTaskCreateSheet` (`?openCreate=true` z nástěnky), smazání přes `ConfirmDialog`, stvrzenka v `ReceiptDialog`. Nové `MultiCombobox` a `MonthYearPicker` na shadcn (šipky na předchozí/další měsíc, `value` místo `defaultValue`). Smazány `PerformedTaskCreateModal`, `GenerateReceiptModal`, `FiltersModal`. `PerformedTaskDetailModal` + `PerformedTaskForm` zůstávají jen pro `MonthlyReport` (krok 7).
 7. [x] `ClientDetail.jsx` a `ClientCreate.jsx` hotovo (stránka s kartami Osobní údaje / Adresa a kontakt / Poznámky / Péče / Úkony / Ukončení smlouvy, úprava na místě přes sdílené `ClientFields` + `clientForm.js`, posun na první chybu po odeslání, `ClientAvatar`, `ClientPhotoInput`, mapa v `ClientMapDialog`; smazány `ClientForm` a `MapModal`). `IndividualPlan.jsx` hotovo (sekce plánu jako karty s ikonami, vpravo Platnost se štítkem termínu a souhrn klienta, výběr verze + pruh „starší verze“, nová verze ve formuláři s datem plánované aktualizace, prázdný stav, denní záznamy jako karty, `DailyRecordDialog`, smazání přes `ConfirmDialog`; smazány `ImageUpload`, `DailyRecord*Modal`, `DeleteConfirmationModal`). `MonthlyReport.jsx` hotovo (pohled klienta: dlaždice Úkony / K úhradě s QR platbou v dialogu, tabulka seskupená po dnech přes sdílené `DayRow` + `dayGroups.js`, detail v `PerformedTaskSheet` jen pro čtení s `linkClient={false}`; smazány `PerformedTaskForm`, `PerformedTaskDetailModal`, `ReadOnlyField`)
-8. [ ] Sdílené: `components/forms/*`, `components/modals/*`, `MonthYearPicker.jsx`, `ImageUpload.jsx`, `ReadOnlyField.jsx`, `MyToast.jsx`
+8. [x] Sdílené: `components/forms/*`, `components/modals/*`, `MonthYearPicker.jsx`, `ImageUpload.jsx`, `ReadOnlyField.jsx`, `MyToast.jsx`
 
 Každou stránku dokončit podle checklistu v sekci 6.
 
 ### Fáze 6 – Odstranění HeroUI
-- [ ] `grep -r "@heroui" src` vrací nic.
-- [ ] Odebrat `lucide-react` (`grep -r lucide-react src` nic nevrací), v `components.json` přepnout `iconLibrary` a po každém `shadcn add` převést ikony na Tabler.
-- [ ] Odebrat `@heroui/react`, `@heroui/toast`, `@heroui/use-theme`, `framer-motion` (pokud ho nic jiného nepoužívá; `motion` zůstává).
-- [ ] `index.css`: smazat `@plugin "./hero.ts"`, `@source ../../node_modules/@heroui…`, workaroundy pro toasty. Smazat `hero.ts`, `table.css` (pokud už nic nepoužívá).
-- [ ] `providers.tsx`: odstranit `HeroUIProvider`.
-- [ ] `npm run build` a porovnat velikost bundlu s velikostí před migrací.
+- [x] `grep -r "@heroui" src` vrací nic.
+- [x] Odebrat `lucide-react` (`grep -r lucide-react src` nic nevrací), v `components.json` přepnout `iconLibrary` a po každém `shadcn add` převést ikony na Tabler.
+- [x] Odebrat `@heroui/react`, `@heroui/toast`, `@heroui/use-theme`, `framer-motion` (pokud ho nic jiného nepoužívá; `motion` zůstává).
+- [x] `index.css`: smazat `@plugin "./hero.ts"`, `@source ../../node_modules/@heroui…`, workaroundy pro toasty. Smazat `hero.ts`, `table.css` (pokud už nic nepoužívá).
+- [x] `providers.tsx`: odstranit `HeroUIProvider`.
+- [x] `npm run build` a porovnat velikost bundlu s velikostí před migrací.
 
 ### Fáze 7 – Doladění
 - [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.
@@ -624,3 +624,4 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 | 2026-11-09 | Fáze 5, krok 7: detail a založení klienta na nových komponentách. Detail jako stránka (avatar, stav, středisko a pečovatel v hlavičce; akce Individuální plán / Upravit / ⋯ ukončit nebo aktivovat), formulář po kartách se sticky patičkou. Telefon a PSČ se při načtení do formuláře naformátují (seed data bez mezer neprošla validací). Nejstarší datum narození 1900 (dřív `MIN_YEAR` 1970). |
 | 2026-11-09 | Fáze 5, krok 7: `IndividualPlan` na nových komponentách. `planStatus` přesunut z nástěnky do `individualPlan/planForm.js`. Opraveno: u denních záznamů se nezobrazoval autor (`createdBy.fullName`), bez plánu se stránka nevrací zpět s toastem, ale ukáže prázdný stav. |
 | 2026-11-09 | Fáze 5, krok 7 hotový: `MonthlyReport` na nových komponentách, ověřeno jako klient (QR platba, detail úkonu). Řádky dnů z Provedených úkonů vytažené do `performedTasks/DayRow.jsx` a `dayGroups.js`. |
+| 2026-11-09 | Krok 8 a fáze 6 hotové: hooky volají `toast` ze Sonneru přímo (`MyToast` smazán), HeroUI, Lucide, `framer-motion`, `@react-aria/i18n` a `@internationalized/date` odinstalovány, `hero.ts` a `table.css` smazány, `iconLibrary` v `components.json` na Tabler. Bundle: CSS 369 → 170 kB, JS 2 264 → 2 252 kB (JS tvoří hlavně maplibre a recharts). |

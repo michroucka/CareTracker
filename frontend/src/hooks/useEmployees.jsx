@@ -1,9 +1,8 @@
 import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {CloudAlert, UserRoundCheck, UserRoundX, MailCheck, MailX} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 
 export function useEmployees() {
     const [employees, setEmployees] = useState([]);
@@ -70,7 +69,7 @@ export function useEmployees() {
             }
 
             console.error("Error fetching employees:", err);
-            showErrorToast(err, "Chyba při načítání zaměstnanců", { icon: <CloudAlert /> });
+            showErrorToast(err, "Chyba při načítání zaměstnanců");
             if (!silent) setLoading(false);
         }
     };
@@ -80,7 +79,7 @@ export function useEmployees() {
             return await getJSON(`/employees/${id}`);
         } catch (err) {
             console.error("Error fetching employee:", err);
-            showErrorToast(err, "Zaměstnanec nenalezen", {icon: <UserRoundX />});
+            showErrorToast(err, "Zaměstnanec nenalezen");
             throw err;
         }
     };
@@ -94,16 +93,12 @@ export function useEmployees() {
                 sortByKey([...prev, mappedEmployee], 'lastName', 'ascending')
             );
 
-            showToast({
-                title: "Zaměstnanec úspěšně vytvořen",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně vytvořen");
 
             return newEmployee;
         } catch (err) {
             console.error("Error creating employee:", err);
-            showErrorToast(err, "Chyba při vytváření zaměstnance", { icon: <UserRoundX /> });
+            showErrorToast(err, "Chyba při vytváření zaměstnance");
             throw err;
         }
     };
@@ -114,16 +109,12 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně aktualizován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně aktualizován");
 
             return updated;
         } catch (err) {
             console.error("Error updating employee:", err);
-            showErrorToast(err, "Chyba při aktualizaci zaměstnance", { icon: <UserRoundX /> });
+            showErrorToast(err, "Chyba při aktualizaci zaměstnance");
             throw err;
         }
     };
@@ -134,16 +125,12 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně deaktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně deaktivován");
 
             return updated;
         } catch (err) {
             console.error("Error terminating employee:", err);
-            showErrorToast(err, "Chyba při deaktivaci zaměstnance", { icon: <UserRoundX /> });
+            showErrorToast(err, "Chyba při deaktivaci zaměstnance");
             throw err;
         }
     };
@@ -154,16 +141,12 @@ export function useEmployees() {
 
             fetchEmployees(filtersRef.current, { silent: true });
 
-            showToast({
-                title: "Zaměstnanec úspěšně aktivován",
-                color: "success",
-                icon: <UserRoundCheck />
-            });
+            toast.success("Zaměstnanec úspěšně aktivován");
 
             return updated;
         } catch (err) {
             console.error("Error activating client:", err);
-            showErrorToast(err, "Chyba při aktivaci zaměstnance", { icon: <UserRoundX /> });
+            showErrorToast(err, "Chyba při aktivaci zaměstnance");
             throw err;
         }
     };
@@ -173,21 +156,13 @@ export function useEmployees() {
             const response = await postJSON(`/employees/${id}/resend`);
 
             if (response.success) {
-                showToast({
-                    title: response.message,
-                    color: "success",
-                    icon: <MailCheck />
-                })
+                toast.success(response.message)
             } else {
-                showToast({
-                    title: response.message,
-                    color: "danger",
-                    icon: <MailX />
-                })
+                toast.error(response.message)
             }
         } catch (err) {
             console.error("Error resending activation email:", err);
-            showErrorToast(err, "Chyba při odesílání aktivačního emailu", { icon: <MailX /> });
+            showErrorToast(err, "Chyba při odesílání aktivačního emailu");
             throw err;
         }
     }

@@ -1,9 +1,8 @@
 import {useRef, useState} from "react";
 import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import {Building2, CloudAlert} from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import {showToast} from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 
 export function useOrganizations() {
     const [organizations, setOrganizations] = useState([]);
@@ -40,7 +39,7 @@ export function useOrganizations() {
             if (!silent) setLoading(false);
         } catch (err) {
             console.error("Error fetching organizations:", err);
-            showErrorToast(err, "Chyba při načítání organizací", { icon: <CloudAlert /> });
+            showErrorToast(err, "Chyba při načítání organizací");
             if (!silent) setLoading(false);
         }
     };
@@ -50,7 +49,7 @@ export function useOrganizations() {
             return await getJSON(`/organizations/${id}`);
         } catch (err) {
             console.error("Error fetching organization:", err);
-            showErrorToast(err, "Organizace nenalezena", { icon: <Building2 /> });
+            showErrorToast(err, "Organizace nenalezena");
             throw err;
         }
     };
@@ -61,12 +60,12 @@ export function useOrganizations() {
 
             setOrganizations(prev => sortByKey([...prev, created], 'name', 'ascending'));
 
-            showToast({ title: "Organizace úspěšně vytvořena", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně vytvořena");
 
             return created;
         } catch (err) {
             console.error("Error creating organization:", err);
-            showErrorToast(err, "Chyba při vytváření organizace", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při vytváření organizace");
             throw err;
         }
     };
@@ -77,12 +76,12 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně aktualizována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně aktualizována");
 
             return updated;
         } catch (err) {
             console.error("Error updating organization:", err);
-            showErrorToast(err, "Chyba při aktualizaci organizace", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při aktualizaci organizace");
             throw err;
         }
     };
@@ -93,12 +92,12 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně deaktivována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně deaktivována");
 
             return updated;
         } catch (err) {
             console.error("Error terminating organization:", err);
-            showErrorToast(err, "Chyba při deaktivaci organizace", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při deaktivaci organizace");
             throw err;
         }
     };
@@ -109,12 +108,12 @@ export function useOrganizations() {
 
             fetchOrganizations(filtersRef.current, { silent: true });
 
-            showToast({ title: "Organizace úspěšně aktivována", color: "success", icon: <Building2 /> });
+            toast.success("Organizace úspěšně aktivována");
 
             return updated;
         } catch (err) {
             console.error("Error activating organization:", err);
-            showErrorToast(err, "Chyba při aktivaci organizace", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při aktivaci organizace");
             throw err;
         }
     };
