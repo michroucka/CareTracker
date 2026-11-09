@@ -405,8 +405,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     public MessageResponseDTO sendResetPasswordEmailByEmail(String email) {
         List<User> matches = userRepository.findAllByEmailIgnoreCase(email);
         // Older data may hold one address in two letter cases; such a request is left unanswered instead of guessing.
-        // A pending account has no password to reset; its activation link must stay valid.
-        if (matches.size() == 1 && isActivated(matches.getFirst())) {
+        if (matches.size() == 1 && canResetForgottenPassword(matches.getFirst())) {
             User user = matches.getFirst();
             String token = issueResetToken(user);
             String recipientEmail = user.getEmail();
@@ -415,6 +414,14 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
         }
         return new MessageResponseDTO(true, RESET_REQUESTED_MESSAGE);
+    }
+
+    /**
+     * A pending account has no password to reset and its activation link must stay valid;
+     * a deactivated account cannot sign in, so a new password would be of no use.
+     */
+    private static boolean canResetForgottenPassword(User user) {
+        return isActivated(user) && Boolean.TRUE.equals(user.getActive());
     }
 
     /** Creates a 24-hour reset token and persists it. */

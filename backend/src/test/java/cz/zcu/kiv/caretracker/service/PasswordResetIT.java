@@ -86,7 +86,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: deaktivovaný účet dostane e-mail pro reset hesla, i když se přihlásit nemůže")
     void deactivatedAccountGetsNoResetMail() throws Exception {
         account.setActive(false);
         userRepository.save(account);
