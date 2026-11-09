@@ -15,6 +15,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -23,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -35,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * never with Spring or Jackson internals. Only the web layer runs here (no database), with the real
  * security configuration and the service mocked.
  */
-@WebMvcTest(ClientController.class)
+@WebMvcTest(controllers = ClientController.class, properties = "app.remember-me.key=test-remember-me-key")
 @Import({SecurityConfig.class, CustomAuthenticationSuccessHandler.class, CustomAuthenticationFailureHandler.class})
 @WithMockUser(roles = "ADMIN")
 class ClientRequestErrorsTest {
@@ -53,10 +57,17 @@ class ClientRequestErrorsTest {
     private UserRepository userRepository;
     @MockitoBean
     private UserDetailsService userDetailsService;
+    @MockitoBean
+    private PersistentTokenRepository rememberMeTokenRepository;
+
+    /** Every request carries a valid CSRF token like the frontend sends, so only the tested error shows. */
+    private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
+        return mockMvc.perform(request.with(csrf()));
+    }
 
     @Test
     void malformedJsonIsRejected() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"firstName\": \"Marie\","))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"firstName\": \"Marie\","))
                 .andExpect(error(400, "Neplatný formát dat v požadavku"));
 
         verifyNoInteractions(clientService);
@@ -64,31 +75,31 @@ class ClientRequestErrorsTest {
 
     @Test
     void missingBodyIsRejected() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(error(400, "Neplatný formát dat v požadavku"));
     }
 
     @Test
     void textInNumberFieldNamesTheField() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"personalNumber\": \"abc\"}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"personalNumber\": \"abc\"}"))
                 .andExpect(error(400, "Neplatná hodnota pole 'personalNumber'"));
     }
 
     @Test
     void invalidDateNamesTheField() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"dateOfBirth\": \"12. 3. 1948\"}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"dateOfBirth\": \"12. 3. 1948\"}"))
                 .andExpect(error(400, "Neplatná hodnota pole 'dateOfBirth'"));
     }
 
     @Test
     void invalidListItemNamesTheFieldAndPosition() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"taskIds\": [1, \"x\"]}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"taskIds\": [1, \"x\"]}"))
                 .andExpect(error(400, "Neplatná hodnota pole 'taskIds[1]'"));
     }
 
     @Test
     void objectInsteadOfTextNamesTheField() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"firstName\": {\"a\": 1}}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"firstName\": {\"a\": 1}}"))
                 .andExpect(error(400, "Neplatná hodnota pole 'firstName'"));
     }
 
@@ -97,7 +108,7 @@ class ClientRequestErrorsTest {
     void missingRequiredFieldReportedByServiceKeepsItsMessage() throws Exception {
         when(clientService.createClient(any())).thenThrow(new ValidationException("Jméno je povinné"));
 
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(error(400, "Jméno je povinné"));
     }
 
@@ -107,13 +118,13 @@ class ClientRequestErrorsTest {
         when(clientService.createClient(any()))
                 .thenThrow(new IllegalArgumentException("No enum constant cz.zcu.kiv.caretracker.enums.Gender.ALIEN"));
 
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"gender\": \"ALIEN\"}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{\"gender\": \"ALIEN\"}"))
                 .andExpect(error(400, "Neplatná hodnota v požadavku"));
     }
 
     @Test
     void textAsPathIdIsRejected() throws Exception {
-        mockMvc.perform(get("/api/clients/abc"))
+        perform(get("/api/clients/abc"))
                 .andExpect(error(400, "Neplatná hodnota parametru 'id'"));
 
         verifyNoInteractions(clientService);
@@ -121,13 +132,13 @@ class ClientRequestErrorsTest {
 
     @Test
     void invalidQueryParameterIsRejected() throws Exception {
-        mockMvc.perform(get("/api/clients").param("status", "maybe"))
+        perform(get("/api/clients").param("status", "maybe"))
                 .andExpect(error(400, "Neplatná hodnota parametru 'status'"));
     }
 
     @Test
     void missingRequiredQueryParameterIsRejected() throws Exception {
-        mockMvc.perform(post("/api/clients/1/account/create"))
+        perform(post("/api/clients/1/account/create"))
                 .andExpect(error(400, "Chybí povinný parametr 'email'"));
 
         verifyNoInteractions(userService);
@@ -135,31 +146,31 @@ class ClientRequestErrorsTest {
 
     @Test
     void pictureUploadWithoutFileIsRejected() throws Exception {
-        mockMvc.perform(multipart("/api/clients/1/picture"))
+        perform(multipart("/api/clients/1/picture"))
                 .andExpect(error(400, "Chybí povinná část požadavku 'file'"));
     }
 
     @Test
     void pictureUploadThatIsNotMultipartIsRejected() throws Exception {
-        mockMvc.perform(post("/api/clients/1/picture").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        perform(post("/api/clients/1/picture").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(error(400, "Požadavek se souborem se nepodařilo zpracovat"));
     }
 
     @Test
     void unknownAddressReturnsNotFound() throws Exception {
-        mockMvc.perform(get("/api/client/1"))
+        perform(get("/api/client/1"))
                 .andExpect(error(404, "Požadovaná adresa neexistuje"));
     }
 
     @Test
     void unsupportedMethodReturnsMethodNotAllowed() throws Exception {
-        mockMvc.perform(delete("/api/clients"))
+        perform(delete("/api/clients"))
                 .andExpect(error(405, "Metoda DELETE není pro tuto adresu podporována"));
     }
 
     @Test
     void nonJsonBodyReturnsUnsupportedMediaType() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.TEXT_PLAIN).content("Marie Nová"))
+        perform(post("/api/clients").contentType(MediaType.TEXT_PLAIN).content("Marie Nová"))
                 .andExpect(error(415, "Nepodporovaný formát obsahu požadavku"));
     }
 
@@ -168,14 +179,14 @@ class ClientRequestErrorsTest {
         when(clientService.createClient(any())).thenThrow(
                 new NullPointerException("Cannot invoke \"java.util.List.iterator()\" because \"taskIds\" is null"));
 
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(error(500, "Nastala neočekávaná chyba na serveru"));
     }
 
     @Test
     @WithMockUser(roles = "CAREGIVER")
     void roleWithoutWriteAccessIsForbiddenBeforeBodyIsUsed() throws Exception {
-        mockMvc.perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        perform(post("/api/clients").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(error(403, "Nemáte oprávnění k této operaci"));
 
         verifyNoInteractions(clientService);

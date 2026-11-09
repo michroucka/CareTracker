@@ -32,6 +32,7 @@ import java.util.List;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static cz.zcu.kiv.caretracker.support.CsrfTokens.validCsrfToken;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 /**
@@ -91,8 +92,10 @@ public abstract class AbstractIntegrationTest {
     }
 
     /** Authenticates the request as the given user, loaded the same way as on a real login. */
+    /** Signed-in user with a valid CSRF token, as every write from the frontend carries one. */
     protected RequestPostProcessor loggedInAs(User account) {
-        return user(userDetailsService.loadUserByUsername(account.getUsername()));
+        RequestPostProcessor signedIn = user(userDetailsService.loadUserByUsername(account.getUsername()));
+        return request -> validCsrfToken().postProcessRequest(signedIn.postProcessRequest(request));
     }
 
     protected RequestPostProcessor loggedInAs(Employee employee) {
@@ -137,6 +140,26 @@ public abstract class AbstractIntegrationTest {
                 return text.toString();
             }
             return content instanceof String string ? string : "";
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** Only the HTML part of the e-mail, without the plain-text alternative. */
+    protected static String mailHtml(Part mail) {
+        try {
+            // the Content-Type header is only filled in when the message is sent, the data handler knows it already
+            if (mail.getDataHandler().getContentType().toLowerCase().startsWith("text/html")) {
+                return (String) mail.getContent();
+            }
+            if (mail.getContent() instanceof Multipart multipart) {
+                StringBuilder html = new StringBuilder();
+                for (int i = 0; i < multipart.getCount(); i++) {
+                    html.append(mailHtml(multipart.getBodyPart(i)));
+                }
+                return html.toString();
+            }
+            return "";
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -181,6 +181,16 @@ class UserAccountIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void cannotTakeUsernameOfAnotherAccountInDifferentCase() throws Exception {
+        User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
+        User colleague = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
+
+        updateOwnAccount(account, colleague.getUsername().toUpperCase(), account.getEmail())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Uživatelské jméno je již použité"));
+    }
+
+    @Test
     void cannotClearOwnEmail() throws Exception {
         User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
 
