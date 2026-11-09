@@ -1,83 +1,64 @@
-import React, {useEffect} from "react";
-import {useAuth} from "../contexts/AuthContext.tsx";
-import {ClientForm} from "../components/forms/ClientForm.jsx";
-import {useClients} from "../hooks/useClients.jsx";
-import {useNavigate} from "react-router-dom";
-import {useDepartments} from "../hooks/useDepartments.jsx";
-import {useTasks} from "../hooks/useTasks.jsx";
-import {useEmployees} from "../hooks/useEmployees.jsx";
-import {Button} from "@heroui/react";
-import {ChevronLeft, Save} from "lucide-react";
-
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { IconLoader2 } from "@tabler/icons-react";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { useClients } from "../hooks/useClients.jsx";
+import { useDepartments } from "../hooks/useDepartments.jsx";
+import { useEmployees } from "../hooks/useEmployees.jsx";
+import { useTasks } from "../hooks/useTasks.jsx";
+import { useRecordForm } from "../hooks/useRecordForm";
+import { ClientFields } from "@/components/clients/ClientFields";
+import { emptyClient, toRequest, validateClient } from "@/components/clients/clientForm";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/button";
 
 export function ClientCreate() {
-    const [isLoading, setIsLoading] = React.useState(false);
-    const formRef = React.useRef();
-    const {user} = useAuth();
-    const {createClient} = useClients();
-    const {departments, fetchDepartments} = useDepartments();
-    const {tasks, fetchTasks} = useTasks();
-    const {employees, fetchEmployees} = useEmployees();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const form = useRecordForm(emptyClient(user.departmentId));
 
-    useEffect(() => {
+    const { createClient } = useClients();
+    const { departments, fetchDepartments } = useDepartments();
+    const { employees, fetchEmployees } = useEmployees();
+    const { tasks, fetchTasks } = useTasks();
+
+    React.useEffect(() => {
         fetchDepartments({ status: true });
-        fetchTasks({ status: true });
         fetchEmployees({ status: true });
-    }, [])
+        fetchTasks({ status: true });
+        // options are loaded once
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const handleSubmit = async (formData) => {
-        setIsLoading(true);
-        try {
-            const newClient = await createClient(formData);
-            navigate(`/clients/${newClient.id}`)
-        } catch (error) {
-            console.error("Failed to create client: ", error);
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    function handleFormSubmit() {
-        formRef.current?.submit();
-    }
+    const save = (event) => {
+        event.preventDefault();
+        form.submit(validateClient, async (values) => {
+            const created = await createClient(toRequest(values));
+            navigate(`/clients/${created.id}`, { replace: true });
+        });
+    };
 
     return (
-        <>
-            <div className="flex max-lg:justify-between mb-2 lg:mb-0 lg:gap-2">
-                <Button
-                    variant="flat"
-                    startContent={<ChevronLeft size={18} />}
-                    onPress={() => navigate(-1)}
-                >
-                    Zpět
-                </Button>
-            </div>
-
-            <ClientForm
-                ref={formRef}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
+        <form noValidate onSubmit={save} className="mx-auto grid w-full max-w-3xl gap-6">
+            <PageHeader title="Nový klient" description="Pole s hvězdičkou jsou povinná. Ostatní můžete doplnit později." />
+            <ClientFields
+                idPrefix="client-create"
+                values={form.values}
+                errors={form.errors}
+                onChange={form.setField}
+                disabled={form.isSubmitting}
+                shakeSignal={form.submitCount}
                 departments={departments}
                 caregivers={employees}
                 tasks={tasks}
-                userDept={user?.departmentId}
             />
-
-            <div className="max-w-xl mt-6 mx-auto">
-                <Button
-                    color="primary"
-                    startContent={<Save size={16} />}
-                    onPress={handleFormSubmit}
-                    isLoading={isLoading}
-                    isDisabled={isLoading}
-                    className="w-full"
-                >
-                    {isLoading ? "Ukládání..." : "Uložit změny"}
+            <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/90 px-1 py-4 backdrop-blur">
+                <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={form.isSubmitting}>Zrušit</Button>
+                <Button type="submit" disabled={form.isSubmitting}>
+                    {form.isSubmitting && <IconLoader2 className="animate-spin" />}
+                    {form.isSubmitting ? "Ukládám…" : "Vytvořit klienta"}
                 </Button>
             </div>
-        </>
-
-    )
+        </form>
+    );
 }
