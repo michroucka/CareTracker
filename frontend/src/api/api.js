@@ -183,6 +183,8 @@ export async function uploadFile(endpoint, file) {
         credentials: "include",
     });
 
+    handleUnauthorized(response);
+
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         const message = errorData?.message || `HTTP error! status: ${response.status}`;
@@ -204,6 +206,8 @@ export async function fetchImage(endpoint) {
         credentials: "include",
     });
 
+    handleUnauthorized(response);
+
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -223,6 +227,8 @@ export async function deleteImage(endpoint) {
         headers: csrfHeader(),
         credentials: "include",
     });
+
+    handleUnauthorized(response);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);

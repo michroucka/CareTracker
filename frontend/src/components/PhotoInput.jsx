@@ -61,7 +61,10 @@ export function PhotoInput({ id, value, onChange, name, hasSavedPicture, heading
                 onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={onDrop}
-                aria-label={preview ? "Změnit fotografii" : "Nahrát fotografii"}
+                // a mouse and drop target only; keyboard and screen reader users get the same action from
+                // the labelled button next to it, so they do not meet it twice
+                tabIndex={-1}
+                aria-hidden="true"
                 className={cn(
                     "group relative rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed",
                     isDragging && "ring-[3px] ring-ring/50"

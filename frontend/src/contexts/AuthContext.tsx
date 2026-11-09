@@ -134,20 +134,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = async () => {
+        const showLogoutFailed = () =>
+            toast.error("Odhlášení se nepodařilo", { description: "Zkuste to prosím znovu." });
         try {
             const response = await post("/logout", {});
-
-            if (response.ok) {
-                setUser(null);
-                setSuperadminOrgState(null);
-                localStorage.removeItem(SUPERADMIN_ORG_KEY);
-                toast.success("Odhlášení proběhlo", { description: "Byli jste úspěšně odhlášeni." });
-
-                navigate("/");
+            if (!response.ok) {
+                showLogoutFailed();
+                return;
             }
+
+            setUser(null);
+            setSuperadminOrgState(null);
+            localStorage.removeItem(SUPERADMIN_ORG_KEY);
+            toast.success("Odhlášení proběhlo", { description: "Byli jste úspěšně odhlášeni." });
+            navigate("/");
         } catch (error) {
             console.error("Logout error:", error);
-            toast.error("Odhlášení se nepodařilo", { description: "Zkuste to prosím znovu." });
+            showLogoutFailed();
         }
     };
 
@@ -159,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const handleUnauthorized = () => {
             setUser(null);
             setSuperadminOrgState(null);
+            localStorage.removeItem(SUPERADMIN_ORG_KEY);
             navigate("/login");
         };
         window.addEventListener("auth:unauthorized", handleUnauthorized);

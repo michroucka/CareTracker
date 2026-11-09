@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -20,11 +20,14 @@ function WhenAuthLoaded({ children }) {
  */
 export function renderWithProviders(ui, { authStatus = loggedOut, route = '/' } = {}) {
     server.use(authStatusHandler(authStatus));
+    // BrowserRouter over jsdom's history, not MemoryRouter: useSearchParamsUpdater reads window.location,
+    // which MemoryRouter never updates, so list filters in the URL would get lost
+    window.history.replaceState(null, '', route);
 
     return {
         user: userEvent.setup(),
         ...render(
-            <MemoryRouter initialEntries={[route]}>
+            <BrowserRouter>
                 <ThemeProvider>
                     <AuthProvider>
                         <TooltipProvider>
@@ -33,7 +36,7 @@ export function renderWithProviders(ui, { authStatus = loggedOut, route = '/' } 
                         </TooltipProvider>
                     </AuthProvider>
                 </ThemeProvider>
-            </MemoryRouter>,
+            </BrowserRouter>,
         ),
     };
 }

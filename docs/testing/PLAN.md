@@ -194,23 +194,25 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 ### Fáze T3 – Frontend
 
 #### T3a – Čisté funkce
-- [ ] **[claude]** Vzor: `lib/dates.js` (`fromIsoDate`, `toIsoDate` – přelom měsíce, časová zóna, neplatný vstup). Existující `formatters.test.js` a `sorting.test.js` jsou dobrý vzor struktury.
-- [ ] **[claude]** `lib/pagination.js`, `lib/pictures.js` (`pictureUrl`; `shrinkPhoto` přes mock `canvas`), doplnit chybějící případy ve `formatters`.
+- [x] **[claude]** `lib/dates` (přelom měsíce, čtyři časová pásma přes `process.env.TZ`, celý rok tam a zpět), `pagination`, `pictures` (`shrinkPhoto` s mockovaným canvasem), `utils`, `formatters`, pomocné funkce formulářů (`*Form.js`), `dayGroups`, `dashboardFormat`, konstanty.
 
 #### T3b – API vrstva
-- [ ] **[claude]** Vzor: `api/api.js` – odpověď 401 vyvolá událost `auth:unauthorized`, chybová odpověď vyhodí chybu s `.message` ze serveru. Naučí: MSW (`server.use(...)` pro jeden test).
-- [ ] **[claude]** Zbytek funkcí v `api.js` (`postJSON`, `putJSON`, `deleteJSON`, `uploadFile`, prázdné tělo odpovědi, chyba sítě).
+- [x] **[claude]** `api.test.js`: 401 → `auth:unauthorized`, `.message` ze serveru, záložní hláška, prázdné tělo, chyba sítě, CSRF hlavička u zápisů, soubory. jsdom posílá `FormData` jako text, pole `file` se proto ověřuje přes spy.
 
 #### T3c – Hooky
-- [ ] **[claude]** Vzor: `useListFilters` – změna měsíce vynuluje den a stránku, hodnoty se čtou z URL. Naučí: `renderHook` s `MemoryRouter`.
-- [ ] **[claude]** `useSearchParamsUpdater`, `usePagedList` (reset stránky při změně `resetKey`), `useRecordForm`, `useDetailParam`, `useTokenValidation`, datové hooky (`useClients` apod.) proti MSW.
+- [x] **[claude]** `useListFilters` (vzor), `useSearchParamsUpdater`, `useDetailParam`, `usePagedList`, `useRecordForm`, `useMediaQuery`, `useTokenValidation`, `useEmployeeOverview` a datové hooky proti MSW (jedna tabulka pro klienty, zaměstnance, úkony, střediska, organizace). Pomůcky `src/test/hooks.jsx` (`renderHookWithRouter`, `serveAndRecord`, `serverError`).
 
 #### T3d – Komponenty
-- [ ] **[claude]** Vzor: `ProtectedRoute` – nepřihlášený → přesměrování na login, nepovolená role → přesměrování, povolená → obsah. Naučí: `renderWithProviders` s rolí.
-- [ ] **[claude]** Vzor interakce: `DayFilter` – vybrat jde jen den se záznamy, šipky skáčou mezi dny se záznamy, křížek vrátí celý měsíc. Naučí: `user-event`, klávesnice, `getByRole`.
-- [ ] **[claude]** `DatePicker`, `MonthYearPicker`, `Combobox`, `MultiCombobox`, `PhotoInput` (neznámý formát → hláška), `PasswordInput`, `EmptyState`.
-- [ ] **[claude]** `Table` – roving tabindex (Tab vstoupí na naposledy aktivní řádek, šipky, Home/End, → na ⋯), Enter otevře detail. `RecordSheet` – po zavření vrátí fokus na řádek.
-- [ ] **[claude]** `AuthContext` – načtení `auth-status`, odhlášení po `auth:unauthorized`.
+- [x] **[claude]** `ProtectedRoute`, `DayFilter`, `DatePicker`, `MonthYearPicker`, `Combobox`, `MultiCombobox`, `PhotoInput`, `PasswordInput`, `EmptyState`, `FormField`, `PersonAvatar`.
+- [x] **[claude]** `Table` (roving tabindex, Enter/Space, → na ⋯), `RecordSheet` (fokus zpět na řádek), `AuthContext`, `AppSidebar` podle role.
+- [x] Sdílené nastavení testů (`setup.js`, `render.jsx`): fetch v jsdom zvládá `AbortSignal` (jinak každý požadavek se signálem selhal), toasty se po testu mažou (sonner je drží globálně a další test by je našel), `renderWithProviders` používá `BrowserRouter` nad historií jsdom (`MemoryRouter` neaktualizuje `window.location`, které čte `useSearchParamsUpdater`, takže by se ztrácely filtry).
+- [x] Nálezy, opraveno 2026-11-09:
+  - Střední: frontend počítal cenu v plovoucí čárce (0,29 km × 50 Kč → 14 Kč, backend 15 Kč). Teď v setinách se zaokrouhlením jako backend.
+  - Střední: `useOrganizations` měl překlep `signalL`, starší požadavek se nerušil a jeho pozdní odpověď přepsala novější seznam.
+  - Střední: odhlášení, které server odmítl (např. 403), neudělalo nic. Teď hláška.
+  - Střední (přístupnost): `MultiCombobox` s nejvýš 6 možnostmi nešel ovládat klávesnicí.
+  - Nízká: nahrání a smazání fotky a QR platba neodhlásily uživatele při 401; automatické odhlášení nemazalo uloženou organizaci superadmina; datum bez času se četlo jako UTC (západně od UTC o den dřív); plánovaná aktualizace 31. 8. + 6 měsíců vyšla na 3. 3.; „před 0 dny“ → „dnes“; `DatePicker` začíná na vybraném dni; avatar v `PhotoInput` se nečte dvakrát.
+  - Smazán nepoužívaný `useUrlFilters` (měl chybu, nikde se nepoužíval).
 
 #### T3e – Stránky (integrační s MSW)
 - [ ] **[claude]** Vzor: `Login` – úspěšné přihlášení přesměruje, špatné heslo ukáže chybu. Naučí: celá stránka proti MSW, ověření navigace.
@@ -261,6 +263,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-09: T3a–T3d hotové (664 frontendových testů), nálezy opraveny.
 - 2026-11-09: bezpečnost přihlášení a CSRF (nálezy z T2e) opraveny, ověřeno i v prohlížeči proti běžící aplikaci.
 - 2026-11-09: T2d, T2e a T2f hotové (149 unit + 1123 IT), fáze T2 uzavřená kromě nálezů k přihlášení a CSRF.
 - 2026-11-09: T2c hotová (1047 IT). Testy a opravy nálezů psali paralelně subagenti po doménách, rozhodnutí B1-B5 viz T2c.

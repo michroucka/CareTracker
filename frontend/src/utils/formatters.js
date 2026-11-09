@@ -1,3 +1,5 @@
+import { toLocalDate } from '@/lib/dates';
+
 /**
  * Formats a number using the Czech locale (e.g. thousands separator as space, decimal as comma).
  * @param {number|string|null|undefined} value
@@ -77,7 +79,7 @@ export function removeDiacritics(text) {
  */
 export function formatDate(date) {
     if (!date) return '';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const dateObj = toLocalDate(date);
     return new Intl.DateTimeFormat('cs-CZ', {
         day: 'numeric',
         month: 'numeric',

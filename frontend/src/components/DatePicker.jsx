@@ -15,11 +15,20 @@ const displayFormatter = new Intl.DateTimeFormat("cs-CZ", { day: "numeric", mont
  */
 export function DatePicker({ value, onChange, minDate, maxDate, placeholder = "Vyberte datum", disabled, className, ...triggerProps }) {
     const [isOpen, setIsOpen] = React.useState(false);
+    const contentRef = React.useRef(null);
     const selected = fromIsoDate(value);
     const min = fromIsoDate(minDate);
     const max = fromIsoDate(maxDate);
 
     const disabledDays = [min && { before: min }, max && { after: max }].filter(Boolean);
+
+    // like DayFilter: start on the selected day, not on the month navigation several Tabs away
+    const focusSelectedDay = (event) => {
+        const selectedDay = contentRef.current?.querySelector("button[data-selected-single='true']");
+        if (!selectedDay) return;
+        event.preventDefault();
+        selectedDay.focus();
+    };
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -35,7 +44,7 @@ export function DatePicker({ value, onChange, minDate, maxDate, placeholder = "V
                     <IconCalendar className="text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent ref={contentRef} className="w-auto p-0" align="start" onOpenAutoFocus={focusSelectedDay}>
                 <Calendar
                     mode="single"
                     selected={selected}
