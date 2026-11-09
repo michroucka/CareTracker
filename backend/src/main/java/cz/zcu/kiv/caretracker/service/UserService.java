@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -402,16 +403,17 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional
     public MessageResponseDTO sendResetPasswordEmailByEmail(String email) {
-        userRepository.findByEmail(email)
-                // A pending account has no password to reset; its activation link must stay valid.
-                .filter(UserService::isActivated)
-                .ifPresent(user -> {
-                    String token = issueResetToken(user);
-                    String recipientEmail = user.getEmail();
-                    String recipientName = resetMailRecipientName(user);
-                    // Sending takes long enough to reveal by timing that the account exists, so the response does not wait for it.
-                    mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
-                });
+        List<User> matches = userRepository.findAllByEmailIgnoreCase(email);
+        // Older data may hold one address in two letter cases; such a request is left unanswered instead of guessing.
+        // A pending account has no password to reset; its activation link must stay valid.
+        if (matches.size() == 1 && isActivated(matches.getFirst())) {
+            User user = matches.getFirst();
+            String token = issueResetToken(user);
+            String recipientEmail = user.getEmail();
+            String recipientName = resetMailRecipientName(user);
+            // Sending takes long enough to reveal by timing that the account exists, so the response does not wait for it.
+            mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
+        }
         return new MessageResponseDTO(true, RESET_REQUESTED_MESSAGE);
     }
 

@@ -77,7 +77,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: e-mail se při resetu hledá s ohledem na velikost písmen, ačkoli jeho jedinečnost se kontroluje bez ní")
     void emailIsMatchedIgnoringCase() throws Exception {
         requestReset(account.getEmail().toUpperCase())
                 .andExpect(status().isOk());
