@@ -9,7 +9,6 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -184,7 +183,6 @@ class ActivationTokenIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend nekontroluje délku hesla při aktivaci, pravidlo (alespoň 6 znaků) je jen ve frontendu")
     void tooShortPasswordIsRejected() throws Exception {
         complete(pending.getActivationToken(), "jana.novakova", "12345")
                 .andExpect(status().isBadRequest());
@@ -193,7 +191,6 @@ class ActivationTokenIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend nekontroluje uživatelské jméno při aktivaci, prázdné nebo kratší než 4 znaky projde")
     void blankUsernameIsRejected() throws Exception {
         complete(pending.getActivationToken(), " ", NEW_PASSWORD)
                 .andExpect(status().isBadRequest());

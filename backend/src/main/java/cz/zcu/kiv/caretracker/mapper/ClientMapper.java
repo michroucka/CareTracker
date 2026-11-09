@@ -87,6 +87,7 @@ public class ClientMapper {
         dto.setPictureId(client.getPictureId());
         User user = client.getUser();
         dto.setUserAccountActive(user != null ? user.getActive() : null);
+        dto.setUserAccountActivated(user != null ? user.getUsername() != null && !user.getUsername().isEmpty() : null);
 
         if (client.getDepartment() != null) {
             dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));

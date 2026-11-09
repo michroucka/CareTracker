@@ -16,17 +16,25 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final int MIN_USERNAME_LENGTH = 4;
+    private static final int MIN_PASSWORD_LENGTH = 6;
+    private static final String RESET_REQUESTED_MESSAGE =
+            "Pokud účet s tímto e-mailem existuje, poslali jsme na něj odkaz pro nastavení nového hesla";
 
     @Autowired
     private UserRepository userRepository;
@@ -38,6 +46,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Clock clock;
+    @Autowired
+    @Qualifier(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)
+    private TaskExecutor mailExecutor;
 
     /**
      * Returns the current user's profile as a DTO.
@@ -55,17 +66,35 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param dto updated user data
      * @return the updated user entity
-     * @throws ValidationException if the username is empty or the e-mail belongs to another account
+     * @throws ValidationException if the username is empty or too short, or the e-mail belongs to another account
      */
     @Transactional
     public User updateCurrentUser(UserRequestDTO dto) {
         User user = getCurrentUser();
-        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
-            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
-        }
+        validateUsername(dto.getUsername());
         validateEmailAvailable(dto.getEmail(), user.getId());
         userMapper.requestToUser(user, dto);
         return userRepository.save(user);
+    }
+
+    /** Same rule as the activation and account forms in the frontend, which compare the trimmed value. */
+    private static void validateUsername(String username) {
+        if (isBlank(username)) {
+            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
+        }
+        if (username.trim().length() < MIN_USERNAME_LENGTH) {
+            throw new ValidationException("Uživatelské jméno musí mít alespoň " + MIN_USERNAME_LENGTH + " znaky");
+        }
+    }
+
+    /** Same rule as the activation and password reset forms in the frontend, which compare the trimmed value. */
+    private static void validatePassword(String password) {
+        if (isBlank(password)) {
+            throw new ValidationException("Heslo nesmí být prázdné");
+        }
+        if (password.trim().length() < MIN_PASSWORD_LENGTH) {
+            throw new ValidationException("Heslo musí mít alespoň " + MIN_PASSWORD_LENGTH + " znaků");
+        }
     }
 
     /**
@@ -94,18 +123,23 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * @return success message
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
+     * @throws ValidationException if the token is missing or the new password is too short
      */
     @Transactional
     public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
-        User user = userRepository.findByActivationToken(dto.getToken())
+        requireToken(dto.getToken());
+        User user = userRepository.findByResetToken(dto.getToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný token"));
-        validateToken(dto.getToken());
+        if (user.getResetTokenExpiry().isBefore(LocalDateTime.now(clock))) {
+            throw new TokenExpiredException("Platnost odkazu pro reset hesla vypršela");
+        }
+        validatePassword(dto.getPassword());
 
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
         user.setPassword(hashedPassword);
-        user.setActivationToken(null);
-        user.setTokenExpiry(null);
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
         userRepository.save(user);
 
         return new MessageResponseDTO(true, "Heslo bylo úspěšně změněno");
@@ -198,9 +232,13 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param client the client to create an account for
      * @param email the email address for the account and activation message
+     * @throws ValidationException if the client already has an account or the e-mail belongs to another account
      */
     @Transactional
     public void createUserForClient(Client client, String email) {
+        if (userRepository.existsByClientId(client.getId())) {
+            throw new ValidationException("Klient už má v aplikaci účet");
+        }
         validateEmailAvailable(email, null);
         User user = new User();
         user.setClient(client);
@@ -243,6 +281,20 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     }
 
     /**
+     * Resends the activation email for the client's account, the same way as for an employee.
+     *
+     * @param client the client whose account is still waiting for activation
+     * @throws ResourceNotFoundException if the client has no user account
+     * @throws ValidationException if the account is already activated or the email fails to send
+     */
+    @Transactional
+    public void resendActivationEmailForClient(Client client) {
+        User user = userRepository.findByClientId(client.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nemá v aplikaci účet"));
+        resendActivationEmail(user);
+    }
+
+    /**
      * Generates a new activation token and resends the activation email.
      * Throws if the account is already activated.
      *
@@ -256,7 +308,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             throw new ResourceNotFoundException("Uživatel neexistuje");
         }
 
-        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+        if (isActivated(user)) {
             throw new ValidationException("Účet je již aktivován");
         }
 
@@ -267,14 +319,30 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         userRepository.save(user);
 
         try {
-            String recipientName = user.getEmployee() != null
-                    ? user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName()
-                    : "uživateli";
-            emailService.sendActivationEmail(user.getEmail(), activationToken, recipientName);
+            emailService.sendActivationEmail(user.getEmail(), activationToken, recipientName(user));
         } catch (Exception e) {
             log.error("Failed to resend activation email for user: {}, error: {}", user.getEmail(), e.getMessage());
             throw new ValidationException("Nepodařilo se odeslat aktivační email");
         }
+    }
+
+    /**
+     * Spring Data turns a null parameter into {@code IS NULL}, so looking up a missing token would match
+     * every account that has none.
+     */
+    private static void requireToken(String token) {
+        if (isBlank(token)) {
+            throw new ValidationException("Chybí token");
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    /** The owner has completed activation by choosing a username (and a password). */
+    private static boolean isActivated(User user) {
+        return user.getUsername() != null && !user.getUsername().isEmpty();
     }
 
     /**
@@ -285,6 +353,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional(readOnly = true)
     public boolean validateActivationToken(String token) {
+        if (isBlank(token)) {
+            return false;
+        }
         Optional<User> userOpt = userRepository.findByActivationToken(token);
 
         if (userOpt.isEmpty()) {
@@ -297,7 +368,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             return false;
         }
 
-        return user.getUsername() == null || user.getUsername().isEmpty();
+        return !isActivated(user);
     }
 
     /**
@@ -307,8 +378,11 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * @return {@code true} if the token exists and has not expired
      */
     @Transactional(readOnly = true)
-    public boolean validateToken(String token) {
-        Optional<User> userOpt = userRepository.findByActivationToken(token);
+    public boolean validateResetToken(String token) {
+        if (isBlank(token)) {
+            return false;
+        }
+        Optional<User> userOpt = userRepository.findByResetToken(token);
 
         if (userOpt.isEmpty()) {
             return false;
@@ -316,7 +390,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         User user = userOpt.get();
 
-        return !user.getTokenExpiry().isBefore(LocalDateTime.now(clock));
+        return !user.getResetTokenExpiry().isBefore(LocalDateTime.now(clock));
     }
 
     /**
@@ -325,14 +399,16 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param token the activation token from the email link
      * @param username the chosen username
-     * @param password the already-hashed password
+     * @param password the chosen password in plain text
      * @return the activated user entity
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
-     * @throws ValidationException if the account is already activated or the username is taken
+     * @throws ValidationException if the token is missing, the account is already activated, the username is taken
+     *         or the username or password does not meet the rules
      */
     @Transactional
     public User completeActivation(String token, String username, String password) {
+        requireToken(token);
         User user = userRepository.findByActivationToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný aktivační token"));
 
@@ -340,22 +416,25 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             throw new TokenExpiredException("Platnost aktivačního tokenu vypršela");
         }
 
-        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+        if (isActivated(user)) {
             throw new ValidationException("Účet je již aktivován");
         }
 
-        if (userRepository.findByUsername(username).isPresent()) {
+        validateUsername(username);
+        validatePassword(password);
+        String trimmedUsername = username.trim();
+        if (userRepository.findByUsername(trimmedUsername).isPresent()) {
             throw new ValidationException("Uživatelské jméno je již použité");
         }
 
-        user.setUsername(username);
-        user.setPassword(password);
+        user.setUsername(trimmedUsername);
+        user.setPassword(passwordEncoder.encode(password));
         user.setActivationToken(null);
         user.setTokenExpiry(null);
         user.setActive(true);
 
         User savedUser = userRepository.save(user);
-        log.info("User activation completed for: {}", username);
+        log.info("User activation completed for: {}", trimmedUsername);
 
         return savedUser;
     }
@@ -368,36 +447,58 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     @Transactional
     public MessageResponseDTO sendResetPasswordEmail() {
         User user = getCurrentUser();
-        return generateAndSendResetToken(user);
+        String token = issueResetToken(user);
+        emailService.sendPasswordResetEmail(user.getEmail(), token, recipientName(user));
+        return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
     }
 
     /**
      * Generates a password-reset token for the user with the given email and sends a reset email.
-     * Used on the public forgot-password endpoint where the user is not authenticated.
+     * Used on the public forgot-password endpoint where the user is not authenticated, so the response
+     * is the same whether or not a matching account exists.
      *
      * @param email the email address to look up
-     * @return success message
-     * @throws ResourceNotFoundException if no user with this email exists
+     * @return the same message for every e-mail
      */
     @Transactional
     public MessageResponseDTO sendResetPasswordEmailByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Uživatel se zadaným emailem nenalezen"));
-        return generateAndSendResetToken(user);
+        List<User> matches = userRepository.findAllByEmailIgnoreCase(email);
+        // Older data may hold one address in two letter cases; such a request is left unanswered instead of guessing.
+        if (matches.size() == 1 && canResetForgottenPassword(matches.getFirst())) {
+            User user = matches.getFirst();
+            String token = issueResetToken(user);
+            String recipientEmail = user.getEmail();
+            String recipientName = recipientName(user);
+            // Sending takes long enough to reveal by timing that the account exists, so the response does not wait for it.
+            mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
+        }
+        return new MessageResponseDTO(true, RESET_REQUESTED_MESSAGE);
     }
 
-    /** Creates a 24-hour reset token, persists it, and sends the reset email. */
-    private MessageResponseDTO generateAndSendResetToken(User user) {
+    /**
+     * A pending account has no password to reset and its activation link must stay valid;
+     * a deactivated account cannot sign in, so a new password would be of no use.
+     */
+    private static boolean canResetForgottenPassword(User user) {
+        return isActivated(user) && Boolean.TRUE.equals(user.getActive());
+    }
+
+    /** Creates a 24-hour reset token and persists it. */
+    private String issueResetToken(User user) {
         String token = UUID.randomUUID().toString();
-        user.setActivationToken(token);
-        user.setTokenExpiry(LocalDateTime.now(clock).plusHours(24));
+        user.setResetToken(token);
+        user.setResetTokenExpiry(LocalDateTime.now(clock).plusHours(24));
         userRepository.save(user);
+        return token;
+    }
 
-        String name = user.getEmployee() != null
-                ? user.getEmployee().getFullName()
-                : user.getUsername();
-        emailService.sendPasswordResetEmail(user.getEmail(), token, name);
-
-        return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
+    private static String recipientName(User user) {
+        if (user.getEmployee() != null) {
+            return user.getEmployee().getFullName();
+        }
+        if (user.getClient() != null) {
+            return user.getClient().getFullName();
+        }
+        return user.getUsername();
     }
 }

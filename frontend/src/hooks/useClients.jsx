@@ -184,6 +184,18 @@ export function useClients() {
         }
     };
 
+    const resendClientActivation = async (clientId) => {
+        try {
+            const result = await postJSON(`/clients/${clientId}/account/resend`);
+
+            (result.success ? toast.success : toast.error)(result.message);
+        } catch (err) {
+            console.error("Error resending client activation email:", err);
+            showErrorToast(err, "Chyba při odesílání aktivačního emailu");
+            throw err;
+        }
+    };
+
     const activateClient = async (id) => {
         try {
             const updated = await putJSON(`/clients/${id}/activate`);
@@ -212,6 +224,7 @@ export function useClients() {
         activateClient,
         createClientAccount,
         deactivateClientAccount,
-        activateClientAccount
+        activateClientAccount,
+        resendClientActivation
     };
 }

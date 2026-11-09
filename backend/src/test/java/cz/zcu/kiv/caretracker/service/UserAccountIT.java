@@ -1,5 +1,6 @@
 package cz.zcu.kiv.caretracker.service;
 
+import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -82,6 +84,67 @@ class UserAccountIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void clientResendIssuesFreshTokenForSevenDaysAndInvalidatesTheOld() throws Exception {
+        clock.fixAt(CREATED);
+        Client client = testData.client(testData.employee(department, EmployeeRole.CAREGIVER));
+        String expiredToken = testData.pendingClientAccount(client).getActivationToken();
+        clock.fixAt(NOW);
+
+        resend(client)
+                .andExpect(status().isOk());
+
+        User account = userRepository.findByClientId(client.getId()).orElseThrow();
+        assertThat(account.getActivationToken()).isNotEqualTo(expiredToken);
+        assertThat(account.getTokenExpiry()).isEqualTo(NOW.plusDays(7));
+        validateActivation(expiredToken)
+                .andExpect(status().isBadRequest());
+        validateActivation(account.getActivationToken())
+                .andExpect(status().isOk());
+
+        List<MimeMessage> mails = sentMails();
+        assertThat(mails).hasSize(1);
+        assertThat(recipientOf(mails.getFirst())).isEqualTo(account.getEmail());
+        assertThat(mailText(mails.getFirst()))
+                .contains("/activate?token=" + account.getActivationToken())
+                .contains(client.getFullName());
+    }
+
+    @Test
+    void clientListTellsPendingAccountFromActivatedOne() throws Exception {
+        Employee caregiver = testData.employee(department, EmployeeRole.CAREGIVER);
+        Client pending = testData.client(caregiver);
+        testData.pendingClientAccount(pending);
+        Client activated = testData.client(caregiver);
+        testData.clientAccount(activated);
+
+        mockMvc.perform(get("/api/clients").with(loggedInAs(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == %d)].userAccountActivated", pending.getId()).value(false))
+                .andExpect(jsonPath("$[?(@.id == %d)].userAccountActivated", activated.getId()).value(true));
+    }
+
+    @Test
+    void clientResendForActivatedAccountIsRejectedWithoutMail() throws Exception {
+        Client client = testData.client(testData.employee(department, EmployeeRole.CAREGIVER));
+        testData.clientAccount(client);
+
+        resend(client)
+                .andExpect(status().isBadRequest());
+
+        assertThat(sentMails()).isEmpty();
+    }
+
+    @Test
+    void clientResendWithoutAccountIsNotFound() throws Exception {
+        Client client = testData.client(testData.employee(department, EmployeeRole.CAREGIVER));
+
+        resend(client)
+                .andExpect(status().isNotFound());
+
+        assertThat(sentMails()).isEmpty();
+    }
+
+    @Test
     void ownResetMailGoesToOwnAddressWithLinkValidForTwentyFourHours() throws Exception {
         clock.fixAt(NOW);
         User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
@@ -90,11 +153,11 @@ class UserAccountIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         User withToken = userRepository.findById(account.getId()).orElseThrow();
-        assertThat(withToken.getTokenExpiry()).isEqualTo(NOW.plusHours(24));
+        assertThat(withToken.getResetTokenExpiry()).isEqualTo(NOW.plusHours(24));
         List<MimeMessage> mails = sentMails();
         assertThat(mails).hasSize(1);
         assertThat(recipientOf(mails.getFirst())).isEqualTo(account.getEmail());
-        assertThat(mailText(mails.getFirst())).contains("/reset-password?token=" + withToken.getActivationToken());
+        assertThat(mailText(mails.getFirst())).contains("/reset-password?token=" + withToken.getResetToken());
     }
 
     @Test
@@ -105,6 +168,16 @@ class UserAccountIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         assertThat(userRepository.findById(account.getId()).orElseThrow().getEmail()).isEqualTo(account.getEmail());
+    }
+
+    @Test
+    void ownUsernameShorterThanFourCharactersIsRejected() throws Exception {
+        User account = testData.employee(department, EmployeeRole.CAREGIVER).getUser();
+
+        updateOwnAccount(account, "abc", account.getEmail())
+                .andExpect(status().isBadRequest());
+
+        assertThat(userRepository.findById(account.getId()).orElseThrow().getUsername()).isEqualTo(account.getUsername());
     }
 
     @Test
@@ -136,6 +209,10 @@ class UserAccountIT extends AbstractIntegrationTest {
 
     private ResultActions resend(Employee employee) throws Exception {
         return mockMvc.perform(post("/api/employees/{id}/resend", employee.getId()).with(loggedInAs(admin)));
+    }
+
+    private ResultActions resend(Client client) throws Exception {
+        return mockMvc.perform(post("/api/clients/{id}/account/resend", client.getId()).with(loggedInAs(admin)));
     }
 
     private ResultActions validateActivation(String token) throws Exception {

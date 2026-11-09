@@ -141,13 +141,21 @@ public class TestData {
      * with a token valid for 7 days from the application clock, as a newly created account has.
      */
     public Employee withPendingAccount(Employee employee) {
-        User user = employee.getUser();
+        employee.setUser(pending(employee.getUser()));
+        return employee;
+    }
+
+    /** Client account waiting for activation (no username or password yet), token valid for 7 days. */
+    public User pendingClientAccount(Client client) {
+        return pending(clientAccount(client));
+    }
+
+    private User pending(User user) {
         user.setUsername(null);
         user.setPassword(null);
         user.setActivationToken("token-" + next());
         user.setTokenExpiry(LocalDateTime.now(clock).plusDays(7));
-        employee.setUser(userRepository.save(user));
-        return employee;
+        return userRepository.save(user);
     }
 
     /** Individual plan with one content version (version 1). */

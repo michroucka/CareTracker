@@ -8,7 +8,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.TestData;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -59,7 +58,7 @@ class PasswordResetIT extends AbstractIntegrationTest {
 
         String token = currentToken();
         assertThat(token).isNotNull();
-        assertThat(userRepository.findById(account.getId()).orElseThrow().getTokenExpiry()).isEqualTo(EXPIRY);
+        assertThat(userRepository.findById(account.getId()).orElseThrow().getResetTokenExpiry()).isEqualTo(EXPIRY);
         List<MimeMessage> mails = sentMails();
         assertThat(mails).hasSize(1);
         assertThat(recipientOf(mails.getFirst())).isEqualTo(account.getEmail());
@@ -67,7 +66,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: neexistující e-mail vrací 404 \"Uživatel se zadaným emailem nenalezen\", lze tak zjistit, které e-maily mají účet")
     void unknownEmailGetsSameResponseAndNoMail() throws Exception {
         MockHttpServletResponse known = requestReset(account.getEmail()).andReturn().getResponse();
         MockHttpServletResponse unknown = requestReset("nikdo@caretracker.test").andReturn().getResponse();
@@ -78,7 +76,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: e-mail se při resetu hledá s ohledem na velikost písmen, ačkoli jeho jedinečnost se kontroluje bez ní")
     void emailIsMatchedIgnoringCase() throws Exception {
         requestReset(account.getEmail().toUpperCase())
                 .andExpect(status().isOk());
@@ -88,7 +85,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: deaktivovaný účet dostane e-mail pro reset hesla, i když se přihlásit nemůže")
     void deactivatedAccountGetsNoResetMail() throws Exception {
         account.setActive(false);
         userRepository.save(account);
@@ -101,7 +97,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: reset hesla u neaktivovaného účtu přepíše aktivační token; po resetu má účet heslo, ale žádné uživatelské jméno ani token, a nejde aktivovat ani se přihlásit")
     void resetRequestDoesNotReplaceActivationToken() throws Exception {
         User pending = testData.withPendingAccount(testData.employee(department, EmployeeRole.CAREGIVER)).getUser();
 
@@ -113,7 +108,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: aktivační token jde použít i pro reset hesla; účet pak má heslo bez uživatelského jména a token zmizí, takže aktivaci nejde dokončit")
     void activationTokenCannotResetPassword() throws Exception {
         User pending = testData.withPendingAccount(testData.employee(department, EmployeeRole.CAREGIVER)).getUser();
 
@@ -134,8 +128,8 @@ class PasswordResetIT extends AbstractIntegrationTest {
 
         User changed = userRepository.findById(account.getId()).orElseThrow();
         assertThat(passwordEncoder.matches(NEW_PASSWORD, changed.getPassword())).isTrue();
-        assertThat(changed.getActivationToken()).isNull();
-        assertThat(changed.getTokenExpiry()).isNull();
+        assertThat(changed.getResetToken()).isNull();
+        assertThat(changed.getResetTokenExpiry()).isNull();
     }
 
     @Test
@@ -157,7 +151,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: resetPassword volá validateToken, ale ignoruje jeho výsledek, takže prošlý token heslo změní")
     void expiredTokenCannotChangePassword() throws Exception {
         String token = requestedToken();
         clock.fixAt(EXPIRY.plusSeconds(1));
@@ -215,10 +208,8 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: reset bez tokenu volá findByActivationToken(null), což najde účet s prázdným tokenem; "
-            + "heslo dnes chrání jen NullPointerException na prázdném tokenExpiry, ne kontrola tokenu")
     void missingTokenChangesNoPasswordEvenWithLeftoverExpiry() throws Exception {
-        account.setTokenExpiry(EXPIRY);
+        account.setResetTokenExpiry(EXPIRY);
         userRepository.save(account);
 
         resetPasswordWithoutToken()
@@ -233,7 +224,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend nekontroluje délku nového hesla při resetu, pravidlo (alespoň 6 znaků) je jen ve frontendu")
     void tooShortPasswordIsRejected() throws Exception {
         String token = requestedToken();
 
@@ -250,7 +240,7 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     private String currentToken() {
-        return userRepository.findById(account.getId()).orElseThrow().getActivationToken();
+        return userRepository.findById(account.getId()).orElseThrow().getResetToken();
     }
 
     private void assertPasswordUnchanged(User user) {
