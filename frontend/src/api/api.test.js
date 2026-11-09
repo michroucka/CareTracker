@@ -111,9 +111,7 @@ describe("api – expired session (401)", () => {
         expect(unauthorized.listener).not.toHaveBeenCalled();
     });
 
-    // Nález: uploadFile, deleteImage and fetchImage skip handleUnauthorized, so a session that expires
-    // while editing a photo only shows a warning toast and the user is not sent to the login page.
-    it.skip.each([...FILE_CALLS, ["fetchImage", "get", () => fetchImage("/clients")]])("%s dispatches auth:unauthorized as well", async (_name, method, send) => {
+    it.each([...FILE_CALLS, ["fetchImage", "get", () => fetchImage("/clients")]])("%s dispatches auth:unauthorized as well", async (_name, method, send) => {
         respondWith(method, () => new HttpResponse(null, { status: 401 }));
 
         await expect(send()).rejects.toThrow();
