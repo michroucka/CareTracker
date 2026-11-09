@@ -12,7 +12,6 @@ import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -134,7 +133,6 @@ class TaskCatalogIT extends AbstractIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, -150})
-    @Disabled("Nález: backend přijme úkon s nulovou nebo zápornou cenou (formulář vyžaduje cenu větší než 0)")
     void priceMustBePositive(int unitPrice) throws Exception {
         Map<String, Object> request = taskRequest(null);
         request.put("unitPrice", unitPrice);

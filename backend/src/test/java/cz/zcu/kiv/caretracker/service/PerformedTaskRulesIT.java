@@ -16,7 +16,6 @@ import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -26,6 +25,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +33,9 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -237,6 +239,20 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
         assertThat(listedIds(coordinator)).hasSize(5);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"month=11", "year=2026", "month=13&year=2026"})
+    void incompleteOrInvalidMonthFilterIsRejected(String query) throws Exception {
+        MockHttpServletRequestBuilder request = get("/api/performed-tasks");
+        for (String param : query.split("&")) {
+            String[] nameAndValue = param.split("=");
+            request.param(nameAndValue[0], nameAndValue[1]);
+        }
+
+        mockMvc.perform(request.with(loggedInAs(coordinator)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(startsWith("Měsíc")));
+    }
+
     @Test
     void monthFilterCombinesWithClientAndCaregiverFilters() throws Exception {
         Client otherClient = testData.client(colleague);
@@ -251,7 +267,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: úkon z katalogu, který byl deaktivován, jde backendem dál zapisovat (formulář nabízí jen aktivní úkony)")
     void inactiveTaskCannotBeRecorded() throws Exception {
         task.setActive(false);
         taskRepository.save(task);
@@ -263,19 +278,60 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: ukončenému klientovi jde backendem zapsat nový úkon (formulář nabízí jen aktivní klienty)")
-    void newRecordCannotBeCreatedForTerminatedClient() throws Exception {
-        client.setActive(false);
-        clientRepository.save(client);
+    void recordWithDeactivatedTaskStaysEditableButCannotSwitchToOne() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, caregiver);
+        Task otherTask = testData.task(organization);
+        task.setActive(false);
+        taskRepository.save(task);
+        otherTask.setActive(false);
+        taskRepository.save(otherTask);
+        Map<String, Object> request = request(client, task, caregiver);
+        request.put("unitCount", 45.0);
 
-        perform(coordinator, post("/api/performed-tasks"), request(client, task, caregiver))
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request).andExpect(status().isOk());
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request(client, otherTask, caregiver))
                 .andExpect(status().isBadRequest());
 
-        assertThat(performedTaskRepository.count()).isZero();
+        PerformedTask saved = performedTaskRepository.findById(record.getId()).orElseThrow();
+        assertThat(saved.getUnitCount()).isEqualTo(45.0);
+        assertThat(saved.getTask().getId()).isEqualTo(task.getId());
     }
 
     @Test
-    @Disabled("Nález: ukončený zaměstnanec jde backendem přidat mezi pečovatele (formulář nabízí jen aktivní)")
+    void terminatedClientGetsRecordsOnlyUpToTerminationDate() throws Exception {
+        client.setActive(false);
+        client.setTerminationDate(LocalDate.of(2026, 11, 3));
+        clientRepository.save(client);
+        Map<String, Object> afterTermination = request(client, task, caregiver);
+        afterTermination.put("date", "2026-11-04T08:00:00");
+
+        perform(coordinator, post("/api/performed-tasks"), afterTermination)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Klientovi nelze zapsat úkon po datu ukončení služby"));
+        long onTerminationDay = createdId(perform(coordinator, post("/api/performed-tasks"), request(client, task, caregiver))
+                .andExpect(status().isOk()));
+
+        assertThat(performedTaskRepository.findAll()).extracting(PerformedTask::getId).containsExactly(onTerminationDay);
+    }
+
+    @Test
+    void recordOfTerminatedClientCannotBeMovedPastTerminationDate() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, caregiver);
+        client.setActive(false);
+        client.setTerminationDate(LocalDate.of(2026, 11, 3));
+        clientRepository.save(client);
+        Map<String, Object> afterTermination = request(client, task, caregiver);
+        afterTermination.put("date", "2026-11-05T08:00:00");
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), afterTermination)
+                .andExpect(status().isBadRequest());
+
+        assertThat(performedTaskRepository.findById(record.getId())).get()
+                .extracting(PerformedTask::getDate)
+                .isEqualTo(record.getDate());
+    }
+
+    @Test
     void terminatedEmployeeCannotBeAddedAsCaregiver() throws Exception {
         colleague.setActive(false);
         employeeRepository.save(colleague);
@@ -286,9 +342,20 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
         assertThat(performedTaskRepository.count()).isZero();
     }
 
+    @Test
+    void terminatedCaregiverStaysOnRecordWhenItIsEdited() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, colleague);
+        colleague.setActive(false);
+        employeeRepository.save(colleague);
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request(client, task, colleague, caregiver))
+                .andExpect(status().isOk());
+
+        assertThat(caregiverIdsOf(record.getId())).containsExactlyInAnyOrder(colleague.getId(), caregiver.getId());
+    }
+
     @ParameterizedTest
     @ValueSource(doubles = {0, -30})
-    @Disabled("Nález: backend přijme nulové nebo záporné množství (formulář vyžaduje kladné číslo), cena vyjde záporná")
     void amountMustBePositive(double unitCount) throws Exception {
         Map<String, Object> request = request(client, task, caregiver);
         request.put("unitCount", unitCount);
@@ -299,7 +366,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme zlomek u úkonu počítaného na kusy (formulář dovolí desetinná místa jen u km a kg)")
     void occurrenceCountMustBeWholeNumber() throws Exception {
         Task visit = testData.task(organization, UnitType.OCCURRENCE, 40);
         Map<String, Object> request = request(client, visit, caregiver);
@@ -311,7 +377,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme úkon s datem v budoucnosti (formulář ho odmítne)")
     void recordCannotBeInFuture() throws Exception {
         clock.fixAt(LocalDateTime.of(2026, 11, 3, 9, 0));
 
@@ -322,16 +387,20 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend uloží úkon bez pečovatelů (formulář vyžaduje aspoň jednoho)")
     void recordNeedsAtLeastOneCaregiver() throws Exception {
+        Map<String, Object> withoutCaregivers = request(client, task);
+        withoutCaregivers.remove("caregiverIds");
+
         perform(coordinator, post("/api/performed-tasks"), request(client, task))
                 .andExpect(status().isBadRequest());
+        perform(coordinator, post("/api/performed-tasks"), withoutCaregivers)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Úkon musí mít alespoň jednoho pečovatele"));
 
         assertThat(performedTaskRepository.count()).isZero();
     }
 
     @Test
-    @Disabled("Nález: SUPERADMIN zapíše klientovi úkon z katalogu jiné organizace; kontrola organizace úkonu se pro něj přeskakuje")
     void taskMustComeFromClientsOrganization() throws Exception {
         Task otherOrganizationTask = testData.task(testData.organization());
 
