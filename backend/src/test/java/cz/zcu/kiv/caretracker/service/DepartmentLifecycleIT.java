@@ -14,7 +14,6 @@ import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -186,7 +185,6 @@ class DepartmentLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: koordinátora jiného střediska jde backendem přiřadit i k dalšímu (formulář ho nenabídne); jeho odebrání z jednoho střediska ho pak degraduje na pečovatele, ač druhé dál koordinuje")
     void coordinatorOfAnotherDepartmentCannotBeAssigned() throws Exception {
         Department otherDepartment = testData.department(organization);
         Employee coordinator = testData.employee(otherDepartment, EmployeeRole.CAREGIVER);
@@ -198,7 +196,6 @@ class DepartmentLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: odebraný koordinátor spadne na pečovatele, i když dál koordinuje jiné středisko (OrganizationService to u vedoucího hlídá přes existsByCoordinatorId)")
     void employeeStillCoordinatingAnotherDepartmentStaysCoordinator() throws Exception {
         Department otherDepartment = testData.department(organization);
         Employee coordinator = testData.employee(otherDepartment, EmployeeRole.CAREGIVER);
