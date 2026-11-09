@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -152,6 +153,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         validateTask(performedTask, client, task);
         validateAmount(dto.getUnitCount(), task);
         validateDate(dto.getDate());
+        validateClientServiceEnd(performedTask, client, dto.getDate());
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
         return performedTaskRepository.save(performedTask);
@@ -256,6 +258,22 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         }
         if (date.isAfter(LocalDateTime.now(clock))) {
             throw new ValidationException("Úkon nemůže být v budoucnosti");
+        }
+    }
+
+    /**
+     * Work for a terminated client may still be recorded up to the termination date. Records that keep
+     * their client and date are left alone, so older records stay editable.
+     */
+    private void validateClientServiceEnd(PerformedTask performedTask, Client client, LocalDateTime date) {
+        if (client.getActive()) return;
+        boolean keepsClientAndDate = performedTask.getClient() != null
+                && performedTask.getClient().getId().equals(client.getId())
+                && date.equals(performedTask.getDate());
+        if (keepsClientAndDate) return;
+        LocalDate terminationDate = client.getTerminationDate();
+        if (terminationDate == null || date.toLocalDate().isAfter(terminationDate)) {
+            throw new ValidationException("Klientovi nelze zapsat úkon po datu ukončení služby");
         }
     }
 

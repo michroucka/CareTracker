@@ -16,7 +16,6 @@ import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -26,6 +25,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -283,15 +283,37 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: ukončenému klientovi jde backendem zapsat nový úkon (formulář nabízí jen aktivní klienty)")
-    void newRecordCannotBeCreatedForTerminatedClient() throws Exception {
+    void terminatedClientGetsRecordsOnlyUpToTerminationDate() throws Exception {
         client.setActive(false);
+        client.setTerminationDate(LocalDate.of(2026, 11, 3));
         clientRepository.save(client);
+        Map<String, Object> afterTermination = request(client, task, caregiver);
+        afterTermination.put("date", "2026-11-04T08:00:00");
 
-        perform(coordinator, post("/api/performed-tasks"), request(client, task, caregiver))
+        perform(coordinator, post("/api/performed-tasks"), afterTermination)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Klientovi nelze zapsat úkon po datu ukončení služby"));
+        long onTerminationDay = createdId(perform(coordinator, post("/api/performed-tasks"), request(client, task, caregiver))
+                .andExpect(status().isOk()));
+
+        assertThat(performedTaskRepository.findAll()).extracting(PerformedTask::getId).containsExactly(onTerminationDay);
+    }
+
+    @Test
+    void recordOfTerminatedClientCannotBeMovedPastTerminationDate() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, caregiver);
+        client.setActive(false);
+        client.setTerminationDate(LocalDate.of(2026, 11, 3));
+        clientRepository.save(client);
+        Map<String, Object> afterTermination = request(client, task, caregiver);
+        afterTermination.put("date", "2026-11-05T08:00:00");
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), afterTermination)
                 .andExpect(status().isBadRequest());
 
-        assertThat(performedTaskRepository.count()).isZero();
+        assertThat(performedTaskRepository.findById(record.getId())).get()
+                .extracting(PerformedTask::getDate)
+                .isEqualTo(record.getDate());
     }
 
     @Test
