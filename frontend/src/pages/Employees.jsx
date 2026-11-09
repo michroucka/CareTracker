@@ -10,6 +10,7 @@ import { getRoleLabel, ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
@@ -23,27 +24,12 @@ import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { pictureUrl } from "@/lib/pictures";
 import { cn } from "@/lib/utils";
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR];
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function LoadingRows({ columnCount }) {
-    return Array.from({ length: 6 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            <TableCell>
-                <div className="flex items-center gap-3">
-                    <Skeleton className="size-9 rounded-full" />
-                    <div className="grid gap-1.5"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-40" /></div>
-                </div>
-            </TableCell>
-            {Array.from({ length: columnCount - 1 }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
-        </TableRow>
-    ));
-}
 
 function Employees() {
     const { user, superadminOrg } = useAuth();
@@ -180,7 +166,7 @@ function Employees() {
                 <TableBody>
                     {needsOrganization ? (
                         <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
-                    ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
+                    ) : loading ? <TableLoadingRows avatar columns={["", "@max-xl/table:hidden", "@max-3xl/table:hidden", "@max-4xl/table:hidden", ...(canEdit ? ["", null] : [])]} /> : count === 0 ? (
                         (search
                         ? <TableEmptyRow columnCount={columnCount} title="Nikdo neodpovídá hledání" description="Zkuste jiné jméno." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                         : <TableEmptyRow columnCount={columnCount} title="Žádní zaměstnanci" description="Pro zvolený stav a středisko tu nikdo není." />)

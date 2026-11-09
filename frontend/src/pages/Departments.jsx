@@ -10,6 +10,7 @@ import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -19,24 +20,10 @@ import { pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 const COLUMN_COUNT = 6;
-
-function LoadingRows() {
-    return Array.from({ length: 4 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-44" /></TableCell>
-            <TableCell className="@max-4xl/table:hidden"><Skeleton className="h-4 w-10" /></TableCell>
-            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-36" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-            <TableCell />
-        </TableRow>
-    ));
-}
 
 function Departments() {
     const { user, superadminOrg } = useAuth();
@@ -144,7 +131,7 @@ function Departments() {
                 <TableBody>
                     {needsOrganization ? (
                         <TableEmptyRow columnCount={COLUMN_COUNT} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
-                    ) : loading ? <LoadingRows /> : count === 0 ? (
+                    ) : loading ? <TableLoadingRows rows={4} columns={["", "@max-3xl/table:hidden", "@max-4xl/table:hidden", "@max-3xl/table:hidden", "", null]} /> : count === 0 ? (
                         (search
                         ? <TableEmptyRow columnCount={COLUMN_COUNT} title="Žádné středisko neodpovídá hledání" description="Zkuste jiný název nebo město." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                         : <TableEmptyRow columnCount={COLUMN_COUNT} title="Zatím tu není žádné středisko" description="Střediska jsou pobočky organizace, ke kterým patří klienti a zaměstnanci." action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nové středisko</Button>} />)

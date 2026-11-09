@@ -152,6 +152,13 @@ const VIEWS = {
 };
 const VIEW_STORAGE_KEY = "dashboard_view";
 
+/** Views the role can switch to, shown while the dashboard loads (the server sends the exact list). */
+function expectedViews(role) {
+    if (role === ROLES.ADMIN) return ["ORGANIZATION", "DEPARTMENT", "MINE"];
+    if (role === ROLES.COORDINATOR) return ["DEPARTMENT", "MINE"];
+    return [];
+}
+
 function readStoredView() {
     try {
         return localStorage.getItem(VIEW_STORAGE_KEY);
@@ -172,7 +179,7 @@ function storeView(view) {
  * Switch between the dashboard views the user's role allows; hidden when there is only one.
  * Icon and label from 640 px up; on phones icons only (label in a tooltip and for screen readers).
  */
-function ViewSwitcher({ views, value, onChange }) {
+function ViewSwitcher({ views, value, onChange, disabled = false }) {
     if (!views || views.length < 2) return null;
     return (
         <div role="group" aria-label="Pohled nástěnky" className={SEGMENTED_GROUP}>
@@ -185,6 +192,7 @@ function ViewSwitcher({ views, value, onChange }) {
                                 variant="ghost"
                                 aria-pressed={view === value}
                                 aria-label={label}
+                                disabled={disabled}
                                 onClick={() => onChange(view)}
                                 className={cn(SEGMENT, "px-3 font-normal aria-pressed:bg-secondary aria-pressed:font-medium aria-pressed:text-secondary-foreground", index > 0 && "border-l")}
                             >
@@ -316,7 +324,7 @@ function DashboardContent() {
                     : capitalize(formatLongDate(new Date()))}
                 actions={!isSuperadmin && (
                     <>
-                        <ViewSwitcher views={dashboard?.availableViews} value={dashboard?.view} onChange={changeView} />
+                        <ViewSwitcher views={dashboard?.availableViews ?? expectedViews(user.role)} value={dashboard?.view} onChange={changeView} disabled={!dashboard} />
                         <Button asChild>
                             <Link to="/performed-tasks?openCreate=true"><IconPlus /> Zapsat úkon</Link>
                         </Button>

@@ -9,6 +9,7 @@ import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -19,21 +20,10 @@ import { TaskSheet } from "@/components/tasks/TaskSheet";
 import { formatTaskPrice, unitTypeLabel } from "@/components/tasks/taskForm";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function LoadingRows({ columnCount }) {
-    return Array.from({ length: 5 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            {Array.from({ length: columnCount }, (_, cell) => (
-                <TableCell key={cell}><Skeleton className="h-4 w-24" /></TableCell>
-            ))}
-        </TableRow>
-    ));
-}
 
 function Tasks() {
     const { user, superadminOrg } = useAuth();
@@ -127,7 +117,7 @@ function Tasks() {
                 <TableBody>
                     {needsOrganization ? (
                         <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
-                    ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
+                    ) : loading ? <TableLoadingRows rows={5} columns={["", "@max-xl/table:hidden", "@max-3xl/table:hidden", ...(canEdit ? [""] : []), "text-right", ...(canEdit ? [null] : [])]} /> : count === 0 ? (
                         search
                             ? <TableEmptyRow columnCount={columnCount} title="Žádný úkon neodpovídá hledání" description="Zkuste jiný název." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                             : <TableEmptyRow columnCount={columnCount} title="Katalog je prázdný" description="Úkony jsou služby, které pečovatelé zapisují a které se klientům účtují." action={canEdit && <Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nový úkon</Button>} />

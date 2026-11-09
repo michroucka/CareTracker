@@ -16,6 +16,7 @@ import { formatTime, removeDiacritics } from "../utils/formatters.js";
 import MonthYearPicker from "@/components/MonthYearPicker";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { TablePagination } from "@/components/data/TablePagination";
@@ -30,19 +31,10 @@ import { ReceiptDialog } from "@/components/performedTasks/ReceiptDialog";
 import { formatAmount } from "@/components/performedTasks/performedTaskForm";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function LoadingRows({ columnCount }) {
-    return Array.from({ length: 8 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            {Array.from({ length: columnCount }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
-        </TableRow>
-    ));
-}
 
 /** Memoized so sorting and opening a detail move existing rows instead of re-rendering ~1500 of them. */
 const PerformedTaskRow = React.memo(function PerformedTaskRow({ performedTask, isSelected, canEdit, onOpen, onDelete }) {
@@ -270,7 +262,7 @@ function PerformedTasks() {
                 <TableBody className={cn("transition-opacity duration-base ease-out", isSorting && "opacity-50")} aria-busy={isSorting || undefined}>
                     {needsOrganization ? (
                         <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
-                    ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
+                    ) : loading ? <TableLoadingRows rows={8} columns={["", "", "@max-3xl/table:hidden", "@max-4xl/table:hidden", "text-right", null]} /> : count === 0 ? (
                         (search
                         ? <TableEmptyRow columnCount={columnCount} title="Žádný záznam neodpovídá hledání" description="Hledá se podle jména klienta a názvu úkonu." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                         : <TableEmptyRow columnCount={columnCount} title="V tomto měsíci zatím nic" description="Zapsané úkony se tu objeví den po dni." action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Zapsat úkon</Button>} />)

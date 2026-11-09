@@ -8,6 +8,7 @@ import { usePagedList } from "../hooks/usePagedList";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -18,21 +19,8 @@ import { formatBankAccount } from "@/components/organizations/organizationForm";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-
-function LoadingRows() {
-    return Array.from({ length: 4 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-36" /></TableCell>
-            <TableCell className="@max-4xl/table:hidden"><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-            <TableCell />
-        </TableRow>
-    ));
-}
 
 function Organizations() {
     const { search, setSearch, statusFilter, setStatusFilter, apiStatus } = useListFilters();
@@ -125,7 +113,7 @@ function Organizations() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {loading ? <LoadingRows /> : count === 0 ? (
+                    {loading ? <TableLoadingRows rows={4} columns={["", "@max-3xl/table:hidden", "@max-4xl/table:hidden", "", null]} /> : count === 0 ? (
                         search
                             ? <TableEmptyRow columnCount={5} title="Žádná organizace neodpovídá hledání" description="Zkuste jiný název." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                             : <TableEmptyRow columnCount={5} title="Zatím tu není žádná organizace" action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nová organizace</Button>} />

@@ -14,6 +14,7 @@ import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialo
 import { clientAccountState } from "@/components/clients/clientAccount";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
@@ -24,27 +25,12 @@ import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { pictureUrl } from "@/lib/pictures";
 import { cn } from "@/lib/utils";
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR];
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function LoadingRows({ columnCount }) {
-    return Array.from({ length: 8 }, (_, index) => (
-        <TableRow key={index} className="hover:bg-transparent">
-            <TableCell>
-                <div className="flex items-center gap-3">
-                    <Skeleton className="size-9 rounded-full" />
-                    <div className="grid gap-1.5"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-44" /></div>
-                </div>
-            </TableCell>
-            {Array.from({ length: columnCount - 1 }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
-        </TableRow>
-    ));
-}
 
 function Clients() {
     const navigate = useNavigate();
@@ -163,7 +149,7 @@ function Clients() {
                 <TableBody>
                     {needsOrganization ? (
                         <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
-                    ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
+                    ) : loading ? <TableLoadingRows avatar rows={8} columns={["", "@max-3xl/table:hidden", "@max-xl/table:hidden", "@max-4xl/table:hidden", "", ...(canEdit ? [null] : [])]} /> : count === 0 ? (
                         (search
                         ? <TableEmptyRow columnCount={columnCount} title="Nikdo neodpovídá hledání" description="Zkuste jiné jméno nebo město." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
                         : <TableEmptyRow columnCount={columnCount} title="Žádní klienti" description="Pro zvolený stav, středisko a pečovatele tu nikdo není." />)
