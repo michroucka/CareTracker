@@ -3,7 +3,6 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.entity.Picture;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.support.TestImages;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -120,8 +119,6 @@ class PictureServiceTest {
         assertSquareJpeg(picture.getThumbnail(), THUMB_SIZE);
     }
 
-    @Disabled("Nález: obrázky s paletou (GIF, PNG s paletou) ztratí barvy – Thumbnailator při scale(1.0) "
-            + "vytvoří cílový obrázek stejného indexovaného typu s výchozí paletou; oprava: imageType(TYPE_INT_ARGB) v readUpright")
     @ParameterizedTest
     @ValueSource(strings = {"gif", "png"})
     void keepsColoursOfPaletteImage(String format) throws Exception {
