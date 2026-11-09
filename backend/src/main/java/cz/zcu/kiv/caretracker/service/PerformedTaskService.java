@@ -49,12 +49,13 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
      * @param departmentIds optional department filter
      * @param caregiverIds optional caregiver filter
      * @param clientId optional client filter (ignored for CLIENT role)
-     * @param month optional month filter (1–12)
-     * @param year optional year filter
+     * @param month optional month filter (1–12), given together with {@code year}
+     * @param year optional year filter, given together with {@code month}
      * @return role-filtered list of performed task summary DTOs
      */
     @Transactional(readOnly = true)
     public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds, Long clientId, Integer month, Integer year) {
+        validateMonthFilter(month, year);
         User currentUser = getCurrentUser();
 
         // CLIENT role bypasses org/dept filters — always scoped to the client's own records
@@ -86,6 +87,15 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
         List<PerformedTask> performedTasks = performedTaskRepository.findAll(spec);
         return performedTaskMapper.toSummaryDTOList(performedTasks);
+    }
+
+    private void validateMonthFilter(Integer month, Integer year) {
+        if ((month == null) != (year == null)) {
+            throw new ValidationException("Měsíc a rok je nutné zadat společně");
+        }
+        if (month != null && (month < 1 || month > 12)) {
+            throw new ValidationException("Měsíc musí být v rozsahu 1 až 12");
+        }
     }
 
     /**

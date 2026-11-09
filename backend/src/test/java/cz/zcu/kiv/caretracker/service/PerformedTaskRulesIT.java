@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -236,6 +237,20 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
         assertThat(listedIds(coordinator, "month", "11", "year", "2026"))
                 .containsExactlyInAnyOrder(firstMoment.getId(), lastDay.getId());
         assertThat(listedIds(coordinator)).hasSize(5);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"month=11", "year=2026", "month=13&year=2026"})
+    void incompleteOrInvalidMonthFilterIsRejected(String query) throws Exception {
+        MockHttpServletRequestBuilder request = get("/api/performed-tasks");
+        for (String param : query.split("&")) {
+            String[] nameAndValue = param.split("=");
+            request.param(nameAndValue[0], nameAndValue[1]);
+        }
+
+        mockMvc.perform(request.with(loggedInAs(coordinator)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(startsWith("Měsíc")));
     }
 
     @Test
