@@ -81,11 +81,11 @@ demo-logs:
 # Demo aktivita: doplní realistické provedené úkony za posledních 12 měsíců až do teď.
 # Bezpečné spouštět opakovaně (např. jednou měsíčně), doplní jen to, co od minula chybí.
 seed-activity:
-	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/seed.sql
+	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/src/main/resources/demo-activity/seed.sql
 
 # Smaže všechny úkony vygenerované přes seed-activity
 clear-activity:
-	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/clear.sql
+	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/src/main/resources/demo-activity/clear.sql
 
 demo-seed-activity:
-	@docker compose -f docker-compose.demo.yml exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/seed.sql
+	@docker compose -f docker-compose.demo.yml exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/src/main/resources/demo-activity/seed.sql

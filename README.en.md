@@ -50,14 +50,11 @@ CareTracker replaces paper timesheets and spreadsheets in home care services. Ca
 | **Client billing** | Clients see their statement and pay with a QR code. |
 | **Organizations and departments** | Multiple organizations in one installation (organization → department → employee) with matching access restrictions. |
 | **Roles and permissions** | Superadmin, admin, coordinator, caregiver and client – enforced on both the backend and the frontend. |
-| **Built for field work** | Responsive layout for phones, light and dark mode, quick search (<kbd>⌘</kbd> <kbd>K</kbd>). |
+| **Built for field work** | Responsive layout for phones, light and dark mode, quick search (<kbd>Ctrl</kbd> <kbd>K</kbd> / <kbd>⌘</kbd> <kbd>K</kbd>). |
 
 ## Screenshots
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/screenshots/dashboard-dark.png" />
-  <img src=".github/assets/screenshots/dashboard-light.png" alt="Dashboard with the monthly overview of revenue and caregiver workload" />
-</picture>
+<img src=".github/assets/screenshots/dashboard-light.png" alt="Dashboard with the monthly overview of revenue and caregiver workload" />
 
 <table>
   <tr>
