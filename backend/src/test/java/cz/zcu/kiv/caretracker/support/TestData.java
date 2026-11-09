@@ -7,6 +7,7 @@ import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -37,6 +38,12 @@ public class TestData {
     private final DailyRecordRepository dailyRecordRepository;
     private final TaskRepository taskRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // field injection keeps the constructor untouched while other test domains extend this class in parallel
+    @Autowired
+    private TaskRepository taskRepository;
+    @Autowired
+    private PerformedTaskRepository performedTaskRepository;
 
     // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
     private String encodedPassword;
@@ -180,6 +187,33 @@ public class TestData {
 
     public User superadmin() {
         return userRepository.save(account(UserRole.SUPERADMIN));
+    }
+
+    /** Catalog task of the organization priced per hour (100 Kč). */
+    public Task task(Organization organization) {
+        Task task = new Task();
+        task.setName("Úkon " + next());
+        task.setUnitPrice(100);
+        task.setUnitType(UnitType.HOUR);
+        task.setOrganization(organization);
+        return taskRepository.save(task);
+    }
+
+    /** One hour of the task for the client on 2 November 2026, performed by the caregiver. */
+    public PerformedTask performedTask(Client client, Task task, Employee caregiver) {
+        PerformedTask performedTask = new PerformedTask();
+        performedTask.setClient(client);
+        performedTask.setTask(task);
+        performedTask.setDepartment(client.getDepartment());
+        performedTask.setOrganization(client.getOrganization());
+        performedTask.setDate(LocalDateTime.of(2026, 11, 2, 9, 0));
+        performedTask.setUnitCount(60.0);
+        performedTask.setCaregivers(new ArrayList<>());
+        performedTask = performedTaskRepository.save(performedTask);
+
+        // caregivers cascade PERSIST, which rejects the detached employee; the second save merges instead
+        performedTask.getCaregivers().add(caregiver);
+        return performedTaskRepository.save(performedTask);
     }
 
     private Picture picture() {
