@@ -147,13 +147,13 @@ Všechny příkazy najdeš v [`Makefile`](Makefile).
     <th align="left">Testy</th>
     <td>
       <a href="https://junit.org/">JUnit 5</a>, <a href="https://site.mockito.org/">Mockito</a>,
-      Spring Boot Test (<code>@WebMvcTest</code>), Spring Security Test,
-      <a href="https://vitest.dev/">Vitest</a>
+      Spring Boot Test, Spring Security Test, <a href="https://testcontainers.com/">Testcontainers</a> (PostgreSQL),
+      <a href="https://vitest.dev/">Vitest</a>, <a href="https://testing-library.com/">Testing Library</a>, <a href="https://mswjs.io/">MSW</a>
     </td>
   </tr>
   <tr>
     <th align="left">Nasazení</th>
-    <td><a href="https://www.docker.com/">Docker Compose</a>, demo se nasazuje automaticky z <code>main</code> přes GitHub Actions</td>
+    <td><a href="https://www.docker.com/">Docker Compose</a>, CI (testy, lint, build) na každý PR, demo se nasazuje z <code>main</code> po úspěšném CI</td>
   </tr>
 </table>
 

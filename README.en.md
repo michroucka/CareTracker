@@ -150,13 +150,13 @@ See the [`Makefile`](Makefile) for all commands.
     <th align="left">Testing</th>
     <td>
       <a href="https://junit.org/">JUnit 5</a>, <a href="https://site.mockito.org/">Mockito</a>,
-      Spring Boot Test (<code>@WebMvcTest</code>), Spring Security Test,
-      <a href="https://vitest.dev/">Vitest</a>
+      Spring Boot Test, Spring Security Test, <a href="https://testcontainers.com/">Testcontainers</a> (PostgreSQL),
+      <a href="https://vitest.dev/">Vitest</a>, <a href="https://testing-library.com/">Testing Library</a>, <a href="https://mswjs.io/">MSW</a>
     </td>
   </tr>
   <tr>
     <th align="left">Deployment</th>
-    <td><a href="https://www.docker.com/">Docker Compose</a>; the demo deploys automatically from <code>main</code> via GitHub Actions</td>
+    <td><a href="https://www.docker.com/">Docker Compose</a>; CI (tests, lint, build) on every PR; the demo deploys from <code>main</code> after CI passes</td>
   </tr>
 </table>
 

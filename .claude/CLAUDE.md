@@ -49,6 +49,21 @@ The backend uses Spring Boot DevTools. The recommended cycle for backend changes
 1. Edit Java source files
 2. Run `make compile` — DevTools detects the recompiled classes and restarts automatically
 
+### Tests
+
+Plan and conventions: `docs/testing/PLAN.md`.
+
+```bash
+cd backend && ./mvnw test     # unit tests (*Test)
+cd backend && ./mvnw verify   # + integration tests (*IT, PostgreSQL via Testcontainers, needs Docker) + JaCoCo report
+cd frontend && npm run test:run   # Vitest once (npm test = watch mode)
+cd frontend && npm run coverage
+```
+
+- Backend integration tests extend `support/AbstractIntegrationTest` (shared Spring context, DB emptied before each test, `loggedInAs(...)`, data via `TestData`). Don't add `@MockitoBean` in subclasses, it creates a new context.
+- Frontend: `renderWithProviders` from `src/test/render.jsx`, API mocked with MSW (`src/test/server.js`), sample users in `src/test/users.js`. Unhandled requests fail the test.
+- CI (`.github/workflows/ci.yml`) runs on every PR; demo deploy runs only after CI passes on `main`.
+
 ## Architecture
 
 ### Tech Stack
