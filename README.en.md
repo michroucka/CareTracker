@@ -7,6 +7,7 @@
   <p><strong>Care records, monthly reports and billing for home care services – in one place, without paper.</strong></p>
 
   <p>
+    <a href="https://caretracker.cz"><img alt="Website" src="https://img.shields.io/badge/website-caretracker.cz-4A2B5E?style=for-the-badge" /></a>
     <a href="https://demo.caretracker.cz"><img alt="Live demo" src="https://img.shields.io/badge/live_demo-demo.caretracker.cz-E26A35?style=for-the-badge" /></a>
   </p>
 

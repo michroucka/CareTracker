@@ -7,6 +7,7 @@
   <p><strong>Evidence péče, výkazy a vyúčtování pro pečovatelské služby – na jednom místě, bez papírů.</strong></p>
 
   <p>
+    <a href="https://caretracker.cz"><img alt="Web" src="https://img.shields.io/badge/web-caretracker.cz-4A2B5E?style=for-the-badge" /></a>
     <a href="https://demo.caretracker.cz"><img alt="Živé demo" src="https://img.shields.io/badge/%C5%BEiv%C3%A9_demo-demo.caretracker.cz-E26A35?style=for-the-badge" /></a>
   </p>
 
