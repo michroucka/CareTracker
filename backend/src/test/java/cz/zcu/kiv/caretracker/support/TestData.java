@@ -115,15 +115,24 @@ public class TestData {
 
     /** Sets a small JPEG profile picture (both sizes already generated). */
     public Client withPicture(Client client) {
-        byte[] image = TestImages.jpeg(16, 16);
-        Picture picture = new Picture();
-        picture.setData(image);
-        picture.setThumbnail(image);
-        picture.setContentType("image/jpeg");
-        picture.setSize((long) image.length);
-        picture.setUploadedAt(LocalDateTime.now());
-        client.setPicture(picture);
+        client.setPicture(picture());
         return clientRepository.save(client);
+    }
+
+    /** Sets a small JPEG profile picture (both sizes already generated). */
+    public Employee withPicture(Employee employee) {
+        employee.setPicture(picture());
+        return employeeRepository.save(employee);
+    }
+
+    /** Turns the employee's account back into one waiting for activation (no username yet). */
+    public Employee withPendingAccount(Employee employee) {
+        User user = employee.getUser();
+        user.setUsername(null);
+        user.setActivationToken("token-" + next());
+        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        employee.setUser(userRepository.save(user));
+        return employee;
     }
 
     /** Individual plan with one content version (version 1). */
@@ -155,6 +164,17 @@ public class TestData {
 
     public User superadmin() {
         return userRepository.save(account(UserRole.SUPERADMIN));
+    }
+
+    private Picture picture() {
+        byte[] image = TestImages.jpeg(16, 16);
+        Picture picture = new Picture();
+        picture.setData(image);
+        picture.setThumbnail(image);
+        picture.setContentType("image/jpeg");
+        picture.setSize((long) image.length);
+        picture.setUploadedAt(LocalDateTime.now());
+        return picture;
     }
 
     private User account(UserRole role) {
