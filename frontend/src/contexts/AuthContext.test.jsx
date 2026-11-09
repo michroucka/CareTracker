@@ -168,9 +168,7 @@ describe('AuthContext – logout', () => {
         expect(shownLocation()).toHaveTextContent('/clients');
     });
 
-    // Nález: when /logout answers with an error (e.g. 403 after the CSRF token expired), logout() does
-    // nothing at all – no toast, the user stays signed in and the click looks ignored.
-    it.skip('tells the user when the server refuses the logout', async () => {
+    it('tells the user when the server refuses the logout', async () => {
         serveLogout(() => new HttpResponse(null, { status: 403 }));
         const { user } = await renderAuth(coordinator());
 
@@ -221,9 +219,7 @@ describe('AuthContext – expired session', () => {
         expect(removeListener).toHaveBeenCalledWith('auth:unauthorized', expect.any(Function));
     });
 
-    // Nález: unlike logout() and logoutSilent(), the auth:unauthorized handler leaves the superadmin's
-    // organization in localStorage, so the next superadmin signing in on this browser starts in it.
-    it.skip('forgets the stored superadmin organization', async () => {
+    it('forgets the stored superadmin organization', async () => {
         localStorage.setItem(SUPERADMIN_ORG_KEY, JSON.stringify({ id: 3, name: 'Charita Plzeň' }));
         await renderAuth(superadmin());
 
