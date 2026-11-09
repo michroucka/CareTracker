@@ -61,6 +61,7 @@ cd frontend && npm run coverage
 ```
 
 - Backend integration tests extend `support/AbstractIntegrationTest` (shared Spring context, DB emptied before each test, `loggedInAs(...)`, data via `TestData`). Don't add `@MockitoBean` in subclasses, it creates a new context.
+- Authorization tests use `support/AccessScenario` (two organizations, one user per `Actor` named by relation to a client) and run each endpoint for every actor: allowed set → 2xx, others → 403. Known security gaps are skipped with `assumeFalse(...)` / `@Disabled` and listed in the plan.
 - Frontend: `renderWithProviders` from `src/test/render.jsx`, API mocked with MSW (`src/test/server.js`), sample users in `src/test/users.js`. Unhandled requests fail the test.
 - CI (`.github/workflows/ci.yml`) runs on every PR; demo deploy runs only after CI passes on `main`.
 
