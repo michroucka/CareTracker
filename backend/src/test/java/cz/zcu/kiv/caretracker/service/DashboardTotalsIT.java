@@ -139,6 +139,20 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void ownMinutesAndCaregiverWorkloadRoundTheSameSumOfFractionalMinutes() throws Exception {
+        testData.performedTask(client, hourly, TODAY.atTime(8, 0), 7.5);
+        testData.performedTask(client, hourly, TODAY.atTime(9, 0), 7.5);
+        testData.performedTask(client, hourly, TODAY.atTime(10, 0), 0.4);
+
+        String ownWork = dashboard(caregiver.getUser(), "MINE");
+        String department = dashboard(coordinator.getUser(), "DEPARTMENT");
+
+        assertThat(JsonPath.<Integer>read(ownWork, "$.todayMinutes")).isEqualTo(15);
+        assertThat(JsonPath.<Integer>read(ownWork, "$.totalMonthMinutes")).isEqualTo(15);
+        assertThat(JsonPath.<Integer>read(department, "$.caregiverWorkload[0].minutes")).isEqualTo(15);
+    }
+
+    @Test
     void todayEndsBeforeMidnightOfTheNextDay() throws Exception {
         testData.performedTask(client, hourly, TODAY.plusDays(1).atStartOfDay(), 30);
 

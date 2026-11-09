@@ -167,20 +167,26 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [ ] **[ty]** Před nasazením V24 ověřit, že produkční DB nemá v `app_user` dva účty se stejným `client_id` nebo `employee_id` (migrace by selhala).
 
 #### T2d – Specifikace a dotazy (JPA na Postgresu)
-- [ ] **[claude]** Vzor: `PerformedTaskSpecifications.hasDateInMonth` – první a poslední den měsíce, přelom roku (prosinec/leden), záznam o půlnoci. Naučí: `@DataJpaTest` s Testcontainers.
-- [ ] **[claude]** `withFilters` u klientů, zaměstnanců a provedených úkonů – kombinace filtrů, prázdné filtry, neaktivní záznamy.
-- [ ] **[claude]** Vlastní dotazy v repozitářích (agregace pro nástěnku – zaokrouhlení ceny stejné jako `calculatePrice`).
+- [x] **[claude]** `PerformedTaskSpecificationsIT`: `hasDateInMonth` (první a poslední okamžik, půlnoc, přelom roku, přestupný rok) a `withFilters`. Nový druh testu `@DataJpaTest` nad Postgresem, základ `support/AbstractRepositoryTest` (transakce se po testu vrátí, `flushAndClear()` před nativním dotazem).
+- [x] **[claude]** `ClientSpecificationsIT`, `EmployeeSpecificationsIT`: kombinace filtrů, prázdné filtry, stav, středisko jiné organizace.
+- [x] **[claude]** `PerformedTaskRepositoryIT`, `IndividualPlanRepositoryIT`: agregace nástěnky zaokrouhlují stejně jako `calculatePrice` (po záznamech, `HALF_UP`), rozsahy, rozsah podle organizace/střediska/pečovatele.
+- [x] Nález, opraveno: minuty na nástěnce („moje práce“) se ořezávaly po záznamech (7,5 → 7), vytížení pečovatelů sčítalo přesně. Obojí teď sečte přesně a zaokrouhlí součet.
 
 #### T2e – Web vrstva
-- [ ] **[claude]** Vzor: neplatný vstup při vytvoření klienta → 400 a JSON s `.message`. Naučí: `@WebMvcTest`, ověření JSON odpovědi (`jsonPath`).
-- [ ] **[claude]** `GlobalExceptionHandler`: každá výjimka → správný status a `.message` (404, 400, prošlý token, neočekávaná chyba bez úniku stack trace).
-- [ ] **[ty]** Nález (2026-11-09): neexistující adresa (např. `/api/client/1`) vrací 500 místo 404. `@ExceptionHandler(Exception.class)` v `GlobalExceptionHandler` zachytí i `NoResourceFoundException` ze Springu. Opravit a pokrýt testem.
-- [ ] **[claude]** Přihlášení formulářem (úspěch, špatné heslo, neaktivní účet), odhlášení, `auth-status`, remember-me cookie.
+- [x] **[claude]** `ClientRequestErrorsTest`: nový druh testu `@WebMvcTest` (jen web vrstva, služby mockované, bez Dockeru). Neplatný vstup → 4xx s českou `.message` bez vnitřností Javy a Springu.
+- [x] **[claude]** `GlobalExceptionHandlerTest`: každá výjimka → status a `.message`, neočekávaná chyba → 500 bez úniku zprávy.
+- [x] Nálezy, opraveno: neexistující adresa vracela 500 (teď 404); 405, 415, 413 a chybné parametry s českou hláškou; každá `RuntimeException` vracela 400 se zprávou výjimky (např. „Cannot invoke ...“) – teď 500 s obecnou hláškou; vytvoření klienta bez povinných polí vracelo 500 (teď 400 s hláškou z formuláře, `ClientCreateValidationIT`).
+- [x] **[claude]** `LoginIT`, `AuthStatusIT`, `RememberMeIT` (pomocník `support/FormLogin` posílá přihlášení jako frontend): přihlášení, špatné heslo a neznámý uživatel mají stejnou odpověď, nová session po přihlášení, odhlášení maže cookies, remember-me přestane platit po blokaci a změně hesla.
+- [x] **[claude]** `MailTemplatesIT`: předmět, oslovení, odkaz s tokenem, platnost, escapování jména.
+- [ ] **[ty]** Nálezy k rozhodnutí (testy `@Disabled("Nález: ...")`), bezpečnost přihlášení, patří k CSRF a sekci 7b brandingového plánu:
+  - Střední: blokace účtu neukončí otevřené session, uživatel pracuje dál až do vypršení session (`LoginIT.deactivationEndsExistingSession`).
+  - Střední: remember-me cookie platí i po odhlášení až 7 dní (bezstavové `TokenBasedRememberMeServices`; oprava `PersistentTokenBasedRememberMeServices` s tabulkou tokenů) (`RememberMeIT.cookieStopsWorkingAfterLogout`).
+  - Nízká: špatné heslo u zablokovaného účtu vrátí „Váš účet byl deaktivován“, takže jde zjistit existenci účtu (`LoginIT.deactivatedAccountWithWrongPasswordLooksLikeWrongPassword`).
+  - Bez testu: klíč remember-me je natvrdo v `SecurityConfig` (patří do konfigurace/secrets); uživatelská jména se liší velikostí písmen („Jana“ a „jana“ jsou dva účty); maily jen HTML bez textové části.
 - [ ] **[ty]** Rozhodnout o CSRF: v `SecurityConfig` je `csrf.disable()`, přitom autentizace stojí na session cookie. Patří spíš do sekce 7b brandingového plánu (před produkcí), testy pak ověří, že zápis bez tokenu neprojde.
-- [ ] **[claude]** E-mailové šablony: aktivace a reset hesla se vyrenderují a obsahují správný odkaz.
 
 #### T2f – Prahy pokrytí
-- [ ] **[claude]** Po T2 změřit pokrytí a nastavit JaCoCo práh těsně pod aktuální hodnotu (balíčky `service`, `controller`, `specification`). Práh se pak jen zvedá.
+- [x] **[claude]** JaCoCo `check` ve `verify` (build spadne pod prahem). Po T2: `service` 90,0 % řádků / 77,7 % větví, `controller` 93,5 / 79,5, `specification` 78,1 / 76,5. Prahy těsně pod: 0,89/0,77, 0,93/0,79, 0,77/0,76. Celkem 88 % řádků, 75 % větví. Práh se jen zvedá.
 
 ### Fáze T3 – Frontend
 
@@ -252,6 +258,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-09: T2d, T2e a T2f hotové (149 unit + 1123 IT), fáze T2 uzavřená kromě nálezů k přihlášení a CSRF.
 - 2026-11-09: T2c hotová (1047 IT). Testy a opravy nálezů psali paralelně subagenti po doménách, rozhodnutí B1-B5 viz T2c.
 - 2026-11-09: T2b hotová: cena, stvrzenky, obrázky, nástěnka s pevným `Clock`.
 - 2026-11-09: T2a hotová: zaměstnanci, střediska, organizace, úkony, provedené úkony, nástěnka, vlastní účet, 401 pro nepřihlášeného (865 testů). Testy psali paralelně subagenti po doménách, nálezy rovnou opraveny (viz T2a).

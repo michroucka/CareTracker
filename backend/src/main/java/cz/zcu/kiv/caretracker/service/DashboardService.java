@@ -259,7 +259,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 .map(e -> {
                     Object[] row = totals.get(e.getId());
                     int tasks = row == null ? 0 : ((Number) row[1]).intValue();
-                    int minutes = row == null ? 0 : ((Number) row[2]).intValue();
+                    int minutes = row == null ? 0 : (int) Math.round(((Number) row[2]).doubleValue());
                     return new CaregiverWorkloadDTO(e.getId(), e.getFullName(), tasks, minutes);
                 })
                 .sorted(Comparator.comparing(CaregiverWorkloadDTO::getTasksCount).reversed())
@@ -334,11 +334,12 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     }
 
     /** Unit count of HOUR tasks is stored in minutes; other unit types do not count towards time. */
-    private int minutesOf(PerformedTask task) {
-        return task.getTask().getUnitType() == UnitType.HOUR ? task.getUnitCount().intValue() : 0;
+    private double minutesOf(PerformedTask task) {
+        return task.getTask().getUnitType() == UnitType.HOUR ? task.getUnitCount() : 0;
     }
 
+    /** Sums exact minutes first and rounds the total, the same way as the caregiver workload. */
     private Integer calculateTotalMinutes(List<PerformedTask> tasks) {
-        return tasks.stream().mapToInt(this::minutesOf).sum();
+        return (int) Math.round(tasks.stream().mapToDouble(this::minutesOf).sum());
     }
 }

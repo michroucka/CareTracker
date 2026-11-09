@@ -43,7 +43,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
     }
 
     if (isNotAuthenticated) {
-        // User was previously logged in — intentional logout, go home instead of login
+        // User was previously logged in – intentional logout, go home instead of login
         if (wasAuthenticatedRef.current) {
             return <Navigate to="/" replace />;
         }
