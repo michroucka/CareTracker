@@ -22,17 +22,19 @@ import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { TablePagination } from "@/components/data/TablePagination";
 import { formatCount, formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PerformedTaskCreateSheet } from "@/components/performedTasks/PerformedTaskCreateSheet";
 import { DayFilter } from "@/components/performedTasks/DayFilter";
 import { DayRow } from "@/components/performedTasks/DayRow";
 import { dayKey, summarizeByDay } from "@/components/performedTasks/dayGroups";
-import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskSheet";
 import { ReceiptDialog } from "@/components/performedTasks/ReceiptDialog";
 import { formatAmount } from "@/components/performedTasks/performedTaskForm";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+// the sheets pull in the date picker and form fields; load them on first open, not with the list
+const PerformedTaskSheet = React.lazy(() => import("@/components/performedTasks/PerformedTaskSheet").then((module) => ({ default: module.PerformedTaskSheet })));
+const PerformedTaskCreateSheet = React.lazy(() => import("@/components/performedTasks/PerformedTaskCreateSheet").then((module) => ({ default: module.PerformedTaskCreateSheet })));
 
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
 
@@ -95,6 +97,11 @@ function PerformedTasks() {
     const { detailId, openDetail, closeDetail } = useDetailParam();
     const [detail, setDetail] = React.useState(null);
     const [isCreateOpen, setIsCreateOpen] = React.useState(() => searchParams.get("openCreate") === "true");
+    // once mounted, a sheet stays mounted so its close animation can play
+    const [hasOpenedDetail, setHasOpenedDetail] = React.useState(false);
+    const [hasOpenedCreate, setHasOpenedCreate] = React.useState(false);
+    if (detailId != null && !hasOpenedDetail) setHasOpenedDetail(true);
+    if (isCreateOpen && !hasOpenedCreate) setHasOpenedCreate(true);
     const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
     const [deleteTarget, setDeleteTarget] = React.useState(null);
 
@@ -289,28 +296,34 @@ function PerformedTasks() {
                 <TablePagination {...paginationProps} />
             )}
 
-            <PerformedTaskSheet
-                open={detailId != null}
-                onOpenChange={(open) => !open && closeDetail()}
-                performedTask={detail}
-                isLoading={detailId != null && !detail}
-                canEdit={canEditRecord(detail)}
-                clients={departmentClients}
-                tasks={tasks}
-                caregivers={departmentEmployees}
-                onSave={saveDetail}
-                onDelete={() => setDeleteTarget(detail)}
-            />
+            <React.Suspense fallback={null}>
+                {hasOpenedDetail && (
+                    <PerformedTaskSheet
+                        open={detailId != null}
+                        onOpenChange={(open) => !open && closeDetail()}
+                        performedTask={detail}
+                        isLoading={detailId != null && !detail}
+                        canEdit={canEditRecord(detail)}
+                        clients={departmentClients}
+                        tasks={tasks}
+                        caregivers={departmentEmployees}
+                        onSave={saveDetail}
+                        onDelete={() => setDeleteTarget(detail)}
+                    />
+                )}
 
-            <PerformedTaskCreateSheet
-                open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
-                onCreate={createPerformedTask}
-                clients={departmentClients}
-                tasks={tasks}
-                caregivers={departmentEmployees}
-                defaultCaregiverId={user.employeeId}
-            />
+                {hasOpenedCreate && (
+                    <PerformedTaskCreateSheet
+                        open={isCreateOpen}
+                        onOpenChange={setIsCreateOpen}
+                        onCreate={createPerformedTask}
+                        clients={departmentClients}
+                        tasks={tasks}
+                        caregivers={departmentEmployees}
+                        defaultCaregiverId={user.employeeId}
+                    />
+                )}
+            </React.Suspense>
 
             <ReceiptDialog
                 open={isReceiptOpen}

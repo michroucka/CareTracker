@@ -106,11 +106,10 @@ export function CommandPalette() {
                 variant="outline"
                 onClick={() => setIsOpen(true)}
                 className="ml-auto h-9 w-56 justify-start gap-2 px-3 font-normal text-muted-foreground max-md:w-9 max-md:justify-center max-md:px-0"
-                aria-label="Hledat"
             >
                 <IconSearch className="size-4" />
-                <span className="max-md:hidden">Hledat…</span>
-                <kbd className="ml-auto rounded border bg-muted px-1.5 font-sans text-[11px] max-md:hidden">{isMac ? "⌘K" : "Ctrl K"}</kbd>
+                <span className="max-md:sr-only">Hledat…</span>
+                <kbd aria-hidden="true" className="ml-auto rounded border bg-muted px-1.5 font-sans text-[11px] max-md:hidden">{isMac ? "⌘K" : "Ctrl K"}</kbd>
             </Button>
 
             <CommandDialog open={isOpen} onOpenChange={openChange} commandProps={{ filter: filterItems }}>
