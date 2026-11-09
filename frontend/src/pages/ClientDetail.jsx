@@ -14,7 +14,6 @@ import { formatDate } from "../utils/formatters.js";
 import { PersonAvatar } from "@/components/PersonAvatar";
 import { pictureUrl } from "@/lib/pictures";
 import { ClientFields } from "@/components/clients/ClientFields";
-import { ClientMapDialog } from "@/components/clients/ClientMapDialog";
 import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialog";
 import { toFormValues, toRequest, validateClient } from "@/components/clients/clientForm";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
@@ -28,6 +27,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 
 const AnimatedPanel = motion.div;
+// the map library is large and only needed after "Na mapě"
+const ClientMapDialog = React.lazy(() => import("@/components/clients/ClientMapDialog").then((module) => ({ default: module.ClientMapDialog })));
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR];
 
@@ -302,8 +303,10 @@ export function ClientDetail() {
                 </AnimatedPanel>
             </AnimatePresence>
 
-            {client.latitude != null && client.longitude != null && (
-                <ClientMapDialog open={dialog === "map"} onOpenChange={closeDialog} latitude={client.latitude} longitude={client.longitude} address={address} />
+            {client.latitude != null && client.longitude != null && dialog === "map" && (
+                <React.Suspense fallback={null}>
+                    <ClientMapDialog open onOpenChange={closeDialog} latitude={client.latitude} longitude={client.longitude} address={address} />
+                </React.Suspense>
             )}
             <ClientTerminateDialog open={dialog === "terminate"} onOpenChange={closeDialog} client={{ ...client, fullName }} onTerminate={runAndReload(terminateClient)} />
             <ConfirmDialog

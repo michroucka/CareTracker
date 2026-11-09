@@ -535,6 +535,7 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 - [ ] Skeletony pro tabulky a karty.
 - [ ] Přístupnost: klávesnice ve všech dialozích a menu, viditelný focus, kontrast v obou režimech.
 - [ ] Responzivita: 360 px, 768 px, 1280 px; tabulky na mobilu jako karty nebo horizontální scroll.
+- [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.
 - [ ] Lighthouse (výkon, přístupnost) na Login a PerformedTasks.
 - [ ] Nové screenshoty do README.
 

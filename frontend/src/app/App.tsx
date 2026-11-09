@@ -11,22 +11,24 @@ import { AppSidebar } from "../components/layout/AppSidebar";
 import { AppHeader } from "../components/layout/AppHeader";
 import { SidebarInset, SidebarProvider } from "../components/ui/sidebar";
 import { PageLoader } from "../components/PageLoader";
-import Home from "../pages/Home";
 import Login from "../pages/Login";
-import Clients from "../pages/Clients";
-import PerformedTasks from "../pages/PerformedTasks"
-import IndividualPlan from "../pages/IndividualPlan";
-import Employees from "../pages/Employees";
 import Activate from "../pages/Activate";
-import Tasks from "../pages/Tasks";
-import Account from "../pages/Account";
 import ResetPassword from "../pages/ResetPassword";
-import MonthlyReport from "../pages/MonthlyReport";
-import Departments from "../pages/Departments";
-import Organizations from "../pages/Organizations";
-import {ClientCreate} from "../pages/ClientCreate";
-import {ClientDetail} from "../pages/ClientDetail";
-import ComponentCatalog from "../pages/ComponentCatalog";
+
+// Pages behind the login load on demand, so the login screen does not wait for charts, maps and tables.
+const Home = React.lazy(() => import("../pages/Home"));
+const Clients = React.lazy(() => import("../pages/Clients"));
+const PerformedTasks = React.lazy(() => import("../pages/PerformedTasks"));
+const IndividualPlan = React.lazy(() => import("../pages/IndividualPlan"));
+const Employees = React.lazy(() => import("../pages/Employees"));
+const Tasks = React.lazy(() => import("../pages/Tasks"));
+const Account = React.lazy(() => import("../pages/Account"));
+const MonthlyReport = React.lazy(() => import("../pages/MonthlyReport"));
+const Departments = React.lazy(() => import("../pages/Departments"));
+const Organizations = React.lazy(() => import("../pages/Organizations"));
+const ClientCreate = React.lazy(() => import("../pages/ClientCreate").then((module) => ({ default: module.ClientCreate })));
+const ClientDetail = React.lazy(() => import("../pages/ClientDetail").then((module) => ({ default: module.ClientDetail })));
+const ComponentCatalog = React.lazy(() => import("../pages/ComponentCatalog"));
 
 const AUTH_PAGES = ["/login", "/activate", "/reset-password"];
 
@@ -195,7 +197,7 @@ export default function App() {
     }
 
     if (!showShell) {
-        return routes;
+        return <React.Suspense fallback={<PageLoader />}>{routes}</React.Suspense>;
     }
 
     return (
@@ -206,7 +208,8 @@ export default function App() {
                 <div ref={contentRef} data-scroll-root className="flex-1 md:overflow-y-auto">
                     {/* keyed by pathname so every page change replays the short enter animation */}
                     <PageTransitionWrapper key={pathname} className="p-4 md:p-6">
-                        {routes}
+                        {/* a page chunk loads in a fraction of a second; an empty area flickers less than a loader */}
+                        <React.Suspense fallback={null}>{routes}</React.Suspense>
                     </PageTransitionWrapper>
                 </div>
             </SidebarInset>
