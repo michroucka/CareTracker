@@ -1,4 +1,4 @@
-.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend demo-up demo-down demo-build demo-reset demo-logs seed-activity clear-activity demo-seed-activity
+.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend test-backend-it demo-up demo-down demo-build demo-reset demo-logs seed-activity clear-activity demo-seed-activity
 
 # Start všech služeb + doplnění demo aktivity (provedené úkony až do teď)
 up:
@@ -54,9 +54,14 @@ compile:
 # Spustit všechny testy
 test: test-backend test-frontend
 
+# Jen unit testy (*Test) v kontejneru; integrační testy (*IT) potřebují Docker, viz test-backend-it
 test-backend:
 	docker exec caretracker-backend chmod +x ./mvnw
 	docker exec caretracker-backend ./mvnw test
+
+# Unit + integrační testy (Testcontainers) a JaCoCo report, běží na hostu s Dockerem
+test-backend-it:
+	cd backend && ./mvnw verify
 
 test-frontend:
 	docker exec caretracker-frontend npm test -- --run
