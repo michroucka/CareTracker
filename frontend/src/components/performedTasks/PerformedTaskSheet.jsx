@@ -38,7 +38,7 @@ function SummaryTile({ label, value }) {
     );
 }
 
-function PerformedTaskView({ performedTask }) {
+function PerformedTaskView({ performedTask, linkClient }) {
     const { task, client, caregivers, notes } = performedTask;
     return (
         <div className="grid gap-6">
@@ -49,9 +49,9 @@ function PerformedTaskView({ performedTask }) {
 
             <SheetSection label="Klient">
                 <Person name={client.fullName}>
-                    <Button asChild variant="ghost" size="icon-sm" aria-label={`Otevřít detail klienta ${client.fullName}`}>
+                    {linkClient && <Button asChild variant="ghost" size="icon-sm" aria-label={`Otevřít detail klienta ${client.fullName}`}>
                         <Link to={`/clients/${client.id}`}><IconArrowRight /></Link>
-                    </Button>
+                    </Button>}
                 </Person>
             </SheetSection>
 
@@ -74,9 +74,9 @@ function PerformedTaskView({ performedTask }) {
 
 /**
  * Performed task detail with in-place editing. Without `canEdit` it is read-only
- * (caregivers looking at a record they did not take part in).
+ * (caregivers looking at a record they did not take part in, clients). `linkClient` links the client's detail page.
  */
-export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoading, canEdit, clients, tasks, caregivers, onSave, onDelete }) {
+export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoading, canEdit, linkClient = true, clients = [], tasks = [], caregivers = [], onSave, onDelete }) {
     const [isEditing, setIsEditing] = React.useState(false);
     const form = useRecordForm(toFormValues(performedTask));
 
@@ -148,7 +148,7 @@ export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoadin
                     />
                 </form>
             ) : (
-                <PerformedTaskView performedTask={performedTask} />
+                <PerformedTaskView performedTask={performedTask} linkClient={linkClient} />
             ))}
         </RecordSheet>
     );

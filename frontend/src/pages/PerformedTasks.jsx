@@ -21,6 +21,8 @@ import { TablePagination } from "@/components/data/TablePagination";
 import { formatCount, formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PerformedTaskCreateSheet } from "@/components/performedTasks/PerformedTaskCreateSheet";
+import { DayRow } from "@/components/performedTasks/DayRow";
+import { dayKey, summarizeByDay } from "@/components/performedTasks/dayGroups";
 import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskSheet";
 import { ReceiptDialog } from "@/components/performedTasks/ReceiptDialog";
 import { formatAmount } from "@/components/performedTasks/performedTaskForm";
@@ -84,33 +86,6 @@ const PerformedTaskRow = React.memo(function PerformedTaskRow({ performedTask, i
         </TableRow>
     );
 });
-
-const dayFormatter = new Intl.DateTimeFormat("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
-
-/** "2026-11-06T15:22:00" → "Pátek 6. listopadu"; the year is shown by the month picker. */
-function formatDay(date) {
-    const label = dayFormatter.format(new Date(date));
-    return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-const dayKey = (date) => date.slice(0, 10);
-
-/** Day heading inside the table with the day's record count and total on the right. */
-function DayRow({ date, summary, columnCount }) {
-    return (
-        <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableCell colSpan={columnCount} className="py-2">
-                <div className="flex items-baseline justify-between gap-4">
-                    <span className="font-medium">{formatDay(date)}</span>
-                    <span className="text-sm text-muted-foreground tabular-nums">
-                        <span className="max-sm:hidden">{summary.count} {pluralize(summary.count, ["záznam", "záznamy", "záznamů"])} · </span>
-                        {formatCurrency(summary.price)}
-                    </span>
-                </div>
-            </TableCell>
-        </TableRow>
-    );
-}
 
 const monthPrefix = ({ month, year }) => `${year}-${String(month + 1).padStart(2, "0")}`;
 
@@ -236,16 +211,7 @@ function PerformedTasks() {
     const totalPrice = visibleTasks.reduce((sum, performedTask) => sum + (performedTask.price ?? 0), 0);
     const columnCount = 6;
     // count and price per day over the whole filtered list, so a day split across pages shows its full total
-    const daySummaries = React.useMemo(() => {
-        const summaries = new Map();
-        for (const performedTask of visibleTasks) {
-            const summary = summaries.get(dayKey(performedTask.date)) ?? { count: 0, price: 0 };
-            summary.count += 1;
-            summary.price += performedTask.price ?? 0;
-            summaries.set(dayKey(performedTask.date), summary);
-        }
-        return summaries;
-    }, [visibleTasks]);
+    const daySummaries = React.useMemo(() => summarizeByDay(visibleTasks), [visibleTasks]);
     const toggleSort = () => startSorting(() => withPageReset(setSortDirection)(sortDirection === "descending" ? "ascending" : "descending"));
     const SortIcon = sortDirection === "descending" ? IconArrowDown : IconArrowUp;
 
