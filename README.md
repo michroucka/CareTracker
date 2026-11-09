@@ -11,7 +11,8 @@
   </p>
 
   <p>
-    <a href="https://github.com/michroucka/CareTracker/actions/workflows/deploy-demo.yml"><img alt="Nasazení dema" src="https://img.shields.io/github/actions/workflow/status/michroucka/CareTracker/deploy-demo.yml?branch=main&label=deploy%20demo&style=flat-square" /></a>
+    <a href="https://github.com/michroucka/caretracker/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/michroucka/caretracker/ci.yml?branch=main&label=CI&style=flat-square" /></a>
+    <a href="https://github.com/michroucka/caretracker/actions/workflows/deploy-demo.yml"><img alt="Nasazení dema" src="https://img.shields.io/github/actions/workflow/status/michroucka/caretracker/deploy-demo.yml?branch=main&label=deploy%20demo&style=flat-square" /></a>
     <img alt="Java 21" src="https://img.shields.io/badge/Java-21-4A2B5E?style=flat-square&logo=openjdk&logoColor=white" />
     <img alt="Spring Boot 3.5" src="https://img.shields.io/badge/Spring_Boot-3.5-4A2B5E?style=flat-square&logo=springboot&logoColor=white" />
     <img alt="React 19" src="https://img.shields.io/badge/React-19-4A2B5E?style=flat-square&logo=react&logoColor=white" />
@@ -79,7 +80,7 @@ CareTracker nahrazuje papírové výkazy a tabulky v terénních pečovatelskýc
 **Potřebuješ:** [Docker](https://www.docker.com/) s Docker Compose a `make` (volitelně, ale zjednodušuje příkazy).
 
 ```bash
-git clone git@github.com:michroucka/CareTracker.git
+git clone git@github.com:michroucka/caretracker.git
 cd CareTracker
 
 cp .env.example .env
