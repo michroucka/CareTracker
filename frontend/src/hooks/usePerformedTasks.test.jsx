@@ -3,9 +3,8 @@ import { HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePerformedTasks } from './usePerformedTasks';
 import { toast } from '@/components/ui/sonner';
-import { forwardAbortSignalsToFetch, serveAndRecord, serverError } from '@/test/hooks';
+import { serveAndRecord, serverError } from '@/test/hooks';
 
-forwardAbortSignalsToFetch();
 
 beforeEach(() => {
     vi.spyOn(toast, 'success').mockImplementation(() => {});

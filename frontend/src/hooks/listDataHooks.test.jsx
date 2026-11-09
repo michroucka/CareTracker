@@ -7,9 +7,8 @@ import { useTasks } from './useTasks';
 import { useDepartments } from './useDepartments';
 import { useOrganizations } from './useOrganizations';
 import { toast } from '@/components/ui/sonner';
-import { forwardAbortSignalsToFetch, serveAndRecord, serverError } from '@/test/hooks';
+import { serveAndRecord, serverError } from '@/test/hooks';
 
-forwardAbortSignalsToFetch();
 
 beforeEach(() => {
     vi.spyOn(toast, 'success').mockImplementation(() => {});

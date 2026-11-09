@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { BrowserRouter } from 'react-router-dom';
-import { afterEach, beforeEach, vi } from 'vitest';
+import { afterEach } from 'vitest';
 import { apiUrl, server } from './server';
 
 afterEach(() => window.history.replaceState(null, '', '/'));
@@ -20,34 +20,6 @@ export function renderHookWithRouter(hook, { route = '/', ...options } = {}) {
 
 /** Search params of the current URL, as the router sees them. */
 export const currentSearchParams = () => new URLSearchParams(window.location.search);
-
-/**
- * Lets requests with an AbortSignal through in tests. Call it at the top of a test file.
- *
- * jsdom replaces the global AbortController, but fetch stays Node's and rejects a jsdom signal
- * ("Expected signal to be an instance of AbortSignal"), so every request of the data hooks would fail.
- * The stub sends the request without the signal and rejects with the signal's AbortError on abort,
- * which is what the hooks see in the browser.
- */
-export function forwardAbortSignalsToFetch() {
-    beforeEach(() => {
-        const originalFetch = globalThis.fetch;
-        vi.stubGlobal('fetch', (input, { signal, ...init } = {}) => {
-            if (!signal) return originalFetch(input, init);
-            return new Promise((resolve, reject) => {
-                const rejectWithAbort = () => reject(signal.reason);
-                if (signal.aborted) {
-                    rejectWithAbort();
-                    return;
-                }
-                signal.addEventListener('abort', rejectWithAbort, { once: true });
-                originalFetch(input, init).then(resolve, reject);
-            });
-        });
-    });
-
-    afterEach(() => vi.unstubAllGlobals());
-}
 
 /**
  * Serves `method` + `path` (e.g. 'get', '/clients/:id') with `respond` and records every request

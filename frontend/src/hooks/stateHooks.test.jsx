@@ -6,9 +6,7 @@ import { useIsMobile, useMediaQuery } from './useMediaQuery';
 import { useTokenValidation } from './useTokenValidation';
 import { useEmployeeOverview } from './useEmployeeOverview';
 import { apiUrl, server } from '@/test/server';
-import { forwardAbortSignalsToFetch } from '@/test/hooks';
 
-forwardAbortSignalsToFetch();
 
 afterEach(() => vi.restoreAllMocks());
 
