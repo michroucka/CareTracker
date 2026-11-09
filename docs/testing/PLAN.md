@@ -20,9 +20,11 @@ Dnešní stav: 4 backendové testy (`PerformedTaskTest`, `ClientServiceTest`, `P
 
 ## 2. Kdo co dělá
 
-- **Ty:** první test každého druhu (označené **[ty]**). To je ten, kde se ustaví vzor – struktura, pojmenování, setup. Já dělám review, dokud vzor nesedí.
-- **Claude:** infrastruktura a CI (**[claude]**) a pak zbytek testů stejného druhu **podle tvého schváleného vzoru** (**[claude – podle vzoru]**). Ty to procházíš v PR jako review.
-- U každé fáze se nejdřív udělají položky **[ty]**, teprve potom ostatní.
+Změna 2026-11-09: testy píše Claude, uživatel je prochází v PR. Původní dělení (uživatel píše první test každého druhu) platilo jen pro `ClientAuthorizationIT`.
+
+- **Claude:** infrastruktura, CI a všechny testy (**[claude]**). U nového konceptu (první test daného druhu) stručně vysvětlit v popisu PR, co a proč.
+- **Ty:** review PR, rozhodnutí a opravy aplikačního kódu, které testy odhalí, nastavení na GitHubu (**[ty]**).
+- Větve: krátká větev z `main` na každý kus (`test/client-authorization`, `test/receipt-service`…), jedno PR.
 
 ---
 
@@ -96,34 +98,35 @@ Pořadí podle rizika: nejdřív oprávnění (únik dat mezi organizacemi je ne
 #### T2a – Oprávnění (nejvyšší priorita)
 Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášený) × záznam (vlastní středisko / jiné středisko stejné organizace / jiná organizace) × akce (číst seznam, číst detail, vytvořit, upravit, ukončit, smazat). Očekávání: 200 / 403 / 404 a hlavně **seznam neobsahuje cizí záznamy**.
 
-- [ ] **[ty]** Vzor: `ClientAuthorizationIT` – detail klienta (`GET /api/clients/{id}`) pro pečovatele ze stejného a z jiného střediska a z jiné organizace. Naučí: Testcontainers, buildery, přihlášení jako konkrétní uživatel, parametrizovaný test (`@ParameterizedTest` + `@MethodSource`).
-- [ ] **[ty]** Seznam klientů (`GET /api/clients`) pro koordinátora – vrací jen jeho středisko, i když v parametru pošle cizí `departmentIds` / `organizationId`.
-- [ ] **[claude – podle vzoru]** Zbytek klientů: zápisy, ukončení/aktivace, účet klienta, fotka (čtení, nahrání, smazání), individuální plán (čtení, historie, verze, úpravy, denní záznamy).
-- [ ] **[claude – podle vzoru]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
+- [x] **[ty → claude]** Vzor: `ClientAuthorizationIT` – detail klienta (`GET /api/clients/{id}`) pro pečovatele ze stejného a z jiného střediska a z jiné organizace. Naučí: Testcontainers, buildery, přihlášení jako konkrétní uživatel, parametrizovaný test (`@ParameterizedTest` + `@MethodSource`).
+- [ ] **[claude]** Seznam klientů (`GET /api/clients`) pro koordinátora – vrací jen jeho středisko, i když v parametru pošle cizí `departmentIds` / `organizationId`.
+- [ ] **[claude]** Zbytek klientů: zápisy, ukončení/aktivace, účet klienta, fotka (čtení, nahrání, smazání), individuální plán (čtení, historie, verze, úpravy, denní záznamy).
+- [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
 - [ ] **[claude]** Nepřihlášený na každý chráněný endpoint → 401 (jeden parametrizovaný test přes všechny URL).
 
 #### T2b – Doménová logika (unit)
-- [ ] **[ty]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.
-- [ ] **[claude – podle vzoru]** `ReceiptService`: součet ceny, variabilní symbol, seskupení podle úkonu, formáty částek a množství. Jsou to privátní metody – rozhodnout spolu: testovat přes `generateReceipt` (PDF → text), nebo je vytáhnout do malé čisté třídy (doporučeno, test pak nepotřebuje PDF).
+- [ ] **[claude]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.
+- [ ] **[claude]** `ReceiptService`: součet ceny, variabilní symbol, seskupení podle úkonu, formáty částek a množství. Jsou to privátní metody – rozhodnout spolu: testovat přes `generateReceipt` (PDF → text), nebo je vytáhnout do malé čisté třídy (doporučeno, test pak nepotřebuje PDF).
 - [ ] **[claude]** `PictureService`: zmenšení na 512/128, ořez na čtverec, otočení podle EXIF, limit 5 MB a 30 Mpx, neplatný soubor → 400, WebP vstup. Testovací obrázky do `src/test/resources/pictures/`.
 - [ ] **[claude]** `DashboardService`: dostupné a výchozí pohledy podle role, součty za měsíc a 12 měsíců (s pevným `Clock`).
 
 #### T2c – Služby a byznys pravidla (integrační)
-- [ ] **[ty]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.
-- [ ] **[claude – podle vzoru]** Individuální plán: vytvoření, úprava = nová verze, historie verzí, přidání a smazání denního záznamu, pečovatel jen u svého klienta.
-- [ ] **[claude – podle vzoru]** Provedené úkony: vytvoření a úprava (`validateCaregiverAssignment`), mazání, filtry měsíc/den.
-- [ ] **[claude – podle vzoru]** Zaměstnanci, střediska, organizace, úkony: vytvoření, úprava, ukončení, aktivace a jejich vedlejší efekty (uživatelský účet zaměstnance).
-- [ ] **[ty]** Vzor: aktivační token – platný, prošlý, použitý podruhé. Naučí: testy s časem (`Clock`).
-- [ ] **[claude – podle vzoru]** Zbytek `UserService`: reset hesla (stejná odpověď pro existující i neexistující e-mail – žádné zjišťování účtů), dokončení aktivace, úprava vlastního účtu, opětovné odeslání aktivace.
+- [ ] **[claude]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.
+- [ ] **[claude]** Individuální plán: vytvoření, úprava = nová verze, historie verzí, přidání a smazání denního záznamu, pečovatel jen u svého klienta.
+- [ ] **[claude]** Provedené úkony: vytvoření a úprava (`validateCaregiverAssignment`), mazání, filtry měsíc/den.
+- [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony: vytvoření, úprava, ukončení, aktivace a jejich vedlejší efekty (uživatelský účet zaměstnance).
+- [ ] **[claude]** Vzor: aktivační token – platný, prošlý, použitý podruhé. Naučí: testy s časem (`Clock`).
+- [ ] **[claude]** Zbytek `UserService`: reset hesla (stejná odpověď pro existující i neexistující e-mail – žádné zjišťování účtů), dokončení aktivace, úprava vlastního účtu, opětovné odeslání aktivace.
 
 #### T2d – Specifikace a dotazy (JPA na Postgresu)
-- [ ] **[ty]** Vzor: `PerformedTaskSpecifications.hasDateInMonth` – první a poslední den měsíce, přelom roku (prosinec/leden), záznam o půlnoci. Naučí: `@DataJpaTest` s Testcontainers.
-- [ ] **[claude – podle vzoru]** `withFilters` u klientů, zaměstnanců a provedených úkonů – kombinace filtrů, prázdné filtry, neaktivní záznamy.
+- [ ] **[claude]** Vzor: `PerformedTaskSpecifications.hasDateInMonth` – první a poslední den měsíce, přelom roku (prosinec/leden), záznam o půlnoci. Naučí: `@DataJpaTest` s Testcontainers.
+- [ ] **[claude]** `withFilters` u klientů, zaměstnanců a provedených úkonů – kombinace filtrů, prázdné filtry, neaktivní záznamy.
 - [ ] **[claude]** Vlastní dotazy v repozitářích (agregace pro nástěnku – zaokrouhlení ceny stejné jako `calculatePrice`).
 
 #### T2e – Web vrstva
-- [ ] **[ty]** Vzor: neplatný vstup při vytvoření klienta → 400 a JSON s `.message`. Naučí: `@WebMvcTest`, ověření JSON odpovědi (`jsonPath`).
-- [ ] **[claude – podle vzoru]** `GlobalExceptionHandler`: každá výjimka → správný status a `.message` (404, 400, prošlý token, neočekávaná chyba bez úniku stack trace).
+- [ ] **[claude]** Vzor: neplatný vstup při vytvoření klienta → 400 a JSON s `.message`. Naučí: `@WebMvcTest`, ověření JSON odpovědi (`jsonPath`).
+- [ ] **[claude]** `GlobalExceptionHandler`: každá výjimka → správný status a `.message` (404, 400, prošlý token, neočekávaná chyba bez úniku stack trace).
+- [ ] **[ty]** Nález (2026-11-09): neexistující adresa (např. `/api/client/1`) vrací 500 místo 404. `@ExceptionHandler(Exception.class)` v `GlobalExceptionHandler` zachytí i `NoResourceFoundException` ze Springu. Opravit a pokrýt testem.
 - [ ] **[claude]** Přihlášení formulářem (úspěch, špatné heslo, neaktivní účet), odhlášení, `auth-status`, remember-me cookie.
 - [ ] **[ty]** Rozhodnout o CSRF: v `SecurityConfig` je `csrf.disable()`, přitom autentizace stojí na session cookie. Patří spíš do sekce 7b brandingového plánu (před produkcí), testy pak ověří, že zápis bez tokenu neprojde.
 - [ ] **[claude]** E-mailové šablony: aktivace a reset hesla se vyrenderují a obsahují správný odkaz.
@@ -134,36 +137,36 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 ### Fáze T3 – Frontend
 
 #### T3a – Čisté funkce
-- [ ] **[ty]** Vzor: `lib/dates.js` (`fromIsoDate`, `toIsoDate` – přelom měsíce, časová zóna, neplatný vstup). Existující `formatters.test.js` a `sorting.test.js` jsou dobrý vzor struktury.
-- [ ] **[claude – podle vzoru]** `lib/pagination.js`, `lib/pictures.js` (`pictureUrl`; `shrinkPhoto` přes mock `canvas`), doplnit chybějící případy ve `formatters`.
+- [ ] **[claude]** Vzor: `lib/dates.js` (`fromIsoDate`, `toIsoDate` – přelom měsíce, časová zóna, neplatný vstup). Existující `formatters.test.js` a `sorting.test.js` jsou dobrý vzor struktury.
+- [ ] **[claude]** `lib/pagination.js`, `lib/pictures.js` (`pictureUrl`; `shrinkPhoto` přes mock `canvas`), doplnit chybějící případy ve `formatters`.
 
 #### T3b – API vrstva
-- [ ] **[ty]** Vzor: `api/api.js` – odpověď 401 vyvolá událost `auth:unauthorized`, chybová odpověď vyhodí chybu s `.message` ze serveru. Naučí: MSW (`server.use(...)` pro jeden test).
-- [ ] **[claude – podle vzoru]** Zbytek funkcí v `api.js` (`postJSON`, `putJSON`, `deleteJSON`, `uploadFile`, prázdné tělo odpovědi, chyba sítě).
+- [ ] **[claude]** Vzor: `api/api.js` – odpověď 401 vyvolá událost `auth:unauthorized`, chybová odpověď vyhodí chybu s `.message` ze serveru. Naučí: MSW (`server.use(...)` pro jeden test).
+- [ ] **[claude]** Zbytek funkcí v `api.js` (`postJSON`, `putJSON`, `deleteJSON`, `uploadFile`, prázdné tělo odpovědi, chyba sítě).
 
 #### T3c – Hooky
-- [ ] **[ty]** Vzor: `useListFilters` – změna měsíce vynuluje den a stránku, hodnoty se čtou z URL. Naučí: `renderHook` s `MemoryRouter`.
-- [ ] **[claude – podle vzoru]** `useSearchParamsUpdater`, `usePagedList` (reset stránky při změně `resetKey`), `useRecordForm`, `useDetailParam`, `useTokenValidation`, datové hooky (`useClients` apod.) proti MSW.
+- [ ] **[claude]** Vzor: `useListFilters` – změna měsíce vynuluje den a stránku, hodnoty se čtou z URL. Naučí: `renderHook` s `MemoryRouter`.
+- [ ] **[claude]** `useSearchParamsUpdater`, `usePagedList` (reset stránky při změně `resetKey`), `useRecordForm`, `useDetailParam`, `useTokenValidation`, datové hooky (`useClients` apod.) proti MSW.
 
 #### T3d – Komponenty
-- [ ] **[ty]** Vzor: `ProtectedRoute` – nepřihlášený → přesměrování na login, nepovolená role → přesměrování, povolená → obsah. Naučí: `renderWithProviders` s rolí.
-- [ ] **[ty]** Vzor interakce: `DayFilter` – vybrat jde jen den se záznamy, šipky skáčou mezi dny se záznamy, křížek vrátí celý měsíc. Naučí: `user-event`, klávesnice, `getByRole`.
-- [ ] **[claude – podle vzoru]** `DatePicker`, `MonthYearPicker`, `Combobox`, `MultiCombobox`, `PhotoInput` (neznámý formát → hláška), `PasswordInput`, `EmptyState`.
-- [ ] **[claude – podle vzoru]** `Table` – roving tabindex (Tab vstoupí na naposledy aktivní řádek, šipky, Home/End, → na ⋯), Enter otevře detail. `RecordSheet` – po zavření vrátí fokus na řádek.
+- [ ] **[claude]** Vzor: `ProtectedRoute` – nepřihlášený → přesměrování na login, nepovolená role → přesměrování, povolená → obsah. Naučí: `renderWithProviders` s rolí.
+- [ ] **[claude]** Vzor interakce: `DayFilter` – vybrat jde jen den se záznamy, šipky skáčou mezi dny se záznamy, křížek vrátí celý měsíc. Naučí: `user-event`, klávesnice, `getByRole`.
+- [ ] **[claude]** `DatePicker`, `MonthYearPicker`, `Combobox`, `MultiCombobox`, `PhotoInput` (neznámý formát → hláška), `PasswordInput`, `EmptyState`.
+- [ ] **[claude]** `Table` – roving tabindex (Tab vstoupí na naposledy aktivní řádek, šipky, Home/End, → na ⋯), Enter otevře detail. `RecordSheet` – po zavření vrátí fokus na řádek.
 - [ ] **[claude]** `AuthContext` – načtení `auth-status`, odhlášení po `auth:unauthorized`.
 
 #### T3e – Stránky (integrační s MSW)
-- [ ] **[ty]** Vzor: `Login` – úspěšné přihlášení přesměruje, špatné heslo ukáže chybu. Naučí: celá stránka proti MSW, ověření navigace.
-- [ ] **[claude – podle vzoru]** Pro každou seznamovou stránku (Klienti, Zaměstnanci, Provedené úkony, Úkony, Střediska, Organizace, Měsíční přehled): filtry → správné parametry v requestu, prázdný stav, chyba → toast, viditelnost akcí podle role (pečovatel nevidí „Nový klient“ atd.).
-- [ ] **[claude – podle vzoru]** Formuláře: vytvoření klienta, provedeného úkonu, zaměstnance – validace, odeslání, chyba ze serveru.
+- [ ] **[claude]** Vzor: `Login` – úspěšné přihlášení přesměruje, špatné heslo ukáže chybu. Naučí: celá stránka proti MSW, ověření navigace.
+- [ ] **[claude]** Pro každou seznamovou stránku (Klienti, Zaměstnanci, Provedené úkony, Úkony, Střediska, Organizace, Měsíční přehled): filtry → správné parametry v requestu, prázdný stav, chyba → toast, viditelnost akcí podle role (pečovatel nevidí „Nový klient“ atd.).
+- [ ] **[claude]** Formuláře: vytvoření klienta, provedeného úkonu, zaměstnance – validace, odeslání, chyba ze serveru.
 - [ ] **[claude]** Detail klienta, individuální plán, účet, aktivace a reset hesla, nástěnka (přepínač pohledů podle role).
 
 ### Fáze T4 – E2E (Playwright)
 Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 - [ ] **[claude]** Setup: Playwright ve `frontend/e2e/` (nebo samostatně `e2e/`), spuštění proti `docker-compose.yml` s demo seedem, job v CI (jen na PR do `main`, je pomalejší), screenshoty a trace při selhání jako artefakt.
-- [ ] **[ty]** Vzor: přihlášení koordinátora a vytvoření provedeného úkonu, který se pak objeví v seznamu. Naučí: Playwright lokátory, `expect` s čekáním, page objects jen pokud se opakují.
-- [ ] **[claude – podle vzoru]** Přihlášení za každou roli a co vidí v sidebaru; stažení stvrzenky (PDF se stáhne a není prázdné); úprava individuálního plánu; nahrání fotky; odhlášení po vypršení session.
+- [ ] **[claude]** Vzor: přihlášení koordinátora a vytvoření provedeného úkonu, který se pak objeví v seznamu. Naučí: Playwright lokátory, `expect` s čekáním, page objects jen pokud se opakují.
+- [ ] **[claude]** Přihlášení za každou roli a co vidí v sidebaru; stažení stvrzenky (PDF se stáhne a není prázdné); úprava individuálního plánu; nahrání fotky; odhlášení po vypršení session.
 
 ### Fáze T5 – Dotažení CI
 - [ ] **[claude]** Pokrytí do souhrnu PR (JaCoCo + Vitest coverage v `$GITHUB_STEP_SUMMARY`).
@@ -193,5 +196,6 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ## Log změn
 
+- 2026-11-09: testy přebírá Claude, uživatel dělá review a opravy aplikace. `ClientAuthorizationIT` hotový (detail klienta pro pečovatele: vlastní středisko, jiné středisko, jiná organizace).
 - 2026-11-09: T0 a T1 hotové na `feature/testing` (kromě branch protection a rozhodnutí o existujících testech). Lokálně ověřeno: `mvnw verify` (19 unit + 1 IT), `npm run coverage`, `npm run build`, lint.
-- 2026-11-09: plán založen. Testy píše uživatel jen jako vzor u každého druhu ([ty]), zbytek Claude podle schváleného vzoru.
+- 2026-11-09: plán založen. 
