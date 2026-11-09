@@ -16,6 +16,9 @@ import cz.zcu.kiv.caretracker.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,8 @@ import java.util.UUID;
 @Service
 public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final String RESET_REQUESTED_MESSAGE =
+            "Pokud účet s tímto e-mailem existuje, poslali jsme na něj odkaz pro nastavení nového hesla";
 
     @Autowired
     private UserRepository userRepository;
@@ -38,6 +43,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Clock clock;
+    @Autowired
+    @Qualifier(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)
+    private TaskExecutor mailExecutor;
 
     /**
      * Returns the current user's profile as a DTO.
@@ -379,40 +387,50 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     @Transactional
     public MessageResponseDTO sendResetPasswordEmail() {
         User user = getCurrentUser();
-        return generateAndSendResetToken(user);
+        String token = issueResetToken(user);
+        emailService.sendPasswordResetEmail(user.getEmail(), token, resetMailRecipientName(user));
+        return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
     }
 
     /**
      * Generates a password-reset token for the user with the given email and sends a reset email.
-     * Used on the public forgot-password endpoint where the user is not authenticated.
+     * Used on the public forgot-password endpoint where the user is not authenticated, so the response
+     * is the same whether or not a matching account exists.
      *
      * @param email the email address to look up
-     * @return success message
-     * @throws ResourceNotFoundException if no user with this email exists
+     * @return the same message for every e-mail
      */
     @Transactional
     public MessageResponseDTO sendResetPasswordEmailByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Uživatel se zadaným emailem nenalezen"));
-        if (!isActivated(user)) {
-            // A pending account has no password to reset; its activation link must stay valid.
-            return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
-        }
-        return generateAndSendResetToken(user);
+        userRepository.findByEmail(email)
+                // A pending account has no password to reset; its activation link must stay valid.
+                .filter(UserService::isActivated)
+                .ifPresent(user -> {
+                    String token = issueResetToken(user);
+                    String recipientEmail = user.getEmail();
+                    String recipientName = resetMailRecipientName(user);
+                    // Sending takes long enough to reveal by timing that the account exists, so the response does not wait for it.
+                    mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
+                });
+        return new MessageResponseDTO(true, RESET_REQUESTED_MESSAGE);
     }
 
-    /** Creates a 24-hour reset token, persists it, and sends the reset email. */
-    private MessageResponseDTO generateAndSendResetToken(User user) {
+    /** Creates a 24-hour reset token and persists it. */
+    private String issueResetToken(User user) {
         String token = UUID.randomUUID().toString();
         user.setResetToken(token);
         user.setResetTokenExpiry(LocalDateTime.now(clock).plusHours(24));
         userRepository.save(user);
+        return token;
+    }
 
-        String name = user.getEmployee() != null
-                ? user.getEmployee().getFullName()
-                : user.getUsername();
-        emailService.sendPasswordResetEmail(user.getEmail(), token, name);
-
-        return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
+    private static String resetMailRecipientName(User user) {
+        if (user.getEmployee() != null) {
+            return user.getEmployee().getFullName();
+        }
+        if (user.getClient() != null) {
+            return user.getClient().getFullName();
+        }
+        return user.getUsername();
     }
 }

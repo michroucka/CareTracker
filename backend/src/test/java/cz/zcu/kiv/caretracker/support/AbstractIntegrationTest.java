@@ -43,7 +43,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestcontainersConfiguration.class, TestClockConfiguration.class, DatabaseCleaner.class, TestData.class})
+@Import({TestcontainersConfiguration.class, TestClockConfiguration.class, SynchronousTaskExecutorConfiguration.class,
+        DatabaseCleaner.class, TestData.class})
 public abstract class AbstractIntegrationTest {
 
     @Autowired

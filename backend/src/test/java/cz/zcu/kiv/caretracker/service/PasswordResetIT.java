@@ -67,7 +67,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: neexistující e-mail vrací 404 \"Uživatel se zadaným emailem nenalezen\", lze tak zjistit, které e-maily mají účet")
     void unknownEmailGetsSameResponseAndNoMail() throws Exception {
         MockHttpServletResponse known = requestReset(account.getEmail()).andReturn().getResponse();
         MockHttpServletResponse unknown = requestReset("nikdo@caretracker.test").andReturn().getResponse();
