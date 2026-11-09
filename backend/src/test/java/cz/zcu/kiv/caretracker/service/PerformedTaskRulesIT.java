@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -320,10 +321,15 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend uloží úkon bez pečovatelů (formulář vyžaduje aspoň jednoho)")
     void recordNeedsAtLeastOneCaregiver() throws Exception {
+        Map<String, Object> withoutCaregivers = request(client, task);
+        withoutCaregivers.remove("caregiverIds");
+
         perform(coordinator, post("/api/performed-tasks"), request(client, task))
                 .andExpect(status().isBadRequest());
+        perform(coordinator, post("/api/performed-tasks"), withoutCaregivers)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Úkon musí mít alespoň jednoho pečovatele"));
 
         assertThat(performedTaskRepository.count()).isZero();
     }

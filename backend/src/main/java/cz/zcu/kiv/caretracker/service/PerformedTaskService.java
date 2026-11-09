@@ -125,6 +125,9 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
         Task task = taskRepository.findById(dto.getTaskId())
                 .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
+        if (dto.getCaregiverIds() == null || dto.getCaregiverIds().isEmpty()) {
+            throw new ValidationException("Úkon musí mít alespoň jednoho pečovatele");
+        }
         List<Employee> caregivers = new ArrayList<>();
         for (Long employeeId : dto.getCaregiverIds()) {
             Employee caregiver = employeeRepository.findById(employeeId)
