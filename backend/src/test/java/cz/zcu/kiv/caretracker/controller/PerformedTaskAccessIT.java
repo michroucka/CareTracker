@@ -8,7 +8,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -197,7 +196,6 @@ class PerformedTaskAccessIT extends AbstractIntegrationTest {
                 .andExpect(allowedOnlyFor(CLIENT_ITSELF, actor));
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: klient získá QR platbu (částku a variabilní symbol) jiného klienta")
     @Test
     void clientAccountCannotGetPaymentQrCodeOfOtherClient() throws Exception {
         Client otherOrganizationClient = testData.client(scenario.employee(CAREGIVER_OTHER_ORG));

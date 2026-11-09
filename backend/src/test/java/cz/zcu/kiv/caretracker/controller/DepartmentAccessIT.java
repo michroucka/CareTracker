@@ -12,7 +12,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -138,7 +137,6 @@ class DepartmentAccessIT extends AbstractIntegrationTest {
         assertThat(saved.getOrganization().getId()).isEqualTo(scenario.organization.getId());
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: admin smí jmenovat koordinátorem zaměstnance jiné organizace")
     @Test
     void adminCannotAssignCoordinatorFromOtherOrganization() throws Exception {
         Employee foreignCaregiver = scenario.employee(CAREGIVER_OTHER_ORG);

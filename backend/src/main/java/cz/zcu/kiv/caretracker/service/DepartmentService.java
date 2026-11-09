@@ -150,6 +150,10 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
                 ? employeeRepository.findById(dto.getCoordinatorId())
                         .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"))
                 : null;
+        // assigning a coordinator raises their role, so they must come from the department's organization
+        if (coordinator != null && !coordinator.getOrganization().getId().equals(organization.getId())) {
+            throw new SecurityException("Koordinátor musí patřit do organizace střediska");
+        }
 
         departmentMapper.requestToDepartment(department, dto, coordinator, organization);
         Department saved = departmentRepository.save(department);

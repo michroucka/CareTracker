@@ -143,8 +143,6 @@ class OrganizationAccessIT extends AbstractIntegrationTest {
         Map<String, Object> request = new HashMap<>();
         request.put("name", "Přejmenovaná organizace");
         request.put("managerId", managerId);
-        // the frontend leaves "active" out, which the API rejects with 400 (finding in docs/testing/PLAN.md)
-        request.put("active", true);
         return request;
     }
 }
