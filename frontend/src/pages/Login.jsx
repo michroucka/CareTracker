@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { IconArrowLeft, IconLoader2 } from "@tabler/icons-react";
-import { post } from "../api/api.js";
+import { post, userMessageOf } from "../api/api.js";
 import { useAuth } from "../contexts/AuthContext";
 import { FormField } from "@/components/FormField";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -111,7 +111,7 @@ function LoginForm({ onForgotPassword }) {
             }
         } catch (error) {
             console.error("Login error:", error);
-            toast.error(error.message || "Server není dostupný");
+            toast.error(userMessageOf(error));
         } finally {
             setIsLoading(false);
         }
@@ -210,7 +210,7 @@ function ForgotPasswordForm({ onBack }) {
             }
         } catch (error) {
             console.error("Forgot password error:", error);
-            toast.error(error.message || "Server není dostupný");
+            toast.error(userMessageOf(error));
         } finally {
             setIsLoading(false);
         }

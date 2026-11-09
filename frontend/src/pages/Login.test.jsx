@@ -130,9 +130,7 @@ describe('Login', () => {
         expect(window.location.pathname).toBe('/login');
     });
 
-    // Nález: a failed fetch always has a message (e.g. "Failed to fetch"), so `error.message || "Server není dostupný"`
-    // never falls back and the user gets the browser's English text. The same pattern is in Activate and ResetPassword.
-    it.skip('says in Czech that the server is unreachable', async () => {
+    it('says in Czech that the server is unreachable', async () => {
         serveFailedLogin(() => HttpResponse.error());
         const { user } = renderApp({ route: '/login' });
 
