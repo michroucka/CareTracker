@@ -1,26 +1,26 @@
 import {
     IconBuilding,
     IconBuildingCommunity,
-    IconChartBar,
+    IconCalendarStats,
     IconClipboardCheck,
-    IconHome,
-    IconListCheck,
-    IconUser,
-    IconUsers,
+    IconHeartHandshake,
+    IconIdBadge2,
+    IconLayoutDashboard,
+    IconListDetails,
 } from "@tabler/icons-react";
 import { ROLES } from "@/constants/roles";
 
 const STAFF = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR, ROLES.CAREGIVER];
 
 export const NAV_ITEMS = [
-    { name: "Nástěnka", path: "/", icon: IconHome, allowedRoles: STAFF },
-    { name: "Klienti", path: "/clients", icon: IconUsers, allowedRoles: STAFF },
+    { name: "Nástěnka", path: "/", icon: IconLayoutDashboard, allowedRoles: STAFF },
+    { name: "Klienti", path: "/clients", icon: IconHeartHandshake, allowedRoles: STAFF },
     { name: "Provedené úkony", path: "/performed-tasks", icon: IconClipboardCheck, allowedRoles: STAFF },
-    { name: "Zaměstnanci", path: "/employees", icon: IconUser, allowedRoles: STAFF },
-    { name: "Úkony", path: "/tasks", icon: IconListCheck, allowedRoles: STAFF },
+    { name: "Zaměstnanci", path: "/employees", icon: IconIdBadge2, allowedRoles: STAFF },
+    { name: "Úkony", path: "/tasks", icon: IconListDetails, allowedRoles: STAFF },
     { name: "Střediska", path: "/departments", icon: IconBuilding, allowedRoles: [ROLES.SUPERADMIN, ROLES.ADMIN] },
     { name: "Organizace", path: "/organizations", icon: IconBuildingCommunity, allowedRoles: [ROLES.SUPERADMIN] },
-    { name: "Měsíční přehled", path: "/monthly-report", icon: IconChartBar, allowedRoles: [ROLES.CLIENT] },
+    { name: "Měsíční přehled", path: "/monthly-report", icon: IconCalendarStats, allowedRoles: [ROLES.CLIENT] },
 ];
 
 export function isNavItemActive(itemPath, pathname) {

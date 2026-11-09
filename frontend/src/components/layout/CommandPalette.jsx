@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { IconBuildingCommunity, IconSearch, IconUser, IconUserCircle } from "@tabler/icons-react";
+import { IconBuildingCommunity, IconHeartHandshake, IconIdBadge2, IconSearch, IconUserCircle } from "@tabler/icons-react";
 import { getJSON } from "@/api/api.js";
 import { Button } from "@/components/ui/button";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -131,7 +131,7 @@ export function CommandPalette() {
                                     keywords={[`${client.firstName} ${client.lastName}`]}
                                     onSelect={() => go(`/clients/${client.id}`)}
                                 >
-                                    <IconUserCircle />
+                                    <IconHeartHandshake />
                                     <span className="flex-1 truncate">{client.firstName} {client.lastName}</span>
                                     <span className="text-xs text-muted-foreground">{client.city}</span>
                                 </CommandItem>
@@ -148,7 +148,7 @@ export function CommandPalette() {
                                     keywords={[`${employee.firstName} ${employee.lastName}`]}
                                     onSelect={() => go(`/employees?detail=${employee.id}`)}
                                 >
-                                    <IconUser />
+                                    <IconIdBadge2 />
                                     <span className="flex-1 truncate">{employee.firstName} {employee.lastName}</span>
                                     <span className="text-xs text-muted-foreground">{getRoleLabel(employee.role)}</span>
                                 </CommandItem>

@@ -11,6 +11,10 @@ import java.util.List;
 @AllArgsConstructor
 public class DashboardDTO {
     // CAREGIVER only
+    // shown view and the views the user may switch to (staff dashboards only)
+    private DashboardView view;
+    private List<DashboardView> availableViews;
+
     private Integer myClientsCount;
     private Integer totalMonthMinutes;
     private Integer todayTasksCount;

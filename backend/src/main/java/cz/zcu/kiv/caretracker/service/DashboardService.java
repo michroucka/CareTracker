@@ -3,10 +3,12 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.dashboard.CaregiverWorkloadDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.ClientAttentionDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.DashboardDTO;
+import cz.zcu.kiv.caretracker.dto.dashboard.DashboardView;
 import cz.zcu.kiv.caretracker.dto.dashboard.DepartmentPerformedTasksDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.OrganizationOverviewDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.PlatformOverviewDTO;
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
@@ -53,20 +55,62 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     @Autowired private DashboardMapper dashboardMapper;
 
     /**
-     * Returns dashboard data appropriate for the current user's role.
+     * Returns the dashboard for the current user. Staff can switch between the views their role allows
+     * (an administrator who also cares for clients wants to see their own work, not only the organization);
+     * a view the user may not see falls back to the default one. The default follows the employee's job:
+     * a manager starts on the organization, a coordinator on the department, a caregiver on their own work.
      * Returns an empty DTO for roles without a dashboard (CLIENT).
      *
+     * @param requested view asked for by the client, may be null
      * @return the dashboard DTO
      */
-    public DashboardDTO getDashboard() {
+    public DashboardDTO getDashboard(DashboardView requested) {
         User user = getCurrentUser();
-        return switch (user.getRole()) {
-            case CAREGIVER -> buildCaregiverDashboard(user);
-            case COORDINATOR -> buildCoordinatorDashboard(user);
-            case ADMIN -> buildAdminDashboard(user);
-            case SUPERADMIN -> buildSuperadminDashboard();
-            default -> new DashboardDTO();
+        if (user.getRole() == UserRole.SUPERADMIN) {
+            return buildSuperadminDashboard();
+        }
+
+        List<DashboardView> available = availableViews(user);
+        if (available.isEmpty()) {
+            return new DashboardDTO();
+        }
+        DashboardView view = available.contains(requested) ? requested : defaultView(user, available);
+
+        DashboardDTO dto = switch (view) {
+            case ORGANIZATION -> buildAdminDashboard(user);
+            case DEPARTMENT -> buildCoordinatorDashboard(user);
+            case MINE -> buildCaregiverDashboard(user);
         };
+        dto.setView(view);
+        dto.setAvailableViews(available);
+        return dto;
+    }
+
+    private List<DashboardView> availableViews(User user) {
+        Employee employee = user.getEmployee();
+        if (employee == null) {
+            return List.of();
+        }
+        List<DashboardView> views = new ArrayList<>();
+        if (user.getRole() == UserRole.ADMIN) {
+            views.add(DashboardView.ORGANIZATION);
+        }
+        if ((user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.COORDINATOR) && employee.getDepartment() != null) {
+            views.add(DashboardView.DEPARTMENT);
+        }
+        if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.COORDINATOR || user.getRole() == UserRole.CAREGIVER) {
+            views.add(DashboardView.MINE);
+        }
+        return views;
+    }
+
+    private DashboardView defaultView(User user, List<DashboardView> available) {
+        DashboardView byJob = switch (user.getEmployee().getRole()) {
+            case MANAGER -> DashboardView.ORGANIZATION;
+            case COORDINATOR -> DashboardView.DEPARTMENT;
+            case CAREGIVER -> DashboardView.MINE;
+        };
+        return available.contains(byJob) ? byJob : available.get(0);
     }
 
     /** Builds the CAREGIVER dashboard: their own tasks today and this month, their clients and plans. */

@@ -1,6 +1,6 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom";
-import { IconCalendarDue, IconClipboardCheck, IconClockHour4, IconCoin, IconPlus, IconUsers } from "@tabler/icons-react";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { IconBuilding, IconBuildingCommunity, IconCalendarDue, IconClipboardCheck, IconClockHour4, IconCoin, IconPlus, IconUser, IconUsers } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { getJSON } from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
@@ -10,6 +10,9 @@ import { PageLoader } from "@/components/PageLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SEGMENT, SEGMENTED_GROUP } from "@/lib/segmented";
+import { cn } from "@/lib/utils";
 import {
     BarListCard,
     ClientsWithoutRecordsCard,
@@ -142,9 +145,64 @@ function departmentItems(departments = []) {
     }));
 }
 
-function StaffDashboard({ role, dashboard }) {
-    const isCaregiver = role === ROLES.CAREGIVER;
-    const tiles = isCaregiver ? caregiverTiles(dashboard) : role === ROLES.COORDINATOR ? coordinatorTiles(dashboard) : adminTiles(dashboard);
+const VIEWS = {
+    ORGANIZATION: { label: "Organizace", icon: IconBuildingCommunity },
+    DEPARTMENT: { label: "Středisko", icon: IconBuilding },
+    MINE: { label: "Moje práce", icon: IconUser },
+};
+const VIEW_STORAGE_KEY = "dashboard_view";
+
+function readStoredView() {
+    try {
+        return localStorage.getItem(VIEW_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function storeView(view) {
+    try {
+        localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch {
+        // the choice just will not be remembered
+    }
+}
+
+/**
+ * Switch between the dashboard views the user's role allows; hidden when there is only one.
+ * Icon and label from 640 px up; on phones icons only (label in a tooltip and for screen readers).
+ */
+function ViewSwitcher({ views, value, onChange }) {
+    if (!views || views.length < 2) return null;
+    return (
+        <div role="group" aria-label="Pohled nástěnky" className={SEGMENTED_GROUP}>
+            {views.map((view, index) => {
+                const { label, icon: Icon } = VIEWS[view];
+                return (
+                    <Tooltip key={view}>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                aria-pressed={view === value}
+                                aria-label={label}
+                                onClick={() => onChange(view)}
+                                className={cn(SEGMENT, "px-3 font-normal aria-pressed:bg-secondary aria-pressed:font-medium aria-pressed:text-secondary-foreground", index > 0 && "border-l")}
+                            >
+                                <Icon />
+                                <span className="max-sm:hidden">{label}</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="sm:hidden">{label}</TooltipContent>
+                    </Tooltip>
+                );
+            })}
+        </div>
+    );
+}
+
+function StaffDashboard({ view, dashboard }) {
+    const isCaregiver = view === "MINE";
+    const tiles = isCaregiver ? caregiverTiles(dashboard) : view === "DEPARTMENT" ? coordinatorTiles(dashboard) : adminTiles(dashboard);
 
     return (
         <>
@@ -170,7 +228,7 @@ function StaffDashboard({ role, dashboard }) {
                     />
                 ) : (
                     <TrendChart
-                        title={role === ROLES.COORDINATOR ? "Příjmy střediska" : "Příjmy organizace"}
+                        title={view === "DEPARTMENT" ? "Příjmy střediska" : "Příjmy organizace"}
                         description={(months) => `Vyúčtované úkony za posledních ${months} měsíců.`}
                         labels={MONTH_LABELS}
                         values={dashboard.monthlyIncomeHistory ?? []}
@@ -182,7 +240,7 @@ function StaffDashboard({ role, dashboard }) {
                 <RecentRecordsCard records={dashboard.recentPerformedTasks} title={isCaregiver ? "Moje nedávné záznamy" : "Nedávné záznamy"} />
             </div>
 
-            {role === ROLES.COORDINATOR && (
+            {view === "DEPARTMENT" && (
                 <BarListCard
                     title="Vytížení pečovatelů"
                     description="Úkony a čas u klientů v tomto měsíci."
@@ -190,7 +248,7 @@ function StaffDashboard({ role, dashboard }) {
                     emptyText="Ve středisku zatím nejsou žádní pečovatelé."
                 />
             )}
-            {role === ROLES.ADMIN && (
+            {view === "ORGANIZATION" && (
                 <BarListCard
                     title="Střediska"
                     description="Příjem a počet úkonů v tomto měsíci."
@@ -219,18 +277,35 @@ function DashboardSkeleton() {
 
 function DashboardContent() {
     const { user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [dashboard, setDashboard] = React.useState(null);
+    const [isSwitching, setIsSwitching] = React.useState(false);
     const isSuperadmin = user.role === ROLES.SUPERADMIN;
     const firstName = (user.fullName || user.username).split(" ")[0];
+    // the server checks the view against the role and falls back to the default one
+    const requestedView = searchParams.get("view")?.toUpperCase() || readStoredView();
 
     React.useEffect(() => {
-        getJSON("/dashboard")
-            .then(setDashboard)
+        let isCurrent = true;
+        getJSON(requestedView ? `/dashboard?view=${requestedView}` : "/dashboard")
+            .then((data) => isCurrent && setDashboard(data))
             .catch((error) => {
                 console.error("Error fetching dashboard:", error);
                 showErrorToast(error, "Chyba při načítání nástěnky");
-            });
-    }, []);
+            })
+            .finally(() => isCurrent && setIsSwitching(false));
+        return () => { isCurrent = false; };
+    }, [requestedView]);
+
+    const changeView = (view) => {
+        if (view === dashboard?.view) return;
+        storeView(view);
+        setIsSwitching(true);
+        setSearchParams((params) => {
+            params.set("view", view.toLowerCase());
+            return params;
+        }, { replace: true });
+    };
 
     return (
         <div className="grid gap-6">
@@ -240,9 +315,12 @@ function DashboardContent() {
                     ? "CareTracker napříč organizacemi. Jen souhrnná čísla, bez údajů o klientech."
                     : capitalize(formatLongDate(new Date()))}
                 actions={!isSuperadmin && (
-                    <Button asChild>
-                        <Link to="/performed-tasks?openCreate=true"><IconPlus /> Zapsat úkon</Link>
-                    </Button>
+                    <>
+                        <ViewSwitcher views={dashboard?.availableViews} value={dashboard?.view} onChange={changeView} />
+                        <Button asChild>
+                            <Link to="/performed-tasks?openCreate=true"><IconPlus /> Zapsat úkon</Link>
+                        </Button>
+                    </>
                 )}
             />
 
@@ -251,7 +329,9 @@ function DashboardContent() {
             ) : isSuperadmin ? (
                 <PlatformOverview platform={dashboard.platform} />
             ) : (
-                <StaffDashboard role={user.role} dashboard={dashboard} />
+                <div className={cn("grid gap-6 transition-opacity duration-base", isSwitching && "opacity-60")}>
+                    <StaffDashboard view={dashboard.view} dashboard={dashboard} />
+                </div>
             )}
         </div>
     );
