@@ -3,6 +3,8 @@ package cz.zcu.kiv.caretracker.exception;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import cz.zcu.kiv.caretracker.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +25,13 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 /**
  * Translates exceptions thrown from controllers and services into structured JSON error responses.
  * All handlers return an {@link ErrorResponse} body with an appropriate HTTP status code.
+ * Only the application's own exceptions pass their message to the client; anything unexpected
+ * is logged and answered with a generic 500, so no Java internals reach the response.
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
@@ -56,27 +62,6 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Data Integrity Violation",
-                message,
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex,
-            HttpServletRequest request) {
-
-        String message = ex.getMessage();
-
-        if (message == null || message.isEmpty()) {
-            message = "Nastala neočekávaná chyba";
-        }
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
                 message,
                 request.getRequestURI()
         );
@@ -129,19 +114,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * The application never throws IllegalArgumentException on purpose, it comes from libraries
+     * (e.g. {@code Enum.valueOf} with an unknown value), so its message names Java classes.
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex,
             HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        log.warn("Invalid argument on {}: {}", request.getRequestURI(), ex.getMessage());
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Neplatná hodnota v požadavku", request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -278,7 +261,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
-        ex.printStackTrace();
+        log.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
