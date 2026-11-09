@@ -17,9 +17,10 @@ describe("calculatePrice", () => {
         expect(calculatePrice(task, 5)).toBe(0);
     });
 
-    // Nález: the backend (PerformedTask.calculatePrice) multiplies in BigDecimal and rounds HALF_UP, so
-    // 0.29 km × 50 Kč = 14.5 → 15 Kč. In double 0.29 * 50 is 14.4999…, so the sheet shows 14 Kč.
-    it.skip("matches the backend's decimal rounding for fractional units", () => {
+    it("matches the backend's decimal rounding for fractional units", () => {
         expect(calculatePrice({ unitType: "KM", unitPrice: 50 }, 0.29)).toBe(15);
+        expect(calculatePrice({ unitType: "KG", unitPrice: 90 }, 0.35)).toBe(32);
+        expect(calculatePrice({ unitType: "HOUR", unitPrice: 100 }, 7.5)).toBe(13);
+        expect(calculatePrice({ unitType: "HOUR", unitPrice: 100 }, 10)).toBe(17);
     });
 });
