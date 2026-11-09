@@ -1,14 +1,18 @@
 package cz.zcu.kiv.caretracker.service;
 
 import com.jayway.jsonpath.JsonPath;
+import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Organization;
+import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
+import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
+import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import jakarta.mail.Message;
@@ -17,7 +21,6 @@ import jakarta.mail.Part;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -39,11 +42,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Employee lifecycle and its effect on the employee's login account: an e-mail creates an account waiting for
  * activation and sends the activation link, termination blocks the account and activation unblocks it.
+ * An employee can be terminated only after their active clients get another caregiver; a terminated
+ * coordinator leaves the department without a coordinator.
  */
 class EmployeeLifecycleIT extends AbstractIntegrationTest {
 
@@ -57,6 +63,12 @@ class EmployeeLifecycleIT extends AbstractIntegrationTest {
 
     @Autowired
     private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private ClientRepository clientRepository;
+
+    @Autowired
+    private PerformedTaskRepository performedTaskRepository;
 
     private Organization organization;
     private Department department;
@@ -229,7 +241,6 @@ class EmployeeLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: zaměstnance jde backendem založit do ukončeného střediska (formulář nabízí jen aktivní střediska)")
     void employeeCannotBeCreatedInTerminatedDepartment() throws Exception {
         Department terminated = testData.department(organization);
         terminated.setActive(false);
@@ -239,6 +250,95 @@ class EmployeeLifecycleIT extends AbstractIntegrationTest {
         perform(post("/api/employees"), employeeRequest("CAREGIVER", terminated, null)).andExpect(status().isBadRequest());
 
         assertThat(employeeRepository.count()).isEqualTo(employeesBefore);
+    }
+
+    @Test
+    void employeeCannotBeMovedToTerminatedDepartment() throws Exception {
+        Employee caregiver = testData.employee(department, EmployeeRole.CAREGIVER);
+        Department terminated = testData.department(organization);
+        terminated.setActive(false);
+        departmentRepository.save(terminated);
+
+        perform(put("/api/employees/{id}", caregiver.getId()), employeeRequest("CAREGIVER", terminated, caregiver.getUser().getEmail()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Středisko je ukončené, vyberte aktivní středisko"));
+
+        assertThat(employeeRepository.findById(caregiver.getId()).orElseThrow().getDepartment().getId()).isEqualTo(department.getId());
+    }
+
+    @Test
+    void formerEmployeeOfTerminatedDepartmentCanStillBeEdited() throws Exception {
+        Department terminated = testData.department(organization);
+        Employee former = testData.employee(terminated, EmployeeRole.CAREGIVER);
+        former.setActive(false);
+        employeeRepository.save(former);
+        terminated.setActive(false);
+        departmentRepository.save(terminated);
+
+        perform(put("/api/employees/{id}", former.getId()), employeeRequest("CAREGIVER", terminated, former.getUser().getEmail()))
+                .andExpect(status().isOk());
+
+        assertThat(employeeRepository.findById(former.getId()).orElseThrow().getLastName()).isEqualTo("Pečovatelka");
+    }
+
+    @Test
+    void caregiverOfActiveClientsCannotBeTerminated() throws Exception {
+        Employee caregiver = testData.employee(department, EmployeeRole.CAREGIVER);
+        testData.client(caregiver);
+        testData.client(caregiver);
+
+        perform(put("/api/employees/{id}/terminate", caregiver.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Zaměstnanec je pečovatelem 2 aktivních klientů, nejdřív jim přidělte jiného pečovatele"));
+
+        Employee saved = employeeRepository.findById(caregiver.getId()).orElseThrow();
+        assertThat(saved.getActive()).isTrue();
+        assertThat(saved.getUser().getActive()).isTrue();
+    }
+
+    @Test
+    void caregiverOfSingleActiveClientGetsSingularMessage() throws Exception {
+        Employee caregiver = testData.employee(department, EmployeeRole.CAREGIVER);
+        testData.client(caregiver);
+
+        perform(put("/api/employees/{id}/terminate", caregiver.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Zaměstnanec je pečovatelem 1 aktivního klienta, nejdřív klientovi přidělte jiného pečovatele"));
+    }
+
+    @Test
+    void caregiverOfTerminatedClientsOnlyCanBeTerminatedAndKeepsRecordedTasks() throws Exception {
+        Employee caregiver = testData.employee(department, EmployeeRole.CAREGIVER);
+        Client formerClient = testData.client(caregiver);
+        PerformedTask recorded = testData.performedTask(formerClient, testData.task(organization), caregiver);
+        formerClient.setActive(false);
+        clientRepository.save(formerClient);
+
+        perform(put("/api/employees/{id}/terminate", caregiver.getId())).andExpect(status().isOk());
+
+        assertThat(employeeRepository.findById(caregiver.getId()).orElseThrow().getActive()).isFalse();
+        assertThat(performedTaskRepository.findTop5ByCaregivers_IdOrderByDateDesc(caregiver.getId()))
+                .extracting(PerformedTask::getId)
+                .containsExactly(recorded.getId());
+    }
+
+    @Test
+    void terminatedCoordinatorLeavesDepartmentWithoutCoordinator() throws Exception {
+        Employee coordinator = testData.employee(department, EmployeeRole.COORDINATOR);
+        department.setCoordinator(coordinator);
+        departmentRepository.save(department);
+
+        perform(put("/api/employees/{id}/terminate", coordinator.getId())).andExpect(status().isOk());
+
+        Department saved = departmentRepository.findById(department.getId()).orElseThrow();
+        assertThat(saved.getActive()).isTrue();
+        assertThat(saved.getCoordinator()).isNull();
+        Employee terminated = employeeRepository.findById(coordinator.getId()).orElseThrow();
+        assertThat(terminated.getRole()).isEqualTo(EmployeeRole.CAREGIVER);
+        assertThat(terminated.getUser().getRole()).isEqualTo(UserRole.CAREGIVER);
+        assertThat(terminated.getUser().getActive()).isFalse();
     }
 
     private MimeMessage sentMail() {

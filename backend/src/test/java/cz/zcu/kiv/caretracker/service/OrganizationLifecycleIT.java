@@ -15,7 +15,6 @@ import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -163,7 +162,6 @@ class OrganizationLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: úprava organizace s \"active\": false organizaci deaktivuje, ale účty jejích lidí nezablokuje (obchází terminate)")
     void updateCannotDeactivateOrganization() throws Exception {
         Map<String, Object> request = organizationRequest(null);
         request.put("active", false);

@@ -48,10 +48,8 @@ public class OrganizationMapper {
     }
 
     public void requestToOrganization(Organization organization, OrganizationRequestDTO dto, Employee manager) {
+        // active changes only through terminate and activate, which also block and unblock the accounts
         organization.setName(dto.getName());
-        if (dto.getActive() != null) {
-            organization.setActive(dto.getActive());
-        }
         organization.setAccountPrefix(dto.getAccountPrefix());
         organization.setAccountNumber(dto.getAccountNumber());
         organization.setBankCode(dto.getBankCode());
