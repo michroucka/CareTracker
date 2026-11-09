@@ -19,13 +19,19 @@ const MODES = [
 /** "Marie Nováková" → "marie-novakova" */
 const toFileNamePart = (text) => removeDiacritics(text).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+// the print dialog has no reliable "closed" event for a PDF, so the previous frame is cleaned up on the next print
+let printFrame = null;
+
 function printPdf(blob) {
-    const url = URL.createObjectURL(blob);
-    const frame = document.createElement("iframe");
-    frame.style.display = "none";
-    frame.src = url;
-    document.body.appendChild(frame);
-    frame.onload = () => frame.contentWindow.print();
+    if (printFrame) {
+        URL.revokeObjectURL(printFrame.src);
+        printFrame.remove();
+    }
+    printFrame = document.createElement("iframe");
+    printFrame.style.display = "none";
+    printFrame.src = URL.createObjectURL(blob);
+    document.body.appendChild(printFrame);
+    printFrame.onload = (event) => event.currentTarget.contentWindow.print();
 }
 
 function downloadPdf(blob, fileName) {

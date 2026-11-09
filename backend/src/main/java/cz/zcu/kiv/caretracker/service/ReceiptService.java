@@ -23,6 +23,7 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 import cz.zcu.kiv.caretracker.entity.Task;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import java.io.ByteArrayOutputStream;
+import java.text.Collator;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,6 +34,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,6 +63,8 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d. M. yyyy");
     private static final Locale CZECH = Locale.forLanguageTag("cs-CZ");
+    private static final Collator CZECH_COLLATOR = Collator.getInstance(CZECH);
+    private static final int MAX_PARALLEL_QR_REQUESTS = 8;
     private static final String[] MONTH_NAMES = {
             "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
             "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
@@ -127,8 +133,8 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
                 .collect(Collectors.groupingBy(t -> t.getClient().getId(), LinkedHashMap::new, Collectors.toList()));
 
         List<List<PerformedTask>> clientGroups = tasksByClient.values().stream()
-                .sorted(Comparator.comparing((List<PerformedTask> group) -> group.get(0).getClient().getLastName())
-                        .thenComparing(group -> group.get(0).getClient().getFirstName()))
+                .sorted(Comparator.comparing((List<PerformedTask> group) -> group.get(0).getClient().getLastName(), CZECH_COLLATOR)
+                        .thenComparing(group -> group.get(0).getClient().getFirstName(), CZECH_COLLATOR))
                 .toList();
 
         // QR codes come from an external API one request per client, so they are fetched in parallel;
@@ -138,9 +144,16 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         List<String> variableSymbols = clientGroups.stream()
                 .map(group -> variableSymbol(group.get(0).getClient(), month, year))
                 .toList();
-        List<String> qrCodes = IntStream.range(0, clientGroups.size()).parallel()
-                .mapToObj(index -> encodeBase64(fetchPaymentQrPng(account, totals.get(index), variableSymbols.get(index))))
-                .toList();
+        // own bounded pool: the blocking calls must not occupy the JVM-wide common pool
+        List<String> qrCodes;
+        try (ExecutorService qrFetchers = Executors.newFixedThreadPool(Math.clamp(clientGroups.size(), 1, MAX_PARALLEL_QR_REQUESTS))) {
+            List<CompletableFuture<String>> pendingQrCodes = IntStream.range(0, clientGroups.size())
+                    .mapToObj(index -> CompletableFuture.supplyAsync(
+                            () -> encodeBase64(fetchPaymentQrPng(account, totals.get(index), variableSymbols.get(index))),
+                            qrFetchers))
+                    .toList();
+            qrCodes = pendingQrCodes.stream().map(CompletableFuture::join).toList();
+        }
 
         List<String> pages = IntStream.range(0, clientGroups.size())
                 .mapToObj(index -> buildReceiptHtml(clientGroups.get(index).get(0).getClient(), clientGroups.get(index), month, year, qrCodes.get(index)))
