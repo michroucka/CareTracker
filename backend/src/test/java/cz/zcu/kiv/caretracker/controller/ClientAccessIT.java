@@ -26,7 +26,6 @@ import java.util.Set;
 
 import static cz.zcu.kiv.caretracker.support.AccessScenario.Actor.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,9 +42,6 @@ class ClientAccessIT extends AbstractIntegrationTest {
     private static final Set<Actor> PLAN_EDITORS = EnumSet.of(SUPERADMIN, ADMIN, CAREGIVER_OF_CLIENT);
     // daily records need an employee as author, so SUPERADMIN cannot add them
     private static final Set<Actor> DAILY_RECORD_AUTHORS = EnumSet.of(ADMIN, COORDINATOR, CAREGIVER_OF_CLIENT, CAREGIVER);
-
-    // see docs/testing/PLAN.md, T2a: account endpoints load the client without any access check
-    private static final Set<Actor> ACCOUNT_ACCESS_GAP = EnumSet.of(ADMIN_OTHER_ORG, COORDINATOR_OTHER_DEPT, COORDINATOR_OTHER_ORG);
 
     @Autowired
     private ClientRepository clientRepository;
@@ -174,7 +170,6 @@ class ClientAccessIT extends AbstractIntegrationTest {
     @ParameterizedTest
     @EnumSource(Actor.class)
     void createAccount(Actor actor) throws Exception {
-        assumeFalse(ACCOUNT_ACCESS_GAP.contains(actor), "Known gap: account endpoints have no access check");
         Client clientWithoutAccount = testData.client(scenario.employee(CAREGIVER_OF_CLIENT));
 
         perform(actor, post("/api/clients/{id}/account/create", clientWithoutAccount.getId())
@@ -185,8 +180,6 @@ class ClientAccessIT extends AbstractIntegrationTest {
     @ParameterizedTest
     @EnumSource(Actor.class)
     void deactivateAccount(Actor actor) throws Exception {
-        assumeFalse(ACCOUNT_ACCESS_GAP.contains(actor), "Known gap: account endpoints have no access check");
-
         perform(actor, put("/api/clients/{id}/account/deactivate", client.getId()))
                 .andExpect(allowedOnlyFor(CLIENT_MANAGERS, actor));
     }
@@ -194,8 +187,6 @@ class ClientAccessIT extends AbstractIntegrationTest {
     @ParameterizedTest
     @EnumSource(Actor.class)
     void activateAccount(Actor actor) throws Exception {
-        assumeFalse(ACCOUNT_ACCESS_GAP.contains(actor), "Known gap: account endpoints have no access check");
-
         perform(actor, put("/api/clients/{id}/account/activate", client.getId()))
                 .andExpect(allowedOnlyFor(CLIENT_MANAGERS, actor));
     }

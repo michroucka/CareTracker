@@ -78,9 +78,11 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
             return Collections.emptyList();
         }
 
+        Boolean effectiveStatus = getCurrentUser().getRole() == UserRole.CAREGIVER ? Boolean.TRUE : status;
+
         Specification<Client> spec = ClientSpecifications.withFilters(
                 roleFilters.getOrganizationId(),
-                status,
+                effectiveStatus,
                 roleFilters.getDepartmentIds(),
                 caregiverIds
         );
@@ -289,6 +291,25 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
+     * Loads a client the current user may manage: update, terminate, activate or change its login account.
+     *
+     * @param id the client ID
+     * @return the client entity
+     * @throws ResourceNotFoundException if the client does not exist
+     * @throws SecurityException if the user does not have write access
+     */
+    public Client getClientForUpdate(Long id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
+        validateUpdateAccess(
+                client,
+                c -> c.getOrganization().getId(),
+                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
+        );
+        return client;
+    }
+
+    /**
      * Updates an existing client, applying role-based write access validation.
      *
      * @param id the client ID
@@ -298,13 +319,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @throws SecurityException if the user does not have write access
      */
     public Client updateClient(Long id, ClientRequestDTO dto) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-        validateUpdateAccess(
-                client,
-                c -> c.getOrganization().getId(),
-                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
-        );
+        Client client = getClientForUpdate(id);
         return saveClient(client, dto);
     }
 
@@ -316,13 +331,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @return the updated client entity
      */
     public Client terminateClient(Long id, ClientTerminateDTO dto) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-        validateUpdateAccess(
-                client,
-                c -> c.getOrganization().getId(),
-                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
-        );
+        Client client = getClientForUpdate(id);
         client.setActive(false);
         client.setTerminationDate(dto.getTerminationDate());
         client.setTerminationReason(TerminationReason.valueOf(dto.getTerminationReason()));
@@ -337,13 +346,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @return the updated client entity
      */
     public Client activateClient(Long id) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
-        validateUpdateAccess(
-                client,
-                c -> c.getOrganization().getId(),
-                c -> c.getDepartment() != null ? c.getDepartment().getId() : null
-        );
+        Client client = getClientForUpdate(id);
 
         client.setActive(true);
         client.setTerminationDate(null);
@@ -397,6 +400,17 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
+     * A terminated client's individual plan and daily records stay readable but can no longer change.
+     *
+     * @throws ValidationException if the client is not active
+     */
+    private void requireActiveClient(Client client) {
+        if (!Boolean.TRUE.equals(client.getActive())) {
+            throw new ValidationException("Klient je ukončený, individuální plán už nelze měnit");
+        }
+    }
+
+    /**
      * Maps all content fields from the request DTO onto an {@link IndividualPlanContent} entity.
      * Used for both initial creation and subsequent version updates.
      */
@@ -443,6 +457,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         }
 
         validateIndividualPlanUpdateAccess(client);
+        requireActiveClient(client);
 
         IndividualPlan plan = new IndividualPlan();
         plan.setClient(client);
@@ -478,6 +493,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 .orElseThrow(() -> new ResourceNotFoundException("Individuální plán klienta nebyl nalezen"));
 
         validateIndividualPlanUpdateAccess(plan.getClient());
+        requireActiveClient(plan.getClient());
 
         Integer maxVersion = plan.getContentVersions().stream()
                 .map(IndividualPlanContent::getVersionNumber)
@@ -518,6 +534,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
+        requireActiveClient(plan.getClient());
 
         Employee currentEmployee = getCurrentUser().getEmployee();
         if (currentEmployee == null) {
@@ -563,6 +580,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
+        requireActiveClient(plan.getClient());
 
         if (plan.getDailyRecords() != null) {
             plan.getDailyRecords().removeIf(dr -> dr.getId().equals(dailyRecordId));

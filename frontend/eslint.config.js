@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -24,6 +24,13 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+  {
+    // test helpers are never hot-reloaded
+    files: ['src/test/**/*.{js,jsx}', 'src/**/*.test.{js,jsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
   {

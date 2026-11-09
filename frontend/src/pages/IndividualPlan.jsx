@@ -101,7 +101,7 @@ function PlanSectionsForm({ form }) {
     ));
 }
 
-function DailyRecordsSection({ records, canDelete, onAdd, onDelete }) {
+function DailyRecordsSection({ records, canAdd, canDelete, onAdd, onDelete }) {
     const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     return (
         <section className="grid gap-4">
@@ -110,7 +110,7 @@ function DailyRecordsSection({ records, canDelete, onAdd, onDelete }) {
                     <h2 className="text-2xl">Denní záznamy</h2>
                     <p className="text-muted-foreground">Průběh péče den po dni, nejnovější nahoře.</p>
                 </div>
-                <Button onClick={onAdd}><IconPlus /> Přidat záznam</Button>
+                {canAdd && <Button onClick={onAdd}><IconPlus /> Přidat záznam</Button>}
             </div>
             {sorted.length === 0 ? (
                 <Card><EmptyState compact title="Zatím žádné denní záznamy" description="Jak den proběhl a co je důležité předat dál." /></Card>
@@ -215,7 +215,8 @@ function IndividualPlan() {
         );
     }
 
-    const canEdit = isAdmin || user.employeeId === client.caregiver?.id;
+    // a terminated client's plan and daily records are read-only
+    const canEdit = client.active && (isAdmin || user.employeeId === client.caregiver?.id);
     const latestVersion = individualPlan?.currentContent?.versionNumber;
     const isViewingOldVersion = selectedVersion != null && latestVersion != null && selectedVersion !== latestVersion;
     const fullName = `${client.firstName} ${client.lastName}`;
@@ -247,7 +248,7 @@ function IndividualPlan() {
         setSelectedVersion(latestVersion);
     };
 
-    const canDeleteRecord = (record) => isAdmin || record.createdBy?.id === user.employeeId;
+    const canDeleteRecord = (record) => client.active && (isAdmin || record.createdBy?.id === user.employeeId);
     const closeDialog = (open) => !open && setDialog(null);
     const status = currentContent?.plannedUpdateDate && !isViewingOldVersion ? planStatus(currentContent.plannedUpdateDate) : null;
 
@@ -284,6 +285,12 @@ function IndividualPlan() {
                     </div>
                 )}
             </div>
+
+            {!client.active && (
+                <p className="rounded-lg border bg-muted px-4 py-3 text-muted-foreground">
+                    Klient je ukončený. Individuální plán a denní záznamy jsou jen ke čtení.
+                </p>
+            )}
 
             {isViewingOldVersion && !isEditing && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-soft bg-warning-soft px-4 py-3 text-warning-soft-foreground">
@@ -353,6 +360,7 @@ function IndividualPlan() {
                             </div>
                             <DailyRecordsSection
                                 records={individualPlan.dailyRecords ?? []}
+                                canAdd={client.active}
                                 canDelete={canDeleteRecord}
                                 onAdd={() => setDialog({ type: "record" })}
                                 onDelete={(record) => setDialog({ type: "deleteRecord", record })}
@@ -363,7 +371,11 @@ function IndividualPlan() {
                             <Card className="px-6 lg:col-span-2">
                                 <EmptyState
                                     title="Klient zatím nemá individuální plán"
-                                    description={canEdit ? "Popište, co je pro klienta důležité a s čím potřebuje pomoct. Každé uložení vytvoří novou verzi." : "Plán může vytvořit klíčový pracovník klienta nebo administrátor."}
+                                    description={!client.active
+                                        ? "Klient je ukončený, plán už nejde vytvořit."
+                                        : canEdit
+                                            ? "Popište, co je pro klienta důležité a s čím potřebuje pomoct. Každé uložení vytvoří novou verzi."
+                                            : "Plán může vytvořit klíčový pracovník klienta nebo administrátor."}
                                     action={canEdit && <Button onClick={startEditing}><IconPlus /> Vytvořit plán</Button>}
                                 />
                             </Card>
