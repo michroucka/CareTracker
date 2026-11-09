@@ -6,7 +6,6 @@ import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -59,26 +58,23 @@ class ClientCreateValidationIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: chybějící gender spadne v ClientMapper na Gender.valueOf(null) (NullPointerException) a vrací 500, "
-            + "ClientService.createClient povinná pole nekontroluje")
     void missingGenderIsRejected() throws Exception {
         createClient(validRequestWith("gender", null))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Prosím vyberte pohlaví"));
     }
 
     @Test
-    @Disabled("Nález: chybějící taskIds spadne v ClientService.saveClient na iteraci přes null (NullPointerException) a vrací 500")
-    void missingTaskIdsAreRejected() throws Exception {
+    void missingTaskIdsMeanNoTasks() throws Exception {
         createClient(validRequestWith("taskIds", null))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test
-    @Disabled("Nález: chybějící departmentId jde do departmentRepository.findById(null), "
-            + "Spring Data vyhodí InvalidDataAccessApiUsageException a vrací se 500")
     void missingDepartmentIsRejected() throws Exception {
         createClient(validRequestWith("departmentId", null))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Prosím vyberte středisko"));
     }
 
     private ResultActions createClient(Map<String, Object> request) throws Exception {

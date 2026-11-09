@@ -236,12 +236,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * then incremented until a unique number within the organization is found.
      */
     private Client saveClient(Client client, ClientRequestDTO dto) {
+        validateRequiredFields(dto);
         Department department = departmentRepository.findById(dto.getDepartmentId())
                         .orElseThrow(() -> new ResourceNotFoundException("Oddělení nebylo nalezeno"));
         Employee caregiver = employeeRepository.findById(dto.getCaregiverId())
                         .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
         List<Task> tasks = new ArrayList<>();
-        for (Long taskId : dto.getTaskIds()) {
+        for (Long taskId : dto.getTaskIds() != null ? dto.getTaskIds() : List.<Long>of()) {
             Task task = taskRepository.findById(taskId)
                     .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
             tasks.add(task);
@@ -402,6 +403,33 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param client the client whose plan is being modified
      * @throws SecurityException if the user does not have write access to this plan
      */
+    /** Same required fields as the client form; a missing one would otherwise fail deep in the mapper with a 500. */
+    private static void validateRequiredFields(ClientRequestDTO dto) {
+        requireText(dto.getFirstName(), "Prosím zadejte jméno");
+        requireText(dto.getLastName(), "Prosím zadejte příjmení");
+        requireText(dto.getGender(), "Prosím vyberte pohlaví");
+        require(dto.getDateOfBirth(), "Prosím zadejte datum narození");
+        require(dto.getDepartmentId(), "Prosím vyberte středisko");
+        require(dto.getCaregiverId(), "Prosím vyberte klíčového pracovníka");
+        requireText(dto.getStreet(), "Prosím zadejte ulici a číslo popisné");
+        requireText(dto.getCity(), "Prosím zadejte město");
+        requireText(dto.getPostalCode(), "Prosím zadejte PSČ");
+        require(dto.getLegallyCompetent(), "Prosím uveďte svéprávnost");
+        requireText(dto.getBenefits(), "Prosím vyberte stupeň příspěvku");
+    }
+
+    private static void require(Object value, String message) {
+        if (value == null) {
+            throw new ValidationException(message);
+        }
+    }
+
+    private static void requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new ValidationException(message);
+        }
+    }
+
     /** The payment variable symbol is year, month and the personal number in 10 digits, which leaves six for the number. */
     private static void validatePersonalNumber(Long personalNumber) {
         if (personalNumber < 1 || personalNumber > MAX_PERSONAL_NUMBER) {
