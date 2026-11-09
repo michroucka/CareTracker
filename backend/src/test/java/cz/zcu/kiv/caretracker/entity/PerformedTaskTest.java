@@ -1,7 +1,6 @@
 package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.UnitType;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -57,7 +56,6 @@ class PerformedTaskTest {
         assertEquals(expectedPrice, performedTask(unitCount, unitPrice, unitType).calculatePrice());
     }
 
-    @Disabled("Nález: násobení v double, 0.29 * 50 = 14.499999999999998 a cena se zaokrouhlí dolů")
     @ParameterizedTest(name = "{0} kg × {1} Kč = {2} Kč")
     @CsvSource({
             "0.29, 50,  15",
