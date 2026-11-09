@@ -353,7 +353,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: SUPERADMIN zapíše klientovi úkon z katalogu jiné organizace; kontrola organizace úkonu se pro něj přeskakuje")
     void taskMustComeFromClientsOrganization() throws Exception {
         Task otherOrganizationTask = testData.task(testData.organization());
 
