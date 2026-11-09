@@ -249,6 +249,7 @@ function Employees() {
                 canEdit={canEdit}
                 canManageAdmins={canManageAdmins}
                 isSelf={detail?.id === user.employeeId}
+                organizationId={organizationId}
                 departments={departments}
                 onSave={saveEmployee}
                 onTerminate={() => setConfirmAction({ type: "terminate", employee: detail })}

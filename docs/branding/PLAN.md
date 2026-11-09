@@ -473,7 +473,7 @@ Cíl: celá aplikace má nové barvy a písma ještě před výměnou komponent,
 Nejvíc viditelná změna, nezávislá na formulářích.
 
 - [x] Layout: **A – plovoucí okno** (shadcn `Sidebar variant="inset"`): sidebar na tónovaném podkladu `--sidebar`, obsah jako papírové okno se zaoblením. Zvažováno i C (švestkový sidebar) a plochý layout; A vybráno kvůli klidu při celodenní práci a tomu, že švestka zůstává vyhrazená pro hlavní akce.
-- [x] `AppSidebar` (`src/components/layout/`): logo, položky podle role (`navigation.js`), aktivní položka = bílá dlaždice (`--sidebar-active`) s meruňkovou tečkou, která mezi položkami klouže (`motion` `layoutId`). Dole přepínač organizace (SUPERADMIN), účet, `ThemeSwitcher`, odhlášení.
+- [x] `AppSidebar` (`src/components/layout/`): logo, položky podle role (`navigation.js`), aktivní položka = bílá dlaždice (`--sidebar-active`), která mezi položkami klouže (`motion` `layoutId`; meruňková tečka odebrána ve fázi 6b). Dole přepínač organizace (SUPERADMIN), účet, `ThemeSwitcher`, odhlášení.
 - [x] Sbalení na lištu ikon (`collapsible="icon"`, tlačítko v hlavičce nebo `Ctrl+B`, stav v cookie `sidebar_state`). Na mobilu se menu otevírá jako sheet.
 - [x] `AppHeader`: přepínač menu + drobečková navigace (`getBreadcrumbs` v `navigation.js`), na mobilu logo. Lepkavá hlavička nad obsahem.
 - [x] Přechod mezi stránkami: `motion` – obsah je obalený `motion.div` s `key={pathname}`, při každé změně stránky se prolne a vyjede o 8 px (`DURATION.slow`), sidebar stojí. Jen vstup, bez odchodu, aby nová stránka nečekala. Pozor: `viewTransition` z React Routeru s `<BrowserRouter>` nefunguje (jen data router), proto ne View Transitions. Při změně stránky se obsah posune nahoru.
@@ -503,6 +503,30 @@ Každou stránku dokončit podle checklistu v sekci 6.
 - [x] `index.css`: smazat `@plugin "./hero.ts"`, `@source ../../node_modules/@heroui…`, workaroundy pro toasty. Smazat `hero.ts`, `table.css` (pokud už nic nepoužívá).
 - [x] `providers.tsx`: odstranit `HeroUIProvider`.
 - [x] `npm run build` a porovnat velikost bundlu s velikostí před migrací.
+
+### Fáze 6b – Doladění UI podle poznámek
+Poznámky a otázky z procházení aplikace po migraci. Každá jako jeden bod, odškrtnout po vyřešení.
+- [x] Sidebar: odebrána meruňková tečka u aktivní položky – působila jako stav/notifikace, aktivní položku už značí dlaždice.
+- [x] Sidebar: větší položky – výška 44 px (dřív 40), text 16 px (dřív 14), sbalený sidebar 60 px, aby položky zůstaly čtvercové.
+- [x] Sidebar: ve sbaleném stavu ikony, avatar i logo přesně na středu. Odsazení je v obou stavech stejné (ikony 13 px, avatar a logo 7 px), jinak ikony při animaci sbalení poskočí – nepoužívat `justify-center` ani jiné přepínání odsazení podle `collapsible=icon`.
+- [x] Sidebar: sbalený – stejná mezera vlevo i vpravo od ikon (16 px, mezera `sidebar-gap` u varianty inset užší o 6 px).
+- [x] Sidebar: wordmark v logu o něco větší (výška 18 px místo 16 px vedle 32px symbolu).
+- [x] Sheet zaměstnance: avatar u jména, pod jménem role · středisko a štítek Admin (horní lišta jen typ záznamu a „Neaktivní“; sekce Zařazení zrušena – duplicita), dlaždice „Klíčový pracovník“ (počet aktivních klientů) a „Tento měsíc“ (úkony + čas u klientů), seznam klientů s odkazy (prvních 5, pak „Všichni klienti“ → filtr na stránce Klienti), účet se štítkem nad hodnotou. Data z existujících endpointů (`useEmployeeOverview`). `RecordSheet` má prop `avatar` a sdílené `SheetSummaryTile` a `SheetPerson` (dřív zvlášť v sheetu úkonu a provedeného úkonu).
+- [x] Sheet úkonu z katalogu: dvojité setkání jako sekce „Setkání s klientem“ s ikonou (jeden / dva lidé), názvem a vysvětlením místo šedé věty pod dlaždicemi.
+- [x] Tabulka úkonů: sloupec „Setkání“ s ikonou a textem „Dvojité“ / „Jedno“ (tlumeně) místo štítku „Ano“ a pomlčky; cena přesunuta na konec řádku (před ⋯), aby se pravě zarovnaná cena nelepila na další sloupec.
+- [x] Provedené úkony: filtr „Den“ vedle měsíce (`DayFilter`) – kalendář zvoleného měsíce, vybrat jde jen den se záznamy, šipky skáčou mezi dny se záznamy, křížek vrátí celý měsíc; den v URL (`?day=2026-10-15`), změna měsíce ho vynuluje. Stránka má 50 řádků místo 25 (říjen: 28 stránek místo 55). Fokus po otevření kalendáře: vybraný den; bez výběru při otevření klávesnicí první povolený den (šipky fungují), při kliknutí myší samotný kalendář bez kroužku (kroužek na 1. dni vypadal jako výběr), Tab pak vede do dnů.
+- [x] Provedené úkony: řazení podle sloupce „Datum“ (dřív „Čas“) obrací celé pořadí – dny i časy chronologicky. Dřív zůstávaly dny vždy sestupně a šipka řadila jen časy uvnitř dne; s filtrem „Den“ už to není potřeba a vzestupné pořadí slouží ke kontrole měsíce od začátku.
+
+### Fáze 6c – Profilové fotky (klienti i zaměstnanci)
+Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a s cache.
+
+- [ ] Bezpečnost: endpointy fotek kontrolují přístup ke klientovi (dnes jen role – pečovatel jiné organizace mohl fotku stáhnout, přepsat i smazat podle ID).
+- [ ] Schéma: obecná tabulka `picture` (`data` 512 px, `thumbnail` 128 px, `content_type`, `uploaded_at`, `size`), cizí klíč `client.picture_id` a `employee.picture_id` (vlastnící strana, `LAZY` – seznam klientů nenačítá bloby). Nová fotka = nový řádek, `picture_id` slouží jako verze do URL.
+- [ ] Server: dekódovat, srovnat otočení podle EXIF, oříznout na čtverec, uložit 512 px + 128 px jako JPEG q85 bez metadat. Limit 5 MB a 30 Mpx (kontrola rozměrů před dekódováním kvůli paměti). Čtení WebP přes TwelveMonkeys. Starší fotky se převedou při prvním načtení.
+- [ ] Prohlížeč: fotku před nahráním zmenší přes `canvas` na max 1600 px JPEG, takže jde vybrat i velká fotka z mobilu. Neznámý formát (HEIC v Chrome) = srozumitelná hláška.
+- [ ] Zobrazení: `<img src="/api/clients/{id}/picture?size=thumb&v={pictureId}">` s `Cache-Control: private, max-age=31536000, immutable`, bez `fetchImage` a blob URL. Fotky v tabulce klientů.
+- [ ] Zaměstnanci: fotka v tabulce, detailu a formuláři; vlastní fotka v Můj účet a v sidebaru.
+- WebP jako výstup zamítnut: Java ho neumí zapsat bez nativních knihoven, úspora u avatarů ~1 kB.
 
 ### Fáze 7 – Doladění
 - [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.

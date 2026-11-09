@@ -21,6 +21,7 @@ import { TablePagination } from "@/components/data/TablePagination";
 import { formatCount, formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PerformedTaskCreateSheet } from "@/components/performedTasks/PerformedTaskCreateSheet";
+import { DayFilter } from "@/components/performedTasks/DayFilter";
 import { DayRow } from "@/components/performedTasks/DayRow";
 import { dayKey, summarizeByDay } from "@/components/performedTasks/dayGroups";
 import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskSheet";
@@ -87,6 +88,9 @@ const PerformedTaskRow = React.memo(function PerformedTaskRow({ performedTask, i
     );
 });
 
+// rows are small and a month holds over a thousand records, so pages are longer than in other lists
+const PERFORMED_TASKS_PAGE_SIZE = 50;
+
 const monthPrefix = ({ month, year }) => `${year}-${String(month + 1).padStart(2, "0")}`;
 
 function PerformedTasks() {
@@ -97,6 +101,7 @@ function PerformedTasks() {
     const canFilterDepartments = ADMIN_ROLES.includes(user.role);
 
     const [search, setSearch] = useTextParam("search");
+    const [day, setDay] = useTextParam("day");
     const [period, setPeriod] = useMonthParam();
     const [departmentFilter, setDepartmentFilter] = useMultiSelectParam("departments", user.role !== ROLES.SUPERADMIN && user.departmentId ? [user.departmentId] : []);
     const [caregiverFilter, setCaregiverFilter] = useMultiSelectParam("caregivers");
@@ -184,17 +189,24 @@ function PerformedTasks() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [detailId]);
 
-    const visibleTasks = React.useMemo(() => {
+    const matchingTasks = React.useMemo(() => {
         const query = removeDiacritics(search.trim());
         // a record created for another month is added to the list by the hook; keep it out of this one
         const inPeriod = performedTasks.filter((performedTask) => performedTask.date.startsWith(monthPrefix(period)));
-        const matching = query
+        return query
             ? inPeriod.filter((performedTask) => removeDiacritics(`${performedTask.clientName} ${performedTask.taskName}`).includes(query))
             : inPeriod;
-        // days always go newest first; the "Čas" column only orders records within a day
-        const timeDirection = sortDirection === "ascending" ? 1 : -1;
-        return [...matching].sort((a, b) => dayKey(b.date).localeCompare(dayKey(a.date)) || timeDirection * a.date.localeCompare(b.date));
-    }, [performedTasks, search, period, sortDirection]);
+    }, [performedTasks, search, period]);
+
+    const daysWithRecords = React.useMemo(() => [...new Set(matchingTasks.map((performedTask) => dayKey(performedTask.date)))].sort(), [matchingTasks]);
+    // a day from the URL that is not in the month (or has no matching records) shows the whole month
+    const selectedDay = daysWithRecords.includes(day) ? day : "";
+
+    const visibleTasks = React.useMemo(() => {
+        const inDay = selectedDay ? matchingTasks.filter((performedTask) => dayKey(performedTask.date) === selectedDay) : matchingTasks;
+        const direction = sortDirection === "ascending" ? 1 : -1;
+        return [...inDay].sort((a, b) => direction * a.date.localeCompare(b.date));
+    }, [matchingTasks, selectedDay, sortDirection]);
 
     const canEditRecord = (performedTask) => user.role !== ROLES.CAREGIVER
         || performedTask?.caregivers?.some((caregiver) => caregiver.id === user.employeeId);
@@ -207,7 +219,7 @@ function PerformedTasks() {
     };
 
     const count = visibleTasks.length;
-    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleTasks, { resetKey: organizationId });
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleTasks, { resetKey: organizationId, pageSize: PERFORMED_TASKS_PAGE_SIZE });
     const totalPrice = visibleTasks.reduce((sum, performedTask) => sum + (performedTask.price ?? 0), 0);
     const columnCount = 6;
     // count and price per day over the whole filtered list, so a day split across pages shows its full total
@@ -237,7 +249,8 @@ function PerformedTasks() {
             >
                 {!needsOrganization && (
                     <>
-                        <MonthYearPicker value={period} onChange={withPageReset(setPeriod)} />
+                        <MonthYearPicker value={period} onChange={withPageReset((nextPeriod) => { setPeriod(nextPeriod); setDay(""); })} />
+                        <DayFilter period={period} days={daysWithRecords} value={selectedDay} onChange={withPageReset(setDay)} isDisabled={loading} />
                         {canFilterDepartments && (
                             <MultiSelectFilter label="Středisko" allLabel="Všechna" options={departments.map((department) => ({ value: department.id, label: department.city }))} selected={departmentFilter} onChange={withPageReset(setDepartmentFilter)} searchPlaceholder="Hledat středisko…" />
                         )}
@@ -251,7 +264,7 @@ function PerformedTasks() {
                     <TableRow>
                         <TableHead aria-sort={sortDirection}>
                             <button type="button" onClick={toggleSort} className="-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase transition-colors duration-fast ease-out hover:text-foreground">
-                                Čas <SortIcon className="size-3.5" />
+                                Datum <SortIcon className="size-3.5" />
                             </button>
                         </TableHead>
                         <TableHead>Klient</TableHead>

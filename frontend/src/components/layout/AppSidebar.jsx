@@ -63,7 +63,6 @@ function NavItems() {
                             <NavLink to={item.path} onClick={() => setOpenMobile(false)}>
                                 <Icon stroke={isActive ? 2.25 : 2} />
                                 <span className="flex-1 truncate transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0">{item.name}</span>
-                                {isActive && <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-highlight transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0" />}
                             </NavLink>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -165,10 +164,10 @@ export function AppSidebar() {
                 <NavLink
                     to="/"
                     onClick={() => setOpenMobile(false)}
-                    className="flex h-10 items-center overflow-hidden rounded-md px-1 whitespace-nowrap outline-none focus-visible:ring-[3px] focus-visible:ring-sidebar-ring/50"
+                    className="flex h-10 items-center overflow-hidden rounded-md px-[7px] whitespace-nowrap outline-none focus-visible:ring-[3px] focus-visible:ring-sidebar-ring/50"
                 >
-                    <CareTrackerLogo small className="me-2.5" />
-                    <CareTrackerWordmark className="h-4 text-foreground transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0" />
+                    <CareTrackerLogo small className="me-2.5 shrink-0" />
+                    <CareTrackerWordmark className="h-4.5 text-foreground transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0" />
                 </NavLink>
             </SidebarHeader>
 

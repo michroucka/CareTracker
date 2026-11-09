@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { IconArrowRight, IconTrash } from "@tabler/icons-react";
-import { RecordSheet, SheetSection } from "@/components/data/RecordSheet";
+import { RecordSheet, SheetPerson, SheetSection, SheetSummaryTile } from "@/components/data/RecordSheet";
 import { formatCurrency } from "@/components/dashboard/dashboardFormat";
 import { formatTaskPrice } from "@/components/tasks/taskForm";
 import { Button } from "@/components/ui/button";
@@ -13,53 +13,28 @@ import { formatDateTime } from "@/utils/formatters";
 import { PerformedTaskFields } from "./PerformedTaskFields";
 import { formatAmount, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
 
-function initials(name) {
-    return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function Person({ name, children }) {
-    return (
-        <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(name)}</span>
-                <p className="truncate font-medium">{name}</p>
-            </div>
-            {children}
-        </div>
-    );
-}
-
-function SummaryTile({ label, value }) {
-    return (
-        <div className="rounded-lg bg-muted p-4">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="font-display text-2xl font-semibold tabular-nums">{value}</p>
-        </div>
-    );
-}
-
 function PerformedTaskView({ performedTask, linkClient }) {
     const { task, client, caregivers, notes } = performedTask;
     return (
         <div className="grid gap-6">
             <div className="grid grid-cols-2 gap-3">
-                <SummaryTile label="Množství" value={formatAmount(performedTask.unitCount, task.unitType)} />
-                <SummaryTile label="Cena" value={formatCurrency(calculatePrice(task, performedTask.unitCount))} />
+                <SheetSummaryTile label="Množství" value={formatAmount(performedTask.unitCount, task.unitType)} />
+                <SheetSummaryTile label="Cena" value={formatCurrency(calculatePrice(task, performedTask.unitCount))} />
             </div>
 
             <SheetSection label="Klient">
-                <Person name={client.fullName}>
+                <SheetPerson name={client.fullName}>
                     {linkClient && <Button asChild variant="ghost" size="icon-sm" aria-label={`Otevřít detail klienta ${client.fullName}`}>
                         <Link to={`/clients/${client.id}`}><IconArrowRight /></Link>
                     </Button>}
-                </Person>
+                </SheetPerson>
             </SheetSection>
 
             <Separator />
 
             <SheetSection label={caregivers.length > 1 ? "Pečovatelé" : "Pečovatel"}>
                 <div className="grid gap-3">
-                    {caregivers.map((caregiver) => <Person key={caregiver.id} name={caregiver.fullName} />)}
+                    {caregivers.map((caregiver) => <SheetPerson key={caregiver.id} name={caregiver.fullName} />)}
                 </div>
             </SheetSection>
 

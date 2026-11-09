@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DURATION, EASE_OUT } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 const AnimatedPanel = motion.div;
 
 /**
  * Record detail sheet following the approved layout (PLAN.md 2.6, catalog "Sheet – detail úkonu"):
- * badge + meta, large title with an optional muted `subtitle`, scrolling body and actions in the footer.
+ * badge + meta, large title with an optional `avatar` and muted `subtitle`, scrolling body and actions in the footer.
  *
  * In view mode the footer shows "⋯" with `moreActions` (DropdownMenuItems) on the left and "Upravit"
  * (`onEdit`) on the right; while editing the sheet passes its own `footer` (Zrušit / Uložit) instead.
@@ -23,6 +24,7 @@ export function RecordSheet({
     meta,
     title,
     subtitle,
+    avatar,
     description,
     onEdit,
     moreActions,
@@ -39,10 +41,15 @@ export function RecordSheet({
                         {badge && <Badge variant="secondary">{badge}</Badge>}
                         {meta}
                     </div>
-                    <SheetTitle className="px-5 pt-5 font-display text-2xl font-semibold tracking-tight">
-                        {isLoading ? "Načítám…" : title}
-                    </SheetTitle>
-                    {!isLoading && subtitle && <p className="mt-1 px-5 text-sm text-muted-foreground tabular-nums">{subtitle}</p>}
+                    <div className="flex items-center gap-4 px-5 pt-5">
+                        {!isLoading && avatar}
+                        <div className="grid min-w-0 gap-1">
+                            <SheetTitle className="font-display text-2xl font-semibold tracking-tight">
+                                {isLoading ? "Načítám…" : title}
+                            </SheetTitle>
+                            {!isLoading && subtitle && <p className="text-sm text-muted-foreground tabular-nums">{subtitle}</p>}
+                        </div>
+                    </div>
                     <SheetDescription className="sr-only">{description ?? title}</SheetDescription>
                 </SheetHeader>
 
@@ -93,5 +100,36 @@ export function SheetSection({ label, children }) {
             <h3 className="font-sans text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</h3>
             {children}
         </section>
+    );
+}
+
+/** Muted tile with a key number at the top of a record sheet; `hint` adds a small line under the value. */
+export function SheetSummaryTile({ label, value, hint, valueClassName = "text-2xl" }) {
+    return (
+        <div className="rounded-lg bg-muted p-4">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className={cn("font-display font-semibold tabular-nums", valueClassName)}>{value}</p>
+            {hint && <p className="text-xs text-muted-foreground tabular-nums">{hint}</p>}
+        </div>
+    );
+}
+
+function initials(name) {
+    return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+/** Person row: initials, name, optional muted `description` and an action (`children`) on the right. */
+export function SheetPerson({ name, description, children }) {
+    return (
+        <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(name)}</span>
+                <div className="min-w-0">
+                    <p className="truncate font-medium">{name}</p>
+                    {description && <p className="truncate text-sm text-muted-foreground">{description}</p>}
+                </div>
+            </div>
+            {children}
+        </div>
     );
 }

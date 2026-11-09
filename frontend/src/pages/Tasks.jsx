@@ -1,5 +1,5 @@
 import React from "react";
-import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus, IconUser, IconUsers } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useTasks } from "../hooks/useTasks.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
@@ -16,7 +16,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { TaskCreateDialog } from "@/components/tasks/TaskCreateDialog";
 import { TaskSheet } from "@/components/tasks/TaskSheet";
 import { formatTaskPrice, unitTypeLabel } from "@/components/tasks/taskForm";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -118,9 +117,9 @@ function Tasks() {
                     <TableRow>
                         <TableHead>Název</TableHead>
                         <TableHead className="max-sm:hidden">Jednotka</TableHead>
-                        <TableHead className="text-right">Cena</TableHead>
-                        <TableHead className="max-md:hidden">Dvojité setkání</TableHead>
+                        <TableHead className="max-md:hidden">Setkání</TableHead>
                         {canEdit && <TableHead>Stav</TableHead>}
+                        <TableHead className="text-right">Cena</TableHead>
                         {canEdit && <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>}
                     </TableRow>
                 </TableHeader>
@@ -144,9 +143,13 @@ function Tasks() {
                         >
                             <TableCell className="font-medium">{task.name}</TableCell>
                             <TableCell className="max-sm:hidden">{unitTypeLabel(task.unitType)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{formatTaskPrice(task)}</TableCell>
-                            <TableCell className="max-md:hidden">{task.doubleMeeting ? <Badge variant="secondary">Ano</Badge> : <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="max-md:hidden">
+                                {task.doubleMeeting
+                                    ? <span className="inline-flex items-center gap-1.5 font-medium"><IconUsers className="size-4 text-secondary-foreground" /> Dvojité</span>
+                                    : <span className="inline-flex items-center gap-1.5 text-muted-foreground"><IconUser className="size-4" /> Jedno</span>}
+                            </TableCell>
                             {canEdit && <TableCell><StatusBadge active={task.active} /></TableCell>}
+                            <TableCell className="text-right tabular-nums">{formatTaskPrice(task)}</TableCell>
                             {canEdit && (
                                 <TableCell onClick={(event) => event.stopPropagation()}>
                                     <DropdownMenu>
