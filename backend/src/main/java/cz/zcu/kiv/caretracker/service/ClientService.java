@@ -477,6 +477,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * Used for both initial creation and subsequent version updates.
      */
     private void mapContentFields(IndividualPlanContent content, IndividualPlanContentRequestDTO dto) {
+        validatePlanDates(dto);
         content.setProcessedDate(dto.getProcessedDate());
         content.setPlannedUpdateDate(dto.getPlannedUpdateDate());
         content.setLikes(dto.getLikes());
@@ -494,6 +495,29 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         content.setActivities(dto.getActivities());
         content.setHealth(dto.getHealth());
         content.setExercisingRights(dto.getExercisingRights());
+    }
+
+    /** Mirrors the plan form: the next review must come after the plan was processed. */
+    private static void validatePlanDates(IndividualPlanContentRequestDTO dto) {
+        if (dto.getPlannedUpdateDate() == null) {
+            throw new ValidationException("Datum plánované aktualizace je povinné");
+        }
+        if (dto.getProcessedDate() != null && !dto.getPlannedUpdateDate().isAfter(dto.getProcessedDate())) {
+            throw new ValidationException("Aktualizace musí být až po datu zpracování");
+        }
+    }
+
+    /** Mirrors the daily record form: the record has a text and does not describe a future day. */
+    private void validateDailyRecord(DailyRecordRequestDTO dto) {
+        if (dto.getDate() == null) {
+            throw new ValidationException("Datum denního záznamu je povinné");
+        }
+        if (dto.getDate().isAfter(LocalDate.now(clock))) {
+            throw new ValidationException("Datum denního záznamu nemůže být v budoucnosti");
+        }
+        if (dto.getContent() == null || dto.getContent().isBlank()) {
+            throw new ValidationException("Denní záznam musí obsahovat popis průběhu dne");
+        }
     }
 
     /**
@@ -532,6 +556,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         plan.setCurrentContent(firstVersion);
         plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
+        plan.setDailyRecords(new ArrayList<>());
 
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
         return individualPlanMapper.toDTO(savedPlan);
@@ -597,6 +622,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
         requireActiveClient(plan.getClient());
+        validateDailyRecord(dailyRecordDTO);
 
         Employee currentEmployee = getCurrentUser().getEmployee();
         if (currentEmployee == null) {

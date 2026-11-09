@@ -20,7 +20,6 @@ import cz.zcu.kiv.caretracker.repository.IndividualPlanContentRepository;
 import cz.zcu.kiv.caretracker.repository.IndividualPlanRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -75,6 +74,7 @@ class IndividualPlanIT extends AbstractIntegrationTest {
         assertThat(plan.getCurrentContent().getVersionNumber()).isEqualTo(1);
         assertThat(plan.getCurrentContent().getLikes()).isEqualTo("Procházky v parku");
         assertThat(plan.getCurrentContent().getProcessedDate()).isEqualTo(TODAY);
+        assertThat(plan.getDailyRecords()).isNotNull().isEmpty();
         assertThat(storedVersions(plan.getId())).extracting(IndividualPlanContent::getVersionNumber).containsExactly(1);
     }
 
@@ -127,8 +127,6 @@ class IndividualPlanIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: IndividualPlanContentMapper#toVersionSummary nevyplní plannedUpdateDate, i když ho "
-            + "IndividualPlanVersionSummaryDTO obsahuje; historie ho vždy vrací jako null.")
     void historyContainsPlannedUpdateDateOfEachVersion() {
         clientService.createIndividualPlan(client.getId(), content(TODAY, "A"));
 
@@ -167,8 +165,6 @@ class IndividualPlanIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme plán s plánovanou aktualizací před datem zpracování (nebo ve stejný den). "
-            + "Frontend to zakazuje (planForm.js: \"Aktualizace musí být až po datu zpracování\").")
     void plannedUpdateMustFollowProcessedDate() {
         IndividualPlanContentRequestDTO updateBeforeProcessing = content(TODAY, "A");
         updateBeforeProcessing.setPlannedUpdateDate(TODAY.minusDays(1));
@@ -257,8 +253,6 @@ class IndividualPlanIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme denní záznam s datem v budoucnosti. Frontend ho zakazuje "
-            + "(DailyRecordDialog: \"Datum nemůže být v budoucnosti\").")
     void dailyRecordDateInFutureIsRejected() {
         testData.individualPlan(client);
 
@@ -268,8 +262,6 @@ class IndividualPlanIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme denní záznam s prázdným textem (jen mezery). Frontend ho zakazuje "
-            + "(DailyRecordDialog: \"Prosím popište průběh dne\").")
     void blankDailyRecordIsRejected() {
         testData.individualPlan(client);
 

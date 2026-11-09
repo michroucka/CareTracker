@@ -90,6 +90,7 @@ public class IndividualPlanContentMapper {
         dto.setId(content.getId());
         dto.setVersionNumber(content.getVersionNumber());
         dto.setProcessedDate(content.getProcessedDate());
+        dto.setPlannedUpdateDate(content.getPlannedUpdateDate());
 
         return dto;
     }
