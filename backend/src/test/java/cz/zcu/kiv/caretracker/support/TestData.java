@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.boot.test.context.TestComponent;
@@ -34,6 +35,7 @@ public class TestData {
     private final ClientRepository clientRepository;
     private final IndividualPlanRepository individualPlanRepository;
     private final DailyRecordRepository dailyRecordRepository;
+    private final TaskRepository taskRepository;
     private final PasswordEncoder passwordEncoder;
 
     // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
@@ -46,6 +48,7 @@ public class TestData {
                     ClientRepository clientRepository,
                     IndividualPlanRepository individualPlanRepository,
                     DailyRecordRepository dailyRecordRepository,
+                    TaskRepository taskRepository,
                     PasswordEncoder passwordEncoder) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
@@ -54,6 +57,7 @@ public class TestData {
         this.clientRepository = clientRepository;
         this.individualPlanRepository = individualPlanRepository;
         this.dailyRecordRepository = dailyRecordRepository;
+        this.taskRepository = taskRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -160,6 +164,18 @@ public class TestData {
         dailyRecord.setDate(LocalDate.of(2026, 11, 2));
         dailyRecord.setContent("Záznam " + next());
         return dailyRecordRepository.save(dailyRecord);
+    }
+
+    /** Active catalog entry of the organization, priced per hour. */
+    public Task task(Organization organization) {
+        Task task = new Task();
+        task.setName("Úkon " + next());
+        task.setUnitPrice(150);
+        task.setUnitType(UnitType.HOUR);
+        task.setDoubleMeeting(false);
+        task.setActive(true);
+        task.setOrganization(organization);
+        return taskRepository.save(task);
     }
 
     public User superadmin() {
