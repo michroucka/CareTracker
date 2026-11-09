@@ -6,7 +6,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -99,7 +98,6 @@ class ClientListAccessIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Known gap (docs/testing/PLAN.md, T2a): caregivers should see active clients only, but status=false is passed through")
     void caregiverCannotListTerminatedClients() throws Exception {
         Client client = scenario.client;
         client.setActive(false);
