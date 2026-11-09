@@ -8,7 +8,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.TestData;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static cz.zcu.kiv.caretracker.support.FormLogin.REMEMBER_ME_COOKIE;
 import static cz.zcu.kiv.caretracker.support.FormLogin.login;
 import static org.assertj.core.api.Assertions.assertThat;
+import static cz.zcu.kiv.caretracker.support.CsrfTokens.validCsrfToken;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -110,8 +110,6 @@ class LoginIT extends AbstractIntegrationTest {
         assertNotSignedIn(result);
     }
 
-    @Disabled("Nález: zablokovaný účet hlásí ACCOUNT_DISABLED i při špatném heslu (Spring kontroluje stav účtu "
-            + "před heslem), takže kdokoli bez hesla zjistí, že účet existuje a je zablokovaný")
     @Test
     void deactivatedAccountWithWrongPasswordLooksLikeWrongPassword() throws Exception {
         String wrongPassword = mockMvc.perform(login(account.getUsername(), WRONG_PASSWORD))
@@ -137,13 +135,12 @@ class LoginIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void usernameIsCaseSensitive() throws Exception {
+    void usernameMatchesIgnoringCase() throws Exception {
         mockMvc.perform(login(account.getUsername().toUpperCase(), TestData.PASSWORD))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.errorType").value("INVALID_CREDENTIALS"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(account.getUsername()));
     }
 
-    @Disabled("Nález: zablokování účtu neukončí jeho přihlášené session, uživatel pracuje dál až do jejich vypršení")
     @Test
     void deactivationEndsExistingSession() throws Exception {
         MockHttpSession session = sessionOf(mockMvc.perform(login(account.getUsername(), TestData.PASSWORD))
@@ -162,7 +159,7 @@ class LoginIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn());
 
-        MockHttpServletResponse response = mockMvc.perform(post("/api/logout").session(session))
+        MockHttpServletResponse response = mockMvc.perform(post("/api/logout").with(validCsrfToken()).session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))

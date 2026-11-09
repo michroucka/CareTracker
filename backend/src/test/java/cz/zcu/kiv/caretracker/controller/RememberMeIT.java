@@ -7,10 +7,12 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.TestData;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -20,7 +22,9 @@ import static cz.zcu.kiv.caretracker.support.FormLogin.REMEMBER_ME_COOKIE;
 import static cz.zcu.kiv.caretracker.support.FormLogin.login;
 import static cz.zcu.kiv.caretracker.support.FormLogin.loginRemembered;
 import static org.assertj.core.api.Assertions.assertThat;
+import static cz.zcu.kiv.caretracker.support.CsrfTokens.validCsrfToken;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,8 +40,6 @@ class RememberMeIT extends AbstractIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     private User account;
 
@@ -89,11 +91,16 @@ class RememberMeIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void cookieStopsWorkingAfterPasswordChange() throws Exception {
+    void cookieStopsWorkingAfterPasswordReset() throws Exception {
         Cookie cookie = rememberMeCookie();
         User stored = userRepository.findById(account.getId()).orElseThrow();
-        stored.setPassword(passwordEncoder.encode("NoveHeslo1!"));
+        stored.setResetToken("reset-token");
+        stored.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
         userRepository.save(stored);
+
+        mockMvc.perform(put("/api/activation/reset-password").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("token", "reset-token", "password", "NoveHeslo1!"))))
+                .andExpect(status().isOk());
 
         withOnly(cookie, get("/api/user/me"))
                 .andExpect(status().isUnauthorized());
@@ -108,13 +115,11 @@ class RememberMeIT extends AbstractIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @Disabled("Nález: remember-me cookie je bezstavová (TokenBasedRememberMeServices), odhlášení ji jen smaže "
-            + "v prohlížeči; uniklá kopie platí dál až 7 dní")
     @Test
     void cookieStopsWorkingAfterLogout() throws Exception {
         Cookie cookie = rememberMeCookie();
 
-        mockMvc.perform(post("/api/logout").cookie(cookie))
+        mockMvc.perform(post("/api/logout").with(validCsrfToken()).cookie(cookie))
                 .andExpect(status().isOk());
 
         withOnly(cookie, get("/api/user/me"))

@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static cz.zcu.kiv.caretracker.support.CsrfTokens.validCsrfToken;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -109,7 +110,8 @@ class UnauthenticatedAccessIT extends AbstractIntegrationTest {
         String[] methodAndPath = endpoint.split(" ");
         String pathWithIds = methodAndPath[1].replaceAll("\\{[^}]+}", "1");
 
-        mockMvc.perform(request(HttpMethod.valueOf(methodAndPath[0]), pathWithIds))
+        // with a CSRF token, so the request is rejected for the missing login and not for the token
+        mockMvc.perform(request(HttpMethod.valueOf(methodAndPath[0]), pathWithIds).with(validCsrfToken()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("Unauthorized"));
     }
