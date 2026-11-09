@@ -207,7 +207,15 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ---
 
-## 6. Odkazy
+## 6. Odložené změny aplikace
+
+Nálezy z testů, které jsou větší změnou aplikace než oprava a do testovacích fází nepatří.
+
+- [ ] **[claude]** Cena za jednotku uložená k provedenému úkonu (nález z T2c, rozhodnuto 2026-11-09). Teď se cena počítá z aktuální ceny v katalogu, takže změna ceny přepíše i minulé měsíce a už vystavené stvrzenky. Flyway migrace (`unit_price` v `performed_task`, naplnit z katalogu), `calculatePrice` a agregace nástěnky z uložené ceny, úprava záznamu cenu nemění. Samostatný PR.
+
+---
+
+## 7. Odkazy
 
 - Spring Boot – Testing: https://docs.spring.io/spring-boot/reference/testing/index.html (sekce „Testing Spring Boot Applications“ a „Testcontainers“)
 - Spring Security – Testing: https://docs.spring.io/spring-security/reference/servlet/test/index.html (sekce „Testing Method Security“ a „MockMvc Support“)
