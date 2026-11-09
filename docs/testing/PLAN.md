@@ -64,7 +64,7 @@ Hned začne hlídat to, co už existuje.
   - Reporty (Surefire, Failsafe, JaCoCo, Vitest coverage) jako artefakty běhu.
 - [x] **[claude]** Frontend skripty `test:run` (`vitest run` – bez watch módu, jinak by CI viselo) a `coverage`.
 - [x] **[claude]** `deploy-demo.yml`: spustí se až po úspěšném CI pro push na `main` (`workflow_run`), navíc ručně (`workflow_dispatch`). `workflow_run` se bere z výchozí větve, takže začne platit až po merge.
-- [ ] **[ty]** Na GitHubu nastavit branch protection pro `main`: povinné checky backend + frontend, merge jen přes PR. (Je to klikací nastavení v repu, chce to tvoje oprávnění.)
+- [x] **[ty]** Na GitHubu ruleset `main`: merge jen přes PR, povinné checky Backend a Frontend, větev aktuální vůči `main`, zákaz force push a smazání, bez výjimek.
 - [ ] Ověřit: PR s rozbitým testem nejde mergnout a nespustí deploy.
 - [ ] **[ty]** Volitelně: Dockerfily frontendu jsou na `node:20`, CI na Node 22 (jsdom a jest-dom chtějí ≥ 22). Build v Dockeru funguje, jen hlásí varování o `engines` – zvážit přechod na `node:22`.
 
