@@ -9,6 +9,7 @@ import { usePagedList } from "../hooks/usePagedList";
 import { getRoleLabel, ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
@@ -42,14 +43,6 @@ function LoadingRows({ columnCount }) {
             {Array.from({ length: columnCount - 1 }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
         </TableRow>
     ));
-}
-
-function MessageRow({ columnCount, children }) {
-    return (
-        <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">{children}</TableCell>
-        </TableRow>
-    );
 }
 
 function Employees() {
@@ -186,9 +179,11 @@ function Employees() {
                 </TableHeader>
                 <TableBody>
                     {needsOrganization ? (
-                        <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
+                        <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
-                        <MessageRow columnCount={columnCount}>{search ? "Žádný zaměstnanec neodpovídá hledání." : "Žádní zaměstnanci."}</MessageRow>
+                        (search
+                        ? <TableEmptyRow columnCount={columnCount} title="Nikdo neodpovídá hledání" description="Zkuste jiné jméno." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                        : <TableEmptyRow columnCount={columnCount} title="Žádní zaměstnanci" description="Pro zvolený stav a středisko tu nikdo není." />)
                     ) : pageItems.map((employee) => {
                         const account = accountState(employee);
                         const isSelf = employee.id === user.employeeId;

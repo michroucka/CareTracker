@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { IconDots, IconFileDescription, IconHistory, IconLoader2, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconDots, IconHistory, IconLoader2, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useClients } from "../hooks/useClients.jsx";
 import { useIndividualPlan } from "../hooks/useIndividualPlan.jsx";
@@ -15,6 +15,7 @@ import { FormField } from "@/components/FormField";
 import { PersonAvatar } from "@/components/PersonAvatar";
 import { pictureUrl } from "@/lib/pictures";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { EmptyState } from "@/components/data/EmptyState";
 import { DailyRecordDialog } from "@/components/individualPlan/DailyRecordDialog";
 import { PLAN_SECTIONS, planStatus, toFormValues, toRequest, validatePlan } from "@/components/individualPlan/planForm";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +113,7 @@ function DailyRecordsSection({ records, canDelete, onAdd, onDelete }) {
                 <Button onClick={onAdd}><IconPlus /> Přidat záznam</Button>
             </div>
             {sorted.length === 0 ? (
-                <Card className="py-10 text-center text-muted-foreground">Zatím tu nejsou žádné denní záznamy.</Card>
+                <Card><EmptyState compact title="Zatím žádné denní záznamy" description="Jak den proběhl a co je důležité předat dál." /></Card>
             ) : (
                 <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {sorted.map((record) => (
@@ -359,15 +360,12 @@ function IndividualPlan() {
                         </div>
                     ) : (
                         <div className="grid items-start gap-6 lg:grid-cols-3">
-                            <Card className="items-center gap-4 px-6 py-14 text-center lg:col-span-2">
-                                <span className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground"><IconFileDescription /></span>
-                                <div className="grid gap-1">
-                                    <p className="font-display text-xl font-semibold">Klient zatím nemá individuální plán</p>
-                                    <p className="max-w-md text-muted-foreground">
-                                        {canEdit ? "Popište, co je pro klienta důležité a s čím potřebuje pomoct. Každé uložení vytvoří novou verzi." : "Plán může vytvořit klíčový pracovník klienta nebo administrátor."}
-                                    </p>
-                                </div>
-                                {canEdit && <Button onClick={startEditing}><IconPlus /> Vytvořit plán</Button>}
+                            <Card className="px-6 lg:col-span-2">
+                                <EmptyState
+                                    title="Klient zatím nemá individuální plán"
+                                    description={canEdit ? "Popište, co je pro klienta důležité a s čím potřebuje pomoct. Každé uložení vytvoří novou verzi." : "Plán může vytvořit klíčový pracovník klienta nebo administrátor."}
+                                    action={canEdit && <Button onClick={startEditing}><IconPlus /> Vytvořit plán</Button>}
+                                />
                             </Card>
                             <ClientSummaryCard client={client} />
                         </div>

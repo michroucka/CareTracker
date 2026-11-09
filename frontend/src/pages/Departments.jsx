@@ -9,6 +9,7 @@ import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -35,14 +36,6 @@ function LoadingRows() {
             <TableCell />
         </TableRow>
     ));
-}
-
-function MessageRow({ children }) {
-    return (
-        <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={COLUMN_COUNT} className="py-10 text-center text-muted-foreground">{children}</TableCell>
-        </TableRow>
-    );
 }
 
 function Departments() {
@@ -150,9 +143,11 @@ function Departments() {
                 </TableHeader>
                 <TableBody>
                     {needsOrganization ? (
-                        <MessageRow>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
+                        <TableEmptyRow columnCount={COLUMN_COUNT} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
                     ) : loading ? <LoadingRows /> : count === 0 ? (
-                        <MessageRow>{search ? "Žádné středisko neodpovídá hledání." : "Zatím tu není žádné středisko."}</MessageRow>
+                        (search
+                        ? <TableEmptyRow columnCount={COLUMN_COUNT} title="Žádné středisko neodpovídá hledání" description="Zkuste jiný název nebo město." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                        : <TableEmptyRow columnCount={COLUMN_COUNT} title="Zatím tu není žádné středisko" description="Střediska jsou pobočky organizace, ke kterým patří klienti a zaměstnanci." action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nové středisko</Button>} />)
                     ) : pageItems.map((department) => (
                         <TableRow
                             key={department.id}

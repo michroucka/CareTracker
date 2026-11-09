@@ -14,6 +14,7 @@ import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskShe
 import { DayRow } from "@/components/performedTasks/DayRow";
 import { dayKey, summarizeByDay } from "@/components/performedTasks/dayGroups";
 import { formatAmount } from "@/components/performedTasks/performedTaskForm";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -133,9 +134,7 @@ function MonthlyReport() {
                             {Array.from({ length: COLUMN_COUNT }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
                         </TableRow>
                     )) : count === 0 ? (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={COLUMN_COUNT} className="py-10 text-center text-muted-foreground">V tomto měsíci nebyla poskytnuta žádná péče.</TableCell>
-                        </TableRow>
+                        <TableEmptyRow columnCount={COLUMN_COUNT} title="V tomto měsíci bez péče" description="Jiný měsíc vyberete nahoře." />
                     ) : sortedTasks.map((performedTask, index) => {
                         const day = dayKey(performedTask.date);
                         const startsDay = index === 0 || dayKey(sortedTasks[index - 1].date) !== day;

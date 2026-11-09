@@ -15,6 +15,7 @@ import { ROLES } from "../constants/roles.js";
 import { formatTime, removeDiacritics } from "../utils/formatters.js";
 import MonthYearPicker from "@/components/MonthYearPicker";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { TablePagination } from "@/components/data/TablePagination";
@@ -41,14 +42,6 @@ function LoadingRows({ columnCount }) {
             {Array.from({ length: columnCount }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
         </TableRow>
     ));
-}
-
-function MessageRow({ columnCount, children }) {
-    return (
-        <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">{children}</TableCell>
-        </TableRow>
-    );
 }
 
 /** Memoized so sorting and opening a detail move existing rows instead of re-rendering ~1500 of them. */
@@ -276,9 +269,11 @@ function PerformedTasks() {
                 </TableHeader>
                 <TableBody className={cn("transition-opacity duration-base ease-out", isSorting && "opacity-50")} aria-busy={isSorting || undefined}>
                     {needsOrganization ? (
-                        <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
+                        <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
-                        <MessageRow columnCount={columnCount}>{search ? "Žádný záznam neodpovídá hledání." : "V tomto měsíci zatím nejsou žádné záznamy."}</MessageRow>
+                        (search
+                        ? <TableEmptyRow columnCount={columnCount} title="Žádný záznam neodpovídá hledání" description="Hledá se podle jména klienta a názvu úkonu." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                        : <TableEmptyRow columnCount={columnCount} title="V tomto měsíci zatím nic" description="Zapsané úkony se tu objeví den po dni." action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Zapsat úkon</Button>} />)
                     ) : pageItems.map((performedTask, index) => {
                         const day = dayKey(performedTask.date);
                         const startsDay = index === 0 || dayKey(pageItems[index - 1].date) !== day;

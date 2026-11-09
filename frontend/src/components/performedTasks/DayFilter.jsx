@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fromIsoDate, toIsoDate } from "@/lib/dates";
+import { SEGMENT, SEGMENTED_GROUP } from "@/lib/segmented";
 import { cn } from "@/lib/utils";
 
 const dayFormatter = new Intl.DateTimeFormat("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" });
@@ -38,11 +39,11 @@ export function DayFilter({ period, days, value, onChange, isDisabled = false })
         setIsOpen(false);
     };
 
-    const segmentClass = "h-full rounded-none focus-visible:ring-inset active:scale-100";
+    const segmentClass = SEGMENT;
     const arrowClass = cn(segmentClass, "w-8 text-muted-foreground hover:text-foreground");
 
     return (
-        <div className={cn("inline-flex h-10 items-stretch overflow-hidden rounded-md border bg-card shadow-xs dark:bg-input/30", isDisabled && "opacity-50")}>
+        <div className={cn(SEGMENTED_GROUP, isDisabled && "opacity-50")}>
             {value && (
                 <Button variant="ghost" aria-label="Předchozí den se záznamy" disabled={index <= 0} onClick={() => onChange(days[index - 1])} className={cn(arrowClass, "border-r")}>
                     <IconChevronLeft />

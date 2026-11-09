@@ -503,6 +503,7 @@ Každou stránku dokončit podle checklistu v sekci 6.
 - [x] `index.css`: smazat `@plugin "./hero.ts"`, `@source ../../node_modules/@heroui…`, workaroundy pro toasty. Smazat `hero.ts`, `table.css` (pokud už nic nepoužívá).
 - [x] `providers.tsx`: odstranit `HeroUIProvider`.
 - [x] `npm run build` a porovnat velikost bundlu s velikostí před migrací.
+- [x] Po odstranění HeroUI chyběla barva textu na `body` (dával ji HeroUI plugin) – sheety, dialogy a menu v portálu měly v tmavém režimu černý text. `body` má teď `bg-background text-foreground` v `index.css`.
 
 ### Fáze 6b – Doladění UI podle poznámek
 Poznámky a otázky z procházení aplikace po migraci. Každá jako jeden bod, odškrtnout po vyřešení.
@@ -531,14 +532,15 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 - Sdílené: `lib/pictures.js` (`pictureUrl`, `shrinkPhoto`, `savePicture`, `DELETE_PICTURE`), `PersonAvatar` (fotka nebo iniciály, i v `SheetPerson`), `PhotoInput` (dřív `ClientPhotoInput`). Endpointy `/api/clients/{id}/picture`, `/api/employees/{id}/picture` (čtení všichni zaměstnanci, zápis od koordinátora výš), `/api/user/me/picture` (vlastní fotka). `auth-status` vrací `pictureId`.
 
 ### Fáze 7 – Doladění
-- [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.
+- [x] Prázdné stavy s motivem symbolu: `EmptyState` (prázdné buňky – tři přerušované čtverce a tlumený meruňkový kruh, nadpis, popis, akce) a `TableEmptyRow` pro tabulky. Ve všech seznamech (hledání bez výsledku s „Zrušit hledání“, prázdný seznam s akcí pro vytvoření, nevybraná organizace) a v individuálním plánu. Nahrazeny čtyři kopie `MessageRow`.
 - [ ] Skeletony pro tabulky a karty.
 - [x] Přístupnost:
   - Kontrast tokenů změřen v obou režimech: vše ≥ 4,5:1 kromě `highlight` na kartě ve světlém režimu (3,31:1), použitý jen jako hvězdička povinného pole (`aria-hidden`, povinnost hlásí `aria-required`; jako grafický prvek stačí 3:1).
-  - Klikací řádky tabulek (`TableRow` s `onClick`) jdou Tabem, otevírají se Enterem / mezerníkem, mají viditelný fokus; klávesy na ovládacích prvcích v řádku (⋯) řádek neotevřou. Dřív šel detail klávesnicí otevřít jen přes menu ⋯, a to pečovatel u klientů ani klient v měsíčním přehledu neměl.
+  - Klikací řádky tabulek (`TableRow` s `onClick`) otevírají detail Enterem / mezerníkem a mají viditelný fokus. Tabulka je jedna zastávka Tabu (roving tabindex v `Table`): Tab vstoupí na naposledy aktivní řádek a další Tab tabulku opustí, ↑ ↓ Home End mezi řádky, → na ⋯ řádku, ← zpět. Dřív šel detail klávesnicí otevřít jen přes menu ⋯ (pečovatel u klientů ani klient v měsíčním přehledu ho nemají) a krátce i Tabem přes každý řádek a jeho ⋯ (100 zastávek na stránku Provedených úkonů).
   - `RecordSheet` po zavření vrací fokus na řádek, ze kterého se otevřel (dřív skončil na `body`).
   - Odkaz „Přeskočit na obsah“ jako první prvek po Tabu.
   - Ikonová tlačítka mají `aria-label`, pole bez viditelného popisku (hledání) taky.
+  - Segmentové ovladače (měsíc, den): fokusový kroužek nese celý ovladač zvenku kolem zaoblených rohů jako ostatní pole, fokusovaný segment je jen podbarvený (`lib/segmented.js`); dřív byl kroužek uvnitř segmentu přes rohy skupiny.
 - [x] Responzivita: změřeno na 360 / 768 / 1024 / 1280 px – stránky nepřetékají. Tabulky skrývají sloupce podle své šířky (container queries: obal tabulky je `@container/table`, sloupce `@max-xl/table:hidden` (<576 px), `@max-3xl/table:hidden` (<768 px), `@max-4xl/table:hidden` (<896 px)), ne podle okna – s rozbaleným sidebarem na 768–1024 px dřív přetékaly až o 236 px. Hlavní sloupec (jméno) se zkracuje (`w-full max-w-0`), na mobilu tak zůstane vidět stav a menu ⋯.
 - [x] Hlavička na mobilu (<640 px): vnořené stránky místo drobečků ukazují odkaz zpět na nadřazenou stránku („‹ Klienti“ na detailu klienta, „‹ Detail klienta“ v plánu); stránky první úrovně dál jen svůj název. Od 640 px celé drobečky.
 - [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.

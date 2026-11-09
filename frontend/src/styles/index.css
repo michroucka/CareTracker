@@ -245,6 +245,11 @@
     * {
         @apply border-border outline-ring/50;
     }
+
+    /* sheets, dialogs and menus are portaled to <body>, so the theme colors must start here */
+    body {
+        @apply bg-background text-foreground;
+    }
 }
 
 :root {

@@ -13,6 +13,7 @@ import { ClientAccountDialog } from "@/components/clients/ClientAccountDialog";
 import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialog";
 import { clientAccountState } from "@/components/clients/clientAccount";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
@@ -43,14 +44,6 @@ function LoadingRows({ columnCount }) {
             {Array.from({ length: columnCount - 1 }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
         </TableRow>
     ));
-}
-
-function MessageRow({ columnCount, children }) {
-    return (
-        <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">{children}</TableCell>
-        </TableRow>
-    );
 }
 
 function Clients() {
@@ -169,9 +162,11 @@ function Clients() {
                 </TableHeader>
                 <TableBody>
                     {needsOrganization ? (
-                        <MessageRow columnCount={columnCount}>Nejdřív vyberte organizaci v postranním panelu.</MessageRow>
+                        <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
-                        <MessageRow columnCount={columnCount}>{search ? "Žádný klient neodpovídá hledání." : "Žádní klienti pro zvolené filtry."}</MessageRow>
+                        (search
+                        ? <TableEmptyRow columnCount={columnCount} title="Nikdo neodpovídá hledání" description="Zkuste jiné jméno nebo město." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                        : <TableEmptyRow columnCount={columnCount} title="Žádní klienti" description="Pro zvolený stav, středisko a pečovatele tu nikdo není." />)
                     ) : pageItems.map((client) => {
                         const account = clientAccountState(client);
                         return (

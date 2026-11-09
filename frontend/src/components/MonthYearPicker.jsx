@@ -3,6 +3,7 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MIN_YEAR, MONTHS, MONTHS_SHORT } from "@/constants/globalConstants";
+import { SEGMENT, SEGMENTED_GROUP } from "@/lib/segmented";
 import { cn } from "@/lib/utils";
 
 const toIndex = ({ month, year }) => year * 12 + month;
@@ -37,11 +38,11 @@ export default function MonthYearPicker({ value, onChange, isDisabled = false, c
         setIsOpen(open);
     };
 
-    const segmentClass = "h-full rounded-none focus-visible:ring-inset active:scale-100";
+    const segmentClass = SEGMENT;
     const arrowClass = cn(segmentClass, "w-8 text-muted-foreground hover:text-foreground");
 
     return (
-        <div className={cn("inline-flex h-10 items-stretch overflow-hidden rounded-md border bg-card shadow-xs dark:bg-input/30", isDisabled && "opacity-50", className)}>
+        <div className={cn(SEGMENTED_GROUP, isDisabled && "opacity-50", className)}>
             <Button variant="ghost" aria-label="Předchozí měsíc" disabled={isDisabled || current <= earliest} onClick={() => select(current - 1)} className={arrowClass}>
                 <IconChevronLeft />
             </Button>

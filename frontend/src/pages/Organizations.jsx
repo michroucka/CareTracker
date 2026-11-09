@@ -7,6 +7,7 @@ import { useListFilters } from "../hooks/useListFilters";
 import { usePagedList } from "../hooks/usePagedList";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -125,11 +126,9 @@ function Organizations() {
                 </TableHeader>
                 <TableBody>
                     {loading ? <LoadingRows /> : count === 0 ? (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                                {search ? "Žádná organizace neodpovídá hledání." : "Zatím tu není žádná organizace."}
-                            </TableCell>
-                        </TableRow>
+                        search
+                            ? <TableEmptyRow columnCount={5} title="Žádná organizace neodpovídá hledání" description="Zkuste jiný název." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                            : <TableEmptyRow columnCount={5} title="Zatím tu není žádná organizace" action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nová organizace</Button>} />
                     ) : pageItems.map((organization) => (
                         <TableRow
                             key={organization.id}

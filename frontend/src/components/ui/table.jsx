@@ -3,14 +3,74 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+const INTERACTIVE_ROW = "tr[data-interactive]"
+const ROW_CONTROL = "button, a[href], input, select, [tabindex]:not(tr)"
+
+/**
+ * Rows that open a detail work as one Tab stop (roving tabindex): Tab enters the table on the last
+ * active row and the next Tab leaves it. ↑ ↓ Home End move between rows, → moves to the row's
+ * controls (the "⋯" menu), ← goes back to the row. Enter / Space open the row (see TableRow).
+ */
+function useRowNavigation(containerRef) {
+  React.useEffect(() => {
+    const container = containerRef.current
+    // rows come and go with paging and filtering; keep exactly one row tabbable and their controls out of Tab
+    const syncTabStops = () => {
+      const rows = [...container.querySelectorAll(INTERACTIVE_ROW)]
+      rows.forEach((row) => row.querySelectorAll(ROW_CONTROL).forEach((control) => { control.tabIndex = -1 }))
+      if (rows.length && !rows.some((row) => row.tabIndex === 0)) rows[0].tabIndex = 0
+    }
+    syncTabStops()
+    const observer = new MutationObserver(syncTabStops)
+    observer.observe(container, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [containerRef])
+
+  const makeActive = (row) => {
+    containerRef.current.querySelectorAll(INTERACTIVE_ROW).forEach((other) => { other.tabIndex = other === row ? 0 : -1 })
+  }
+
+  const onFocus = (event) => {
+    const row = event.target.closest(INTERACTIVE_ROW)
+    if (row) makeActive(row)
+  }
+
+  const onKeyDown = (event) => {
+    const row = event.target.closest(INTERACTIVE_ROW)
+    if (!row) return
+    const rows = [...containerRef.current.querySelectorAll(INTERACTIVE_ROW)]
+    const index = rows.indexOf(row)
+    const onRow = event.target === row
+
+    let next = null
+    if (onRow && event.key === "ArrowDown") next = rows[index + 1]
+    else if (onRow && event.key === "ArrowUp") next = rows[index - 1]
+    else if (onRow && event.key === "Home") next = rows[0]
+    else if (onRow && event.key === "End") next = rows.at(-1)
+    else if (onRow && event.key === "ArrowRight") next = row.querySelector(ROW_CONTROL)
+    else if (!onRow && event.key === "ArrowLeft") next = row
+    else return
+
+    event.preventDefault()
+    next?.focus()
+  }
+
+  return { onFocus, onKeyDown }
+}
+
 function Table({
   className,
   ...props
 }) {
+  const containerRef = React.useRef(null)
+  const rowNavigation = useRowNavigation(containerRef)
+
   return (
     <div
+      ref={containerRef}
       data-slot="table-container"
       className="@container/table relative w-full overflow-x-auto rounded-lg border bg-card shadow-xs"
+      {...rowNavigation}
     >
       <table
         data-slot="table"
@@ -63,15 +123,16 @@ function TableFooter({
   )
 }
 
-// A row with onClick (opens a detail) is reachable with Tab and opens with Enter or Space;
-// keys pressed on controls inside the row (the "⋯" menu) are left to them.
+// A row with onClick (opens a detail) opens with Enter or Space; keys pressed on controls inside the row
+// (the "⋯" menu) are left to them. Table moves the focus between such rows with the arrow keys.
 function TableRow({
   className,
   onClick,
   ...props
 }) {
   const keyboardProps = onClick && {
-    tabIndex: 0,
+    "data-interactive": "",
+    tabIndex: -1,
     onKeyDown: (event) => {
       if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return
       event.preventDefault()

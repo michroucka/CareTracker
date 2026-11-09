@@ -8,6 +8,7 @@ import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
 import { ListToolbar } from "@/components/data/ListToolbar";
 import { TablePagination } from "@/components/data/TablePagination";
 import { StatusBadge } from "@/components/data/StatusBadge";
@@ -125,15 +126,11 @@ function Tasks() {
                 </TableHeader>
                 <TableBody>
                     {needsOrganization ? (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">Nejdřív vyberte organizaci v postranním panelu.</TableCell>
-                        </TableRow>
+                        <TableEmptyRow columnCount={columnCount} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
                     ) : loading ? <LoadingRows columnCount={columnCount} /> : count === 0 ? (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">
-                                {search ? "Žádný úkon neodpovídá hledání." : "Katalog zatím neobsahuje žádné úkony."}
-                            </TableCell>
-                        </TableRow>
+                        search
+                            ? <TableEmptyRow columnCount={columnCount} title="Žádný úkon neodpovídá hledání" description="Zkuste jiný název." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                            : <TableEmptyRow columnCount={columnCount} title="Katalog je prázdný" description="Úkony jsou služby, které pečovatelé zapisují a které se klientům účtují." action={canEdit && <Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nový úkon</Button>} />
                     ) : pageItems.map((task) => (
                         <TableRow
                             key={task.id}
