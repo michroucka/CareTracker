@@ -5,6 +5,7 @@ import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
@@ -84,6 +85,9 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
      * SUPERADMIN must supply an explicit organizationId; other roles use their own organization.
      */
     private Task saveTask(Task task, TaskRequestDTO dto) {
+        if (dto.getUnitPrice() == null || dto.getUnitPrice() <= 0) {
+            throw new ValidationException("Cena úkonu musí být větší než 0");
+        }
         User user = getCurrentUser();
 
         Organization organization;
@@ -94,7 +98,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
                 organization = organizationRepository.findById(dto.getOrganizationId())
                         .orElseThrow(() -> new ResourceNotFoundException("Organizace nebyla nalezena"));
             } else {
-                throw new cz.zcu.kiv.caretracker.exception.ValidationException("Pro vytvoření úkonu musí SUPERADMIN zvolit organizaci");
+                throw new ValidationException("Pro vytvoření úkonu musí SUPERADMIN zvolit organizaci");
             }
         } else {
             Employee employee = user.getEmployee();
