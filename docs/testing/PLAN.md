@@ -134,10 +134,10 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [x] Nálezy, opraveno:
   - Střední: záznam přesně o půlnoci 1. dne měsíce se počítal do dvou měsíců (seznam, stvrzenky, QR platba – dvojí vyúčtování). `hasDateInMonth` dávalo horní mez `23:59:59.999999999`, PostgreSQL ji zaokrouhlí na půlnoc dalšího měsíce. Teď polouzavřený interval.
   - Nízká: nástěnka „moje práce“ počítala úkon o půlnoci dalšího dne do dneška a o půlnoci dalšího měsíce do minut za měsíc (`DateBetween` zahrnuje horní mez).
-- [ ] **[ty]** Nálezy k rozhodnutí (testy jsou `@Disabled("Nález: ...")`):
-  - Obrázky s paletou (každý GIF, PNG-8) ztratí barvy: Thumbnailator použije výchozí paletu místo vlastní, 1-4bitové vyjdou černobíle. Oprava: `.imageType(BufferedImage.TYPE_INT_ARGB)` v `PictureService.readUpright`.
-  - `calculatePrice` násobí v `double`: 0,29 kg × 50 Kč = 14,4999… → 14 Kč místo 15. Oprava: `BigDecimal` (pozor, agregace pro nástěnku v SQL musí zaokrouhlovat stejně – T2d).
-  - Variabilní symbol má nejvýš 10 číslic, ale u čísla klienta od 1 000 000 výš vyjde 11 (`RRMM` + číslo). Čísla klientů bez rodného čísla se generují z ID.
+- [x] Nálezy, opraveno na žádost 2026-11-09:
+  - Obrázky s paletou (každý GIF, PNG-8) ztrácely barvy: Thumbnailator použil výchozí paletu místo vlastní, 1-4bitové vyšly černobíle. `PictureService.readUpright` teď dekóduje do ARGB.
+  - `calculatePrice` násobil v `double`: 0,29 kg × 50 Kč = 14,4999… → 14 Kč místo 15. Teď `BigDecimal` s `HALF_UP`, stejně jako `ROUND` nad `NUMERIC` v dotazech nástěnky.
+  - Variabilní symbol (`RRMM` + osobní číslo) měl u osobního čísla od 1 000 000 výš 11 číslic. Osobní číslo je teď omezené na 1 až 999 999 (API 400, formulář). Číslo generované z ID klienta limit nekontroluje, dosáhlo by ho až milionté ID.
 
 #### T2c – Služby a byznys pravidla (integrační)
 - [ ] **[claude]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.
