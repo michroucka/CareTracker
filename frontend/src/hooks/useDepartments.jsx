@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
 import { getJSON, postJSON, putJSON } from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import { Building2, CloudAlert } from "lucide-react";
 import { sortByKey } from "../utils/sorting.js";
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 
 export function useDepartments() {
     const [departments, setDepartments] = useState([]);
@@ -45,7 +44,7 @@ export function useDepartments() {
             if (err.name === 'AbortError') return;
 
             console.error("Error fetching departments:", err);
-            showErrorToast(err, "Chyba při načítání střediska", { icon: <CloudAlert /> });
+            showErrorToast(err, "Chyba při načítání střediska");
             if (!silent) setLoading(false);
         }
     };
@@ -55,7 +54,7 @@ export function useDepartments() {
             return await getJSON(`/departments/${id}`);
         } catch (err) {
             console.error("Error fetching department:", err);
-            showErrorToast(err, "Středisko nenalezeno", { icon: <Building2 /> });
+            showErrorToast(err, "Středisko nenalezeno");
             throw err;
         }
     };
@@ -66,12 +65,12 @@ export function useDepartments() {
 
             setDepartments(prev => sortByKey([...prev, created], 'city', 'ascending'));
 
-            showToast({ title: "Středisko úspěšně vytvořeno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně vytvořeno");
 
             return created;
         } catch (err) {
             console.error("Error creating department:", err);
-            showErrorToast(err, "Chyba při vytváření střediska", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při vytváření střediska");
             throw err;
         }
     };
@@ -82,12 +81,12 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně aktualizováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně aktualizováno");
 
             return updated;
         } catch (err) {
             console.error("Error updating department:", err);
-            showErrorToast(err, "Chyba při aktualizaci střediska", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při aktualizaci střediska");
             throw err;
         }
     };
@@ -98,12 +97,12 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně deaktivováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně deaktivováno");
 
             return updated;
         } catch (err) {
             console.error("Error terminating department:", err);
-            showErrorToast(err, "Chyba při deaktivaci střediska", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při deaktivaci střediska");
             throw err;
         }
     };
@@ -114,12 +113,12 @@ export function useDepartments() {
 
             fetchDepartments(filtersRef.current, { silent: true });
 
-            showToast({ title: "Středisko úspěšně aktivováno", color: "success", icon: <Building2 /> });
+            toast.success("Středisko úspěšně aktivováno");
 
             return updated;
         } catch (err) {
             console.error("Error activating department:", err);
-            showErrorToast(err, "Chyba při aktivaci střediska", { icon: <Building2 /> });
+            showErrorToast(err, "Chyba při aktivaci střediska");
             throw err;
         }
     };

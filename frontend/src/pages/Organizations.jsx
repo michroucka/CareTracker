@@ -1,76 +1,33 @@
 import React from "react";
-import {
-    Button,
-    Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
-    Spinner,
-    Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
-} from "@heroui/react";
-import {
-    Ban,
-    Building2, Check,
-    ChevronDown,
-    Eye,
-    Funnel,
-    MoreVertical,
-    Plus,
-    Search,
-    UserRound,
-    UserRoundCheck,
-    UserRoundX
-} from "lucide-react";
-import { useIsMobile } from "../hooks/useMediaQuery.js";
-import { activeOptions } from '../constants/globalConstants.js';
-import { useAuth } from "../contexts/AuthContext.tsx";
-import { removeDiacritics } from "../utils/formatters.js";
-import { sortByKey } from "../utils/sorting.js";
-import { FiltersModal } from "../components/modals/FiltersModal.jsx";
-import { useSearchParams } from "react-router-dom";
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
+import { useOrganizations } from "../hooks/useOrganizations.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
-import { DepartmentCreateModal } from "../components/modals/department/DepartmentCreateModal.jsx";
-import { DepartmentDetailModal } from "../components/modals/department/DepartmentDetailModal.jsx";
-import { DepartmentTerminateModal } from "../components/modals/department/DepartmentTerminateModal.jsx";
-import {useOrganizations} from "../hooks/useOrganizations.jsx";
-import {OrganizationCreateModal} from "../components/modals/organization/OrganizationCreateModal.jsx";
-import {OrganizationDetailModal} from "../components/modals/organization/OrganizationDetailModal.jsx";
-import {OrganizationTerminateModal} from "../components/modals/organization/OrganizationTerminateModal.jsx";
-
-const columns = [
-    { name: "NÁZEV", key: "name", sortable: true },
-    { name: "VEDOUCÍ", key: "manager" },
-    { name: "AKCE", key: "actions" },
-];
+import { useDetailParam } from "../hooks/useDetailParam";
+import { useListFilters } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
+import { removeDiacritics } from "../utils/formatters.js";
+import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
+import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
+import { StatusBadge } from "@/components/data/StatusBadge";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { OrganizationCreateDialog } from "@/components/organizations/OrganizationCreateDialog";
+import { OrganizationSheet } from "@/components/organizations/OrganizationSheet";
+import { formatBankAccount } from "@/components/organizations/organizationForm";
+import { pluralize } from "@/components/dashboard/dashboardFormat";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 function Organizations() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const { user } = useAuth();
-
-    const getInitialFilterValue = () => searchParams.get("search") || "";
-    const getInitialActiveFilter = () => {
-        const status = searchParams.get("status");
-        if (status === null) return new Set(["true"]);
-        if (status === "all") return new Set(["true", "false"]);
-        return new Set([status]);
-    };
-
-    const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
-    const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [sortDescriptor, setSortDescriptor] = React.useState({ column: "name", direction: "ascending" });
-    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-    const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
-    const [selectedOrganization, setSelectedOrganization] = React.useState(null);
-    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
-    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
+    const { search, setSearch, statusFilter, setStatusFilter, apiStatus } = useListFilters();
+    const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+    const [confirmAction, setConfirmAction] = React.useState(null);
+    const [detail, setDetail] = React.useState(null);
+    const { detailId, openDetail, closeDetail } = useDetailParam();
 
     const {
         organizations,
@@ -82,273 +39,143 @@ function Organizations() {
         terminateOrganization,
         activateOrganization,
     } = useOrganizations();
-
     const { employees, fetchEmployees } = useEmployees();
 
-    const isMobile = useIsMobile();
-
-    const visibleColumns = React.useMemo(() => {
-        if (isMobile) return columns.filter(col => col.key === "name" || col.key === "actions");
-        return columns;
-    }, [isMobile]);
-
-    const filteredItems = React.useMemo(() => {
-        if (!filterValue) return [...organizations];
-        const normalized = removeDiacritics(filterValue);
-        return organizations.filter(o => removeDiacritics(o.name).includes(normalized));
-    }, [organizations, filterValue]);
-
-    const sortedItems = React.useMemo(() => {
-        return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
-    }, [sortDescriptor, filteredItems]);
-
-    const onSearchChange = React.useCallback((value) => setFilterValue(value || ""), []);
-    const onClear = React.useCallback(() => setFilterValue(""), []);
-
+    React.useEffect(() => {
+        fetchOrganizations({ status: apiStatus });
+        // refetch only when the status filter changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apiStatus]);
 
     React.useEffect(() => {
-        if (!user) return;
-        const params = new URLSearchParams();
-        if (filterValue) params.set("search", filterValue);
-        if (activeFilter.size === 2) params.set("status", "all");
-        else if (activeFilter.has("true")) params.set("status", "true");
-        else if (activeFilter.has("false")) params.set("status", "false");
-        setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, user]);
-
-    React.useEffect(() => {
-        fetchOrganizations({ status: getStatusFromFilter(activeFilter) });
-    }, [activeFilter]);
-
-    function getStatusFromFilter(filter) {
-        if (filter.size === 0 || filter.size === 2) return undefined;
-        return filter.has("true");
-    }
-
-    async function handleSelectOrganization(id) {
-        const data = await fetchOrganization(id);
-        fetchEmployees({ orgId: id });
-        setSelectedOrganization(data);
-    }
-
-    const handleOpenDetailModal = async (id) => {
-        setIsLoadingDetail(true);
-        setIsDetailModalOpen(true);
-        try {
-            await handleSelectOrganization(id);
-        } catch {
-            setIsDetailModalOpen(false);
+        if (!detailId) {
+            setDetail(null);
+            return;
         }
-        setIsLoadingDetail(false);
+        setDetail(null);
+        fetchOrganization(detailId).then(setDetail).catch(closeDetail);
+        fetchEmployees({ organizationId: detailId, status: true });
+        // load whenever another organization is opened
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [detailId]);
+
+    const visibleOrganizations = React.useMemo(() => {
+        const query = removeDiacritics(search.trim());
+        return [...organizations]
+            .filter((organization) => !query || removeDiacritics(organization.name).includes(query))
+            .sort((a, b) => a.name.localeCompare(b.name, "cs"));
+    }, [organizations, search]);
+
+    const askTerminate = (organization) => setConfirmAction({ type: "terminate", organization });
+    const askActivate = (organization) => setConfirmAction({ type: "activate", organization });
+
+    const runConfirmedAction = async () => {
+        const { type, organization } = confirmAction;
+        if (type === "terminate") await terminateOrganization(organization.id);
+        else await activateOrganization(organization.id);
+        if (detail?.id === organization.id) setDetail(await fetchOrganization(organization.id));
     };
 
-    const handleCloseDetailModal = () => {
-        setSelectedOrganization(null);
-        setIsDetailModalOpen(false);
+    const saveOrganization = async (id, request) => {
+        const updated = await updateOrganization(id, request);
+        setDetail(updated);
     };
 
-    const handleOpenTerminateModal = async (id) => {
-        setIsTerminateModalOpen(true);
-        try {
-            await handleSelectOrganization(id);
-        } catch {
-            setIsTerminateModalOpen(false);
-        }
-    };
-
-    const handleCloseTerminateModal = () => {
-        setSelectedOrganization(null);
-        setIsTerminateModalOpen(false);
-    };
-
-    const handleCreate = async (data) => {
-        await createOrganization(data);
-        setIsCreateModalOpen(false);
-    };
-
-    const topContent = React.useMemo(() => (
-        <div className="flex flex-col gap-4">
-            <div className="flex justify-between gap-3 items-end">
-                <Input
-                    isClearable
-                    className="w-full lg:max-w-[44%]"
-                    placeholder="Hledat podle názvu..."
-                    startContent={<Search className="size-5" />}
-                    value={filterValue}
-                    onClear={onClear}
-                    onValueChange={onSearchChange}
-                />
-                <div className="flex gap-3">
-                    <Button isIconOnly variant="flat" className="lg:hidden" onPress={() => setIsFiltersModalOpen(true)}>
-                        <Funnel className="size-4" />
-                    </Button>
-                    <Dropdown>
-                        <DropdownTrigger className="hidden lg:flex">
-                            <Button
-                                endContent={<ChevronDown className="size-4" />}
-                                variant="flat"
-                                className="text-foreground"
-                            >
-                                Status
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu
-                            disallowEmptySelection
-                            aria-label="Active Filter"
-                            closeOnSelect={false}
-                            selectedKeys={activeFilter}
-                            selectionMode="multiple"
-                            onSelectionChange={setActiveFilter}
-                            className="max-h-60 overflow-y-auto"
-                        >
-                            {activeOptions.map((active) => (
-                                <DropdownItem key={active.key}>{active.name}</DropdownItem>
-                            ))}
-                        </DropdownMenu>
-                    </Dropdown>
-                    <Button color="primary" endContent={<Plus className="size-4" />} onPress={() => setIsCreateModalOpen(true)}>
-                        Přidat
-                    </Button>
-                </div>
-            </div>
-            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "organizace" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "organizace" : "organizací"}</span>
-        </div>
-    ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear]);
-
-    const renderCell = React.useCallback((organization, columnKey) => {
-        const cellValue = organization[columnKey];
-
-        switch (columnKey) {
-            case "name":
-                return <p className="font-bold text-small">{cellValue}</p>;
-            case "manager":
-                return <p className="text-small">{cellValue?.fullName || "-"}</p>;
-            case "actions":
-                return (
-                    <div className="relative flex justify-end items-center gap-2">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider>
-                                    <DropdownItem
-                                        key="view"
-                                        startContent={<Building2 />}
-                                        variant="light"
-                                        isLoading={isLoadingDetail}
-                                        onPress={() => handleOpenDetailModal(organization.id)}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
-                                <DropdownSection>
-                                    {organization.active ? (
-                                        <DropdownItem
-                                            key="terminate"
-                                            startContent={<Ban />}
-                                            variant="light"
-                                            color="danger"
-                                            onPress={() => handleOpenTerminateModal(organization.id)}
-                                        >
-                                            Deaktivovat
-                                        </DropdownItem>
-                                    ) : (
-                                        <DropdownItem
-                                            key="activate"
-                                            startContent={<Check />}
-                                            variant="light"
-                                            color="success"
-                                            onPress={() => activateOrganization(organization.id)}
-                                        >
-                                            Aktivovat
-                                        </DropdownItem>
-                                    )}
-                                </DropdownSection>
-                            </DropdownMenu>
-                        </Dropdown>
-                    </div>
-                );
-            default:
-                return cellValue ?? "-";
-        }
-    }, [isLoadingDetail]);
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleOrganizations);
+    const count = visibleOrganizations.length;
 
     return (
-        <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Organizations table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-                classNames={{ table: "clickable-rows" }}
-                onRowAction={(key) => handleOpenDetailModal(key)}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ?
-                                "end" : "start"}
-                            allowsSorting={column.sortable}
-                        >
-                            {column.name}
-                        </TableColumn>
-                    )}
+        <div className="grid gap-6">
+            <PageHeader
+                title="Organizace"
+                description="Poskytovatelé péče, kteří CareTracker používají."
+                actions={<Button onClick={() => setIsCreateOpen(true)}><IconPlus /> Nová organizace</Button>}
+            />
+
+            <ListToolbar
+                search={search}
+                onSearchChange={withPageReset(setSearch)}
+                searchPlaceholder="Hledat podle názvu…"
+                statusFilter={statusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
+                isLoading={loading}
+                countLabel={`${count} ${pluralize(count, ["organizace", "organizace", "organizací"])}`}
+            />
+
+            <Table ref={tableRef}>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Název</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Vedoucí</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Bankovní účet</TableHead>
+                        <TableHead>Stav</TableHead>
+                        <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
+                    </TableRow>
                 </TableHeader>
-                <TableBody
-                    isLoading={loading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání organizace..." />}
-                    emptyContent="Žádná organizace nenalezena"
-                    items={sortedItems}
-                >
-                    {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""} onClick={() => handleOpenDetailModal(item.id)}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                <TableBody>
+                    {loading ? <TableLoadingRows rows={4} columns={["", "@max-3xl/table:hidden", "@max-4xl/table:hidden", "", null]} /> : count === 0 ? (
+                        search
+                            ? <TableEmptyRow columnCount={5} title="Žádná organizace neodpovídá hledání" description="Zkuste jiný název." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                            : <TableEmptyRow columnCount={5} title="Zatím tu není žádná organizace" action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nová organizace</Button>} />
+                    ) : pageItems.map((organization) => (
+                        <TableRow
+                            key={organization.id}
+                            data-state={organization.id === detailId ? "selected" : undefined}
+                            onClick={() => openDetail(organization.id)}
+                            className={cn("cursor-pointer", !organization.active && "text-muted-foreground")}
+                        >
+                            <TableCell className="font-medium">{organization.name}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{organization.manager?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="tabular-nums @max-4xl/table:hidden">{formatBankAccount(organization) ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell>
+                                <StatusBadge active={organization.active} />
+                            </TableCell>
+                            <TableCell onClick={(event) => event.stopPropagation()}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button size="icon-row" variant="ghost" aria-label={`Akce pro ${organization.name}`}><IconDots /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onSelect={() => openDetail(organization.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
+                                        {organization.active ? (
+                                            <DropdownMenuItem variant="destructive" onSelect={() => askTerminate(organization)}><IconBan /> Deaktivovat</DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem onSelect={() => askActivate(organization)}><IconCircleCheck /> Aktivovat</DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
                         </TableRow>
-                    )}
+                    ))}
                 </TableBody>
             </Table>
+            {!loading && <TablePagination {...paginationProps} />}
 
-            <OrganizationCreateModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSubmit={handleCreate}
+            <OrganizationSheet
+                open={detailId != null}
+                onOpenChange={(open) => !open && closeDetail()}
+                organization={detail}
+                isLoading={detailId != null && !detail}
                 employees={employees}
-            />
-            
-            <OrganizationDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseDetailModal}
-                onSubmit={updateOrganization}
-                organization={selectedOrganization}
-                isLoading={isLoadingDetail}
-                employees={employees}
-            />
-            
-            <OrganizationTerminateModal
-                isOpen={isTerminateModalOpen}
-                onClose={handleCloseTerminateModal}
-                onSubmit={terminateOrganization}
-                organizationId={selectedOrganization?.id}
-                organizationName={selectedOrganization?.name}
+                onSave={saveOrganization}
+                onTerminate={() => askTerminate(detail)}
+                onActivate={() => askActivate(detail)}
             />
 
-            <FiltersModal
-                isOpen={isFiltersModalOpen}
-                onClose={() => setIsFiltersModalOpen(false)}
-                onSubmit={({ activeFilter: f }) => setActiveFilter(f)}
-                user={user}
-                showStatusFilter
-                initialActiveFilter={activeFilter}
-                activeOptions={activeOptions}
+            <OrganizationCreateDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} onCreate={createOrganization} />
+
+            <ConfirmDialog
+                open={confirmAction != null}
+                onOpenChange={(open) => !open && setConfirmAction(null)}
+                title={confirmAction?.type === "terminate" ? "Deaktivovat organizaci?" : "Aktivovat organizaci?"}
+                description={confirmAction?.type === "terminate"
+                    ? `Organizace ${confirmAction.organization.name} se deaktivuje a uživatelské účty jejích zaměstnanců i klientů se zablokují. Později ji můžete znovu aktivovat.`
+                    : `Organizace ${confirmAction?.organization.name} bude znovu aktivní. Uživatelské účty zůstanou zablokované, odblokujte je u jednotlivých zaměstnanců a klientů.`}
+                confirmLabel={confirmAction?.type === "terminate" ? "Deaktivovat" : "Aktivovat"}
+                destructive={confirmAction?.type === "terminate"}
+                onConfirm={runConfirmedAction}
             />
-        </>
+        </div>
     );
 }
 

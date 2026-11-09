@@ -1,825 +1,388 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React from "react";
+import { Link, useParams } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
+import { IconDots, IconHistory, IconLoader2, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import {
-    Button,
-    Card,
-    CardHeader,
-    CardBody,
-    CardFooter,
-    Divider,
-    Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
-    Form,
-    Spinner,
-    Textarea,
-    Alert
-} from "@heroui/react";
-import { ReadOnlyField } from "../components/ReadOnlyField.jsx";
-import { today, getLocalTimeZone } from "@internationalized/date";
-import { ThumbsUp, Save, Pencil, X, ChevronLeft, Plus, ChevronDown, ThumbsDown, Star, Heart, Route, Info, Bath, PersonStanding, Footprints, Utensils, House, MessagesSquare, Hand, Cross, ScrollText, UserRound, Phone, Calendar, User, Trash2 } from "lucide-react";
-import { useIndividualPlan } from "../hooks/useIndividualPlan.jsx";
 import { useClients } from "../hooks/useClients.jsx";
-import { showToast } from "../components/MyToast.jsx";
-import { BackToTopButton } from "../components/BackToTopButton.jsx";
-import { DailyRecordCreateModal } from "../components/modals/individualPlan/DailyRecordCreateModal.jsx";
-import { DailyRecordDeleteModal } from "../components/modals/individualPlan/DailyRecordDeleteModal.jsx";
-import {formatDate} from "../utils/formatters.js";
-import {benefitsOptions} from "../constants/clientConstants.js";
-import {useIsMobile} from "../hooks/useMediaQuery.js";
-import {ImageUpload} from "../components/ImageUpload.jsx";
+import { useIndividualPlan } from "../hooks/useIndividualPlan.jsx";
+import { useRecordForm } from "../hooks/useRecordForm";
+import { ROLES } from "../constants/roles.js";
+import { benefitsOptions } from "../constants/clientConstants.js";
+import { formatDate } from "../utils/formatters.js";
+import { BackToTopButton } from "@/components/BackToTopButton";
+import { DatePicker } from "@/components/DatePicker";
+import { FormField } from "@/components/FormField";
+import { PersonAvatar } from "@/components/PersonAvatar";
+import { pictureUrl } from "@/lib/pictures";
+import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { EmptyState } from "@/components/data/EmptyState";
+import { DailyRecordDialog } from "@/components/individualPlan/DailyRecordDialog";
+import { PLAN_SECTIONS, planStatus, toFormValues, toRequest, validatePlan } from "@/components/individualPlan/planForm";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { DURATION, EASE_OUT } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+
+const AnimatedPanel = motion.div;
+
+const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
+
+function DetailItem({ label, children }) {
+    return (
+        <div>
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className="font-medium break-words whitespace-pre-line">{children || <span className="font-normal text-muted-foreground">–</span>}</dd>
+        </div>
+    );
+}
+
+function ClientSummaryCard({ client }) {
+    return (
+        <Card>
+            <CardHeader><CardTitle>Klient</CardTitle></CardHeader>
+            <CardContent>
+                <dl className="grid gap-4">
+                    <DetailItem label="Datum narození">{client.dateOfBirth && <span className="tabular-nums">{formatDate(client.dateOfBirth)}</span>}</DetailItem>
+                    <DetailItem label="Službu využívá od">{client.created && <span className="tabular-nums">{formatDate(client.created)}</span>}</DetailItem>
+                    <DetailItem label="Středisko">{client.department?.city}</DetailItem>
+                    <DetailItem label="Klíčový pracovník">{client.caregiver?.fullName}</DetailItem>
+                    <DetailItem label="Adresa">{client.street}{"\n"}{client.postalCode} {client.city}</DetailItem>
+                    <DetailItem label="Kontakt na příbuzné">{client.relativesContact}</DetailItem>
+                    <DetailItem label="Příspěvek na péči">{benefitsOptions.find((option) => option.key === client.benefits)?.name}</DetailItem>
+                    <DetailItem label="Svéprávný">{client.legallyCompetent ? "Ano" : "Ne"}</DetailItem>
+                </dl>
+            </CardContent>
+        </Card>
+    );
+}
+
+function PlanSectionsView({ content }) {
+    return PLAN_SECTIONS.map((section) => (
+        <Card key={section.title}>
+            <CardHeader>
+                <CardTitle>{section.title}</CardTitle>
+                <CardDescription>{section.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-5">
+                {section.fields.map((field) => (
+                    <section key={field.name} className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                        <span className="grid size-8 place-items-center rounded-full bg-secondary text-secondary-foreground"><field.icon className="size-4" /></span>
+                        <h3 className="self-center font-sans text-sm font-semibold">{field.label}</h3>
+                        <p className={cn("col-start-2 whitespace-pre-line", !content[field.name] && "text-muted-foreground")}>{content[field.name] || "Nevyplněno"}</p>
+                    </section>
+                ))}
+            </CardContent>
+        </Card>
+    ));
+}
+
+function PlanSectionsForm({ form }) {
+    return PLAN_SECTIONS.map((section) => (
+        <Card key={section.title}>
+            <CardHeader>
+                <CardTitle>{section.title}</CardTitle>
+                <CardDescription>{section.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-5">
+                {section.fields.map(({ name, label }) => (
+                    <FormField key={name} id={`plan-${name}`} label={label}>
+                        {(controlProps) => (
+                            <Textarea {...controlProps} rows={3} disabled={form.isSubmitting} value={form.values[name]} onChange={(event) => form.setField(name, event.target.value)} />
+                        )}
+                    </FormField>
+                ))}
+            </CardContent>
+        </Card>
+    ));
+}
+
+function DailyRecordsSection({ records, canDelete, onAdd, onDelete }) {
+    const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    return (
+        <section className="grid gap-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="grid gap-1">
+                    <h2 className="text-2xl">Denní záznamy</h2>
+                    <p className="text-muted-foreground">Průběh péče den po dni, nejnovější nahoře.</p>
+                </div>
+                <Button onClick={onAdd}><IconPlus /> Přidat záznam</Button>
+            </div>
+            {sorted.length === 0 ? (
+                <Card><EmptyState compact title="Zatím žádné denní záznamy" description="Jak den proběhl a co je důležité předat dál." /></Card>
+            ) : (
+                <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {sorted.map((record) => (
+                        <li key={record.id}>
+                            <Card className="h-full gap-3">
+                                <CardHeader>
+                                    <CardTitle className="font-sans text-base tabular-nums">{formatDate(record.date)}</CardTitle>
+                                    <CardDescription>{record.createdBy?.fullName}</CardDescription>
+                                    {canDelete(record) && (
+                                        <CardAction>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon-row" aria-label={`Akce pro záznam z ${formatDate(record.date)}`}><IconDots /></Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem variant="destructive" onSelect={() => onDelete(record)}><IconTrash /> Smazat záznam</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </CardAction>
+                                    )}
+                                </CardHeader>
+                                <CardContent><p className="whitespace-pre-line">{record.content}</p></CardContent>
+                            </Card>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
+}
+
+function IndividualPlanSkeleton() {
+    return (
+        <div className="grid gap-6" role="status" aria-label="Načítání individuálního plánu">
+            <div className="flex items-center gap-4">
+                <Skeleton className="size-14 rounded-full" />
+                <div className="grid gap-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div>
+            </div>
+            <div className="grid items-start gap-6 lg:grid-cols-3">
+                <div className="grid gap-6 lg:col-span-2"><Skeleton className="h-96 rounded-lg" /><Skeleton className="h-96 rounded-lg" /></div>
+                <div className="grid gap-6"><Skeleton className="h-40 rounded-lg" /><Skeleton className="h-96 rounded-lg" /></div>
+            </div>
+        </div>
+    );
+}
 
 function IndividualPlan() {
     const { clientId } = useParams();
-    const navigate = useNavigate();
     const { user } = useAuth();
-    const isMobile = useIsMobile();
+    const isAdmin = ADMIN_ROLES.includes(user.role);
+
+    const [client, setClient] = React.useState(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [selectedVersion, setSelectedVersion] = React.useState(null);
+    const [dialog, setDialog] = React.useState(null);
+    const form = useRecordForm(toFormValues(null));
 
     const { fetchClient } = useClients();
-
     const {
-        versions,
-        individualPlan,
-        currentContent,
-        loading,
-        fetchIndividualPlan,
-        fetchVersions,
-        fetchIndividualPlanByVersion,
-        createIndividualPlan,
-        updateIndividualPlan,
-        addDailyRecord,
-        removeDailyRecord,
-        reset
+        versions, individualPlan, currentContent, loading: isPlanLoading,
+        fetchIndividualPlan, fetchVersions, fetchIndividualPlanByVersion,
+        createIndividualPlan, updateIndividualPlan, addDailyRecord, removeDailyRecord, reset,
     } = useIndividualPlan();
 
-    const [client, setClient] = useState(null);
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedVersionNumber, setSelectedVersionNumber] = useState(null);
-    const [isDailyRecordModalOpen, setIsDailyRecordModalOpen] = useState(false);
-    const [isDailyRecordDeleteModalOpen, setIsDailyRecordDeleteModalOpen] = useState(false);
-    const [selectedDailyRecordId, setSelectedDailyRecordId] = useState(null);
-    const hasShownPermissionToast = React.useRef(false);
-
-    // Form state
-    const [processedDate, setProcessedDate] = useState("");
-    const [plannedUpdateDate, setPlannedUpdateDate] = useState("");
-    const [likes, setLikes] = useState("");
-    const [dislikes, setDislikes] = useState("");
-    const [strengths, setStrengths] = useState("");
-    const [aspirations, setAspirations] = useState("");
-    const [lifePath, setLifePath] = useState("");
-    const [additionalInfo, setAdditionalInfo] = useState("");
-    const [hygiene, setHygiene] = useState("");
-    const [selfCare, setSelfCare] = useState("");
-    const [mobility, setMobility] = useState("");
-    const [diet, setDiet] = useState("");
-    const [homeCare, setHomeCare] = useState("");
-    const [socialContact, setSocialContact] = useState("");
-    const [activities, setActivities] = useState("");
-    const [health, setHealth] = useState("");
-    const [exercisingRights, setExercisingRights] = useState("");
-
-    const [errors, setErrors] = useState({});
-
-    // Helper function to initialize form from content
-    const initializeFormFromContent = (content) => {
-        if (!content) return;
-
-        setProcessedDate(content.processedDate || "");
-        setPlannedUpdateDate(content.plannedUpdateDate || "");
-        setLikes(content.likes || "");
-        setDislikes(content.dislikes || "");
-        setStrengths(content.strengths || "");
-        setAspirations(content.aspirations || "");
-        setLifePath(content.lifePath || "");
-        setAdditionalInfo(content.additionalInfo || "");
-        setHygiene(content.hygiene || "");
-        setSelfCare(content.selfCare || "");
-        setMobility(content.mobility || "");
-        setDiet(content.diet || "");
-        setHomeCare(content.homeCare || "");
-        setSocialContact(content.socialContact || "");
-        setActivities(content.activities || "");
-        setHealth(content.health || "");
-        setExercisingRights(content.exercisingRights || "");
-    };
-
-    useEffect(() => {
-        async function loadData() {
+    React.useEffect(() => {
+        let isCurrent = true;
+        async function load() {
+            setIsLoading(true);
+            setIsEditing(false);
             try {
-                const clientData = await fetchClient(clientId);
+                const [clientData, plan] = await Promise.all([fetchClient(clientId), fetchIndividualPlan(clientId)]);
+                if (!isCurrent) return;
                 setClient(clientData);
-
-                const plan = await fetchIndividualPlan(clientId);
-
-                if (plan) {
-                    await fetchVersions(clientId);
-
-                    if (plan.currentContent) {
-                        setSelectedVersionNumber(plan.currentContent.versionNumber);
-                    }
-                } else {
-                    const isCaregiver = user && clientData && user.employeeId === clientData.caregiver?.id;
-                    const isAdmin = user && ["SUPERADMIN", "ADMIN"].includes(user.role);
-
-                    if (!isCaregiver && !isAdmin) {
-                        // Show the permission toast only once to avoid duplicate toasts on re-renders
-                        if (!hasShownPermissionToast.current) {
-                            hasShownPermissionToast.current = true;
-                            showToast({
-                                title: "Nemáte oprávnění",
-                                description: "Individuální plán může vytvořit pouze klíčový pracovník klienta.",
-                                color: "warning"
-                            });
-                            navigate(-1);
-                        }
-                        return;
-                    }
-
-                    // No plan yet and user is authorized — auto-enter edit mode to create the first version
-                    setIsEditMode(true);
-                    setProcessedDate(today(getLocalTimeZone()).toString());
-                    const sixMonthsLater = today(getLocalTimeZone()).add({ months: 6 });
-                    setPlannedUpdateDate(sixMonthsLater.toString());
-                }
-            } catch (error) {
-                console.error("Error loading data:", error);
+                setSelectedVersion(plan?.currentContent?.versionNumber ?? null);
+                if (plan) await fetchVersions(clientId);
+            } catch {
+                if (isCurrent) setClient(null);
+            } finally {
+                if (isCurrent) setIsLoading(false);
             }
         }
-
-        loadData();
-
-        return () => reset();
+        load();
+        return () => {
+            isCurrent = false;
+            reset();
+        };
+        // hook functions are recreated on every render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId]);
 
-    useEffect(() => {
-        initializeFormFromContent(currentContent);
-    }, [currentContent]);
+    if (isLoading) return <IndividualPlanSkeleton />;
+    if (!client) {
+        return (
+            <div className="grid justify-items-center gap-4 py-16 text-center">
+                <p className="text-muted-foreground">Klient nebyl nalezen.</p>
+                <Button variant="outline" asChild><Link to="/clients">Zpět na klienty</Link></Button>
+            </div>
+        );
+    }
 
-    const handleVersionChange = async (versionNumber) => {
-        const versionNum = parseInt(versionNumber);
-        setSelectedVersionNumber(versionNum);
-        setIsEditMode(false); // disable edit when browsing a historical version
-        await fetchIndividualPlanByVersion(clientId, versionNum);
+    const canEdit = isAdmin || user.employeeId === client.caregiver?.id;
+    const latestVersion = individualPlan?.currentContent?.versionNumber;
+    const isViewingOldVersion = selectedVersion != null && latestVersion != null && selectedVersion !== latestVersion;
+    const fullName = `${client.firstName} ${client.lastName}`;
+
+    const showVersion = async (versionNumber) => {
+        setSelectedVersion(versionNumber);
+        await fetchIndividualPlanByVersion(clientId, versionNumber);
     };
 
-    const handleEnterEditMode = () => {
-        if (individualPlan?.currentContent && selectedVersionNumber !== individualPlan.currentContent.versionNumber) {
-            setSelectedVersionNumber(individualPlan.currentContent.versionNumber);
-            initializeFormFromContent(individualPlan.currentContent);
-        } else if (currentContent) {
-            initializeFormFromContent(currentContent);
-        }
-
-        // Always set fresh dates when entering edit mode — each save creates a new version
-        setProcessedDate(today(getLocalTimeZone()).toString());
-        const sixMonthsLater = today(getLocalTimeZone()).add({ months: 6 });
-        setPlannedUpdateDate(sixMonthsLater.toString());
-
-        setIsEditMode(true);
+    const startEditing = async () => {
+        if (isViewingOldVersion) await showVersion(latestVersion);
+        form.reset(toFormValues(individualPlan?.currentContent));
+        setIsEditing(true);
     };
 
-    const handleCancelEdit = () => {
-        setIsEditMode(false);
-        setErrors({});
-
-        if (currentContent) {
-            initializeFormFromContent(currentContent);
-        } else {
-            navigate(-1);
-        }
+    const save = async (event) => {
+        event.preventDefault();
+        const saved = await form.submit(validatePlan, async (values) => {
+            const request = toRequest(values);
+            const plan = individualPlan ? await updateIndividualPlan(clientId, request) : await createIndividualPlan(clientId, request);
+            setSelectedVersion(plan.currentContent.versionNumber);
+        });
+        if (saved) setIsEditing(false);
     };
 
-    const validateForm = () => {
-        return {};
+    // record changes return the plan with its latest content, so the page switches back to the latest version
+    const changeRecords = (change) => async (...args) => {
+        await change(...args);
+        setSelectedVersion(latestVersion);
     };
 
-    const handleSubmit = async (e) => {
-        if (e && e.preventDefault) {
-            e.preventDefault();
-        }
-
-        const newErrors = validateForm();
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
-        setErrors({});
-        setIsSubmitting(true);
-
-        const formData = {
-            processedDate,
-            plannedUpdateDate,
-            likes: likes || null,
-            dislikes: dislikes || null,
-            strengths: strengths || null,
-            aspirations: aspirations || null,
-            lifePath: lifePath || null,
-            additionalInfo: additionalInfo || null,
-            hygiene: hygiene || null,
-            selfCare: selfCare || null,
-            mobility: mobility || null,
-            diet: diet || null,
-            homeCare: homeCare || null,
-            socialContact: socialContact || null,
-            activities: activities || null,
-            health: health || null,
-            exercisingRights: exercisingRights || null,
-        };
-
-        try {
-            if (individualPlan) {
-                const updated = await updateIndividualPlan(clientId, formData);
-                setSelectedVersionNumber(updated.currentContent.versionNumber);
-            } else {
-                const created = await createIndividualPlan(clientId, formData);
-                setSelectedVersionNumber(created.currentContent.versionNumber);
-            }
-            setIsEditMode(false);
-        } catch (error) {
-            console.error("Error submitting form:", error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleAddDailyRecord = async (dailyRecordData) => {
-        try {
-            await addDailyRecord(clientId, dailyRecordData);
-            setIsDailyRecordModalOpen(false);
-        } catch (error) {
-            console.error("Error adding daily record:", error);
-            throw error; // re-throw so the modal stays open on failure
-        }
-    };
-
-    const handleOpenDeleteModal = (dailyRecordId) => {
-        setSelectedDailyRecordId(dailyRecordId);
-        setIsDailyRecordDeleteModalOpen(true);
-    };
-
-    const handleDeleteDailyRecord = async (dailyRecordId) => {
-        try {
-            await removeDailyRecord(clientId, dailyRecordId);
-            setIsDailyRecordDeleteModalOpen(false);
-            setSelectedDailyRecordId(null);
-        } catch (error) {
-            console.error("Error deleting daily record:", error);
-            throw error;
-        }
-    };
-
-    const canDeleteDailyRecord = (record) => {
-        if (!user) return false;
-
-        if (["SUPERADMIN", "ADMIN"].includes(user.role)) {
-            return true;
-        }
-
-        // COORDINATOR and CAREGIVER can only delete records they created themselves
-        return record.createdBy.id === user.employeeId;
-    };
-
-    const canEdit = user && client && (
-        user.employeeId === client.caregiver?.id ||
-        ["SUPERADMIN", "ADMIN"].includes(user.role)
-    );
-
-    const isViewingOldVersion = !isSubmitting && !loading &&
-                                 selectedVersionNumber !== null &&
-                                 individualPlan?.currentContent &&
-                                 selectedVersionNumber !== individualPlan.currentContent.versionNumber;
+    const canDeleteRecord = (record) => isAdmin || record.createdBy?.id === user.employeeId;
+    const closeDialog = (open) => !open && setDialog(null);
+    const status = currentContent?.plannedUpdateDate && !isViewingOldVersion ? planStatus(currentContent.plannedUpdateDate) : null;
 
     return (
-        <div className="container mx-auto">
-            {/* Header */}
-            <div className="flex items-center align-middle justify-between pb-3">
-                <Button
-                    variant="flat"
-                    startContent={<ChevronLeft size={18} />}
-                    onPress={() => navigate(-1)}
+        <div className="grid gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                <div className="flex min-w-0 items-center gap-4">
+                    <PersonAvatar name={`${client.firstName} ${client.lastName}`} src={pictureUrl("clients", client.id, client.pictureId, "full")} className="size-14 font-display text-xl" />
+                    <div className="grid min-w-0 gap-1">
+                        <h1 className="text-3xl">{isEditing ? (individualPlan ? "Nová verze plánu" : "Nový individuální plán") : "Individuální plán"}</h1>
+                        <p className="flex flex-wrap items-center gap-x-2 text-muted-foreground">
+                            <Link to={`/clients/${client.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">{fullName}</Link>
+                            {currentContent && !isEditing && <span className="tabular-nums">· verze {currentContent.versionNumber} ze dne {formatDate(currentContent.processedDate)}</span>}
+                        </p>
+                    </div>
+                </div>
+                {!isEditing && individualPlan && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        {versions.length > 1 && (
+                            <Select value={selectedVersion ? String(selectedVersion) : ""} onValueChange={(version) => showVersion(Number(version))}>
+                                <SelectTrigger className="w-auto min-w-44" aria-label="Verze plánu">
+                                    <IconHistory className="text-muted-foreground" /><SelectValue />
+                                </SelectTrigger>
+                                <SelectContent align="end">
+                                    {versions.map((version) => (
+                                        <SelectItem key={version.versionNumber} value={String(version.versionNumber)}>
+                                            Verze {version.versionNumber} · {formatDate(version.processedDate)}{version.versionNumber === latestVersion && " (aktuální)"}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {canEdit && <Button onClick={startEditing}><IconPlus /> Nová verze</Button>}
+                    </div>
+                )}
+            </div>
+
+            {isViewingOldVersion && !isEditing && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-soft bg-warning-soft px-4 py-3 text-warning-soft-foreground">
+                    <p>Prohlížíte starší verzi {selectedVersion}. Platí verze {latestVersion}.</p>
+                    <Button size="sm" variant="outline" onClick={() => showVersion(latestVersion)}>Zobrazit aktuální verzi</Button>
+                </div>
+            )}
+
+            <AnimatePresence mode="wait" initial={false}>
+                <AnimatedPanel
+                    key={isEditing ? "edit" : "view"}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: DURATION.base, ease: EASE_OUT }}
                 >
-                    Zpět
-                </Button>
-
-                {!isMobile && (
-                    <h1 className="text-center">Individuální plán</h1>
-                )}
-
-                {versions.length > 0 && !isEditMode ? (
-                    <Dropdown>
-                        <DropdownTrigger>
-                            <Button
-                                endContent={<ChevronDown className="size-4" />}
-                                variant="flat"
-                            >
-                                {selectedVersionNumber
-                                    ? `Verze ${selectedVersionNumber}${
-                                        selectedVersionNumber === individualPlan?.currentContent?.versionNumber
-                                            ? ' (Aktuální)'
-                                            : ''
-                                      }`
-                                    : 'Vyberte verzi'
-                                }
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu
-                            disallowEmptySelection
-                            aria-label="Výběr verze individuálního plánu"
-                            selectedKeys={selectedVersionNumber ? [selectedVersionNumber.toString()] : []}
-                            selectionMode="single"
-                            onSelectionChange={(keys) => {
-                                const versionNum = Array.from(keys)[0];
-                                handleVersionChange(versionNum);
-                            }}
-                        >
-                            {versions.map((v) => (
-                                <DropdownItem key={v.versionNumber.toString()}>
-                                    Verze {v.versionNumber} - {new Date(v.processedDate).toLocaleDateString('cs-CZ')}
-                                    {v.versionNumber === individualPlan?.currentContent?.versionNumber && " (Aktuální)"}
-                                </DropdownItem>
-                            ))}
-                        </DropdownMenu>
-                    </Dropdown>
-                ) : (
-                    <div />
-                )}
-            </div>
-
-            {isMobile && (
-                <h1 className="text-center py-3">Individuální plán</h1>
-            )}
-
-            {/* Loading */}
-            {loading && !currentContent && (
-                <div className="flex justify-center items-center py-12">
-                    <Spinner size="lg" label="Načítání individuálního plánu..." />
-                </div>
-            )}
-
-            <h2 className="my-4">
-                Základní informace
-            </h2>
-
-            { client && client.pictureUrl && (
-                <ImageUpload
-                    value={client.pictureUrl}
-                    isReadOnly
-                    size={48}
-                />
-            )}
-
-            <div className="flex flex-col gap-4 w-full mb-4">
-                <div className="flex flex-row gap-2 w-full items-center mt-2">
-                    <UserRound size={20}/>
-                    <h4>Obecné informace</h4>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Jméno" value={client ? client.firstName : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Příjmení" value={client ? client.lastName : "-"} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Datum narození" value={client ? formatDate(client.dateOfBirth) : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Od kdy využívá službu" value={client ? formatDate(client.created) : "-"} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Středisko" value={client ? client.department?.city : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Klíčový pracovník" value={client?.caregiver?.fullName || "-"} />
-                </div>
-                <div className="flex flex-row gap-2 w-full items-center mt-2">
-                    <House size={20}/>
-                    <h4>Adresa bydliště</h4>
-                </div>
-                <ReadOnlyField labelPlacement="outside" label="Ulice a číslo popisné" value={client ? client.street : "-"} />
-                <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Město" value={client ? client.city : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="PSČ" value={client ? client.postalCode : "-"} />
-                </div>
-                <div className="flex flex-row gap-2 w-full items-center mt-2">
-                    <Phone size={20}/>
-                    <h4>Kontakt na příbuzné</h4>
-                </div>
-                <ReadOnlyField labelPlacement="outside" value={client && client.relativesContact ? client.relativesContact : "-"} multiline={true} />
-                <div className="flex flex-row gap-2 w-full items-center mt-2">
-                    <Info size={20}/>
-                    <h4>Doplňující informace</h4>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField labelPlacement="outside" label="Příspěvek na péči" value={client ? benefitsOptions.find(b => b.key === client.benefits)?.name : "-"} />
-                    <ReadOnlyField labelPlacement="outside" label="Omezení ve svéprávnosti" value={client ? client.legallyCompetent ? 'Ano' : 'Ne' : "-"} />
-                </div>
-            </div>
-
-            {/* Content */}
-            {!loading || currentContent ? (
-                <Form className="space-y-4" validationErrors={errors} onSubmit={handleSubmit}>
-                    <h2 className="mt-4">Osobní profil</h2>
-                    <div className="space-y-4 w-full">
-                        <div className="flex flex-row gap-2 w-full items-center mt-2">
-                            <ThumbsUp size={20} />
-                            <h4>Co mám rád/a, co mě baví, co je pro mě důležité</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="likes"
-                                value={likes}
-                                onValueChange={setLikes}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={likes} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center mt-2">
-                            <ThumbsDown size={20} />
-                            <h4>Co nemám rád/a, co mi vadí</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="dislikes"
-                                value={dislikes}
-                                onValueChange={setDislikes}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={dislikes} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Star size={20} />
-                            <h4>Co na mě mají lidé rádi, mé silné stránky</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="strengths"
-                                value={strengths}
-                                onValueChange={setStrengths}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={strengths} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Heart size={20} />
-                            <h4>Moje touhy, přání, sny</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="aspirations"
-                                value={aspirations}
-                                onValueChange={setAspirations}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={aspirations} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Route size={20} />
-                            <h4>Životní cesta</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="lifePath"
-                                value={lifePath}
-                                onValueChange={setLifePath}
-                                minRows={4}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={lifePath} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Info size={20} />
-                            <h4>Další důležité informace</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="additionalInfo"
-                                value={additionalInfo}
-                                onValueChange={setAdditionalInfo}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={additionalInfo} multiline={true} />
-                        )}
-                    </div>
-
-                    <h2>Popis podpory</h2>
-                    <div className="space-y-4 w-full">
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Bath size={20} />
-                            <h4>Osobní hygiena</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="hygiene"
-                                value={hygiene}
-                                onValueChange={setHygiene}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={hygiene} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <PersonStanding size={20} />
-                            <h4>Péče o vlastní osobu</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="selfCare"
-                                value={selfCare}
-                                onValueChange={setSelfCare}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={selfCare} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Footprints size={20} />
-                            <h4>Samostatný pohyb</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="mobility"
-                                value={mobility}
-                                onValueChange={setMobility}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={mobility} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Utensils size={20} />
-                            <h4>Stravování</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="diet"
-                                value={diet}
-                                onValueChange={setDiet}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={diet} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <House size={20} />
-                            <h4>Péče o domácnost nebo pokoj</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="homeCare"
-                                value={homeCare}
-                                onValueChange={setHomeCare}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={homeCare} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <MessagesSquare size={20} />
-                            <h4>Kontakt s lidmi</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="socialContact"
-                                value={socialContact}
-                                onValueChange={setSocialContact}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={socialContact} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Hand size={20} />
-                            <h4>Aktivity a činnosti</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="activities"
-                                value={activities}
-                                onValueChange={setActivities}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={activities} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <Cross size={20} />
-                            <h4>Zdraví a bezpečí</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="health"
-                                value={health}
-                                onValueChange={setHealth}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={health} multiline={true} />
-                        )}
-
-                        <div className="flex flex-row gap-2 w-full items-center">
-                            <ScrollText size={20} />
-                            <h4>Uplatňování práv</h4>
-                        </div>
-                        {isEditMode ? (
-                            <Textarea
-                                name="exercisingRights"
-                                value={exercisingRights}
-                                onValueChange={setExercisingRights}
-                                minRows={3}
-                                isDisabled={isSubmitting}
-                            />
-                        ) : (
-                            <ReadOnlyField labelPlacement="outside" value={exercisingRights} multiline={true} />
-                        )}
-                    </div>
-
-                    {!isEditMode ? (
-                        <div className="flex flex-col gap-4 w-full mb-4">
-                            <h2>Doplňující informace</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <ReadOnlyField labelPlacement="outside" label="Datum zpracování" value={formatDate(processedDate)}></ReadOnlyField>
-                                <ReadOnlyField labelPlacement="outside" label="Datum plánované aktualizace" value={formatDate(plannedUpdateDate)}></ReadOnlyField>
-                            </div>
-                        </div>
-                    ) : null}
-
-                    {isViewingOldVersion && (
-                        <div className="flex flex-col gap-4 w-full">
-                            <Alert
-                                color="warning"
-                                variant="faded"
-                                title="Prohlížíte si starší verzi individuálního plánu."
-                                endContent={
-                                    <Button
-                                        color="warning"
-                                        size="sm"
-                                        variant="light"
-                                        className="whitespace-normal text-wrap"
-                                        onPress={() => handleVersionChange(individualPlan.currentContent.versionNumber)}
-                                    >
-                                        Zobrazit aktuální verzi
-                                    </Button>
-                                }
-                                hideIconWrapper
-                            />
-                        </div>
-                    )}
-
-                    {isEditMode ? (
-                        <div className="flex w-full items-center pt-4 justify-between">
-                            <Button
-                                variant="bordered"
-                                startContent={<X size={16} />}
-                                onPress={handleCancelEdit}
-                                isDisabled={isSubmitting}
-                            >
-                                Zrušit
-                            </Button>
-                            <Button
-                                color="primary"
-                                startContent={<Save size={16} />}
-                                onPress={handleSubmit}
-                                isLoading={isSubmitting}
-                                isDisabled={isSubmitting}
-                            >
-                                {isSubmitting
-                                    ? "Ukládání..."
-                                    : individualPlan
-                                        ? "Uložit novou verzi"
-                                        : "Vytvořit plán"
-                                }
-                            </Button>
-                        </div>
-                    ) : (
-                        canEdit && !isViewingOldVersion && (
-                            <div className="flex w-full items-center pt-4 justify-center">
-                                <Button
-                                    color="primary"
-                                    startContent={individualPlan ? <Plus size={16} /> : <Pencil size={16} />}
-                                    onPress={handleEnterEditMode}
-                                >
-                                    {individualPlan ? "Vytvořit novou verzi" : "Vytvořit plán"}
+                    {isEditing ? (
+                        <form noValidate onSubmit={save} className="mx-auto grid max-w-3xl gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Platnost</CardTitle>
+                                    <CardDescription>
+                                        Uložením vznikne {individualPlan ? `verze ${latestVersion + 1}` : "první verze"} se dnešním datem zpracování ({formatDate(form.values.processedDate)}). Starší verze zůstanou v historii.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <FormField id="plan-planned-update" label="Plánovaná aktualizace" required error={form.errors.plannedUpdateDate} shakeSignal={form.submitCount} className="sm:max-w-64">
+                                        {(controlProps) => (
+                                            <DatePicker {...controlProps} minDate={form.values.processedDate} disabled={form.isSubmitting} value={form.values.plannedUpdateDate}
+                                                onChange={(date) => form.setField("plannedUpdateDate", date)} />
+                                        )}
+                                    </FormField>
+                                </CardContent>
+                            </Card>
+                            <PlanSectionsForm form={form} />
+                            <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/90 px-1 py-4 backdrop-blur">
+                                <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={form.isSubmitting}>Zrušit</Button>
+                                <Button type="submit" disabled={form.isSubmitting}>
+                                    {form.isSubmitting && <IconLoader2 className="animate-spin" />}
+                                    {form.isSubmitting ? "Ukládám…" : individualPlan ? "Uložit novou verzi" : "Vytvořit plán"}
                                 </Button>
                             </div>
-                        )
-                    )}
-                </Form>
-            ) : null}
-
-            <Divider className="mt-6" />
-
-            {individualPlan && !loading && (
-                <div className="mt-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2>Denní záznamy</h2>
-                        <Button
-                            color="primary"
-                            startContent={<Plus size={16} />}
-                            onPress={() => setIsDailyRecordModalOpen(true)}
-                        >
-                            Přidat záznam
-                        </Button>
-                    </div>
-
-                    {individualPlan.dailyRecords && individualPlan.dailyRecords.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {individualPlan.dailyRecords
-                                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                .map((record) => (
-                                    <Card key={record.id} className="w-full h-full">
-                                        <CardHeader className="flex justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={16} className="text-default-400" />
-                                                <span className="text-small font-semibold">
-                                                    {formatDate(record.date)}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <User size={16} className="text-default-400" />
-                                                <span className="text-small text-default-500">
-                                                    {record.createdBy.firstName} {record.createdBy.lastName}
-                                                </span>
-                                            </div>
-                                        </CardHeader>
-                                        <Divider />
-                                        <CardBody>
-                                            <p className="whitespace-pre-wrap">{record.content}</p>
-                                        </CardBody>
-                                        {canDeleteDailyRecord(record) && (
-                                            <>
-                                                <Divider />
-                                                <CardFooter className="justify-end p-1.5">
-                                                    <Button
-                                                        size="sm"
-                                                        color="danger"
-                                                        variant="light"
-                                                        startContent={<Trash2 size={14} />}
-                                                        onPress={() => handleOpenDeleteModal(record.id)}
-                                                    >
-                                                        Smazat
-                                                    </Button>
-                                                </CardFooter>
-                                            </>
-                                        )}
-                                    </Card>
-                                ))}
+                        </form>
+                    ) : individualPlan ? (
+                        <div className="grid gap-10">
+                            <div className="grid items-start gap-6 lg:grid-cols-3">
+                                <div className={cn("grid gap-6 transition-opacity duration-fast lg:col-span-2", isPlanLoading && "opacity-60")}>
+                                    {currentContent && <PlanSectionsView content={currentContent} />}
+                                </div>
+                                <div className="grid gap-6">
+                                    {currentContent && (
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle>Platnost</CardTitle>
+                                                {status && <CardAction><Badge variant={status.variant}>{status.label}</Badge></CardAction>}
+                                            </CardHeader>
+                                            <CardContent>
+                                                <dl className="grid gap-4">
+                                                    <DetailItem label="Zpracováno"><span className="tabular-nums">{formatDate(currentContent.processedDate)}</span></DetailItem>
+                                                    <DetailItem label="Plánovaná aktualizace"><span className="tabular-nums">{formatDate(currentContent.plannedUpdateDate)}</span></DetailItem>
+                                                </dl>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                    <ClientSummaryCard client={client} />
+                                </div>
+                            </div>
+                            <DailyRecordsSection
+                                records={individualPlan.dailyRecords ?? []}
+                                canDelete={canDeleteRecord}
+                                onAdd={() => setDialog({ type: "record" })}
+                                onDelete={(record) => setDialog({ type: "deleteRecord", record })}
+                            />
                         </div>
                     ) : (
-                        <p className="text-center text-default-400 py-8">
-                            Zatím zde nejsou žádné denní záznamy
-                        </p>
+                        <div className="grid items-start gap-6 lg:grid-cols-3">
+                            <Card className="px-6 lg:col-span-2">
+                                <EmptyState
+                                    title="Klient zatím nemá individuální plán"
+                                    description={canEdit ? "Popište, co je pro klienta důležité a s čím potřebuje pomoct. Každé uložení vytvoří novou verzi." : "Plán může vytvořit klíčový pracovník klienta nebo administrátor."}
+                                    action={canEdit && <Button onClick={startEditing}><IconPlus /> Vytvořit plán</Button>}
+                                />
+                            </Card>
+                            <ClientSummaryCard client={client} />
+                        </div>
                     )}
-                </div>
-            )}
+                </AnimatedPanel>
+            </AnimatePresence>
 
-            {/* Daily Record Create Modal */}
-            <DailyRecordCreateModal
-                isOpen={isDailyRecordModalOpen}
-                onClose={() => setIsDailyRecordModalOpen(false)}
-                onSubmit={handleAddDailyRecord}
+            <DailyRecordDialog open={dialog?.type === "record"} onOpenChange={closeDialog} onCreate={changeRecords((record) => addDailyRecord(clientId, record))} />
+            <ConfirmDialog
+                open={dialog?.type === "deleteRecord"}
+                onOpenChange={closeDialog}
+                title="Smazat denní záznam?"
+                description={dialog?.record ? `Záznam ze dne ${formatDate(dialog.record.date)} se smaže natrvalo.` : ""}
+                confirmLabel="Smazat"
+                destructive
+                onConfirm={changeRecords(() => removeDailyRecord(clientId, dialog.record.id))}
             />
-
-            {/* Daily Record Delete Modal */}
-            <DailyRecordDeleteModal
-                isOpen={isDailyRecordDeleteModalOpen}
-                onClose={() => {
-                    setIsDailyRecordDeleteModalOpen(false);
-                    setSelectedDailyRecordId(null);
-                }}
-                onSubmit={handleDeleteDailyRecord}
-                dailyRecordId={selectedDailyRecordId}
-            />
-
             <BackToTopButton />
         </div>
     );

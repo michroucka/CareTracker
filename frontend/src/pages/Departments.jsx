@@ -1,75 +1,37 @@
 import React from "react";
-import {
-    Button,
-    Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownSection,
-    DropdownTrigger,
-    Input,
-    Spinner,
-    Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
-} from "@heroui/react";
-import {
-    Ban, Building2, Check,
-    ChevronDown,
-    Eye,
-    Funnel,
-    MoreVertical,
-    Plus,
-    Search,
-    UserRound,
-    UserRoundCheck,
-    UserRoundX
-} from "lucide-react";
-import { useIsMobile } from "../hooks/useMediaQuery.js";
-import { activeOptions } from '../constants/globalConstants.js';
+import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconPlus } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { removeDiacritics } from "../utils/formatters.js";
-import { sortByKey } from "../utils/sorting.js";
-import { FiltersModal } from "../components/modals/FiltersModal.jsx";
-import { useSearchParams } from "react-router-dom";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
-import { DepartmentCreateModal } from "../components/modals/department/DepartmentCreateModal.jsx";
-import { DepartmentDetailModal } from "../components/modals/department/DepartmentDetailModal.jsx";
-import { DepartmentTerminateModal } from "../components/modals/department/DepartmentTerminateModal.jsx";
+import { useDetailParam } from "../hooks/useDetailParam";
+import { useListFilters } from "../hooks/useListFilters";
+import { usePagedList } from "../hooks/usePagedList";
+import { ROLES } from "../constants/roles.js";
+import { removeDiacritics } from "../utils/formatters.js";
+import { ConfirmDialog } from "@/components/data/ConfirmDialog";
+import { TableEmptyRow } from "@/components/data/EmptyState";
+import { TableLoadingRows } from "@/components/data/TableLoadingRows";
+import { ListToolbar } from "@/components/data/ListToolbar";
+import { TablePagination } from "@/components/data/TablePagination";
+import { StatusBadge } from "@/components/data/StatusBadge";
+import { DepartmentCreateDialog } from "@/components/departments/DepartmentCreateDialog";
+import { DepartmentSheet } from "@/components/departments/DepartmentSheet";
+import { pluralize } from "@/components/dashboard/dashboardFormat";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
-const columns = [
-    { name: "MĚSTO", key: "city", sortable: true },
-    { name: "ADRESA", key: "street" },
-    { name: "PSČ", key: "postalCode" },
-    { name: "ČÍSLO", key: "departmentNumber" },
-    { name: "KOORDINÁTOR", key: "coordinator" },
-    { name: "AKCE", key: "actions" },
-];
+const COLUMN_COUNT = 6;
 
 function Departments() {
-    const [searchParams, setSearchParams] = useSearchParams();
     const { user, superadminOrg } = useAuth();
-
-    const getInitialFilterValue = () => searchParams.get("search") || "";
-    const getInitialActiveFilter = () => {
-        const status = searchParams.get("status");
-        if (status === null) return new Set(["true"]);
-        if (status === "all") return new Set(["true", "false"]);
-        return new Set([status]);
-    };
-
-    const [filterValue, setFilterValue] = React.useState(getInitialFilterValue);
-    const [activeFilter, setActiveFilter] = React.useState(getInitialActiveFilter);
-    const [sortDescriptor, setSortDescriptor] = React.useState({ column: "city", direction: "ascending" });
-    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-    const [isTerminateModalOpen, setIsTerminateModalOpen] = React.useState(false);
-    const [selectedDepartment, setSelectedDepartment] = React.useState(null);
-    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
-    const [isFiltersModalOpen, setIsFiltersModalOpen] = React.useState(false);
+    const { search, setSearch, statusFilter, setStatusFilter, apiStatus } = useListFilters();
+    const { detailId, openDetail, closeDetail } = useDetailParam();
+    const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+    const [confirmAction, setConfirmAction] = React.useState(null);
+    const [detail, setDetail] = React.useState(null);
 
     const {
         departments,
@@ -82,302 +44,162 @@ function Departments() {
         terminateDepartment,
         activateDepartment,
     } = useDepartments();
-
     const { employees, fetchEmployees } = useEmployees();
 
-    const availableCoordinators = React.useMemo(() => {
-        return employees.filter(e => e.role !== "COORDINATOR");
-    }, [employees]);
-
-    const availableCoordinatorsForEdit = React.useMemo(() => {
-        const currentCoordinatorId = selectedDepartment?.coordinator?.id;
-        return employees.filter(e => e.role !== "COORDINATOR" || e.id === currentCoordinatorId);
-    }, [employees, selectedDepartment]);
-
-    const isMobile = useIsMobile();
-
-    const visibleColumns = React.useMemo(() => {
-        if (isMobile) return columns.filter(col => col.key === "city" || col.key === "actions");
-        return columns;
-    }, [isMobile]);
-
-    const filteredItems = React.useMemo(() => {
-        if (!filterValue) return [...departments];
-        const normalized = removeDiacritics(filterValue);
-        return departments.filter(d => removeDiacritics(d.city).includes(normalized));
-    }, [departments, filterValue]);
-
-    const sortedItems = React.useMemo(() => {
-        return sortByKey(filteredItems, sortDescriptor.column, sortDescriptor.direction);
-    }, [sortDescriptor, filteredItems]);
-
-    const onSearchChange = React.useCallback((value) => setFilterValue(value || ""), []);
-    const onClear = React.useCallback(() => setFilterValue(""), []);
-
+    const needsOrganization = user.role === ROLES.SUPERADMIN && !superadminOrg;
+    const organizationId = superadminOrg?.id;
 
     React.useEffect(() => {
-        if (!user) return;
-        const params = new URLSearchParams();
-        if (filterValue) params.set("search", filterValue);
-        if (activeFilter.size === 2) params.set("status", "all");
-        else if (activeFilter.has("true")) params.set("status", "true");
-        else if (activeFilter.has("false")) params.set("status", "false");
-        setSearchParams(params, { replace: true });
-    }, [filterValue, activeFilter, user]);
-
-    React.useEffect(() => {
-        if (user?.role === "SUPERADMIN" && !superadminOrg) {
+        if (needsOrganization) {
             setDepartments([]);
             return;
         }
-        const orgId = superadminOrg?.id;
-        fetchDepartments({ organizationId: orgId, status: getStatusFromFilter(activeFilter) });
-        fetchEmployees({ organizationId: orgId, status: true });
-    }, [superadminOrg, activeFilter, user]);
+        fetchDepartments({ organizationId, status: apiStatus });
+        fetchEmployees({ organizationId, status: true });
+        // refetch when the organization or the status filter changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [organizationId, apiStatus, needsOrganization]);
 
-    function getStatusFromFilter(filter) {
-        if (filter.size === 0 || filter.size === 2) return undefined;
-        return filter.has("true");
-    }
+    React.useEffect(() => {
+        setDetail(null);
+        if (!detailId) return;
+        fetchDepartment(detailId).then(setDetail).catch(closeDetail);
+        // load whenever another department is opened
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [detailId]);
 
-    async function handleSelectDepartment(id) {
-        const data = await fetchDepartment(id);
-        setSelectedDepartment(data);
-    }
+    const visibleDepartments = React.useMemo(() => {
+        const query = removeDiacritics(search.trim());
+        return [...departments]
+            .filter((department) => !query || removeDiacritics(`${department.city} ${department.street}`).includes(query))
+            .sort((a, b) => a.city.localeCompare(b.city, "cs"));
+    }, [departments, search]);
 
-    const handleOpenDetailModal = async (id) => {
-        setIsLoadingDetail(true);
-        setIsDetailModalOpen(true);
-        try {
-            await handleSelectDepartment(id);
-        } catch {
-            setIsDetailModalOpen(false);
-        }
-        setIsLoadingDetail(false);
+    const askTerminate = (department) => setConfirmAction({ type: "terminate", department });
+    const askActivate = (department) => setConfirmAction({ type: "activate", department });
+
+    const runConfirmedAction = async () => {
+        const { type, department } = confirmAction;
+        if (type === "terminate") await terminateDepartment(department.id);
+        else await activateDepartment(department.id);
+        if (detail?.id === department.id) setDetail(await fetchDepartment(department.id));
     };
 
-    const handleCloseDetailModal = () => {
-        setSelectedDepartment(null);
-        setIsDetailModalOpen(false);
+    const saveDepartment = async (id, request) => {
+        await updateDepartment(id, request);
+        setDetail(await fetchDepartment(id));
+        fetchEmployees({ organizationId, status: true }, { silent: true });
     };
 
-    const handleOpenTerminateModal = async (id) => {
-        setIsTerminateModalOpen(true);
-        try {
-            await handleSelectDepartment(id);
-        } catch {
-            setIsTerminateModalOpen(false);
-        }
+    const createAndRefresh = async (request) => {
+        await createDepartment(request);
+        fetchEmployees({ organizationId, status: true }, { silent: true });
     };
 
-    const handleCloseTerminateModal = () => {
-        setSelectedDepartment(null);
-        setIsTerminateModalOpen(false);
-    };
-
-    const handleCreate = async (data) => {
-        await createDepartment(data);
-        setIsCreateModalOpen(false);
-    };
-
-    const topContent = React.useMemo(() => (
-        <div className="flex flex-col gap-4">
-            <div className="flex justify-between gap-3 items-end">
-                <Input
-                    isClearable
-                    className="w-full lg:max-w-[44%]"
-                    placeholder="Hledat podle názvu..."
-                    startContent={<Search className="size-5" />}
-                    value={filterValue}
-                    onClear={onClear}
-                    onValueChange={onSearchChange}
-                    isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                />
-                <div className="flex gap-3">
-                    <Button isIconOnly variant="flat" className="lg:hidden" onPress={() => setIsFiltersModalOpen(true)}>
-                        <Funnel className="size-4" />
-                    </Button>
-                    <Dropdown>
-                        <DropdownTrigger className="hidden lg:flex">
-                            <Button
-                                endContent={<ChevronDown className="size-4" />}
-                                variant="flat"
-                                className="text-foreground"
-                                isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                            >
-                                Status
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu
-                            disallowEmptySelection
-                            aria-label="Active Filter"
-                            closeOnSelect={false}
-                            selectedKeys={activeFilter}
-                            selectionMode="multiple"
-                            onSelectionChange={setActiveFilter}
-                            className="max-h-60 overflow-y-auto"
-                        >
-                            {activeOptions.map((active) => (
-                                <DropdownItem key={active.key}>{active.name}</DropdownItem>
-                            ))}
-                        </DropdownMenu>
-                    </Dropdown>
-                    <Button
-                        color="primary"
-                        endContent={<Plus className="size-4" />}
-                        onPress={() => setIsCreateModalOpen(true)}
-                        isDisabled={user?.role === "SUPERADMIN" && !superadminOrg}
-                    >
-                        Přidat
-                    </Button>
-                </div>
-            </div>
-            <span className="text-small">Celkem {filteredItems.length} {filteredItems.length === 1 ? "středisko" : filteredItems.length >= 2 && filteredItems.length <= 4 ? "střediska" : "středisek"}</span>
-        </div>
-    ), [filterValue, activeFilter, filteredItems.length, onSearchChange, onClear, user, superadminOrg]);
-
-    const renderCell = React.useCallback((department, columnKey) => {
-        const cellValue = department[columnKey];
-
-        switch (columnKey) {
-            case "name":
-                return <p className="font-bold text-small">{cellValue}</p>;
-            case "coordinator":
-                return <p className="text-small">{cellValue?.fullName || "-"}</p>;
-            case "actions":
-                return (
-                    <div className="relative flex justify-end items-center gap-2">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button isIconOnly size="sm" variant="light">
-                                    <MoreVertical size={20} />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu>
-                                <DropdownSection showDivider>
-                                    <DropdownItem
-                                        key="view"
-                                        startContent={<Building2 />}
-                                        variant="light"
-                                        isLoading={isLoadingDetail}
-                                        onPress={() => handleOpenDetailModal(department.id)}
-                                    >
-                                        {isLoadingDetail ? "Načítání..." : "Detail"}
-                                    </DropdownItem>
-                                </DropdownSection>
-                                <DropdownSection>
-                                    {department.active ? (
-                                        <DropdownItem
-                                            key="terminate"
-                                            startContent={<Ban />}
-                                            variant="light"
-                                            color="danger"
-                                            onPress={() => handleOpenTerminateModal(department.id)}
-                                        >
-                                            Deaktivovat
-                                        </DropdownItem>
-                                    ) : (
-                                        <DropdownItem
-                                            key="activate"
-                                            startContent={<Check />}
-                                            variant="light"
-                                            color="success"
-                                            onPress={() => activateDepartment(department.id)}
-                                        >
-                                            Aktivovat
-                                        </DropdownItem>
-                                    )}
-                                </DropdownSection>
-                            </DropdownMenu>
-                        </Dropdown>
-                    </div>
-                );
-            default:
-                return cellValue ?? "-";
-        }
-    }, [isLoadingDetail]);
-
-    const isSuperadminWithoutOrg = user?.role === "SUPERADMIN" && !superadminOrg;
-    const shouldShowLoading = !isSuperadminWithoutOrg && loading;
+    const { pageItems, tableRef, withPageReset, paginationProps } = usePagedList(visibleDepartments, { resetKey: organizationId });
+    const count = visibleDepartments.length;
 
     return (
-        <>
-            <Table
-                isHeaderSticky
-                removeWrapper
-                                aria-label="Departments table"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSortChange={setSortDescriptor}
-                classNames={{ table: "clickable-rows" }}
-                onRowAction={(key) => handleOpenDetailModal(key)}
-            >
-                <TableHeader columns={visibleColumns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.key}
-                            align={column.key === "actions" ?
-                                "end" :
-                                column.key === "departmentNumber" ?
-                                    "center" : "start"}
-                            allowsSorting={column.sortable}
-                        >
-                            {column.name}
-                        </TableColumn>
-                    )}
+        <div className="grid gap-6">
+            <PageHeader
+                title="Střediska"
+                description={superadminOrg ? `Regionální pobočky organizace ${superadminOrg.name}.` : "Regionální pobočky organizace."}
+                actions={!needsOrganization && <Button onClick={() => setIsCreateOpen(true)}><IconPlus /> Nové středisko</Button>}
+            />
+
+            <ListToolbar
+                search={search}
+                onSearchChange={withPageReset(setSearch)}
+                searchPlaceholder="Hledat podle města nebo ulice…"
+                statusFilter={statusFilter}
+                onStatusFilterChange={withPageReset(setStatusFilter)}
+                isLoading={loading && !needsOrganization}
+                countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["středisko", "střediska", "středisek"])}`}
+            />
+
+            <Table ref={tableRef}>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Město</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Adresa</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Číslo</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Koordinátor</TableHead>
+                        <TableHead>Stav</TableHead>
+                        <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
+                    </TableRow>
                 </TableHeader>
-                <TableBody
-                    isLoading={shouldShowLoading}
-                    loadingContent={<Spinner className="mt-72" label="Načítání středisek..." />}
-                    emptyContent={isSuperadminWithoutOrg ? "Vyberte prosím organizaci v navigační liště" : "Žádná střediska nenalezena"}
-                    items={sortedItems}
-                >
-                    {(item) => (
-                        <TableRow key={item.id} className={!item.active ? "opacity-50" : ""} onClick={() => handleOpenDetailModal(item.id)}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                <TableBody>
+                    {needsOrganization ? (
+                        <TableEmptyRow columnCount={COLUMN_COUNT} title="Vyberte organizaci" description="Organizaci přepnete v postranním panelu." />
+                    ) : loading ? <TableLoadingRows rows={4} columns={["", "@max-3xl/table:hidden", "@max-4xl/table:hidden", "@max-3xl/table:hidden", "", null]} /> : count === 0 ? (
+                        (search
+                        ? <TableEmptyRow columnCount={COLUMN_COUNT} title="Žádné středisko neodpovídá hledání" description="Zkuste jiný název nebo město." action={<Button variant="outline" size="sm" onClick={() => setSearch("")}>Zrušit hledání</Button>} />
+                        : <TableEmptyRow columnCount={COLUMN_COUNT} title="Zatím tu není žádné středisko" description="Střediska jsou pobočky organizace, ke kterým patří klienti a zaměstnanci." action={<Button size="sm" onClick={() => setIsCreateOpen(true)}><IconPlus /> Nové středisko</Button>} />)
+                    ) : pageItems.map((department) => (
+                        <TableRow
+                            key={department.id}
+                            data-state={department.id === detailId ? "selected" : undefined}
+                            onClick={() => openDetail(department.id)}
+                            className={cn("cursor-pointer", !department.active && "text-muted-foreground")}
+                        >
+                            <TableCell className="font-medium">{department.city}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{department.street}{department.postalCode && <span className="text-muted-foreground">, {department.postalCode}</span>}</TableCell>
+                            <TableCell className="tabular-nums @max-4xl/table:hidden">{department.departmentNumber ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{department.coordinator?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell><StatusBadge active={department.active} /></TableCell>
+                            <TableCell onClick={(event) => event.stopPropagation()}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button size="icon-row" variant="ghost" aria-label={`Akce pro středisko ${department.city}`}><IconDots /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onSelect={() => openDetail(department.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
+                                        {department.active ? (
+                                            <DropdownMenuItem variant="destructive" onSelect={() => askTerminate(department)}><IconBan /> Deaktivovat</DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem onSelect={() => askActivate(department)}><IconCircleCheck /> Aktivovat</DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
                         </TableRow>
-                    )}
+                    ))}
                 </TableBody>
             </Table>
+            {!needsOrganization && !loading && <TablePagination {...paginationProps} />}
 
-            <DepartmentCreateModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSubmit={handleCreate}
-                employees={availableCoordinators}
-                organizationId={superadminOrg?.id}
+            <DepartmentSheet
+                open={detailId != null}
+                onOpenChange={(open) => !open && closeDetail()}
+                department={detail}
+                isLoading={detailId != null && !detail}
+                employees={employees}
+                organizationId={organizationId}
+                onSave={saveDepartment}
+                onTerminate={() => askTerminate(detail)}
+                onActivate={() => askActivate(detail)}
             />
 
-            <DepartmentDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseDetailModal}
-                onSubmit={updateDepartment}
-                department={selectedDepartment}
-                isLoading={isLoadingDetail}
-                employees={availableCoordinatorsForEdit}
-                organizationId={superadminOrg?.id}
+            <DepartmentCreateDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                onCreate={createAndRefresh}
+                employees={employees}
+                organizationId={organizationId}
             />
 
-            <DepartmentTerminateModal
-                isOpen={isTerminateModalOpen}
-                onClose={handleCloseTerminateModal}
-                onSubmit={terminateDepartment}
-                departmentId={selectedDepartment?.id}
-                departmentName={selectedDepartment?.city}
+            <ConfirmDialog
+                open={confirmAction != null}
+                onOpenChange={(open) => !open && setConfirmAction(null)}
+                title={confirmAction?.type === "terminate" ? "Deaktivovat středisko?" : "Aktivovat středisko?"}
+                description={confirmAction?.type === "terminate"
+                    ? `Středisko ${confirmAction.department.city} jde deaktivovat, jen když nemá žádné aktivní klienty ani zaměstnance. Později ho můžete znovu aktivovat.`
+                    : `Středisko ${confirmAction?.department.city} bude znovu aktivní.`}
+                confirmLabel={confirmAction?.type === "terminate" ? "Deaktivovat" : "Aktivovat"}
+                destructive={confirmAction?.type === "terminate"}
+                onConfirm={runConfirmedAction}
             />
-
-            <FiltersModal
-                isOpen={isFiltersModalOpen}
-                onClose={() => setIsFiltersModalOpen(false)}
-                onSubmit={({ activeFilter: f }) => setActiveFilter(f)}
-                user={user}
-                superadminOrgSelected={!!superadminOrg}
-                showStatusFilter
-                initialActiveFilter={activeFilter}
-                activeOptions={activeOptions}
-            />
-        </>
+        </div>
     );
 }
 

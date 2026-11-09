@@ -1,8 +1,15 @@
-.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend demo-up demo-down demo-build demo-reset demo-logs
+.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend demo-up demo-down demo-build demo-reset demo-logs seed-activity clear-activity demo-seed-activity
 
-# Start všech služeb
+# Start všech služeb + doplnění demo aktivity (provedené úkony až do teď)
 up:
 	docker-compose up -d
+	@echo "Čekám na backend, pak doplním demo aktivitu…"
+	@if for i in $$(seq 1 90); do curl -sf -o /dev/null http://localhost:8080/api/auth-status && break; sleep 2; done \
+		&& curl -sf -o /dev/null http://localhost:8080/api/auth-status; then \
+		$(MAKE) --no-print-directory seed-activity; \
+	else \
+		echo "Backend nenaběhl, demo aktivitu doplníš později přes: make seed-activity"; \
+	fi
 
 # Stop všech služeb
 down:
@@ -33,7 +40,8 @@ rebuild:
 # Vyčistit volumes a rebuild
 clean:
 	docker-compose down -v
-	docker-compose up --build -d
+	docker-compose build
+	@$(MAKE) --no-print-directory up
 
 # Zobrazit logy
 logs:
@@ -69,3 +77,15 @@ demo-reset:
 
 demo-logs:
 	docker compose -f docker-compose.demo.yml logs -f $(service)
+
+# Demo aktivita: doplní realistické provedené úkony za posledních 12 měsíců až do teď.
+# Bezpečné spouštět opakovaně (např. jednou měsíčně), doplní jen to, co od minula chybí.
+seed-activity:
+	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/seed.sql
+
+# Smaže všechny úkony vygenerované přes seed-activity
+clear-activity:
+	@docker-compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/clear.sql
+
+demo-seed-activity:
+	@docker compose -f docker-compose.demo.yml exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < backend/scripts/demo-activity/seed.sql

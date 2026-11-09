@@ -50,7 +50,17 @@ public class Employee {
     @JsonIgnore
     private User user;
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "picture_id")
+    @JsonIgnore
+    private Picture picture;
+
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    /** Id of the picture without loading its data (the lazy proxy knows its id); used as a cache version. */
+    public Long getPictureId() {
+        return picture != null ? picture.getId() : null;
     }
 }

@@ -1,51 +1,49 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@heroui/react";
-import { ChevronUp } from "lucide-react";
+import React from "react";
+import { createPortal } from "react-dom";
+import { IconArrowUp } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+/** The app shell content scrolls on its own on desktop, the window on mobile. */
+function findScrollRoot(element) {
+    return element?.closest("[data-scroll-root]") ?? null;
+}
 
 /**
- * Floating back to top button that appears after scrolling
- * @param {number} scrollThreshold - Scroll position (px) to show button (default: 300)
- * @param {string} position - CSS classes for position (default: "bottom-20 right-10")
- * @param {string} color - Button color (default: "default")
- * @param {string} variant - Button variant (default: "flat")
+ * Floating "back to top" button for long pages; appears after scrolling past `threshold` px.
+ * Rendered in a portal because the page transition wrapper uses transforms, which break `position: fixed`.
  */
-export function BackToTopButton({
-    scrollThreshold = 300,
-    position = "bottom-20 right-10",
-    color = "default",
-    variant = "flat"
-}) {
-    const [showButton, setShowButton] = useState(false);
+export function BackToTopButton({ threshold = 600 }) {
+    const anchorRef = React.useRef(null);
+    const [isVisible, setIsVisible] = React.useState(false);
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setShowButton(window.scrollY > scrollThreshold);
+    React.useEffect(() => {
+        const root = findScrollRoot(anchorRef.current);
+        const update = () => setIsVisible(Math.max(root?.scrollTop ?? 0, window.scrollY) > threshold);
+        root?.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("scroll", update, { passive: true });
+        return () => {
+            root?.removeEventListener("scroll", update);
+            window.removeEventListener("scroll", update);
         };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [scrollThreshold]);
+    }, [threshold]);
 
     const scrollToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        findScrollRoot(anchorRef.current)?.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     return (
-        <div className={`fixed ${position} z-50 transition-all duration-300 ${
-            showButton
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}>
-            <Button
-                isIconOnly
-                color={color}
-                variant={variant}
-                className="shadow-lg"
-                onPress={scrollToTop}
-                aria-label="Zpět nahoru"
-            >
-                <ChevronUp size={24} />
-            </Button>
-        </div>
+        <>
+            <span ref={anchorRef} hidden />
+            {createPortal(
+                <div className={cn("fixed right-6 bottom-6 z-40 transition-[opacity,translate] duration-base ease-out", isVisible ? "opacity-100" : "pointer-events-none translate-y-3 opacity-0")}>
+                    <Button variant="outline" size="icon" className="rounded-full bg-card shadow-md dark:bg-card dark:hover:bg-accent" onClick={scrollToTop} aria-label="Zpět nahoru" tabIndex={isVisible ? 0 : -1}>
+                        <IconArrowUp />
+                    </Button>
+                </div>,
+                document.body
+            )}
+        </>
     );
 }

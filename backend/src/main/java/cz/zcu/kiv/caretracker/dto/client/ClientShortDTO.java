@@ -17,6 +17,7 @@ public class ClientShortDTO {
     private String street;
     private String city;
     private Boolean active;
+    private Long pictureId;
 
     private Boolean userAccountActive;
 

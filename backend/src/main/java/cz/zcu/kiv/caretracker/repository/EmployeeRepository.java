@@ -16,4 +16,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     List<Employee> findByActiveTrueAndDepartmentId(Long departmentId);
     boolean existsByDepartmentIdAndActiveTrue(Long departmentId);
     long countByActiveTrueAndOrganizationId(Long organizationId);
+    long countByActiveTrue();
 }

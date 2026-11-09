@@ -1,9 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import React, { useEffect, useRef } from "react";
-import {Spinner} from "@heroui/react";
-import { showToast } from "../MyToast";
-import { ShieldAlert } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import { PageLoader } from "@/components/PageLoader";
 
 /**
  * Route wrapper that only allows unauthenticated users.
@@ -33,22 +32,13 @@ const PublicOnlyRoute = ({ children, redirectTo = '/' }) => {
 
     useEffect(() => {
         if (isAuthenticated && !toastShownRef.current && initialAuthStatusRef.current === true) {
-            showToast({
-                title: "Již jste přihlášeni",
-                description: "Nemůžete přistupovat na tuto stránku, když jste už přihlášeni",
-                color: "warning",
-                icon: <ShieldAlert />,
-            });
+            toast.warning("Již jste přihlášeni", { description: "Nemůžete přistupovat na tuto stránku, když jste už přihlášeni" });
             toastShownRef.current = true;
         }
     }, [isAuthenticated]);
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-              <Spinner size="lg" variant="gradient" label="Načítání..." />
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (user) {

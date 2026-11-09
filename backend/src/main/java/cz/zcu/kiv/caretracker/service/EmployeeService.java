@@ -2,19 +2,25 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
+import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Department;
+import cz.zcu.kiv.caretracker.entity.Picture;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
+import cz.zcu.kiv.caretracker.repository.PictureRepository;
 import cz.zcu.kiv.caretracker.specification.EmployeeSpecifications;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +35,10 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     private DepartmentRepository departmentRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private PictureService pictureService;
+    @Autowired
+    private PictureRepository pictureRepository;
     @Autowired
     private EntityManager entityManager;
 
@@ -219,5 +229,78 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
                 .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         userService.resendActivationEmail(employee.getUser());
+    }
+
+    /**
+     * Returns the employee's profile picture in the requested size.
+     *
+     * @throws ResourceNotFoundException if the employee or the picture does not exist
+     * @throws SecurityException if the user does not have access to this employee
+     */
+    @Transactional
+    public byte[] getPictureContent(Long employeeId, PictureService.Size size) {
+        Picture picture = findAccessibleEmployee(employeeId).getPicture();
+        if (picture == null) {
+            throw new ResourceNotFoundException("Obrázek nenalezen");
+        }
+        return pictureService.getContent(picture, size);
+    }
+
+    /** Replaces the employee's profile picture with a resized copy of the upload. */
+    @Transactional
+    public PictureDTO setPicture(Long employeeId, MultipartFile file) throws IOException {
+        return replacePicture(findAccessibleEmployee(employeeId), file);
+    }
+
+    /** Removes the employee's profile picture. */
+    @Transactional
+    public void deletePicture(Long employeeId) {
+        removePicture(findAccessibleEmployee(employeeId));
+    }
+
+    /** Replaces the profile picture of the signed-in employee (Můj účet). */
+    @Transactional
+    public PictureDTO setOwnPicture(MultipartFile file) throws IOException {
+        return replacePicture(currentEmployee(), file);
+    }
+
+    /** Removes the profile picture of the signed-in employee. */
+    @Transactional
+    public void deleteOwnPicture() {
+        removePicture(currentEmployee());
+    }
+
+    private PictureDTO replacePicture(Employee employee, MultipartFile file) throws IOException {
+        Picture picture = pictureRepository.save(pictureService.createPicture(file));
+        // the previous picture is an orphan now and gets deleted with the employee update
+        employee.setPicture(picture);
+        return PictureDTO.of(picture);
+    }
+
+    private void removePicture(Employee employee) {
+        if (employee.getPicture() == null) {
+            throw new ResourceNotFoundException("Obrázek nenalezen");
+        }
+        employee.setPicture(null);
+    }
+
+    private Employee findAccessibleEmployee(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
+        validateDepartmentAccess(
+                employee,
+                emp -> emp.getOrganization().getId(),
+                emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
+        );
+        return employee;
+    }
+
+    private Employee currentEmployee() {
+        Employee employee = getCurrentUser().getEmployee();
+        if (employee == null) {
+            throw new ResourceNotFoundException("Účet nepatří zaměstnanci");
+        }
+        return employeeRepository.findById(employee.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
     }
 }

@@ -1,21 +1,27 @@
 package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
+import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.dto.user.UserDTO;
 import cz.zcu.kiv.caretracker.dto.user.UserRequestDTO;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.mapper.UserMapper;
+import cz.zcu.kiv.caretracker.service.EmployeeService;
 import cz.zcu.kiv.caretracker.service.MyUserDetailsService;
 import cz.zcu.kiv.caretracker.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 /**
  * REST controller for the current user's own profile management and password reset.
@@ -33,6 +39,8 @@ public class UserController {
     private UserMapper userMapper;
     @Autowired
     private MyUserDetailsService myUserDetailsService;
+    @Autowired
+    private EmployeeService employeeService;
 
     /** Returns the current user's profile. */
     @GetMapping("/me")
@@ -66,5 +74,19 @@ public class UserController {
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponseDTO> sendResetPasswordEmail() {
         return ResponseEntity.ok(userService.sendResetPasswordEmail());
+    }
+
+    /** Own profile picture of a signed-in employee (Můj účet); clients have no own picture upload. */
+    @PostMapping("/me/picture")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<PictureDTO> uploadOwnPicture(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(employeeService.setOwnPicture(file));
+    }
+
+    @DeleteMapping("/me/picture")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<Void> deleteOwnPicture() {
+        employeeService.deleteOwnPicture();
+        return ResponseEntity.noContent().build();
     }
 }

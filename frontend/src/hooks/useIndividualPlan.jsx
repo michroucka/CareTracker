@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { getJSON, postJSON, putJSON, deleteJSON } from "../api/api.js";
-import { showToast } from "../components/MyToast.jsx";
+import { toast } from "@/components/ui/sonner";
 import { showErrorToast } from "../utils/errorHandler.jsx";
-import { FileX, FileCheck, FilePlus, FileEdit, Trash2 } from "lucide-react";
 
 export function useIndividualPlan() {
     const [versions, setVersions] = useState([]);
@@ -46,7 +45,7 @@ export function useIndividualPlan() {
                 return null;
             }
             console.error("Error fetching individual plan:", error);
-            showErrorToast(error, "Chyba při načítání individuálního plánu", { icon: <FileX /> });
+            showErrorToast(error, "Chyba při načítání individuálního plánu");
             throw error;
         } finally {
             setLoading(false);
@@ -66,7 +65,7 @@ export function useIndividualPlan() {
             return response;
         } catch (error) {
             console.error("Error fetching individual plan version:", error);
-            showErrorToast(error, "Verze individuálního plánu nenalezena", { icon: <FileX /> });
+            showErrorToast(error, "Verze individuálního plánu nenalezena");
             throw error;
         } finally {
             setLoading(false);
@@ -84,14 +83,14 @@ export function useIndividualPlan() {
             const response = await postJSON(`/clients/${clientId}/individual-plan`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Individuální plán byl úspěšně vytvořen", icon: <FilePlus />, color: "success" });
+            toast.success("Individuální plán byl úspěšně vytvořen");
 
             await fetchVersions(clientId);
 
             return response;
         } catch (error) {
             console.error("Error creating individual plan:", error);
-            showErrorToast(error, "Chyba při vytváření individuálního plánu", { icon: <FileX /> });
+            showErrorToast(error, "Chyba při vytváření individuálního plánu");
             throw error;
         } finally {
             setLoading(false);
@@ -110,14 +109,14 @@ export function useIndividualPlan() {
             const response = await putJSON(`/clients/${clientId}/individual-plan`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Nová verze individuálního plánu byla úspěšně vytvořena", icon: <FileEdit />, color: "success" });
+            toast.success("Nová verze individuálního plánu byla úspěšně vytvořena");
 
             await fetchVersions(clientId);
 
             return response;
         } catch (error) {
             console.error("Error updating individual plan:", error);
-            showErrorToast(error, "Chyba při aktualizaci individuálního plánu", { icon: <FileX /> });
+            showErrorToast(error, "Chyba při aktualizaci individuálního plánu");
             throw error;
         } finally {
             setLoading(false);
@@ -135,11 +134,11 @@ export function useIndividualPlan() {
             const response = await postJSON(`/clients/${clientId}/individual-plan/daily-records`, data);
             setIndividualPlan(response);
             setCurrentContent(response?.currentContent || null);
-            showToast({ title: "Denní záznam byl úspěšně přidán", icon: <FileCheck />, color: "success" });
+            toast.success("Denní záznam byl úspěšně přidán");
             return response;
         } catch (error) {
             console.error("Error adding daily record:", error);
-            showErrorToast(error, "Chyba při přidávání denního záznamu", { icon: <FileX /> });
+            showErrorToast(error, "Chyba při přidávání denního záznamu");
             throw error;
         } finally {
             setLoading(false);
@@ -161,11 +160,11 @@ export function useIndividualPlan() {
             setIndividualPlan(updatedPlan);
             setCurrentContent(updatedPlan?.currentContent || null);
 
-            showToast({ title: "Denní záznam byl úspěšně odstraněn", icon: <Trash2 />, color: "success" });
+            toast.success("Denní záznam byl úspěšně odstraněn");
             return updatedPlan;
         } catch (error) {
             console.error("Error removing daily record:", error);
-            showErrorToast(error, "Chyba při odstraňování denního záznamu", { icon: <FileX /> });
+            showErrorToast(error, "Chyba při odstraňování denního záznamu");
             throw error;
         } finally {
             setLoading(false);

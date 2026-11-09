@@ -101,7 +101,8 @@ public class Client {
     @OnDelete(action = OnDeleteAction.RESTRICT)
     private Employee caregiver;
 
-    @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "picture_id")
     private Picture picture;
 
     @OneToOne(mappedBy = "client")
@@ -117,5 +118,10 @@ public class Client {
 
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    /** Id of the picture without loading its data (the lazy proxy knows its id); used as a cache version. */
+    public Long getPictureId() {
+        return picture != null ? picture.getId() : null;
     }
 }

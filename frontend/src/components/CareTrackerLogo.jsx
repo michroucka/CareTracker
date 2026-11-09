@@ -1,13 +1,30 @@
-import logo from "../assets/ct_icon.svg";
+import { cn } from "@/lib/utils";
 
-export function CareTrackerLogo({ className = "", size = "size-8" }) {
+const REGULAR_CUT = { cell: 96, offset: 24, gap: 16, radius: 28, circleRadius: 50 };
+const SMALL_CUT = { cell: 100, offset: 16, gap: 24, radius: 30, circleRadius: 52 };
+
+/**
+ * Brand symbol "Buňka". Use `small` at 32 px and below, the small cut keeps the gaps readable.
+ * Use `inverse` on plum or other dark brand surfaces (paper squares in both themes).
+ */
+export function CareTrackerLogo({ className = "", size = "size-8", small = false, inverse = false }) {
+    const { cell, offset, gap, radius, circleRadius } = small ? SMALL_CUT : REGULAR_CUT;
+    const secondColumn = offset + cell + gap;
+    const circleCenter = secondColumn + cell / 2;
+
     return (
-        <img
-            src={logo}
-            alt="CareTracker Logo"
-            className={`select-none me-1.5 ${size} ${className}`}
-            draggable={false}
-            onContextMenu={(e) => e.preventDefault()}
-        />
+        <svg
+            viewBox="0 0 256 256"
+            role="img"
+            aria-label="CareTracker"
+            className={cn("select-none shrink-0 me-1.5", size, className)}
+        >
+            <g className={inverse ? "fill-plum-50" : "fill-plum-700 dark:fill-plum-50"}>
+                <rect x={offset} y={offset} width={cell} height={cell} rx={radius} />
+                <rect x={offset} y={secondColumn} width={cell} height={cell} rx={radius} />
+                <rect x={secondColumn} y={secondColumn} width={cell} height={cell} rx={radius} />
+            </g>
+            <circle cx={circleCenter} cy={offset + cell / 2} r={circleRadius} className="fill-apricot-500" />
+        </svg>
     );
 }

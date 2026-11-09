@@ -10,14 +10,25 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardDTO {
+    // shown view and the views the user may switch to (staff dashboards only)
+    private DashboardView view;
+    private List<DashboardView> availableViews;
+
     // CAREGIVER only
     private Integer myClientsCount;
     private Integer totalMonthMinutes;
-    private List<Integer> tasksPerformedCountHistory;
+    private Integer todayTasksCount;
+    private Integer todayMinutes;
 
-    // CAREGIVER + COORDINATOR
+    // CAREGIVER + COORDINATOR + ADMIN
     private Integer tasksPerformedCount;
+    private List<Integer> tasksPerformedCountHistory;
     private List<ClientIPUpdateDTO> clientIPUpdates;
+    private List<ClientAttentionDTO> clientsWithoutRecentRecords;
+    private Integer clientsWithoutRecentRecordsCount;
+
+    // COORDINATOR only
+    private List<CaregiverWorkloadDTO> caregiverWorkload;
 
     // COORDINATOR + ADMIN
     private Integer clientCount;
@@ -26,8 +37,12 @@ public class DashboardDTO {
 
     // ADMIN only
     private Integer employeeCount;
+    private Integer departmentCount;
     private List<DepartmentPerformedTasksDTO> tasksPerformedByDepartment;
 
-    // all roles
+    // SUPERADMIN only
+    private PlatformOverviewDTO platform;
+
+    // all roles except SUPERADMIN
     private List<PerformedTaskSummaryDTO> recentPerformedTasks;
 }

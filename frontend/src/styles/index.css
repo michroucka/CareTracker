@@ -1,38 +1,256 @@
 @import "tailwindcss";
-@import "./table.css";
-@plugin "./hero.ts";
-@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+@import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
+/* Semantic tokens follow shadcn naming. */
+:root {
+    --background: #F7F5F9;
+    --foreground: #1E1A24;
+    --card: #FFFFFF;
+    --card-foreground: #1E1A24;
+    --popover: #FFFFFF;
+    --popover-foreground: #1E1A24;
+    --primary: #4A2B5E;
+    --primary-foreground: #FFFFFF;
+    --primary-hover: #372046;
+    --secondary: #ECE3F2;
+    --secondary-foreground: #4A2B5E;
+    --secondary-hover: #DAC7E6;
+    --muted: #F7F3F9;
+    --muted-foreground: #645C6E;
+    --accent: #EFE9F3;
+    --accent-foreground: #1E1A24;
+    --highlight: #E26A35;
+    --brand-panel: #4A2B5E;
+    --highlight-foreground: #1E1A24;
+    --destructive: #C9364F;
+    --destructive-foreground: #FFFFFF;
+    --destructive-hover: #AF3249;
+    --success: #1E8752;
+    --warning: #E6B325;
+    --success-soft: #E3F0E9;
+    --success-soft-foreground: #145835;
+    --warning-soft: #FCF6E4;
+    --warning-soft-foreground: #6D5512;
+    --danger-soft: #FAEBED;
+    --danger-soft-foreground: #892436;
+    --pending-soft: #FCEFE9;
+    --pending-soft-foreground: #A54318;
+    --border: #E2DCE8;
+    --input: #E2DCE8;
+    --ring: #E26A35;
+
+    --sidebar: #EDE8F1;
+    --sidebar-foreground: #4D4557;
+    --sidebar-primary: #4A2B5E;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #E2DAE9;
+    --sidebar-accent-foreground: #1E1A24;
+    --sidebar-active: #FFFFFF;
+    --sidebar-active-foreground: #4A2B5E;
+    --sidebar-border: #DDD5E4;
+    --sidebar-ring: #E26A35;
+}
+
+.dark {
+    --background: #17131C;
+    --foreground: #F1EDF5;
+    --card: #211B28;
+    --card-foreground: #F1EDF5;
+    --popover: #211B28;
+    --popover-foreground: #F1EDF5;
+    --primary: #C2A4D6;
+    --primary-foreground: #1E1A24;
+    --primary-hover: #DAC7E6;
+    --secondary: #3B2D4A;
+    --secondary-foreground: #F1EDF5;
+    --secondary-hover: #4A3A5C;
+    --muted: #2A2332;
+    --muted-foreground: #A79EB2;
+    --accent: #332A3D;
+    --accent-foreground: #F1EDF5;
+    --highlight: #E78255;
+    --brand-panel: #170F1D;
+    --highlight-foreground: #1E1A24;
+    --destructive: #DE8292;
+    --destructive-foreground: #1E1A24;
+    --destructive-hover: #E7A5B0;
+    --success: #6DB18F;
+    --warning: #EFCE71;
+    --success-soft: #2D3338;
+    --success-soft-foreground: #6DB18F;
+    --warning-soft: #423834;
+    --warning-soft-foreground: #EFCE71;
+    --danger-soft: #3F2B39;
+    --danger-soft-foreground: #DE8292;
+    --pending-soft: #412B2F;
+    --pending-soft-foreground: #E78255;
+    --border: #352D3E;
+    --input: #352D3E;
+    --ring: #E78255;
+
+    --sidebar: #110D15;
+    --sidebar-foreground: #C9C0D3;
+    --sidebar-primary: #C2A4D6;
+    --sidebar-primary-foreground: #1E1A24;
+    --sidebar-accent: #211B28;
+    --sidebar-accent-foreground: #F1EDF5;
+    --sidebar-active: #2A2332;
+    --sidebar-active-foreground: #F1EDF5;
+    --sidebar-border: #2A2332;
+    --sidebar-ring: #E78255;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary-hover: var(--secondary-hover);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-highlight: var(--highlight);
+    --color-brand-panel: var(--brand-panel);
+    --color-highlight-foreground: var(--highlight-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-destructive-hover: var(--destructive-hover);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-success-soft: var(--success-soft);
+    --color-success-soft-foreground: var(--success-soft-foreground);
+    --color-warning-soft: var(--warning-soft);
+    --color-warning-soft-foreground: var(--warning-soft-foreground);
+    --color-danger-soft: var(--danger-soft);
+    --color-danger-soft-foreground: var(--danger-soft-foreground);
+    --color-pending-soft: var(--pending-soft);
+    --color-pending-soft-foreground: var(--pending-soft-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-active: var(--sidebar-active);
+    --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
 @theme {
-    --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Bricolage Grotesque", "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+    --color-plum-50: #F7F3F9;
+    --color-plum-100: #ECE3F2;
+    --color-plum-200: #DAC7E6;
+    --color-plum-300: #C2A4D6;
+    --color-plum-400: #A679C3;
+    --color-plum-500: #8A4FB0;
+    --color-plum-600: #6E3F8D;
+    --color-plum-700: #4A2B5E;
+    --color-plum-800: #372046;
+    --color-plum-900: #24152E;
+
+    --color-apricot-50: #FCEFE9;
+    --color-apricot-100: #F8DBCE;
+    --color-apricot-200: #F2BDA6;
+    --color-apricot-300: #EDA07E;
+    --color-apricot-400: #E78255;
+    --color-apricot-500: #E26A35;
+    --color-apricot-600: #CD531D;
+    --color-apricot-700: #A54318;
+    --color-apricot-800: #783111;
+    --color-apricot-900: #4C1F0B;
+
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+
+    --shadow-sm: 0 1px 2px rgb(30 26 36 / 0.06);
+    --shadow-md: 0 8px 24px rgb(30 26 36 / 0.10);
+    --shadow-lg: 0 20px 50px rgb(30 26 36 / 0.18);
+
+    --ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
 }
 
-/* hides the internal bottom-right toast provider — workaround until fixed upstream */
-div[role="alertdialog"][data-placement="bottom-right"] {
-    display: none !important;
+/*
+ * Motion tokens (PLAN.md section 2.5). Keep in sync with src/lib/motion.js.
+ * --tw-duration is also read by tw-animate-css, so these work for enter/exit animations too.
+ */
+:root {
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+    --duration-slow: 300ms;
 }
 
-/* toast exiting */
-[data-toast="true"][data-toast-exiting="true"][data-placement="top-center"] {
-    transform: translateY(-150%) !important; /* slide fully out of view */
-    opacity: 0 !important;
-    transition: all 0.4s ease-in-out !important;
+@utility duration-fast {
+    --tw-duration: var(--duration-fast);
+    transition-duration: var(--duration-fast);
 }
 
-/* toast entering */
-[data-toast="true"][data-toast-entering="true"][data-placement="top-center"] {
-    transform: translateY(-150%) scale(0.9);
-    opacity: 0;
-    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+@utility duration-base {
+    --tw-duration: var(--duration-base);
+    transition-duration: var(--duration-base);
 }
 
-[data-toast="true"][data-placement="top-center"] {
-    transform: translateY(0%) scale(1);
-    opacity: 1;
-    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+@utility duration-slow {
+    --tw-duration: var(--duration-slow);
+    transition-duration: var(--duration-slow);
 }
 
+/* Fades the edges of a scroll container where more content is hidden; driven by its own scroll position */
+@property --scroll-fade-top {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --scroll-fade-bottom {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes scroll-fade {
+    0% { --scroll-fade-top: 0px; --scroll-fade-bottom: 2rem; }
+    10% { --scroll-fade-top: 2rem; }
+    90% { --scroll-fade-bottom: 2rem; }
+    100% { --scroll-fade-top: 2rem; --scroll-fade-bottom: 0px; }
+}
+
+@utility scroll-fade {
+    @supports (animation-timeline: scroll()) {
+        mask-image: linear-gradient(to bottom, transparent, #000 var(--scroll-fade-top), #000 calc(100% - var(--scroll-fade-bottom)), transparent);
+        animation: scroll-fade linear both;
+        animation-timeline: scroll(self);
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    /* sheets, dialogs and menus are portaled to <body>, so the theme colors must start here */
+    body {
+        @apply bg-background text-foreground;
+    }
+}
 
 :root {
     font-synthesis: none;
@@ -41,20 +259,22 @@ div[role="alertdialog"][data-placement="bottom-right"] {
     -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-    @apply text-4xl font-bold text-foreground leading-tight;
-}
+@layer base {
+    h1 {
+        @apply font-display text-4xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h2 {
-    @apply text-3xl font-bold text-foreground leading-tight;
-}
+    h2 {
+        @apply font-display text-3xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h3 {
-    @apply text-2xl font-semibold text-foreground leading-tight;
-}
+    h3 {
+        @apply font-display text-2xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 
-h4 {
-    @apply text-xl font-semibold text-foreground leading-tight;
+    h4 {
+        @apply font-display text-xl font-semibold tracking-tight text-balance text-foreground leading-tight;
+    }
 }
 
 .recharts-wrapper * {

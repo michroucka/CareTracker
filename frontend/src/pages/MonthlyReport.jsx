@@ -1,253 +1,178 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { IconLoader2, IconQrcode } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { usePerformedTasks } from "../hooks/usePerformedTasks.jsx";
-import { MIN_YEAR } from "../constants/globalConstants.js";
-import { unitTypeTranslations } from "../constants/performedTaskConstants.js";
-import { formatDateTime, formatNumber } from "../utils/formatters.js";
+import { useDetailParam } from "../hooks/useDetailParam";
+import { useMonthParam } from "../hooks/useListFilters";
 import { fetchImage } from "../api/api.js";
-import {
-    Button,
-    Image,
-    Modal,
-    ModalBody,
-    ModalContent,
-    Spinner,
-    Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
-} from "@heroui/react";
-import MonthYearPicker from "../components/MonthYearPicker.jsx";
-import {useIsMobile} from "../hooks/useMediaQuery.js";
-import {sortByKey} from "../utils/sorting.js";
-import {Eye, QrCode} from "lucide-react";
-import {PerformedTaskDetailModal} from "../components/modals/performedTask/PerformedTaskDetailModal.jsx";
+import { formatTime } from "../utils/formatters.js";
+import { MONTHS } from "../constants/globalConstants.js";
+import MonthYearPicker from "@/components/MonthYearPicker";
+import { formatCount, formatCurrency, pluralize } from "@/components/dashboard/dashboardFormat";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PerformedTaskSheet } from "@/components/performedTasks/PerformedTaskSheet";
+import { DayRow } from "@/components/performedTasks/DayRow";
+import { dayKey, summarizeByDay } from "@/components/performedTasks/dayGroups";
+import { formatAmount } from "@/components/performedTasks/performedTaskForm";
+import { TableEmptyRow } from "@/components/data/EmptyState";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const columns = [
-    { name: "DATUM", key: "date" },
-    { name: "ÚKON", key: "task" },
-    { name: "POČET", key: "unitCount" },
-    { name: "CENA", key: "price" },
-    { name: "DETAIL", key: "detail" },
-];
+const COLUMN_COUNT = 4;
 
-function MonthlyReport() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const { user } = useAuth();
-    const { performedTasks, loading, fetchPerformedTasks, fetchPerformedTask } = usePerformedTasks();
-
-    const [qrCodeUrl, setQrCodeUrl] = React.useState(null);
-    const [isQrModalOpen, setIsQrModalOpen] = React.useState(false);
-    const [isLoadingQr, setIsLoadingQr] = React.useState(false);
-    const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
-    const [selectedPerformedTask, setSelectedPerformedTask] = React.useState(null);
-
-    const [sortDescriptor, setSortDescriptor] = React.useState({
-        column: "date",
-        direction: "descending",
-    });
-    const isMobile = useIsMobile();
-
-    const getInitialMonthYearFilter = () => {
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
-        const monthParam = Number(searchParams.get("month"));
-        const yearParam = Number(searchParams.get("year"));
-        const month = (monthParam >= 1 && monthParam <= 12) ? monthParam - 1 : currentMonth;
-        const year = (yearParam >= MIN_YEAR && yearParam <= currentYear) ? yearParam : currentYear;
-        return { month, year };
-    };
-
-    const [monthYearFilter, setMonthYearFilter] = React.useState(getInitialMonthYearFilter);
-
-    const visibleColumns = React.useMemo(() => {
-        if (isMobile) {
-            return columns.filter(col => ["date", "task", "detail"].includes(col.key));
-        }
-        return columns;
-    }, [isMobile]);
-
-    const sortedItems = React.useMemo(() => {
-        return sortByKey(performedTasks, sortDescriptor.column, sortDescriptor.direction);
-    }, [sortDescriptor, performedTasks]);
-
-    // Synchronizovat month/year do URL
-    React.useEffect(() => {
-        const params = new URLSearchParams();
-        params.set("month", monthYearFilter.month + 1);
-        params.set("year", monthYearFilter.year);
-        setSearchParams(params, { replace: true });
-    }, [monthYearFilter]);
-
-    React.useEffect(() => {
-        if (!user?.clientId) return;
-        fetchPerformedTasks({
-            clientId: user.clientId,
-            month: monthYearFilter.month,
-            year: monthYearFilter.year,
-        });
-    }, [monthYearFilter, user]);
-
-    React.useEffect(() => {
-        setQrCodeUrl(null);
-    }, [monthYearFilter]);
-
-
-    const totalPrice = React.useMemo(() => {
-        return performedTasks.reduce((sum, task) => sum + (task.price || 0), 0);
-    }, [performedTasks]);
-
-    async function handleSelectPerformedTask(performedTaskId) {
-        try {
-            const performedTaskData = await fetchPerformedTask(performedTaskId);
-            setSelectedPerformedTask(performedTaskData);
-        } catch (error) {
-            console.error("Failed to load performed task:", error);
-            throw error;
-        }
-    }
-
-    const handleOpenDetailModal = async (taskId) => {
-        setIsLoadingDetail(true);
-        setIsDetailModalOpen(true);
-
-        try {
-            await handleSelectPerformedTask(taskId);
-        } catch {
-            setIsDetailModalOpen(false);
-        }
-
-        setIsLoadingDetail(false);
-    }
-
-    const handleOpenQrModal = async () => {
-        setIsQrModalOpen(true);
-        if (qrCodeUrl) return;
-        setIsLoadingQr(true);
-        const month = monthYearFilter.month + 1;
-        const { year } = monthYearFilter;
-        try {
-            const url = await fetchImage(`/performed-tasks/payment-qr?clientId=${user.clientId}&month=${month}&year=${year}`);
-            setQrCodeUrl(url);
-        } catch {
-            setIsQrModalOpen(false);
-        } finally {
-            setIsLoadingQr(false);
-        }
-    };
-
-    const handleCloseDetailModal = () => {
-        setSelectedPerformedTask(null);
-        setIsDetailModalOpen(false);
-    }
-
-    const renderCell = React.useCallback((performedTask, columnKey) => {
-        switch (columnKey) {
-            case "date":
-                return formatDateTime(performedTask.date);
-            case "task":
-                return performedTask.taskName;
-            case "unitCount":
-                return `${formatNumber(performedTask.unitCount)} ${unitTypeTranslations[performedTask.unitType] || "-"}`;
-            case "price":
-                return `${formatNumber(performedTask.price)} Kč`;
-            case "detail":
-                return (
-                    <Button isIconOnly size="sm" variant="light" onPress={() => handleOpenDetailModal(performedTask.id)}>
-                        <Eye size={20} />
-                    </Button>
-                )
-            default:
-                return performedTask[columnKey] || "-";
-        }
-    }, []);
-
-    const topContent = React.useMemo(() => {
-        return (
-            <div className="flex justify-between gap-3 items-end">
-                <span className="text-small">
-                        Celkem {performedTasks.length} {performedTasks.length === 1 ? "úkon" : performedTasks.length >= 2 && performedTasks.length <= 4 ? "úkony" : "úkonů"}
-                </span>
-                <MonthYearPicker
-                    onChange={setMonthYearFilter}
-                    defaultValue={monthYearFilter}
-                />
+function SummaryTile({ label, value, children }) {
+    return (
+        <Card className="gap-1 px-6 py-5">
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+                <p className="font-display text-3xl font-semibold tabular-nums">{value}</p>
+                {children}
             </div>
-        )
-    }, [monthYearFilter, performedTasks.length]);
+        </Card>
+    );
+}
+
+function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
+    const [qrUrl, setQrUrl] = React.useState(null);
+
+    React.useEffect(() => {
+        if (!open) return undefined;
+        let objectUrl = null;
+        let isCurrent = true;
+        setQrUrl(null);
+        fetchImage(`/performed-tasks/payment-qr?clientId=${clientId}&month=${period.month + 1}&year=${period.year}`)
+            .then((url) => {
+                objectUrl = url;
+                if (isCurrent) setQrUrl(url);
+            })
+            .catch(() => isCurrent && onOpenChange(false));
+        return () => {
+            isCurrent = false;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+        // reload only when the dialog opens for another month
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, clientId, period.month, period.year]);
 
     return (
-        <>
-            <div className="flex flex-col gap-6">
-                <div className="text-center">
-                    <h1>Měsíční přehled</h1>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>QR platba</DialogTitle>
+                    <DialogDescription>
+                        {MONTHS[period.month]} {period.year}: <span className="font-medium text-foreground tabular-nums">{formatCurrency(total)}</span>. Naskenujte kód v aplikaci své banky.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="mx-auto grid size-64 place-items-center rounded-lg bg-white p-2">
+                    {qrUrl
+                        ? <img src={qrUrl} alt={`QR kód pro platbu ${formatCurrency(total)}`} className="size-full" />
+                        : <IconLoader2 className="size-6 animate-spin text-muted-foreground" aria-label="Načítání QR kódu" />}
                 </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
-                <Table
-                    isHeaderSticky
-                    removeWrapper
-                                        aria-label="Měsíční přehled úkonů"
-                    sortDescriptor={sortDescriptor}
-                    topContent={topContent}
-                    topContentPlacement="outside"
-                    onSortChange={setSortDescriptor}
-                >
-                    <TableHeader columns={columns}>
-                        {(column) => (
-                            <TableColumn
-                                key={column.key}
-                                align={column.key === "detail" ? "end" : "start"}
-                            >
-                                {column.name}
-                            </TableColumn>
-                        )}
-                    </TableHeader>
-                    <TableBody
-                        isLoading={loading}
-                        loadingContent={<Spinner className="mt-72" label="Načítání přehledu..." />}
-                        emptyContent="V tomto měsíci nebyly provedeny žádné úkony"
-                        items={performedTasks}
-                    >
-                        {(item) => (
-                            <TableRow key={item.id} onClick={() => handleOpenDetailModal(item.id)}>
-                                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+function MonthlyReport() {
+    const { user } = useAuth();
+    const [period, setPeriod] = useMonthParam();
+    const { detailId, openDetail, closeDetail } = useDetailParam();
+    const [detail, setDetail] = React.useState(null);
+    const [isQrOpen, setIsQrOpen] = React.useState(false);
+    const { performedTasks, loading, fetchPerformedTasks, fetchPerformedTask } = usePerformedTasks();
 
-                {!loading && performedTasks.length > 0 && (
-                    <div className="flex justify-between items-end">
-                        <Button variant="ghost" startContent={<QrCode className="size-4.5" />} onPress={handleOpenQrModal}>
-                            QR Platba
-                        </Button>
-                        <span className="text-large font-semibold">
-                            Celkem: {formatNumber(totalPrice)} Kč
-                        </span>
-                    </div>
-                )}
+    React.useEffect(() => {
+        if (!user.clientId) return;
+        fetchPerformedTasks({ clientId: user.clientId, month: period.month, year: period.year });
+        // fetchPerformedTasks is recreated on every render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user.clientId, period.month, period.year]);
+
+    React.useEffect(() => {
+        setDetail(null);
+        if (!detailId) return;
+        fetchPerformedTask(detailId).then(setDetail).catch(closeDetail);
+        // fetchPerformedTask is recreated on every render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [detailId]);
+
+    const sortedTasks = React.useMemo(() => [...performedTasks].sort((a, b) => b.date.localeCompare(a.date)), [performedTasks]);
+    const daySummaries = React.useMemo(() => summarizeByDay(sortedTasks), [sortedTasks]);
+    const count = sortedTasks.length;
+    const totalPrice = sortedTasks.reduce((sum, performedTask) => sum + (performedTask.price ?? 0), 0);
+
+    return (
+        <div className="grid gap-6">
+            <PageHeader
+                title="Měsíční přehled"
+                description="Péče, kterou jste v daném měsíci dostali, a kolik za ni zaplatíte."
+                actions={<MonthYearPicker value={period} onChange={setPeriod} />}
+            />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+                <SummaryTile label="Úkony" value={loading ? <Skeleton className="h-9 w-16" /> : formatCount(count)} />
+                <SummaryTile label="K úhradě" value={loading ? <Skeleton className="h-9 w-32" /> : formatCurrency(totalPrice)}>
+                    {!loading && count > 0 && <Button variant="outline" onClick={() => setIsQrOpen(true)}><IconQrcode /> QR platba</Button>}
+                </SummaryTile>
             </div>
 
-            <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} size="sm">
-                <ModalContent>
-                    <ModalBody className="flex items-center justify-center py-6">
-                        <Image src={qrCodeUrl} alt="QR platba" width={300} height={300} isLoading={isLoadingQr} />
-                    </ModalBody>
-                </ModalContent>
-            </Modal>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-14 sm:w-20">Čas</TableHead>
+                        <TableHead>Úkon</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Pečovatelé</TableHead>
+                        <TableHead className="text-right">Cena</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {loading ? Array.from({ length: 6 }, (_, index) => (
+                        <TableRow key={index} className="hover:bg-transparent">
+                            {Array.from({ length: COLUMN_COUNT }, (_, cell) => <TableCell key={cell}><Skeleton className="h-4 w-20" /></TableCell>)}
+                        </TableRow>
+                    )) : count === 0 ? (
+                        <TableEmptyRow columnCount={COLUMN_COUNT} title="V tomto měsíci bez péče" description="Jiný měsíc vyberete nahoře." />
+                    ) : sortedTasks.map((performedTask, index) => {
+                        const day = dayKey(performedTask.date);
+                        const startsDay = index === 0 || dayKey(sortedTasks[index - 1].date) !== day;
+                        return (
+                            <React.Fragment key={performedTask.id}>
+                                {startsDay && <DayRow date={performedTask.date} summary={daySummaries.get(day)} columnCount={COLUMN_COUNT} />}
+                                <TableRow data-state={performedTask.id === detailId ? "selected" : undefined} onClick={() => openDetail(performedTask.id)} className="cursor-pointer">
+                                    <TableCell className="text-muted-foreground tabular-nums">{formatTime(performedTask.date)}</TableCell>
+                                    <TableCell>
+                                        <span className="font-medium">{performedTask.taskName}</span>
+                                        <span className="ml-2 text-muted-foreground tabular-nums">{formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground @max-3xl/table:hidden">
+                                        {performedTask.caregivers?.map((caregiver) => caregiver.fullName).join(", ") || "–"}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium tabular-nums">{formatCurrency(performedTask.price)}</TableCell>
+                                </TableRow>
+                            </React.Fragment>
+                        );
+                    })}
+                </TableBody>
+            </Table>
+            {!loading && count > 0 && (
+                <p className="text-right text-sm text-muted-foreground tabular-nums">
+                    {formatCount(count)} {pluralize(count, ["úkon", "úkony", "úkonů"])} · celkem <span className="font-medium text-foreground">{formatCurrency(totalPrice)}</span>
+                </p>
+            )}
 
-            <PerformedTaskDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseDetailModal}
-                isLoading={isLoadingDetail}
-                performedTask={selectedPerformedTask}
-                readOnly
+            <PerformedTaskSheet
+                open={detailId != null}
+                onOpenChange={(open) => !open && closeDetail()}
+                performedTask={detail}
+                isLoading={detailId != null && !detail}
+                canEdit={false}
+                linkClient={false}
             />
-        </>
+            <PaymentQrDialog open={isQrOpen} onOpenChange={setIsQrOpen} clientId={user.clientId} period={period} total={totalPrice} />
+        </div>
     );
 }
 

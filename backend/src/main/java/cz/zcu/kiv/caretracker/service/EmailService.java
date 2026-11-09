@@ -53,6 +53,7 @@ public class EmailService {
             context.setVariable("recipientName", recipientName);
             context.setVariable("activationLink", activationLink);
             context.setVariable("appName", appName);
+            context.setVariable("logoUrl", frontendUrl + "/email-logo.png");
             context.setVariable("expiryDays", 7);
 
             String htmlContent = templateEngine.process("email/activation-email", context);
@@ -126,6 +127,7 @@ public class EmailService {
             context.setVariable("recipientName", recipientName);
             context.setVariable("resetLink", resetLink);
             context.setVariable("appName", appName);
+            context.setVariable("logoUrl", frontendUrl + "/email-logo.png");
             context.setVariable("expiryHours", 24);
 
             String htmlContent = templateEngine.process("email/password-reset-email", context);

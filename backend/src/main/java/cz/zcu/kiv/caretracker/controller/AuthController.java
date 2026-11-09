@@ -63,6 +63,7 @@ public class AuthController {
                         response.put("employeeId", user.getEmployee().getId());
                         response.put("employeeRole", user.getEmployee().getRole().toString());
                         response.put("fullName", user.getEmployee().getFullName());
+                        response.put("pictureId", user.getEmployee().getPictureId());
 
                         if (user.getEmployee().getDepartment() != null) {
                             response.put("departmentId", user.getEmployee().getDepartment().getId());
