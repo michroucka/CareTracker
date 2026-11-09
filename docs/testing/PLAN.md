@@ -104,7 +104,7 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [x] Nález (vysoká závažnost), opraveno: endpointy účtu klienta (`/account/create|deactivate|activate`) nekontrolovaly přístup. Teď jdou přes `ClientService.getClientForUpdate` jako úprava klienta.
 - [x] Nález, opraveno podle Javadocu: pečovatel dostane ze `GET /api/clients` jen aktivní klienty bez ohledu na `status`; ve frontendu nevidí filtr stavu.
 - [x] Nález z UI, opraveno: u ukončeného klienta šel vytvořit individuální plán. Plán i denní záznamy ukončeného klienta jsou teď jen ke čtení (API vrací 400, stránka nenabízí úpravy) – `InactiveClientPlanIT`, `IndividualPlan.test.jsx`.
-- [ ] **[ty]** Rozhodnout: mazání denního záznamu. Frontend ho nabízí jen autorovi a adminovi, API ho dovolí komukoli ze střediska. Sjednotit (doporučení: API podle frontendu).
+- [x] Mazání denního záznamu sjednoceno podle frontendu: API ho dovolí jen autorovi a adminovi (SUPERADMIN, ADMIN), neexistující záznam vrací 404.
 - Pozorováno, beze změny: individuální plán smí upravit jen pečovatel klienta a admin, koordinátor střediska ne (`validateIndividualPlanUpdateAccess`, odpovídá Javadocu). Superadmin nemůže přidat denní záznam (nemá zaměstnance).
 - [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
 - [ ] **[claude]** Nepřihlášený na každý chráněný endpoint → 401 (jeden parametrizovaný test přes všechny URL).

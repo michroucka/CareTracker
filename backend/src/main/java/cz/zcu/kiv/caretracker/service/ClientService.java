@@ -400,6 +400,22 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
+     * Only the author of a daily record or an admin (SUPERADMIN, ADMIN of the organization) may delete it.
+     *
+     * @throws SecurityException if the current user is neither
+     */
+    private void validateDailyRecordDeleteAccess(DailyRecord dailyRecord) {
+        User user = getCurrentUser();
+        if (user.getRole() == UserRole.SUPERADMIN || user.getRole() == UserRole.ADMIN) {
+            return;
+        }
+        Employee author = dailyRecord.getCreatedBy();
+        if (user.getEmployee() == null || author == null || !author.getId().equals(user.getEmployee().getId())) {
+            throw new SecurityException("Denní záznam může smazat jen jeho autor nebo administrátor");
+        }
+    }
+
+    /**
      * A terminated client's individual plan and daily records stay readable but can no longer change.
      *
      * @throws ValidationException if the client is not active
@@ -565,8 +581,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param clientId the client ID
      * @param dailyRecordId the ID of the daily record to remove
      * @return the updated plan DTO
-     * @throws SecurityException if the user does not have access to this client
-     * @throws ResourceNotFoundException if the client or plan is not found
+     * @throws SecurityException if the user does not have access to this client or is neither the record's author nor an admin
+     * @throws ResourceNotFoundException if the client, plan or record is not found
      */
     @Transactional
     public IndividualPlanDTO removeDailyRecordFromIndividualPlan(Long clientId, Long dailyRecordId) {
@@ -582,9 +598,16 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         );
         requireActiveClient(plan.getClient());
 
-        if (plan.getDailyRecords() != null) {
-            plan.getDailyRecords().removeIf(dr -> dr.getId().equals(dailyRecordId));
+        DailyRecord dailyRecord = plan.getDailyRecords() == null ? null : plan.getDailyRecords().stream()
+                .filter(record -> record.getId().equals(dailyRecordId))
+                .findFirst()
+                .orElse(null);
+        if (dailyRecord == null) {
+            throw new ResourceNotFoundException("Denní záznam nebyl nalezen");
         }
+        validateDailyRecordDeleteAccess(dailyRecord);
+
+        plan.getDailyRecords().remove(dailyRecord);
 
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
         return individualPlanMapper.toDTO(savedPlan);

@@ -42,6 +42,8 @@ class ClientAccessIT extends AbstractIntegrationTest {
     private static final Set<Actor> PLAN_EDITORS = EnumSet.of(SUPERADMIN, ADMIN, CAREGIVER_OF_CLIENT);
     // daily records need an employee as author, so SUPERADMIN cannot add them
     private static final Set<Actor> DAILY_RECORD_AUTHORS = EnumSet.of(ADMIN, COORDINATOR, CAREGIVER_OF_CLIENT, CAREGIVER);
+    // a daily record may be deleted by its author (here CAREGIVER_OF_CLIENT) or an admin
+    private static final Set<Actor> DAILY_RECORD_DELETERS = EnumSet.of(SUPERADMIN, ADMIN, CAREGIVER_OF_CLIENT);
 
     @Autowired
     private ClientRepository clientRepository;
@@ -226,7 +228,25 @@ class ClientAccessIT extends AbstractIntegrationTest {
         DailyRecord dailyRecord = testData.dailyRecord(plan, scenario.employee(CAREGIVER_OF_CLIENT));
 
         perform(actor, delete("/api/clients/{id}/individual-plan/daily-records/{recordId}", client.getId(), dailyRecord.getId()))
-                .andExpect(allowedOnlyFor(CLIENT_DEPARTMENT_STAFF, actor));
+                .andExpect(allowedOnlyFor(DAILY_RECORD_DELETERS, actor));
+    }
+
+    @Test
+    void coordinatorCanRemoveOwnDailyRecord() throws Exception {
+        IndividualPlan plan = testData.individualPlan(client);
+        DailyRecord dailyRecord = testData.dailyRecord(plan, scenario.employee(COORDINATOR));
+
+        perform(COORDINATOR, delete("/api/clients/{id}/individual-plan/daily-records/{recordId}", client.getId(), dailyRecord.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dailyRecords").isEmpty());
+    }
+
+    @Test
+    void removingUnknownDailyRecordReturnsNotFound() throws Exception {
+        testData.individualPlan(client);
+
+        perform(ADMIN, delete("/api/clients/{id}/individual-plan/daily-records/{recordId}", client.getId(), 999_999))
+                .andExpect(status().isNotFound());
     }
 
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
