@@ -103,9 +103,11 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * @return success message
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
+     * @throws ValidationException if the token is missing
      */
     @Transactional
     public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
+        requireToken(dto.getToken());
         User user = userRepository.findByResetToken(dto.getToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný token"));
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now(clock))) {
@@ -292,6 +294,20 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         }
     }
 
+    /**
+     * Spring Data turns a null parameter into {@code IS NULL}, so looking up a missing token would match
+     * every account that has none.
+     */
+    private static void requireToken(String token) {
+        if (isBlank(token)) {
+            throw new ValidationException("Chybí token");
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
     /** The owner has completed activation by choosing a username (and a password). */
     private static boolean isActivated(User user) {
         return user.getUsername() != null && !user.getUsername().isEmpty();
@@ -305,6 +321,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional(readOnly = true)
     public boolean validateActivationToken(String token) {
+        if (isBlank(token)) {
+            return false;
+        }
         Optional<User> userOpt = userRepository.findByActivationToken(token);
 
         if (userOpt.isEmpty()) {
@@ -328,6 +347,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional(readOnly = true)
     public boolean validateResetToken(String token) {
+        if (isBlank(token)) {
+            return false;
+        }
         Optional<User> userOpt = userRepository.findByResetToken(token);
 
         if (userOpt.isEmpty()) {
@@ -349,10 +371,11 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      * @return the activated user entity
      * @throws ResourceNotFoundException if the token is not found
      * @throws TokenExpiredException if the token has expired
-     * @throws ValidationException if the account is already activated or the username is taken
+     * @throws ValidationException if the token is missing, the account is already activated or the username is taken
      */
     @Transactional
     public User completeActivation(String token, String username, String password) {
+        requireToken(token);
         User user = userRepository.findByActivationToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný aktivační token"));
 

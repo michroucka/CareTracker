@@ -209,8 +209,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: reset bez tokenu volá findByActivationToken(null), což najde účet s prázdným tokenem; "
-            + "heslo dnes chrání jen NullPointerException na prázdném tokenExpiry, ne kontrola tokenu")
     void missingTokenChangesNoPasswordEvenWithLeftoverExpiry() throws Exception {
         account.setResetTokenExpiry(EXPIRY);
         userRepository.save(account);
