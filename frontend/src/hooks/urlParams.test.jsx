@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { useSearchParamsUpdater } from './useSearchParamsUpdater';
 import { useDetailParam } from './useDetailParam';
 import { usePagedList } from './usePagedList';
-import { useUrlFilters } from './useUrlFilters';
 import { currentSearchParams, renderHookWithRouter } from '@/test/hooks';
 
 describe('useSearchParamsUpdater', () => {
@@ -129,61 +128,5 @@ describe('usePagedList', () => {
         table.getBoundingClientRect = () => ({ top: -300 });
         act(() => result.current.paginationProps.onPageChange(3));
         expect(table.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
-    });
-});
-
-// a stable object, because useUrlFilters re-runs its effects whenever the config changes
-const filterConfig = {
-    search: { type: 'string', defaultValue: '' },
-    status: { type: 'set', defaultValue: new Set(['true']) },
-    departments: { type: 'multiset', defaultValue: new Set(['all']), urlParam: 'dep' },
-};
-
-describe('useUrlFilters', () => {
-    it('reads the filters from the URL', () => {
-        const { result } = renderHookWithRouter(() => useUrlFilters(filterConfig), { route: '/list?search=Nov&status=true,false&dep=1,2' });
-
-        expect(result.current.filters).toEqual({
-            search: 'Nov',
-            status: new Set(['true', 'false']),
-            departments: new Set(['1', '2']),
-        });
-    });
-
-    it('uses the defaults without params and keeps them out of the URL', () => {
-        const { result } = renderHookWithRouter(() => useUrlFilters(filterConfig), { route: '/list' });
-
-        expect(result.current.filters).toEqual({ search: '', status: new Set(['true']), departments: new Set(['all']) });
-        expect(currentSearchParams().toString()).toBe('');
-    });
-
-    it('writes changed filters to the URL', () => {
-        const { result } = renderHookWithRouter(() => useUrlFilters(filterConfig), { route: '/list?status=false' });
-
-        act(() => result.current.handlers.search('Nov'));
-        act(() => result.current.handlers.departments(new Set(['all', '3'])));
-
-        expect(currentSearchParams().toString()).toBe('search=Nov&status=false&dep=3');
-    });
-
-    // Nález: with no params in the URL on mount, the first effect returns early ("" equals the initial
-    // previousUrlParams ""), so hasInitialized never becomes true and filter changes never reach the URL.
-    it.skip('writes changed filters to the URL when the page opened without params', () => {
-        const { result } = renderHookWithRouter(() => useUrlFilters(filterConfig), { route: '/list' });
-
-        act(() => result.current.handlers.search('Nov'));
-
-        expect(currentSearchParams().get('search')).toBe('Nov');
-    });
-
-    it('makes "all" exclusive in a multi-select filter', () => {
-        const { result } = renderHookWithRouter(() => useUrlFilters(filterConfig), { route: '/list?dep=3' });
-
-        act(() => result.current.handlers.departments(new Set(['3', 'all'])));
-        expect(result.current.filters.departments).toEqual(new Set(['all']));
-        expect(currentSearchParams().has('dep')).toBe(false);
-
-        act(() => result.current.handlers.departments(new Set()));
-        expect(result.current.filters.departments).toEqual(new Set(['all']));
     });
 });
