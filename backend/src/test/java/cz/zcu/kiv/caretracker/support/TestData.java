@@ -187,12 +187,21 @@ public class TestData {
 
     /** One hour of the task for the client on 2 November 2026, performed by the caregiver. */
     public PerformedTask performedTask(Client client, Task task, Employee caregiver) {
+        return performedTask(client, task, caregiver, LocalDateTime.of(2026, 11, 2, 9, 0));
+    }
+
+    /** One hour of the task for the client on the given date, performed by the client's caregiver. */
+    public PerformedTask performedTask(Client client, Task task, LocalDateTime date) {
+        return performedTask(client, task, client.getCaregiver(), date);
+    }
+
+    private PerformedTask performedTask(Client client, Task task, Employee caregiver, LocalDateTime date) {
         PerformedTask performedTask = new PerformedTask();
         performedTask.setClient(client);
         performedTask.setTask(task);
         performedTask.setDepartment(client.getDepartment());
         performedTask.setOrganization(client.getOrganization());
-        performedTask.setDate(LocalDateTime.of(2026, 11, 2, 9, 0));
+        performedTask.setDate(date);
         performedTask.setUnitCount(60.0);
         performedTask.setCaregivers(new ArrayList<>());
         performedTask = performedTaskRepository.save(performedTask);
