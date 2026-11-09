@@ -1,18 +1,15 @@
 package cz.zcu.kiv.caretracker.support;
 
-import cz.zcu.kiv.caretracker.entity.Department;
-import cz.zcu.kiv.caretracker.entity.Employee;
-import cz.zcu.kiv.caretracker.entity.Organization;
-import cz.zcu.kiv.caretracker.entity.User;
+import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
+import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.UserRole;
-import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
-import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
-import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
-import cz.zcu.kiv.caretracker.repository.UserRepository;
+import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,17 +28,20 @@ public class TestData {
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
 
     public TestData(OrganizationRepository organizationRepository,
                     DepartmentRepository departmentRepository,
                     EmployeeRepository employeeRepository,
                     UserRepository userRepository,
+                    ClientRepository clientRepository,
                     PasswordEncoder passwordEncoder) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
+        this.clientRepository = clientRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -74,6 +74,25 @@ public class TestData {
         user.setEmployee(employee);
         employee.setUser(userRepository.save(user));
         return employee;
+    }
+
+    public Client client(Employee caregiver) {
+        Client client = new Client();
+        client.setFirstName("Petr");
+        client.setLastName("Test " +  next());
+        client.setGender(Gender.MALE);
+        client.setDateOfBirth(LocalDate.of(1950, 6, 24));
+        client.setStreet("Testovací");
+        client.setCity("Testov");
+        client.setPostalCode("301 23");
+        client.setLegallyCompetent(true);
+        client.setBenefits(BenefitLevel.TWO);
+        client.setDepartment(caregiver.getDepartment());
+        client.setOrganization(caregiver.getOrganization());
+        client.setCaregiver(caregiver);
+
+        client = clientRepository.save(client);
+        return client;
     }
 
     public User superadmin() {
