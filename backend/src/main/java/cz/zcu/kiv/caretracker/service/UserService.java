@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,8 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private UserMapper userMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private Clock clock;
 
     /**
      * Returns the current user's profile as a DTO.
@@ -127,7 +130,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         String activationToken = UUID.randomUUID().toString();
         user.setActivationToken(activationToken);
-        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        user.setTokenExpiry(LocalDateTime.now(clock).plusDays(7));
 
         userRepository.save(user);
         emailService.sendActivationEmail(email, activationToken, employee.getFullName());
@@ -207,7 +210,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         String activationToken = UUID.randomUUID().toString();
         user.setActivationToken(activationToken);
-        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        user.setTokenExpiry(LocalDateTime.now(clock).plusDays(7));
 
         userRepository.save(user);
         emailService.sendActivationEmail(email, activationToken, client.getFullName());
@@ -259,7 +262,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         String activationToken = UUID.randomUUID().toString();
         user.setActivationToken(activationToken);
-        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        user.setTokenExpiry(LocalDateTime.now(clock).plusDays(7));
 
         userRepository.save(user);
 
@@ -290,7 +293,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         User user = userOpt.get();
 
-        if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
+        if (user.getTokenExpiry().isBefore(LocalDateTime.now(clock))) {
             return false;
         }
 
@@ -313,7 +316,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
 
         User user = userOpt.get();
 
-        return !user.getTokenExpiry().isBefore(LocalDateTime.now());
+        return !user.getTokenExpiry().isBefore(LocalDateTime.now(clock));
     }
 
     /**
@@ -333,7 +336,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         User user = userRepository.findByActivationToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný aktivační token"));
 
-        if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
+        if (user.getTokenExpiry().isBefore(LocalDateTime.now(clock))) {
             throw new TokenExpiredException("Platnost aktivačního tokenu vypršela");
         }
 
@@ -387,7 +390,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     private MessageResponseDTO generateAndSendResetToken(User user) {
         String token = UUID.randomUUID().toString();
         user.setActivationToken(token);
-        user.setTokenExpiry(LocalDateTime.now().plusHours(24));
+        user.setTokenExpiry(LocalDateTime.now(clock).plusHours(24));
         userRepository.save(user);
 
         String name = user.getEmployee() != null

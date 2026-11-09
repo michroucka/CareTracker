@@ -10,6 +10,7 @@ import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class TestData {
     private final TaskRepository taskRepository;
     private final PerformedTaskRepository performedTaskRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
     // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
     private String encodedPassword;
@@ -51,7 +53,8 @@ public class TestData {
                     DailyRecordRepository dailyRecordRepository,
                     TaskRepository taskRepository,
                     PerformedTaskRepository performedTaskRepository,
-                    PasswordEncoder passwordEncoder) {
+                    PasswordEncoder passwordEncoder,
+                    Clock clock) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
@@ -62,6 +65,7 @@ public class TestData {
         this.taskRepository = taskRepository;
         this.performedTaskRepository = performedTaskRepository;
         this.passwordEncoder = passwordEncoder;
+        this.clock = clock;
     }
 
     public Organization organization() {
@@ -132,12 +136,16 @@ public class TestData {
         return employeeRepository.save(employee);
     }
 
-    /** Turns the employee's account back into one waiting for activation (no username yet). */
+    /**
+     * Turns the employee's account back into one waiting for activation (no username or password yet)
+     * with a token valid for 7 days from the application clock, as a newly created account has.
+     */
     public Employee withPendingAccount(Employee employee) {
         User user = employee.getUser();
         user.setUsername(null);
+        user.setPassword(null);
         user.setActivationToken("token-" + next());
-        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        user.setTokenExpiry(LocalDateTime.now(clock).plusDays(7));
         employee.setUser(userRepository.save(user));
         return employee;
     }
