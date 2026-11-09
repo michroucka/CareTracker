@@ -79,7 +79,7 @@ export function useUrlFilters(config) {
 
             if (!isDefault && value) {
                 if (filterConfig.type === 'set' || filterConfig.type === 'multiset') {
-                    // "all" means no filter — omit from URL so it stays clean
+                    // "all" means no filter – omit from URL so it stays clean
                     if (filterConfig.type === 'multiset' && value.has("all")) {
                         return;
                     }
@@ -124,11 +124,11 @@ export function useUrlFilters(config) {
             if (newKeys.has("all") && !currentValue.has("all")) {
                 setFilter(name, new Set(["all"]));
             } else if (newKeys.size > 1 && newKeys.has("all")) {
-                // Something specific selected while "all" was active — drop "all"
+                // Something specific selected while "all" was active – drop "all"
                 newKeys.delete("all");
                 setFilter(name, newKeys);
             } else if (newKeys.size === 0) {
-                // Everything deselected — fall back to "all"
+                // Everything deselected – fall back to "all"
                 setFilter(name, new Set(["all"]));
             } else {
                 setFilter(name, newKeys);

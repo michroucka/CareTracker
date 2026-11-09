@@ -601,7 +601,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     /**
      * Adds a daily record to a client's individual care plan.
-     * Daily records are not versioned — they are shared across all plan versions.
+     * Daily records are not versioned – they are shared across all plan versions.
      *
      * @param clientId the client ID
      * @param dailyRecordDTO the daily record data
@@ -648,7 +648,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
     /**
      * Removes a daily record from a client's individual care plan.
-     * Daily records are not versioned — the removal affects all plan versions.
+     * Daily records are not versioned – the removal affects all plan versions.
      *
      * @param clientId the client ID
      * @param dailyRecordId the ID of the daily record to remove

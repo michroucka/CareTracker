@@ -13,7 +13,7 @@ function handleUnauthorized(response) {
 
 /**
  * Sends a GET request with credentials (session cookie) and returns the raw Response.
- * Does not throw on non-2xx — callers must check response.ok themselves.
+ * Does not throw on non-2xx – callers must check response.ok themselves.
  * @param {string} endpoint
  * @returns {Promise<Response>}
  */

@@ -38,7 +38,7 @@ export function useIndividualPlan() {
             setCurrentContent(response?.currentContent || null);
             return response;
         } catch (error) {
-            // 404 means the client has no plan — treat as empty, not as an error
+            // 404 means the client has no plan – treat as empty, not as an error
             if (error.message && (error.message.includes('404') || error.message.toLowerCase().includes('not found'))) {
                 setIndividualPlan(null);
                 setCurrentContent(null);

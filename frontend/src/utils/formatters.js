@@ -30,14 +30,14 @@ export function formatPhoneNumber(value) {
     cleaned = cleaned.replace(/\+/g, '');
 
     if (hasPlus) {
-        // +XXX XXX XXX XXX — max 3 digits for country code + 9 for the local number
+        // +XXX XXX XXX XXX – max 3 digits for country code + 9 for the local number
         const limited = cleaned.slice(0, 12);
         if (limited.length <= 3) return `+${limited}`;
         if (limited.length <= 6) return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
         if (limited.length <= 9) return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
         return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
     } else {
-        // XXX XXX XXX — max 9 digits
+        // XXX XXX XXX – max 9 digits
         const limited = cleaned.slice(0, 9);
         if (limited.length <= 3) return limited;
         if (limited.length <= 6) return `${limited.slice(0, 3)} ${limited.slice(3)}`;

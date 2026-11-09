@@ -35,7 +35,7 @@ public class AuthController {
     /**
      * Returns the current authentication state including role, organizational context,
      * and employee/client IDs needed by the frontend auth context.
-     * Always returns 200 OK — the {@code isLoggedIn} field indicates whether a session is active.
+     * Always returns 200 OK – the {@code isLoggedIn} field indicates whether a session is active.
      */
     @GetMapping("/auth-status")
     @Transactional(readOnly = true)
