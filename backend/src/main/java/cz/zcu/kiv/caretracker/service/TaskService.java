@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.service;
 import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import cz.zcu.kiv.caretracker.dto.task.TaskRequestDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.TaskMapper;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
@@ -29,7 +30,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
      * Returns tasks filtered by the current user's role and optional status filter.
      *
      * @param organizationId optional organization filter (SUPERADMIN only)
-     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all
+     * @param status {@code true} = active, {@code false} = inactive, {@code null} = all (COORDINATOR and CAREGIVER always see active)
      * @return role-filtered list of task DTOs
      */
     @Transactional(readOnly = true)
@@ -40,6 +41,11 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         // If user has no access, return empty list
         if (roleFilters.isNoAccess()) {
             return List.of();
+        }
+
+        UserRole role = getCurrentUser().getRole();
+        if (role == UserRole.COORDINATOR || role == UserRole.CAREGIVER) {
+            status = true;
         }
 
         // Fetch tasks based on computed organizationId
@@ -81,7 +87,7 @@ public class TaskService extends BaseRoleFilteringService<Task, TaskDTO> {
         User user = getCurrentUser();
 
         Organization organization;
-        if (user.getRole() == cz.zcu.kiv.caretracker.enums.UserRole.SUPERADMIN) {
+        if (user.getRole() == UserRole.SUPERADMIN) {
             if (task.getOrganization() != null) {
                 organization = task.getOrganization();
             } else if (dto.getOrganizationId() != null) {

@@ -7,7 +7,6 @@ import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -101,7 +100,6 @@ class TaskListAccessIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[*].id", containsInAnyOrder(idOf(task))));
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor a pečovatel vidí v katalogu i neaktivní úkony")
     @ParameterizedTest
     @EnumSource(value = Actor.class, names = {"COORDINATOR", "CAREGIVER"})
     void staffCannotListInactiveTasks(Actor actor) throws Exception {
@@ -109,7 +107,6 @@ class TaskListAccessIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[*].id", not(hasItem(idOf(inactiveTask)))));
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor a pečovatel vidí v katalogu i neaktivní úkony")
     @ParameterizedTest
     @EnumSource(value = Actor.class, names = {"COORDINATOR", "CAREGIVER"})
     void staffListWithoutStatusContainsOnlyActiveTasks(Actor actor) throws Exception {
