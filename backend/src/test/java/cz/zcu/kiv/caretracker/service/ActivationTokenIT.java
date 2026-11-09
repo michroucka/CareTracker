@@ -170,6 +170,17 @@ class ActivationTokenIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void usernameDifferingOnlyInCaseIsRejected() throws Exception {
+        User colleague = testData.employee(department, EmployeeRole.COORDINATOR).getUser();
+
+        complete(pending.getActivationToken(), colleague.getUsername().toUpperCase(), NEW_PASSWORD)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Uživatelské jméno je již použité"));
+
+        assertStillPending();
+    }
+
+    @Test
     void missingFieldIsRejected() throws Exception {
         Map<String, String> withoutPassword = new HashMap<>();
         withoutPassword.put("token", pending.getActivationToken());

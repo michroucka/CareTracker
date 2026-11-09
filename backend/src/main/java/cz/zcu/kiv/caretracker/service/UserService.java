@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
@@ -47,6 +48,8 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     @Autowired
     private Clock clock;
     @Autowired
+    private PersistentTokenRepository rememberMeTokenRepository;
+    @Autowired
     @Qualifier(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)
     private TaskExecutor mailExecutor;
 
@@ -72,6 +75,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     public User updateCurrentUser(UserRequestDTO dto) {
         User user = getCurrentUser();
         validateUsername(dto.getUsername());
+        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(dto.getUsername().trim(), user.getId())) {
+            throw new ValidationException("Uživatelské jméno je již použité");
+        }
         validateEmailAvailable(dto.getEmail(), user.getId());
         userMapper.requestToUser(user, dto);
         return userRepository.save(user);
@@ -141,6 +147,8 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
         userRepository.save(user);
+        // a reset usually means the password leaked, so devices remembered with the old one must sign in again
+        rememberMeTokenRepository.removeUserTokens(user.getUsername());
 
         return new MessageResponseDTO(true, "Heslo bylo úspěšně změněno");
     }
@@ -423,7 +431,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         validateUsername(username);
         validatePassword(password);
         String trimmedUsername = username.trim();
-        if (userRepository.findByUsername(trimmedUsername).isPresent()) {
+        if (userRepository.existsByUsernameIgnoreCase(trimmedUsername)) {
             throw new ValidationException("Uživatelské jméno je již použité");
         }
 

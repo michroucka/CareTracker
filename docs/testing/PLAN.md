@@ -178,12 +178,15 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [x] Nálezy, opraveno: neexistující adresa vracela 500 (teď 404); 405, 415, 413 a chybné parametry s českou hláškou; každá `RuntimeException` vracela 400 se zprávou výjimky (např. „Cannot invoke ...“) – teď 500 s obecnou hláškou; vytvoření klienta bez povinných polí vracelo 500 (teď 400 s hláškou z formuláře, `ClientCreateValidationIT`).
 - [x] **[claude]** `LoginIT`, `AuthStatusIT`, `RememberMeIT` (pomocník `support/FormLogin` posílá přihlášení jako frontend): přihlášení, špatné heslo a neznámý uživatel mají stejnou odpověď, nová session po přihlášení, odhlášení maže cookies, remember-me přestane platit po blokaci a změně hesla.
 - [x] **[claude]** `MailTemplatesIT`: předmět, oslovení, odkaz s tokenem, platnost, escapování jména.
-- [ ] **[ty]** Nálezy k rozhodnutí (testy `@Disabled("Nález: ...")`), bezpečnost přihlášení, patří k CSRF a sekci 7b brandingového plánu:
-  - Střední: blokace účtu neukončí otevřené session, uživatel pracuje dál až do vypršení session (`LoginIT.deactivationEndsExistingSession`).
-  - Střední: remember-me cookie platí i po odhlášení až 7 dní (bezstavové `TokenBasedRememberMeServices`; oprava `PersistentTokenBasedRememberMeServices` s tabulkou tokenů) (`RememberMeIT.cookieStopsWorkingAfterLogout`).
-  - Nízká: špatné heslo u zablokovaného účtu vrátí „Váš účet byl deaktivován“, takže jde zjistit existenci účtu (`LoginIT.deactivatedAccountWithWrongPasswordLooksLikeWrongPassword`).
-  - Bez testu: klíč remember-me je natvrdo v `SecurityConfig` (patří do konfigurace/secrets); uživatelská jména se liší velikostí písmen („Jana“ a „jana“ jsou dva účty); maily jen HTML bez textové části.
-- [ ] **[ty]** Rozhodnout o CSRF: v `SecurityConfig` je `csrf.disable()`, přitom autentizace stojí na session cookie. Patří spíš do sekce 7b brandingového plánu (před produkcí), testy pak ověří, že zápis bez tokenu neprojde.
+- [x] Bezpečnost přihlášení, opraveno 2026-11-09 (samostatný PR):
+  - Špatné heslo u zablokovaného účtu odpoví jako každé špatné heslo, stav účtu se kontroluje až po správném hesle.
+  - Blokace účtu ukončí jeho otevřené session (`ActiveAccountFilter`).
+  - Remember-me tokeny v DB (V26, `RevocableRememberMeServices`): odhlášení a reset hesla je zruší. Token se při použití nemění – rotace by u souběžných požadavků SPA vypadala jako ukradená cookie.
+  - Klíč remember-me z konfigurace (`app.remember-me.key`, na demu `REMEMBER_ME_KEY`).
+  - Uživatelská jména bez ohledu na velikost písmen (přihlášení, duplicita, unikátní index V27).
+  - CSRF zapnuté: token z cookie `XSRF-TOKEN` v hlavičce `X-XSRF-TOKEN` (frontend `api.js`), bez tokenu jen přihlášení, aktivace a reset hesla (`CsrfIT`). V testech `support/CsrfTokens`, ne `csrf()` ze Spring Security Test – ten natrvalo podvrhne úložiště tokenů ve sdíleném filtru.
+  - Maily mají i textovou verzi.
+- [ ] **[ty]** Před nasazením: do `~/caretracker-secrets/.env.demo` přidat `REMEMBER_ME_KEY` (`openssl rand -base64 32`), jinak backend nenastartuje. Ověřit, že v produkční DB nejsou uživatelská jména lišící se jen velikostí písmen (V27 by selhala). Po nasazení se všichni jednou znovu přihlásí (staré remember-me cookies přestanou platit).
 
 #### T2f – Prahy pokrytí
 - [x] **[claude]** JaCoCo `check` ve `verify` (build spadne pod prahem). Po T2: `service` 90,0 % řádků / 77,7 % větví, `controller` 93,5 / 79,5, `specification` 78,1 / 76,5. Prahy těsně pod: 0,89/0,77, 0,93/0,79, 0,77/0,76. Celkem 88 % řádků, 75 % větví. Práh se jen zvedá.
@@ -258,6 +261,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-09: bezpečnost přihlášení a CSRF (nálezy z T2e) opraveny, ověřeno i v prohlížeči proti běžící aplikaci.
 - 2026-11-09: T2d, T2e a T2f hotové (149 unit + 1123 IT), fáze T2 uzavřená kromě nálezů k přihlášení a CSRF.
 - 2026-11-09: T2c hotová (1047 IT). Testy a opravy nálezů psali paralelně subagenti po doménách, rozhodnutí B1-B5 viz T2c.
 - 2026-11-09: T2b hotová: cena, stvrzenky, obrázky, nástěnka s pevným `Clock`.

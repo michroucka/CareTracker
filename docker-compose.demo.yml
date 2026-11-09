@@ -13,6 +13,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - APP_MAPY_API_KEY=${MAPY_API_KEY}
+      - APP_REMEMBER_ME_KEY=${REMEMBER_ME_KEY}
     depends_on:
       db:
         condition: service_healthy

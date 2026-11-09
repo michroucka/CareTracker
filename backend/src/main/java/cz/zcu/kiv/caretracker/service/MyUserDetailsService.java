@@ -34,7 +34,7 @@ public class MyUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Attempting to load user: {}", username);
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> {
                     log.warn("User '{}' not found", username);
                     return new UsernameNotFoundException("User not found: " + username);
