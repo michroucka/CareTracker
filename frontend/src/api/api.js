@@ -1,5 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+const CSRF_COOKIE = "XSRF-TOKEN";
+const CSRF_HEADER = "X-XSRF-TOKEN";
+
+/**
+ * Header with the CSRF token the backend sets in the XSRF-TOKEN cookie. Every write must send it back,
+ * which another site cannot do, because it cannot read the cookie.
+ * @returns {Record<string, string>}
+ */
+export function csrfHeader() {
+    const cookie = document.cookie.split("; ").find((entry) => entry.startsWith(`${CSRF_COOKIE}=`));
+    return cookie ? { [CSRF_HEADER]: decodeURIComponent(cookie.slice(CSRF_COOKIE.length + 1)) } : {};
+}
+
 /**
  * Dispatches an "auth:unauthorized" custom event when the response status is 401,
  * triggering the global logout flow in AuthContext.
@@ -40,7 +53,7 @@ export async function post(endpoint, data) {
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", ...csrfHeader() },
         body: formData.toString(),
         credentials: "include",
     });
@@ -84,7 +97,7 @@ export async function getJSON(endpoint, options = {}) {
 export async function postJSON(endpoint, data) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeader() },
         body: JSON.stringify(data),
         credentials: "include",
     });
@@ -111,7 +124,7 @@ export async function postJSON(endpoint, data) {
 export async function putJSON(endpoint, data) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeader() },
         body: JSON.stringify(data),
         credentials: "include",
     });
@@ -137,6 +150,7 @@ export async function putJSON(endpoint, data) {
 export async function deleteJSON(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "DELETE",
+        headers: csrfHeader(),
         credentials: "include",
     });
 
@@ -164,6 +178,7 @@ export async function uploadFile(endpoint, file) {
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
+        headers: csrfHeader(),
         body: formData,
         credentials: "include",
     });
@@ -205,6 +220,7 @@ export async function fetchImage(endpoint) {
 export async function deleteImage(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: "DELETE",
+        headers: csrfHeader(),
         credentials: "include",
     });
 
