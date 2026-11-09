@@ -9,7 +9,12 @@ export function useClients() {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
     const abortControllerRef = useRef(null);
-    const filtersRef = useRef({});
+    // null until a list is loaded: the detail page uses the mutations too and has no list to refresh
+    const filtersRef = useRef(null);
+
+    const reloadListIfShown = () => {
+        if (filtersRef.current) fetchClients(filtersRef.current, { silent: true });
+    };
 
     function mapClient(client) {
         return {
@@ -115,7 +120,7 @@ export function useClients() {
             const updated = await putJSON(`/clients/${id}`, updatedDataWithoutPicture);
             updated.pictureId = await savePicture("clients", id, picture, updated.pictureId);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
             toast.success("Klient úspěšně aktualizován");
 
             return mapClient(updated);
@@ -130,7 +135,7 @@ export function useClients() {
         try {
             const updated = await putJSON(`/clients/${id}/terminate`, data);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
 
             toast.success("Klient úspěšně deaktivován");
 
@@ -146,7 +151,7 @@ export function useClients() {
         try {
             const result = await postJSON(`/clients/${clientId}/account/create?email=${encodeURIComponent(email)}`);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
 
             (result.success ? toast.success : toast.error)(result.message);
         } catch (err) {
@@ -160,7 +165,7 @@ export function useClients() {
         try {
             await putJSON(`/clients/${clientId}/account/deactivate`);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
 
             toast.success("Účet klienta byl deaktivován");
         } catch (err) {
@@ -174,7 +179,7 @@ export function useClients() {
         try {
             await putJSON(`/clients/${clientId}/account/activate`);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
 
             toast.success("Účet klienta byl aktivován");
         } catch (err) {
@@ -200,7 +205,7 @@ export function useClients() {
         try {
             const updated = await putJSON(`/clients/${id}/activate`);
 
-            fetchClients(filtersRef.current, { silent: true });
+            reloadListIfShown();
 
             toast.success("Klient úspěšně aktivován");
 
