@@ -30,24 +30,35 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * Node 22's fetch takes jsdom's FormData for its own and then waits forever on the jsdom File inside it.
+ * MSW cannot read a multipart body in tests anyway, so uploads are sent as the field names and file names.
+ */
+function withoutJsdomFormData(init) {
+    if (!(init.body instanceof FormData)) return init;
+    const fields = [...init.body.entries()].map(([name, value]) => [name, typeof value === 'string' ? value : value.name]);
+    return { ...init, body: new URLSearchParams(fields).toString() };
+}
+
+/**
  * Node's fetch rejects jsdom's AbortSignal ("Expected signal to be an instance of AbortSignal"),
  * so every request a data hook sends with a signal would fail. The signal is handled here instead
  * and the request goes on without it.
  */
-function fetchHonouringJsdomAbortSignal(fetchWithoutSignal) {
+function fetchForJsdom(nodeFetch) {
     return (input, { signal, ...init } = {}) => {
-        if (!signal) return fetchWithoutSignal(input, init);
+        const request = withoutJsdomFormData(init);
+        if (!signal) return nodeFetch(input, request);
         if (signal.aborted) return Promise.reject(signal.reason);
         return new Promise((resolve, reject) => {
             signal.addEventListener('abort', () => reject(signal.reason), { once: true });
-            fetchWithoutSignal(input, init).then(resolve, reject);
+            nodeFetch(input, request).then(resolve, reject);
         });
     };
 }
 
 beforeAll(() => {
     server.listen({ onUnhandledRequest: 'error' });
-    globalThis.fetch = fetchHonouringJsdomAbortSignal(globalThis.fetch);
+    globalThis.fetch = fetchForJsdom(globalThis.fetch);
 });
 
 afterEach(() => {
