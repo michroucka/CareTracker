@@ -33,11 +33,12 @@ export function useOrganizations() {
 
             const queryString = params.toString();
             const url = queryString ? `/organizations?${queryString}` : "/organizations";
-            const organizations = await getJSON(url, { signalL: controller.signal });
+            const organizations = await getJSON(url, { signal: controller.signal });
             const sorted = sortByKey(organizations, 'name', 'ascending');
             setOrganizations(sorted);
             if (!silent) setLoading(false);
         } catch (err) {
+            if (err.name === 'AbortError') return;
             console.error("Error fetching organizations:", err);
             showErrorToast(err, "Chyba při načítání organizací");
             if (!silent) setLoading(false);

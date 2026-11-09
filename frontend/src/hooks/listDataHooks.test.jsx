@@ -199,9 +199,7 @@ describe.each(listHooks.filter(({ name }) => name !== 'useOrganizations'))('$nam
 });
 
 describe('useOrganizations with a newer request', () => {
-    // Nález: fetchOrganizations passes `signalL` instead of `signal` to getJSON, so an older request is
-    // never aborted and its late answer overwrites the newer list (e.g. after switching the status filter).
-    it.skip('drops the answer to an older request', async () => {
+    it('drops the answer to an older request', async () => {
         serveAndRecord('get', '/organizations', async ({ request }) => {
             const isOlder = new URL(request.url).searchParams.get('status') === 'true';
             if (isOlder) await delay(50);
