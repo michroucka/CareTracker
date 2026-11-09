@@ -295,7 +295,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: ukončený zaměstnanec jde backendem přidat mezi pečovatele (formulář nabízí jen aktivní)")
     void terminatedEmployeeCannotBeAddedAsCaregiver() throws Exception {
         colleague.setActive(false);
         employeeRepository.save(colleague);
@@ -304,6 +303,18 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         assertThat(performedTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void terminatedCaregiverStaysOnRecordWhenItIsEdited() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, colleague);
+        colleague.setActive(false);
+        employeeRepository.save(colleague);
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request(client, task, colleague, caregiver))
+                .andExpect(status().isOk());
+
+        assertThat(caregiverIdsOf(record.getId())).containsExactlyInAnyOrder(colleague.getId(), caregiver.getId());
     }
 
     @ParameterizedTest

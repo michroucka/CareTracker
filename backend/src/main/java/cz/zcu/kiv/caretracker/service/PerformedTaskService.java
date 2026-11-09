@@ -211,16 +211,21 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     }
 
     /**
-     * Newly added caregivers must work in the client's department (caregivers already on the record may have
-     * moved since). A CAREGIVER must list themselves, otherwise they could not edit the record afterwards.
+     * Newly added caregivers must be active and work in the client's department (caregivers already on the record
+     * may have been terminated or moved since). A CAREGIVER must list themselves, otherwise they could not edit
+     * the record afterwards.
      *
-     * @throws ValidationException if a caregiver is from another department or a CAREGIVER left themselves out
+     * @throws ValidationException if a new caregiver is terminated or from another department, or a CAREGIVER left
+     *                             themselves out
      */
     private void validateCaregivers(PerformedTask performedTask, Client client, List<Employee> caregivers) {
         Set<Long> currentCaregiverIds = performedTask.getCaregivers() == null ? Set.of()
                 : performedTask.getCaregivers().stream().map(Employee::getId).collect(Collectors.toSet());
         for (Employee caregiver : caregivers) {
             boolean newlyAdded = !currentCaregiverIds.contains(caregiver.getId());
+            if (newlyAdded && !caregiver.getActive()) {
+                throw new ValidationException("Ukončeného zaměstnance nelze přidat mezi pečovatele");
+            }
             if (newlyAdded && !caregiver.getDepartment().getId().equals(client.getDepartment().getId())) {
                 throw new ValidationException("Pečovatel musí patřit do střediska klienta");
             }
