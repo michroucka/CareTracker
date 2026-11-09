@@ -7,7 +7,6 @@ import cz.zcu.kiv.caretracker.enums.Gender;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -37,13 +36,8 @@ public class TestData {
     private final IndividualPlanRepository individualPlanRepository;
     private final DailyRecordRepository dailyRecordRepository;
     private final TaskRepository taskRepository;
+    private final PerformedTaskRepository performedTaskRepository;
     private final PasswordEncoder passwordEncoder;
-
-    // field injection keeps the constructor untouched while other test domains extend this class in parallel
-    @Autowired
-    private TaskRepository taskRepository;
-    @Autowired
-    private PerformedTaskRepository performedTaskRepository;
 
     // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
     private String encodedPassword;
@@ -56,6 +50,7 @@ public class TestData {
                     IndividualPlanRepository individualPlanRepository,
                     DailyRecordRepository dailyRecordRepository,
                     TaskRepository taskRepository,
+                    PerformedTaskRepository performedTaskRepository,
                     PasswordEncoder passwordEncoder) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
@@ -65,6 +60,7 @@ public class TestData {
         this.individualPlanRepository = individualPlanRepository;
         this.dailyRecordRepository = dailyRecordRepository;
         this.taskRepository = taskRepository;
+        this.performedTaskRepository = performedTaskRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -187,16 +183,6 @@ public class TestData {
 
     public User superadmin() {
         return userRepository.save(account(UserRole.SUPERADMIN));
-    }
-
-    /** Catalog task of the organization priced per hour (100 Kč). */
-    public Task task(Organization organization) {
-        Task task = new Task();
-        task.setName("Úkon " + next());
-        task.setUnitPrice(100);
-        task.setUnitType(UnitType.HOUR);
-        task.setOrganization(organization);
-        return taskRepository.save(task);
     }
 
     /** One hour of the task for the client on 2 November 2026, performed by the caregiver. */
