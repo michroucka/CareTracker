@@ -98,7 +98,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         User user = new User();
         user.setEmployee(employee);
         user.setEmail(email);
-        user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
+        user.setRole(Boolean.TRUE.equals(isAdmin) ? UserRole.ADMIN : employee.getRole().toUserRole());
         user.setActive(true);
 
         String activationToken = UUID.randomUUID().toString();
@@ -125,7 +125,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         }
 
         user.setEmail(email);
-        user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
+        user.setRole(Boolean.TRUE.equals(isAdmin) ? UserRole.ADMIN : employee.getRole().toUserRole());
 
         userRepository.save(user);
     }

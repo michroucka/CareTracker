@@ -10,7 +10,6 @@ import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
 import cz.zcu.kiv.caretracker.support.TestImages;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -28,7 +27,6 @@ import java.util.Set;
 
 import static cz.zcu.kiv.caretracker.support.AccessScenario.Actor.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,8 +39,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
 
     private static final Set<Actor> DEPARTMENT_STAFF = EnumSet.of(SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER_OF_CLIENT, CAREGIVER);
     private static final Set<Actor> EMPLOYEE_MANAGERS = EnumSet.of(SUPERADMIN, ADMIN, COORDINATOR);
-    // resending the activation e-mail does not check the employee's department (finding in docs/testing/PLAN.md)
-    private static final Set<Actor> RESEND_WITHOUT_SCOPE_CHECK = EnumSet.of(ADMIN_OTHER_ORG, COORDINATOR_OTHER_DEPT, COORDINATOR_OTHER_ORG);
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -142,7 +138,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
     @ParameterizedTest
     @EnumSource(Actor.class)
     void resendActivationEmail(Actor actor) throws Exception {
-        assumeFalse(RESEND_WITHOUT_SCOPE_CHECK.contains(actor), "known gap: resend does not check the employee's department");
         testData.withPendingAccount(employee);
 
         perform(actor, post("/api/employees/{id}/resend", employee.getId()))
@@ -165,7 +160,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
                 .andExpect(allowedOnlyFor(EMPLOYEE_MANAGERS, actor));
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor smí vytvořit administrátora")
     @Test
     void coordinatorCannotCreateAdminAccount() throws Exception {
         Map<String, Object> request = employeeRequest("CAREGIVER", scenario.department.getId());
@@ -178,7 +172,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
         assertThat(userRepository.findAll()).noneMatch(account -> "novy.admin@caretracker.test".equals(account.getEmail()));
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor smí přidělit roli koordinátora a vedoucího")
     @ParameterizedTest
     @EnumSource(value = EmployeeRole.class, names = {"COORDINATOR", "MANAGER"})
     void coordinatorCannotCreateEmployeeWithHigherRole(EmployeeRole role) throws Exception {
@@ -187,7 +180,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor si sám přidělí administrátora")
     @Test
     void coordinatorCannotMakeThemselvesAdmin() throws Exception {
         Employee coordinator = scenario.employee(COORDINATOR);
@@ -203,7 +195,6 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
                 .isEqualTo(UserRole.COORDINATOR);
     }
 
-    @Disabled("Nález v docs/testing/PLAN.md: koordinátor změní e-mail administrátora ve svém středisku")
     @Test
     void coordinatorCannotChangeAdminEmail() throws Exception {
         Employee admin = scenario.employee(ADMIN);
@@ -217,6 +208,36 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
         assertThat(userRepository.findById(admin.getUser().getId())).get()
                 .extracting(account -> account.getEmail())
                 .isEqualTo(admin.getUser().getEmail());
+    }
+
+    @Test
+    void coordinatorCanKeepRoleOfCoordinator() throws Exception {
+        Employee otherCoordinator = testData.employee(scenario.department, EmployeeRole.COORDINATOR);
+
+        perform(COORDINATOR, put("/api/employees/{id}", otherCoordinator.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(json(employeeRequest("COORDINATOR", scenario.department.getId()))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void coordinatorCannotTerminateAdmin() throws Exception {
+        perform(COORDINATOR, put("/api/employees/{id}/terminate", scenario.employee(ADMIN).getId()))
+                .andExpect(status().isForbidden());
+
+        assertThat(employeeRepository.findById(scenario.employee(ADMIN).getId())).get()
+                .extracting(Employee::getActive)
+                .isEqualTo(true);
+    }
+
+    @Test
+    void adminCanGrantAdminAccount() throws Exception {
+        Map<String, Object> request = employeeRequest("COORDINATOR", scenario.department.getId());
+        request.put("email", "novy.admin@caretracker.test");
+        request.put("isAdmin", true);
+
+        perform(ADMIN, post("/api/employees").contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isAdmin").value(true));
     }
 
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
