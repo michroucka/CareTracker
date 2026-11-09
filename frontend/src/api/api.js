@@ -13,6 +13,19 @@ export function csrfHeader() {
     return cookie ? { [CSRF_HEADER]: decodeURIComponent(cookie.slice(CSRF_COOKIE.length + 1)) } : {};
 }
 
+const SERVER_UNREACHABLE = "Server není dostupný";
+
+/**
+ * Message to show the user: the server's own message, or a Czech one when there was no answer at all.
+ * fetch rejects with a TypeError ("Failed to fetch" in the browser's language) when the server is unreachable.
+ * @param {unknown} error
+ * @returns {string}
+ */
+export function userMessageOf(error) {
+    if (error instanceof TypeError) return SERVER_UNREACHABLE;
+    return error?.message || SERVER_UNREACHABLE;
+}
+
 /**
  * Dispatches an "auth:unauthorized" custom event when the response status is 401,
  * triggering the global logout flow in AuthContext.
@@ -195,10 +208,11 @@ export async function uploadFile(endpoint, file) {
 }
 
 /**
- * Fetches a binary image and returns a blob object URL suitable for use in an <img> src.
+ * Fetches a binary image and returns a blob object URL suitable for use in an <img> src, or null when
+ * the server answers 204 No Content (there is no image, e.g. a payment QR without a bank account).
  * The caller is responsible for calling URL.revokeObjectURL() when the URL is no longer needed.
  * @param {string} endpoint
- * @returns {Promise<string>} blob object URL
+ * @returns {Promise<string | null>} blob object URL, or null for 204
  */
 export async function fetchImage(endpoint) {
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -211,6 +225,7 @@ export async function fetchImage(endpoint) {
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
+    if (response.status === 204) return null;
 
     const blob = await response.blob();
     return URL.createObjectURL(blob);

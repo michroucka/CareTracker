@@ -140,10 +140,7 @@ describe('MonthlyReport', () => {
         expect(Object.fromEntries(qrRequests[0].searchParams)).toEqual({ clientId: String(CLIENT_ID), month: '11', year: '2026' });
     });
 
-    // Nález: the backend answers 204 No Content when the organization has no bank account set up
-    // (ReceiptService.generatePaymentQrCode returns null). fetchImage treats 204 as success and makes
-    // an object URL of the empty body, so the dialog shows a broken image instead of saying there is no QR payment.
-    it.skip('does not show a QR code when the organization has no bank account (204)', async () => {
+    it('does not show a QR code when the organization has no bank account (204)', async () => {
         serveMonths();
         server.use(http.get(apiUrl('/performed-tasks/payment-qr'), () => new HttpResponse(null, { status: 204 })));
         const { user } = renderReport();
@@ -153,6 +150,7 @@ describe('MonthlyReport', () => {
 
         await waitFor(() => expect(screen.queryByLabelText('Načítání QR kódu')).not.toBeInTheDocument());
         expect(screen.queryByRole('img', { name: /QR kód pro platbu/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/organizace nemá nastavený bankovní účet/)).toBeInTheDocument();
     });
 
     it('closes the QR dialog when the code cannot be loaded', async () => {

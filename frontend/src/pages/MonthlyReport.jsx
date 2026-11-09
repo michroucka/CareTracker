@@ -37,16 +37,20 @@ function SummaryTile({ label, value, children }) {
 
 function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
     const [qrUrl, setQrUrl] = React.useState(null);
+    const [isQrUnavailable, setIsQrUnavailable] = React.useState(false);
 
     React.useEffect(() => {
         if (!open) return undefined;
         let objectUrl = null;
         let isCurrent = true;
         setQrUrl(null);
+        setIsQrUnavailable(false);
         fetchImage(`/performed-tasks/payment-qr?clientId=${clientId}&month=${period.month + 1}&year=${period.year}`)
             .then((url) => {
                 objectUrl = url;
-                if (isCurrent) setQrUrl(url);
+                if (!isCurrent) return;
+                if (url) setQrUrl(url);
+                else setIsQrUnavailable(true);
             })
             .catch(() => isCurrent && onOpenChange(false));
         return () => {
@@ -66,11 +70,17 @@ function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
                         {MONTHS[period.month]} {period.year}: <span className="font-medium text-foreground tabular-nums">{formatCurrency(total)}</span>. Naskenujte kód v aplikaci své banky.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="mx-auto grid size-64 place-items-center rounded-lg bg-white p-2">
-                    {qrUrl
-                        ? <img src={qrUrl} alt={`QR kód pro platbu ${formatCurrency(total)}`} className="size-full" />
-                        : <IconLoader2 className="size-6 animate-spin text-muted-foreground" aria-label="Načítání QR kódu" />}
-                </div>
+                {isQrUnavailable ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                        QR platbu nelze vytvořit, organizace nemá nastavený bankovní účet.
+                    </p>
+                ) : (
+                    <div className="mx-auto grid size-64 place-items-center rounded-lg bg-white p-2">
+                        {qrUrl
+                            ? <img src={qrUrl} alt={`QR kód pro platbu ${formatCurrency(total)}`} className="size-full" />
+                            : <IconLoader2 className="size-6 animate-spin text-muted-foreground" aria-label="Načítání QR kódu" />}
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );
