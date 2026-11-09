@@ -1,3 +1,5 @@
+import { toLocalDate } from "@/lib/dates";
+
 const currencyFormatter = new Intl.NumberFormat("cs-CZ", { style: "currency", currency: "CZK", maximumFractionDigits: 0 });
 const numberFormatter = new Intl.NumberFormat("cs-CZ");
 const longDateFormatter = new Intl.DateTimeFormat("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
@@ -26,7 +28,7 @@ export function formatDuration(minutes = 0) {
 }
 
 function startOfDay(date) {
-    const day = new Date(date);
+    const day = toLocalDate(date);
     day.setHours(0, 0, 0, 0);
     return day;
 }
@@ -35,7 +37,7 @@ export function daysFromToday(date) {
     return Math.round((startOfDay(date) - startOfDay(new Date())) / DAY_MS);
 }
 
-/** "Dnes 14:30", "Včera 9:05" or "5. 11." */
+/** "Dnes 14:30", "Včera 09:05" or "5. 11." */
 export function formatRecordDate(date) {
     const days = daysFromToday(date);
     if (days === 0) return `Dnes ${timeFormatter.format(new Date(date))}`;
@@ -46,6 +48,7 @@ export function formatRecordDate(date) {
 /** "před 3 dny", "před 2 týdny", "před 4 měsíci" */
 export function formatAgo(date) {
     const days = -daysFromToday(date);
+    if (days <= 0) return "dnes";
     if (days < 14) return `před ${days} ${pluralize(days, ["dnem", "dny", "dny"])}`;
     if (days < 60) {
         const weeks = Math.floor(days / 7);
@@ -96,7 +99,7 @@ export function projectMonthEnd(valueSoFar, now = new Date()) {
     return Math.round((valueSoFar / elapsed) * total);
 }
 
-/** 265 400 → "265 tis.", 1 234 567 → "1,2 mil." – for compact estimates */
+/** 265 400 → "265 tis.", 1 234 567 → "1,23 mil." – for compact estimates */
 export function formatCompact(value) {
     return new Intl.NumberFormat("cs-CZ", { notation: "compact", maximumSignificantDigits: 3 }).format(value);
 }

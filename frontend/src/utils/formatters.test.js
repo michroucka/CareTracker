@@ -211,9 +211,7 @@ describe('formatDate – exact output', () => {
         expect(normalizeSpaces(formatDate('2024-12-13T23:30:00'))).toBe('13. 12. 2024');
     });
 
-    // Nález: a date-only string such as "1950-03-15" (LocalDate from the backend, e.g. dateOfBirth or
-    // plannedUpdateDate) is parsed by new Date() as UTC midnight. West of UTC it shows the previous day.
-    test.skip('shows the same day for a date-only string west of UTC', () => {
+    test('shows the same day for a date-only string west of UTC', () => {
         process.env.TZ = 'America/New_York';
 
         expect(normalizeSpaces(formatDate('1950-03-15'))).toBe('15. 3. 1950');

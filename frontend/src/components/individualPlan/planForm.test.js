@@ -41,9 +41,7 @@ describe("toFormValues", () => {
         expect(values.plannedUpdateDate).toBe("2027-05-08");
     });
 
-    // Nález: monthsFromToday uses Date.setMonth, which overflows a missing day into the next month.
-    // On 31 August the review lands on 3 March instead of the end of February (similarly 31 May → 1 December).
-    it.skip("plans the review for the end of a shorter month instead of overflowing it", () => {
+    it("plans the review for the end of a shorter month instead of overflowing it", () => {
         setToday(2026, 7, 31);
 
         expect(toFormValues(null).plannedUpdateDate).toBe("2027-02-28");
@@ -91,16 +89,13 @@ describe("planStatus", () => {
         ["2026-11-15", "pending", "Za 7 dní"],
         ["2026-11-16", "outline", "Za 8 dní"],
     ])("review on %s seen on 2026-11-08 → %s %j", (plannedUpdateDate, variant, label) => {
-        // pinned to the app's home zone; west of UTC the count is off by one (see the Nález below)
         process.env.TZ = "Europe/Prague";
         setToday(2026, 10, 8);
 
         expect(planStatus(plannedUpdateDate)).toEqual({ variant, label });
     });
 
-    // Nález: daysFromToday parses "YYYY-MM-DD" with new Date(), i.e. as UTC midnight. West of UTC that is
-    // the previous local day, so the badge is one day off (here "Za 1 den" instead of "Za 2 dny").
-    it.skip("counts calendar days west of UTC as well", () => {
+    it("counts calendar days west of UTC as well", () => {
         process.env.TZ = "America/New_York";
         setToday(2026, 10, 8);
 

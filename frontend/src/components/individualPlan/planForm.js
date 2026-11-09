@@ -3,7 +3,7 @@ import {
     IconScale, IconShirt, IconStar, IconThumbDown, IconThumbUp, IconToolsKitchen2, IconWalk,
 } from "@tabler/icons-react";
 import { daysFromToday, pluralize } from "@/components/dashboard/dashboardFormat";
-import { todayIsoDate, toIsoDate } from "@/lib/dates";
+import { addMonths, todayIsoDate, toIsoDate } from "@/lib/dates";
 
 export const PLAN_SECTIONS = [
     {
@@ -40,9 +40,7 @@ const FIELD_NAMES = PLAN_SECTIONS.flatMap((section) => section.fields.map((field
 export const PLAN_REVIEW_MONTHS = 6;
 
 function monthsFromToday(months) {
-    const date = new Date();
-    date.setMonth(date.getMonth() + months);
-    return toIsoDate(date);
+    return toIsoDate(addMonths(new Date(), months));
 }
 
 /** Every save creates a new version processed today, so the dates always start fresh. */

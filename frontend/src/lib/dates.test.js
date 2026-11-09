@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import process from "node:process";
-import { fromIsoDate, todayIsoDate, toIsoDate } from "./dates";
+import { addMonths, fromIsoDate, toLocalDate, todayIsoDate, toIsoDate } from "./dates";
 
 const TIME_ZONES = ["Europe/Prague", "UTC", "America/New_York", "Pacific/Kiritimati"];
 const originalTimeZone = process.env.TZ;
@@ -109,5 +109,34 @@ describe("todayIsoDate", () => {
         vi.setSystemTime(now);
 
         expect(todayIsoDate()).toBe(expected);
+    });
+});
+
+describe("toLocalDate", () => {
+    afterEach(() => useTimeZone(originalTimeZone));
+
+    it.each(TIME_ZONES)("reads a date-only string as that calendar day in %s", (timeZone) => {
+        useTimeZone(timeZone);
+
+        expect(toIsoDate(toLocalDate("1950-03-15"))).toBe("1950-03-15");
+    });
+
+    it("reads a date-time string and a Date as they are", () => {
+        const date = new Date(2026, 10, 9, 14, 30);
+
+        expect(toLocalDate(date).getTime()).toBe(date.getTime());
+        expect(toLocalDate("2026-11-09T14:30:00").getHours()).toBe(14);
+    });
+});
+
+describe("addMonths", () => {
+    it.each([
+        ["2026-03-15", 6, "2026-09-15"],
+        ["2026-08-31", 6, "2027-02-28"],
+        ["2027-08-31", 6, "2028-02-29"],
+        ["2026-05-31", 6, "2026-11-30"],
+        ["2026-12-31", 2, "2027-02-28"],
+    ])("%s + %i months → %s", (start, months, expected) => {
+        expect(toIsoDate(addMonths(fromIsoDate(start), months))).toBe(expected);
     });
 });

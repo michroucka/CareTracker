@@ -110,8 +110,7 @@ describe("formatAgo", () => {
         expect(formatAgo(new Date(2026, 10, 9 - days, 10, 0))).toBe(expected);
     });
 
-    // Nález: activity from today reads "před 0 dny" (e.g. the organization's last activity on the platform overview).
-    it.skip("says today for activity from today", () => {
+    it("says today for activity from today", () => {
         setNow(new Date(2026, 10, 9, 12, 0));
 
         expect(formatAgo(new Date(2026, 10, 9, 8, 0))).toBe("dnes");
