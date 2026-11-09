@@ -281,6 +281,20 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     }
 
     /**
+     * Resends the activation email for the client's account, the same way as for an employee.
+     *
+     * @param client the client whose account is still waiting for activation
+     * @throws ResourceNotFoundException if the client has no user account
+     * @throws ValidationException if the account is already activated or the email fails to send
+     */
+    @Transactional
+    public void resendActivationEmailForClient(Client client) {
+        User user = userRepository.findByClientId(client.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Klient nemá v aplikaci účet"));
+        resendActivationEmail(user);
+    }
+
+    /**
      * Generates a new activation token and resends the activation email.
      * Throws if the account is already activated.
      *
@@ -305,10 +319,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         userRepository.save(user);
 
         try {
-            String recipientName = user.getEmployee() != null
-                    ? user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName()
-                    : "uživateli";
-            emailService.sendActivationEmail(user.getEmail(), activationToken, recipientName);
+            emailService.sendActivationEmail(user.getEmail(), activationToken, recipientName(user));
         } catch (Exception e) {
             log.error("Failed to resend activation email for user: {}, error: {}", user.getEmail(), e.getMessage());
             throw new ValidationException("Nepodařilo se odeslat aktivační email");
@@ -437,7 +448,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     public MessageResponseDTO sendResetPasswordEmail() {
         User user = getCurrentUser();
         String token = issueResetToken(user);
-        emailService.sendPasswordResetEmail(user.getEmail(), token, resetMailRecipientName(user));
+        emailService.sendPasswordResetEmail(user.getEmail(), token, recipientName(user));
         return new MessageResponseDTO(true, "Email pro reset hesla byl odeslán");
     }
 
@@ -457,7 +468,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             User user = matches.getFirst();
             String token = issueResetToken(user);
             String recipientEmail = user.getEmail();
-            String recipientName = resetMailRecipientName(user);
+            String recipientName = recipientName(user);
             // Sending takes long enough to reveal by timing that the account exists, so the response does not wait for it.
             mailExecutor.execute(() -> emailService.sendPasswordResetEmail(recipientEmail, token, recipientName));
         }
@@ -481,7 +492,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
         return token;
     }
 
-    private static String resetMailRecipientName(User user) {
+    private static String recipientName(User user) {
         if (user.getEmployee() != null) {
             return user.getEmployee().getFullName();
         }

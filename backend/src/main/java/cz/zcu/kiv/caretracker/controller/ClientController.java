@@ -136,6 +136,16 @@ public class ClientController {
         return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
     }
 
+    @PostMapping("/{id}/account/resend")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<MessageResponseDTO> resendClientAccountActivation(@PathVariable Long id) {
+        log.info("Resending activation email to client with id: {}", id);
+        Client client = clientService.getClientForUpdate(id);
+        userService.resendActivationEmailForClient(client);
+
+        return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
+    }
+
     @PutMapping("/{id}/account/deactivate")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
     public ResponseEntity<Void> deactivateClientAccount(@PathVariable Long id) {

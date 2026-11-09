@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { IconArrowRight, IconBan, IconCircleCheck, IconDots, IconFileDescription, IconLock, IconLockOpen, IconPlus, IconUserPlus } from "@tabler/icons-react";
+import { IconArrowRight, IconBan, IconCircleCheck, IconDots, IconFileDescription, IconLock, IconLockOpen, IconMailForward, IconPlus, IconUserPlus } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useClients } from "../hooks/useClients.jsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
@@ -11,7 +11,7 @@ import { ROLES } from "../constants/roles.js";
 import { removeDiacritics } from "../utils/formatters.js";
 import { ClientAccountDialog } from "@/components/clients/ClientAccountDialog";
 import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialog";
-import { clientAccountState } from "@/components/clients/clientAccount";
+import { canResendClientActivation, clientAccountState } from "@/components/clients/clientAccount";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { TableEmptyRow } from "@/components/data/EmptyState";
 import { TableLoadingRows } from "@/components/data/TableLoadingRows";
@@ -46,7 +46,7 @@ function Clients() {
     const [caregiverFilter, setCaregiverFilter] = useMultiSelectParam("caregivers");
     const [dialog, setDialog] = React.useState(null);
 
-    const { clients, setClients, loading, fetchClients, terminateClient, activateClient, createClientAccount, deactivateClientAccount, activateClientAccount } = useClients();
+    const { clients, setClients, loading, fetchClients, terminateClient, activateClient, createClientAccount, deactivateClientAccount, activateClientAccount, resendClientActivation } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { employees, fetchEmployees } = useEmployees();
 
@@ -192,6 +192,9 @@ function Clients() {
                                                     <DropdownMenuItem onSelect={() => openDialog("blockAccount", client)}><IconLock /> Zablokovat účet</DropdownMenuItem>
                                                 ) : (
                                                     <DropdownMenuItem onSelect={() => activateClientAccount(client.id)}><IconLockOpen /> Odblokovat účet</DropdownMenuItem>
+                                                )}
+                                                {canResendClientActivation(client) && (
+                                                    <DropdownMenuItem onSelect={() => resendClientActivation(client.id)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
                                                 )}
                                                 {client.active ? (
                                                     <DropdownMenuItem variant="destructive" onSelect={() => openDialog("terminate", client)}><IconBan /> Ukončit smlouvu</DropdownMenuItem>
