@@ -119,13 +119,12 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Nízká: koordinátor a pečovatel viděli v katalogu i neaktivní úkony. Teď jen aktivní.
   - Nízká: neznámé `?view=` na nástěnce vracelo 400. Teď spadne na výchozí pohled jako nepovolený pohled.
   - E-mail bez `isAdmin` při vytvoření/úpravě zaměstnance spadl na 500 (`NullPointerException`).
-- Pozorováno, beze změny (**[ty]** rozhodnout, jestli je to záměr):
-  - Provedený úkon: pečovatelé se kontrolují jen proti organizaci, ne středisku (`PerformedTaskService`). UI nabízí jen středisko. Pečovatel může vytvořit záznam bez sebe a pak ho nemůže upravit.
-  - `PUT /api/departments/{id}` s `active: false` deaktivuje středisko bez kontroly aktivních klientů a zaměstnanců, kterou dělá `/terminate`.
-  - Superadmin bez `organizationId` dostane prázdný seznam úkonů i středisek (`findByOrganizationId(null)`). Frontend organizaci vždy posílá.
-  - Superadmin smí nastavit vedoucího/koordinátora z libovolné organizace (frontend nabízí jen tu správnou). Koordinátor teď kontrolu má, vedoucí organizace ne.
-  - Pečovatel vidí s `status=false` neaktivní střediska. Koordinátor a pečovatel vidí všechna střediska organizace (pro filtry, záměr).
-  - E-mail v `app_user` není unikátní v DB, kontroluje se jen v `PUT /api/user/me`. Unikátní index až po kontrole dat.
+- [x] Pozorování z T2a, rozhodnuto 2026-11-09:
+  - Provedený úkon: nově přidaný pečovatel musí být ze střediska klienta (pečovatel, který mezitím přešel jinam, na starém záznamu zůstává). Pečovatel musí být mezi pečovateli svého záznamu, koordinátor a admin ne. Formulář to hlídá taky.
+  - `PUT /api/departments/{id}` stav `active` nemění, deaktivace jen přes `/terminate` (s kontrolou aktivních klientů a zaměstnanců).
+  - Vedoucí organizace musí patřit do té organizace (i u superadmina).
+  - E-mail účtu se kontroluje na duplicitu (bez ohledu na velikost písmen) při vytvoření a úpravě účtu zaměstnance, klienta i v `PUT /api/user/me`. Unikátní index v DB odložen do kontroly dat.
+  - Necháno beze změny: superadmin bez `organizationId` dostane prázdný seznam úkonů a středisek (frontend organizaci vždy posílá). Koordinátor a pečovatel vidí všechna střediska organizace včetně neaktivních (potřebují je filtry).
 
 #### T2b – Doménová logika (unit)
 - [ ] **[claude]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.

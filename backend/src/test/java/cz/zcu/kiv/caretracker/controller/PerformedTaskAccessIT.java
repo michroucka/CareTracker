@@ -1,8 +1,10 @@
 package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.entity.Client;
+import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.Task;
+import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
@@ -46,6 +48,9 @@ class PerformedTaskAccessIT extends AbstractIntegrationTest {
     @Autowired
     private PerformedTaskRepository performedTaskRepository;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     private AccessScenario scenario;
     private Task task;
     private PerformedTask performedTask;
@@ -82,7 +87,7 @@ class PerformedTaskAccessIT extends AbstractIntegrationTest {
     @EnumSource(Actor.class)
     void createRecord(Actor actor) throws Exception {
         perform(actor, post("/api/performed-tasks").contentType(MediaType.APPLICATION_JSON)
-                .content(json(recordRequest(scenario.client, task, scenario.employee(CAREGIVER_OF_CLIENT).getId()))))
+                .content(json(recordRequest(scenario.client, task, recordedCaregiverFor(actor).getId()))))
                 .andExpect(allowedOnlyFor(DEPARTMENT_STAFF, actor));
     }
 
@@ -209,6 +214,46 @@ class PerformedTaskAccessIT extends AbstractIntegrationTest {
 
     private Client otherClientInDepartment() {
         return testData.client(scenario.employee(CAREGIVER));
+    }
+
+    @Test
+    void coordinatorCannotAddCaregiverFromOtherDepartment() throws Exception {
+        perform(COORDINATOR, post("/api/performed-tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(json(recordRequest(scenario.client, task, scenario.employee(CAREGIVER_OTHER_DEPT).getId()))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void caregiverMustBeAmongCaregiversOfOwnRecord() throws Exception {
+        perform(CAREGIVER_OF_CLIENT, post("/api/performed-tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(json(recordRequest(scenario.client, task, scenario.employee(CAREGIVER).getId()))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void coordinatorMayRecordWorkOfAnotherCaregiver() throws Exception {
+        perform(COORDINATOR, post("/api/performed-tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(json(recordRequest(scenario.client, task, scenario.employee(CAREGIVER).getId()))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void recordStaysEditableAfterItsCaregiverMovedToOtherDepartment() throws Exception {
+        Employee caregiver = scenario.employee(CAREGIVER_OF_CLIENT);
+        caregiver.setDepartment(scenario.otherDepartment);
+        employeeRepository.save(caregiver);
+
+        perform(COORDINATOR, put("/api/performed-tasks/{id}", performedTask.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(json(recordRequest(scenario.client, task, caregiver.getId()))))
+                .andExpect(status().isOk());
+    }
+
+    // a caregiver records own work, other staff record the work of the client's caregiver
+    private Employee recordedCaregiverFor(Actor actor) {
+        return switch (actor) {
+            case CAREGIVER_OF_CLIENT, CAREGIVER, CAREGIVER_OTHER_DEPT, CAREGIVER_OTHER_ORG -> scenario.employee(actor);
+            default -> scenario.employee(CAREGIVER_OF_CLIENT);
+        };
     }
 
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {

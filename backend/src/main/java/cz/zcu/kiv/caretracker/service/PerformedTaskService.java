@@ -6,6 +6,7 @@ import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.mapper.PerformedTaskMapper;
 import cz.zcu.kiv.caretracker.repository.*;
 import cz.zcu.kiv.caretracker.specification.PerformedTaskSpecifications;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask, PerformedTaskDTO> {
@@ -138,6 +140,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         for (Employee caregiver : caregivers) {
             validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
         }
+        validateCaregivers(performedTask, client, caregivers);
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
         return performedTaskRepository.save(performedTask);
@@ -194,6 +197,29 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         validateCaregiverAssignment(task);
 
         performedTaskRepository.delete(task);
+    }
+
+    /**
+     * Newly added caregivers must work in the client's department (caregivers already on the record may have
+     * moved since). A CAREGIVER must list themselves, otherwise they could not edit the record afterwards.
+     *
+     * @throws ValidationException if a caregiver is from another department or a CAREGIVER left themselves out
+     */
+    private void validateCaregivers(PerformedTask performedTask, Client client, List<Employee> caregivers) {
+        Set<Long> currentCaregiverIds = performedTask.getCaregivers() == null ? Set.of()
+                : performedTask.getCaregivers().stream().map(Employee::getId).collect(Collectors.toSet());
+        for (Employee caregiver : caregivers) {
+            boolean newlyAdded = !currentCaregiverIds.contains(caregiver.getId());
+            if (newlyAdded && !caregiver.getDepartment().getId().equals(client.getDepartment().getId())) {
+                throw new ValidationException("Pečovatel musí patřit do střediska klienta");
+            }
+        }
+
+        User currentUser = getCurrentUser();
+        if (currentUser.getRole() == UserRole.CAREGIVER
+                && caregivers.stream().noneMatch(c -> c.getId().equals(currentUser.getEmployee().getId()))) {
+            throw new ValidationException("Mezi pečovateli musíte být i vy");
+        }
     }
 
     /**

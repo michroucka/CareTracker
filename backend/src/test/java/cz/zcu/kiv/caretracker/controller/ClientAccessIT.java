@@ -249,6 +249,15 @@ class ClientAccessIT extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void cannotCreateClientAccountWithEmailOfAnotherAccount() throws Exception {
+        Client clientWithoutAccount = testData.client(scenario.employee(CAREGIVER_OF_CLIENT));
+
+        perform(ADMIN, post("/api/clients/{id}/account/create", clientWithoutAccount.getId())
+                .param("email", scenario.user(CAREGIVER).getEmail()))
+                .andExpect(status().isBadRequest());
+    }
+
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.with(loggedInAs(scenario.user(actor))));
     }

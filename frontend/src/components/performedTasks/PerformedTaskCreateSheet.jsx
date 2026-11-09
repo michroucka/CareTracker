@@ -2,14 +2,16 @@ import React from "react";
 import { RecordSheet } from "@/components/data/RecordSheet";
 import { Button } from "@/components/ui/button";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { useAuth } from "@/contexts/AuthContext";
 import { PerformedTaskFields } from "./PerformedTaskFields";
-import { emptyPerformedTask, toPersonOptions, toRequest, validatePerformedTask } from "./performedTaskForm";
+import { emptyPerformedTask, requiredCaregiverId, toPersonOptions, toRequest, validatePerformedTask } from "./performedTaskForm";
 
 /**
  * New performed task in a sheet, so the list stays visible next to it. `defaultCaregiverId` pre-selects
  * the signed-in caregiver.
  */
 export function PerformedTaskCreateSheet({ open, onOpenChange, onCreate, clients, tasks, caregivers, defaultCaregiverId }) {
+    const { user } = useAuth();
     const caregiverId = caregivers.some((caregiver) => caregiver.id === defaultCaregiverId) ? defaultCaregiverId : null;
     const form = useRecordForm(emptyPerformedTask(caregiverId));
     const { reset } = form;
@@ -20,7 +22,7 @@ export function PerformedTaskCreateSheet({ open, onOpenChange, onCreate, clients
 
     const create = async (event) => {
         event.preventDefault();
-        const validate = (values) => validatePerformedTask(values, tasks.find((task) => task.id === values.taskId));
+        const validate = (values) => validatePerformedTask(values, tasks.find((task) => task.id === values.taskId), requiredCaregiverId(user));
         const created = await form.submit(validate, (values) => onCreate(toRequest(values)));
         if (created) onOpenChange(false);
     };

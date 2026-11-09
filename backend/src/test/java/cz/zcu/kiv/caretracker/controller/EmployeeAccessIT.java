@@ -240,6 +240,27 @@ class EmployeeAccessIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.isAdmin").value(true));
     }
 
+    @Test
+    void cannotCreateAccountWithEmailOfAnotherAccount() throws Exception {
+        Map<String, Object> request = employeeRequest("CAREGIVER", scenario.department.getId());
+        request.put("email", scenario.user(CAREGIVER).getEmail().toUpperCase());
+        request.put("isAdmin", false);
+
+        perform(ADMIN, post("/api/employees").contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void employeeKeepsOwnEmailOnUpdate() throws Exception {
+        Employee caregiver = scenario.employee(CAREGIVER);
+        Map<String, Object> request = employeeRequest("CAREGIVER", scenario.department.getId());
+        request.put("email", caregiver.getUser().getEmail());
+        request.put("isAdmin", false);
+
+        perform(ADMIN, put("/api/employees/{id}", caregiver.getId()).contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isOk());
+    }
+
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.with(loggedInAs(scenario.user(actor))));
     }

@@ -2,6 +2,7 @@ package cz.zcu.kiv.caretracker.controller;
 
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Organization;
+import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
@@ -129,6 +130,19 @@ class OrganizationAccessIT extends AbstractIntegrationTest {
 
         perform(actor, put("/api/organizations/{id}/activate", organization.getId()))
                 .andExpect(allowedOnlyFor(ONLY_SUPERADMIN, actor));
+    }
+
+    @Test
+    void superadminCannotMakeEmployeeOfOtherOrganizationManager() throws Exception {
+        Employee outsider = scenario.employee(CAREGIVER_OTHER_ORG);
+
+        perform(SUPERADMIN, put("/api/organizations/{id}", organization.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(json(organizationRequest(outsider.getId()))))
+                .andExpect(status().isBadRequest());
+
+        assertThat(userRepository.findById(outsider.getUser().getId())).get()
+                .extracting(User::getRole)
+                .isEqualTo(UserRole.CAREGIVER);
     }
 
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {

@@ -182,6 +182,20 @@ class DepartmentAccessIT extends AbstractIntegrationTest {
                 .andExpect(allowedOnlyFor(DEPARTMENT_MANAGERS, actor));
     }
 
+    @Test
+    void updateCannotDeactivateDepartment() throws Exception {
+        testData.employee(department, EmployeeRole.CAREGIVER);
+        Map<String, Object> request = departmentRequest(scenario.organization.getId());
+        request.put("active", false);
+
+        perform(ADMIN, put("/api/departments/{id}", department.getId()).contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isOk());
+
+        assertThat(departmentRepository.findById(department.getId())).get()
+                .extracting(Department::getActive)
+                .isEqualTo(true);
+    }
+
     private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.with(loggedInAs(scenario.user(actor))));
     }
