@@ -1,14 +1,23 @@
 package cz.zcu.kiv.caretracker.exception;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import cz.zcu.kiv.caretracker.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -188,6 +197,82 @@ public class GlobalExceptionHandler {
         return errorResponse(HttpStatus.NOT_FOUND, "Not Found", "Požadovaná adresa neexistuje", request);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed",
+                "Metoda " + ex.getMethod() + " není pro tuto adresu podporována", request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type",
+                "Nepodporovaný formát obsahu požadavku", request);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        String message = "Neplatný formát dat v požadavku";
+        if (ex.getCause() instanceof JsonMappingException mappingException && !mappingException.getPath().isEmpty()) {
+            message = "Neplatná hodnota pole '" + fieldPath(mappingException) + "'";
+        }
+
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request", message, request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Neplatná hodnota parametru '" + ex.getName() + "'", request);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Chybí povinný parametr '" + ex.getParameterName() + "'", request);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(
+            MissingServletRequestPartException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Chybí povinná část požadavku '" + ex.getRequestPartName() + "'", request);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(
+            MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.PAYLOAD_TOO_LARGE, "Payload Too Large",
+                "Soubor je příliš velký", request);
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipart(
+            MultipartException ex,
+            HttpServletRequest request) {
+
+        return errorResponse(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Požadavek se souborem se nepodařilo zpracovat", request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
@@ -203,6 +288,22 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /** JSON path of the invalid value in the request body, e.g. {@code taskIds[1]} or {@code address.city}. */
+    private static String fieldPath(JsonMappingException ex) {
+        StringBuilder path = new StringBuilder();
+        for (JsonMappingException.Reference reference : ex.getPath()) {
+            if (reference.getFieldName() != null) {
+                if (!path.isEmpty()) {
+                    path.append('.');
+                }
+                path.append(reference.getFieldName());
+            } else {
+                path.append('[').append(reference.getIndex()).append(']');
+            }
+        }
+        return path.toString();
     }
 
     private ResponseEntity<ErrorResponse> errorResponse(
