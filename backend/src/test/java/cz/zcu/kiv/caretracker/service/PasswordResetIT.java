@@ -157,7 +157,6 @@ class PasswordResetIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: resetPassword volá validateToken, ale ignoruje jeho výsledek, takže prošlý token heslo změní")
     void expiredTokenCannotChangePassword() throws Exception {
         String token = requestedToken();
         clock.fixAt(EXPIRY.plusSeconds(1));

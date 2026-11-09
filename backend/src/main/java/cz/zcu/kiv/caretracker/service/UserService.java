@@ -99,7 +99,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
     public MessageResponseDTO resetPassword(PasswordResetRequestDTO dto) {
         User user = userRepository.findByActivationToken(dto.getToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Neplatný token"));
-        validateToken(dto.getToken());
+        if (user.getTokenExpiry().isBefore(LocalDateTime.now(clock))) {
+            throw new TokenExpiredException("Platnost odkazu pro reset hesla vypršela");
+        }
 
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
