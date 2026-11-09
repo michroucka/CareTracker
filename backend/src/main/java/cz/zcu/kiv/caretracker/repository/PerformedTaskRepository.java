@@ -23,8 +23,6 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
     List<PerformedTask> findTop5ByDepartmentIdOrderByDateDesc(Long departmentId);
     List<PerformedTask> findTop5ByCaregivers_IdOrderByDateDesc(Long caregiverId);
 
-    List<PerformedTask> findByDateBetween(LocalDateTime start, LocalDateTime end);
-
     /** Returns rows of [clientId, latest task date] for the given clients. */
     @Query("SELECT pt.client.id, MAX(pt.date) FROM PerformedTask pt WHERE pt.client.id IN :clientIds GROUP BY pt.client.id")
     List<Object[]> findLastRecordDatesByClientIds(@Param("clientIds") Collection<Long> clientIds);

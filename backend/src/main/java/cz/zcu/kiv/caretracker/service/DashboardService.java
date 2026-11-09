@@ -273,7 +273,6 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 .toList();
     }
 
-    /** Task count and income of one month. */
     private record MonthTotals(int count, int income) {
     }
 
