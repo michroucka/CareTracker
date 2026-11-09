@@ -26,8 +26,20 @@ public class DashboardController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<DashboardDTO> getDashboard(@RequestParam(required = false) DashboardView view) {
+    public ResponseEntity<DashboardDTO> getDashboard(@RequestParam(required = false) String view) {
         log.info("Fetching dashboard data");
-        return ResponseEntity.ok(dashboardService.getDashboard(view));
+        return ResponseEntity.ok(dashboardService.getDashboard(parseView(view)));
+    }
+
+    /** Unknown values (old bookmarks, edited URLs) fall back to the default view like views the role may not see. */
+    private static DashboardView parseView(String view) {
+        if (view == null) {
+            return null;
+        }
+        try {
+            return DashboardView.valueOf(view);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

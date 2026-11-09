@@ -52,10 +52,18 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param dto updated user data
      * @return the updated user entity
+     * @throws ValidationException if the username is empty or the e-mail belongs to another account
      */
     @Transactional
     public User updateCurrentUser(UserRequestDTO dto) {
         User user = getCurrentUser();
+        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
+            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
+        }
+        // password reset looks the account up by e-mail, so two accounts must not share one
+        if (dto.getEmail() != null && userRepository.existsByEmailIgnoreCaseAndIdNot(dto.getEmail(), user.getId())) {
+            throw new ValidationException("Tento e-mail už používá jiný účet");
+        }
         userMapper.requestToUser(user, dto);
         return userRepository.save(user);
     }
