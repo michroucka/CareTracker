@@ -38,6 +38,8 @@ function Clients() {
     const canEdit = EDITOR_ROLES.includes(user.role);
     // only admins choose departments; coordinators and caregivers see their own department
     const canFilterDepartments = ADMIN_ROLES.includes(user.role);
+    // caregivers see active clients only (enforced by the API)
+    const canFilterStatus = user.role !== ROLES.CAREGIVER;
 
     const { search, setSearch, statusFilter, setStatusFilter, apiStatus } = useListFilters();
     const [departmentFilter, setDepartmentFilter] = useMultiSelectParam("departments", user.role !== ROLES.SUPERADMIN && user.departmentId ? [user.departmentId] : []);
@@ -122,7 +124,7 @@ function Clients() {
                 search={search}
                 onSearchChange={withPageReset(setSearch)}
                 searchPlaceholder="Hledat podle jména nebo města…"
-                statusFilter={statusFilter}
+                statusFilter={canFilterStatus ? statusFilter : null}
                 onStatusFilterChange={withPageReset(setStatusFilter)}
                 isLoading={loading && !needsOrganization}
                 countLabel={needsOrganization ? null : `${count} ${pluralize(count, ["klient", "klienti", "klientů"])}`}

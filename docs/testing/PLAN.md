@@ -101,9 +101,11 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [x] **[ty → claude]** Vzor: `ClientAuthorizationIT` – detail klienta (`GET /api/clients/{id}`) pro pečovatele ze stejného a z jiného střediska a z jiné organizace. Naučí: Testcontainers, buildery, přihlášení jako konkrétní uživatel, parametrizovaný test (`@ParameterizedTest` + `@MethodSource`).
 - [x] **[claude]** Seznam klientů (`GET /api/clients`) podle role – `ClientListAccessIT`: každý aktér vidí jen klienty ve svém rozsahu, cizí `organizationId` / `departmentIds` v parametru rozsah nerozšíří.
 - [x] **[claude]** Zbytek klientů – `ClientAccessIT` (matice 11 aktérů × 19 endpointů): detail, vytvoření, úprava, ukončení/aktivace, účet klienta, fotka, individuální plán (čtení, historie, verze, úpravy, denní záznamy). Sdílený scénář `support/AccessScenario` (aktéři podle vztahu ke klientovi) půjde použít i pro další domény.
-- [ ] **[ty]** Nález (vysoká závažnost): `POST /api/clients/{id}/account/create`, `PUT .../account/deactivate` a `.../account/activate` načtou klienta přes `clientRepository.findById` bez kontroly přístupu (`ClientController` → `UserService`). Admin z jiné organizace nebo koordinátor z jiného střediska či organizace tak cizímu klientovi založí, vypne nebo zapne účet. Ověřeno testem (`ClientAccessIT`, řádky z `ACCOUNT_ACCESS_GAP` se zatím přeskakují). Oprava: před voláním `UserService` ověřit přístup jako u úprav klienta, pak `ACCOUNT_ACCESS_GAP` smazat.
-- [ ] **[ty]** Nález: `ClientService.getClients` podle Javadocu ukazuje pečovateli jen aktivní klienty, ale parametr `status` předává beze změny – pečovatel s `?status=false` vidí ukončené klienty svého střediska. Rozhodnout, jestli platí Javadoc (pak vynutit `status=true` pro CAREGIVER a odstranit `@Disabled` z `ClientListAccessIT.caregiverCannotListTerminatedClients`), nebo kód (pak opravit Javadoc a test smazat).
-- Pozorováno, beze změny: individuální plán smí upravit jen pečovatel klienta a admin, koordinátor střediska ne (`validateIndividualPlanUpdateAccess`, odpovídá Javadocu). Denní záznam smaže kdokoli ze střediska, i cizí záznam. Superadmin nemůže přidat denní záznam (nemá zaměstnance).
+- [x] Nález (vysoká závažnost), opraveno: endpointy účtu klienta (`/account/create|deactivate|activate`) nekontrolovaly přístup. Teď jdou přes `ClientService.getClientForUpdate` jako úprava klienta.
+- [x] Nález, opraveno podle Javadocu: pečovatel dostane ze `GET /api/clients` jen aktivní klienty bez ohledu na `status`; ve frontendu nevidí filtr stavu.
+- [x] Nález z UI, opraveno: u ukončeného klienta šel vytvořit individuální plán. Plán i denní záznamy ukončeného klienta jsou teď jen ke čtení (API vrací 400, stránka nenabízí úpravy) – `InactiveClientPlanIT`, `IndividualPlan.test.jsx`.
+- [x] Mazání denního záznamu sjednoceno podle frontendu: API ho dovolí jen autorovi a adminovi (SUPERADMIN, ADMIN), neexistující záznam vrací 404.
+- Pozorováno, beze změny: individuální plán smí upravit jen pečovatel klienta a admin, koordinátor střediska ne (`validateIndividualPlanUpdateAccess`, odpovídá Javadocu). Superadmin nemůže přidat denní záznam (nemá zaměstnance).
 - [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
 - [ ] **[claude]** Nepřihlášený na každý chráněný endpoint → 401 (jeden parametrizovaný test přes všechny URL).
 
@@ -199,6 +201,7 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ## Log změn
 
+- 2026-11-09: opraveny nálezy z T2a (účet klienta bez kontroly přístupu, pečovatel a ukončení klienti, plán ukončeného klienta). První test stránky s MSW (`IndividualPlan.test.jsx`), `renderWithProviders` čeká na načtení přihlášení.
 - 2026-11-09: T2a klienti hotoví (`ClientAccessIT`, `ClientListAccessIT`, nahrazují `ClientAuthorizationIT`), dva nálezy v T2a.
 - 2026-11-09: testy přebírá Claude, uživatel dělá review a opravy aplikace. `ClientAuthorizationIT` hotový (detail klienta pro pečovatele: vlastní středisko, jiné středisko, jiná organizace).
 - 2026-11-09: T0 a T1 hotové na `feature/testing` (kromě branch protection a rozhodnutí o existujících testech). Lokálně ověřeno: `mvnw verify` (19 unit + 1 IT), `npm run coverage`, `npm run build`, lint.
