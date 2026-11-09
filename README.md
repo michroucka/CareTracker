@@ -47,14 +47,11 @@ CareTracker nahrazuje papírové výkazy a tabulky v terénních pečovatelskýc
 | **Vyúčtování pro klienty** | Klient vidí svůj výkaz a platí přes QR kód. |
 | **Organizace a střediska** | Více organizací v jedné instalaci (organizace → střediska → zaměstnanci) s odpovídajícím omezením přístupu. |
 | **Role a oprávnění** | Superadmin, admin, koordinátor, pečovatel a klient – vynucené na backendu i ve frontendu. |
-| **Pro práci v terénu** | Responzivní rozhraní pro mobil, světlý i tmavý režim, rychlé hledání (<kbd>⌘</kbd> <kbd>K</kbd>). |
+| **Pro práci v terénu** | Responzivní rozhraní pro mobil, světlý i tmavý režim, rychlé hledání (<kbd>Ctrl</kbd> <kbd>K</kbd> / <kbd>⌘</kbd> <kbd>K</kbd>). |
 
 ## Ukázky
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/screenshots/dashboard-dark.png" />
-  <img src=".github/assets/screenshots/dashboard-light.png" alt="Nástěnka s měsíčním přehledem tržeb a vytížení pečovatelů" />
-</picture>
+<img src=".github/assets/screenshots/dashboard-light.png" alt="Nástěnka s měsíčním přehledem tržeb a vytížení pečovatelů" />
 
 <table>
   <tr>
