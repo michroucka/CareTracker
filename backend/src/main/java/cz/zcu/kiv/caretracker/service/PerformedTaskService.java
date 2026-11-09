@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
@@ -141,6 +142,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
             validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
         }
         validateCaregivers(performedTask, client, caregivers);
+        validateAmount(dto.getUnitCount(), task);
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
         return performedTaskRepository.save(performedTask);
@@ -219,6 +221,18 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         if (currentUser.getRole() == UserRole.CAREGIVER
                 && caregivers.stream().noneMatch(c -> c.getId().equals(currentUser.getEmployee().getId()))) {
             throw new ValidationException("Mezi pečovateli musíte být i vy");
+        }
+    }
+
+    private void validateAmount(Double unitCount, Task task) {
+        if (unitCount == null) {
+            throw new ValidationException("Množství je povinné");
+        }
+        if (unitCount <= 0) {
+            throw new ValidationException("Množství musí být větší než 0");
+        }
+        if (task.getUnitType() == UnitType.OCCURRENCE && unitCount % 1 != 0) {
+            throw new ValidationException("Počet úkonů musí být celé číslo");
         }
     }
 

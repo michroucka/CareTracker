@@ -288,7 +288,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(doubles = {0, -30})
-    @Disabled("Nález: backend přijme nulové nebo záporné množství (formulář vyžaduje kladné číslo), cena vyjde záporná")
     void amountMustBePositive(double unitCount) throws Exception {
         Map<String, Object> request = request(client, task, caregiver);
         request.put("unitCount", unitCount);
@@ -299,7 +298,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme zlomek u úkonu počítaného na kusy (formulář dovolí desetinná místa jen u km a kg)")
     void occurrenceCountMustBeWholeNumber() throws Exception {
         Task visit = testData.task(organization, UnitType.OCCURRENCE, 40);
         Map<String, Object> request = request(client, visit, caregiver);
