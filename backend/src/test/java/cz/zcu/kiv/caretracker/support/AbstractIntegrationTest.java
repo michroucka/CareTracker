@@ -8,12 +8,16 @@ import cz.zcu.kiv.caretracker.service.GeocodingService;
 import cz.zcu.kiv.caretracker.service.PaymentQrClient;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -85,6 +89,25 @@ public abstract class AbstractIntegrationTest {
 
     protected RequestPostProcessor loggedInAs(Employee employee) {
         return loggedInAs(employee.getUser());
+    }
+
+    /**
+     * Signs the user in for direct service calls (no HTTP), the same way as {@link #loggedInAs}.
+     * Services read the user from the {@link SecurityContextHolder}; it is cleared after each test.
+     */
+    protected void signInAs(User account) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(account.getUsername());
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(userDetails, null, userDetails.getAuthorities()));
+    }
+
+    protected void signInAs(Employee employee) {
+        signInAs(employee.getUser());
+    }
+
+    @AfterEach
+    void signOut() {
+        SecurityContextHolder.clearContext();
     }
 
     protected String json(Object body) {
