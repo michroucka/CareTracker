@@ -3,6 +3,7 @@ import { Combobox } from "@/components/Combobox";
 import { DatePicker } from "@/components/DatePicker";
 import { FormField } from "@/components/FormField";
 import { MultiCombobox } from "@/components/MultiCombobox";
+import { PhotoInput } from "@/components/PhotoInput";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { benefitsOptions, genderOptions, terminationReasonOptions } from "@/constants/clientConstants";
 import { todayIsoDate } from "@/lib/dates";
 import { formatPhoneNumber, formatPostalCode } from "@/utils/formatters";
-import { ClientPhotoInput } from "./ClientPhotoInput";
 import { OLDEST_BIRTH_DATE } from "./clientForm";
 
 function FieldSection({ title, description, children }) {
@@ -70,7 +70,7 @@ export function ClientFields({ idPrefix, values, errors, onChange, disabled, sha
     return (
         <div ref={containerRef} className="grid gap-6">
             <FieldSection title="Osobní údaje">
-                <ClientPhotoInput id={`${idPrefix}-picture`} value={values.picture} onChange={(picture) => onChange("picture", picture)} client={values} hasSavedPicture={hasSavedPicture} disabled={disabled} />
+                <PhotoInput id={`${idPrefix}-picture`} value={values.picture} onChange={(picture) => onChange("picture", picture)} name={`${values.firstName} ${values.lastName}`} hasSavedPicture={hasSavedPicture} disabled={disabled} />
                 <div className="grid items-start gap-4 sm:grid-cols-2">
                     <FormField {...field("firstName", "Jméno", { required: true })}>
                         {(controlProps) => <Input {...controlProps} autoComplete="off" disabled={disabled} value={values.firstName} onChange={update("firstName")} />}

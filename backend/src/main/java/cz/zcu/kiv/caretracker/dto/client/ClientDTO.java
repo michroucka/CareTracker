@@ -35,7 +35,7 @@ public class ClientDTO {
     private String notes;
     private LocalDate created;
     private Boolean active;
-    private Boolean hasPicture;
+    private Long pictureId;
 
     private DepartmentSummaryDTO department;
     private EmployeeSummaryDTO caregiver;

@@ -1,4 +1,5 @@
 import { FormField } from "@/components/FormField";
+import { PhotoInput } from "@/components/PhotoInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +21,12 @@ function CheckboxRow({ id, checked, onChange, disabled, label, hint }) {
  * Employee form fields. `hasAccount` hides the "create account" switch for employees who already have one;
  * `canManageAdmins` allows the administrator flag.
  */
-export function EmployeeFields({ idPrefix, values, errors, onChange, disabled, shakeSignal, roles, departments, hasAccount, canManageAdmins }) {
+export function EmployeeFields({ idPrefix, values, errors, onChange, disabled, shakeSignal, roles, departments, hasAccount, hasSavedPicture, canManageAdmins }) {
     const update = (field) => (event) => onChange(field, event.target.value);
 
     return (
         <div className="grid gap-4">
+            <PhotoInput id={`${idPrefix}-picture`} value={values.picture} onChange={(picture) => onChange("picture", picture)} name={`${values.firstName} ${values.lastName}`} hasSavedPicture={hasSavedPicture} disabled={disabled} />
             <div className="grid grid-cols-2 items-start gap-3">
                 <FormField id={`${idPrefix}-first-name`} label="Jméno" required error={errors.firstName} shakeSignal={shakeSignal}>
                     {(controlProps) => <Input {...controlProps} autoFocus autoComplete="given-name" disabled={disabled} value={values.firstName} onChange={update("firstName")} />}

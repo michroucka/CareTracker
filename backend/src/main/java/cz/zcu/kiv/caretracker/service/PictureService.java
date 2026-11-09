@@ -1,128 +1,138 @@
 package cz.zcu.kiv.caretracker.service;
 
-import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Picture;
-import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
-import cz.zcu.kiv.caretracker.repository.ClientRepository;
-import cz.zcu.kiv.caretracker.repository.PictureRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Iterator;
 
 /**
- * Manages client profile pictures stored as binary BLOBs in the database.
- * Each client may have at most one picture; uploading a new file replaces the existing one.
+ * Turns uploaded images into profile pictures: square JPEGs in two sizes (detail and thumbnail),
+ * rotated by their EXIF orientation and stripped of metadata (location, camera).
+ * Owners (clients, employees) keep the picture; access checks are done by their services.
  */
 @Service
 public class PictureService {
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp"
-    );
+    public enum Size { FULL, THUMB }
 
-    @Autowired
-    private PictureRepository pictureRepository;
-
-    @Autowired
-    private ClientRepository clientRepository;
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    // a decoded image takes 4 bytes per pixel, so the size limit alone does not bound memory
+    private static final long MAX_PIXELS = 30_000_000L;
+    private static final int FULL_SIZE = 512;
+    private static final int THUMB_SIZE = 128;
+    private static final double JPEG_QUALITY = 0.85;
 
     /**
-     * Saves or replaces a client's profile picture.
-     * If a picture already exists for the client, its binary data is updated in place.
+     * Validates an upload and resizes it into a new, not yet saved picture.
      *
-     * @param clientId the client ID
-     * @param file the uploaded image file
-     * @return the persisted picture entity
-     * @throws ValidationException if the file is empty, too large, or has an unsupported content type
-     * @throws ResourceNotFoundException if the client is not found
+     * @throws ValidationException if the file is empty, too large or not a readable JPEG, PNG, GIF or WebP image
      */
-    @Transactional
-    public Picture savePicture(Long clientId, MultipartFile file) throws IOException {
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Klient nenalezen"));
-
-        Picture picture = pictureRepository.findByClientId(clientId).orElse(null);
-
-        byte[] data = file.getBytes();
-        String detectedContentType = validateFile(file, data);
-        String safeFilename = sanitizeFilename(file.getOriginalFilename());
-
-        if (picture != null) {
-            picture.setData(data);
-            picture.setContentType(detectedContentType);
-            picture.setFilename(safeFilename);
-            picture.setSize(file.getSize());
-            picture.setUploadedAt(LocalDateTime.now());
-        } else {
-            picture = Picture.builder()
-                    .client(client)
-                    .data(data)
-                    .contentType(detectedContentType)
-                    .filename(safeFilename)
-                    .size(file.getSize())
-                    .uploadedAt(LocalDateTime.now())
-                    .build();
-        }
-
-        return pictureRepository.save(picture);
-    }
-
-    /**
-     * Returns the profile picture for a client.
-     *
-     * @param clientId the client ID
-     * @return the picture entity containing the binary data
-     * @throws ResourceNotFoundException if no picture exists for this client
-     */
-    @Transactional(readOnly = true)
-    public Picture getPicture(Long clientId) {
-        return pictureRepository.findByClientId(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Obrázek nenalezen"));
-    }
-
-    /**
-     * Deletes the profile picture for a client.
-     *
-     * @param clientId the client ID
-     * @throws ResourceNotFoundException if no picture exists for this client
-     */
-    @Transactional
-    public void deletePicture(Long clientId) {
-        if (!pictureRepository.existsByClientId(clientId)) {
-            throw new ResourceNotFoundException("Obrázek nenalezen");
-        }
-        pictureRepository.deleteByClientId(clientId);
-    }
-
-    /**
-     * Validates size and detects the real MIME type from magic bytes (ignores the
-     * client-supplied Content-Type header, which is trivially forgeable).
-     *
-     * @return the detected MIME type to store
-     * @throws ValidationException if the file is empty, too large, or not a recognised image format
-     */
-    private String validateFile(MultipartFile file, byte[] data) throws IOException {
+    public Picture createPicture(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new ValidationException("Soubor je prázdný");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new ValidationException("Soubor je příliš velký. Maximální velikost je 5 MB");
         }
-
-        String detected = detectMimeType(data);
-        if (detected == null) {
+        byte[] original = file.getBytes();
+        if (detectMimeType(original) == null) {
             throw new ValidationException("Nepovolený formát souboru. Povolené formáty: JPEG, PNG, GIF, WEBP");
         }
-        return detected;
+
+        Picture picture = new Picture();
+        fillResized(picture, original);
+        return picture;
     }
 
-    /** Detects MIME type from file magic bytes, returns null if not a supported image. */
+    /**
+     * Returns the image in the requested size. Pictures saved before resizing was introduced
+     * (no thumbnail, original upload in {@code data}) are converted in place, so the caller
+     * must pass a managed entity inside a read-write transaction.
+     */
+    public byte[] getContent(Picture picture, Size size) {
+        if (picture.getThumbnail() == null) {
+            fillResized(picture, picture.getData());
+        }
+        return size == Size.THUMB ? picture.getThumbnail() : picture.getData();
+    }
+
+    private void fillResized(Picture picture, byte[] original) {
+        BufferedImage image = readUpright(original);
+        byte[] full = toSquareJpeg(image, FULL_SIZE);
+        picture.setData(full);
+        picture.setThumbnail(toSquareJpeg(image, THUMB_SIZE));
+        picture.setContentType("image/jpeg");
+        picture.setSize((long) full.length);
+        picture.setUploadedAt(LocalDateTime.now());
+    }
+
+    /** Decodes the image upright (EXIF orientation applied) on a white background, as JPEG has no transparency. */
+    private BufferedImage readUpright(byte[] original) {
+        checkPixelCount(original);
+        try {
+            BufferedImage decoded = Thumbnails.of(new ByteArrayInputStream(original)).scale(1.0).asBufferedImage();
+            BufferedImage opaque = new BufferedImage(decoded.getWidth(), decoded.getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = opaque.createGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, opaque.getWidth(), opaque.getHeight());
+            graphics.drawImage(decoded, 0, 0, null);
+            graphics.dispose();
+            return opaque;
+        } catch (IOException e) {
+            throw new ValidationException("Obrázek se nepodařilo přečíst");
+        }
+    }
+
+    /** Reads only the image header, so an oversized image is rejected before it is decoded. */
+    private void checkPixelCount(byte[] original) {
+        try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(original))) {
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) {
+                throw new ValidationException("Obrázek se nepodařilo přečíst");
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                if ((long) reader.getWidth(0) * reader.getHeight(0) > MAX_PIXELS) {
+                    throw new ValidationException("Obrázek má příliš vysoké rozlišení. Maximum je 30 Mpx");
+                }
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException e) {
+            throw new ValidationException("Obrázek se nepodařilo přečíst");
+        }
+    }
+
+    private byte[] toSquareJpeg(BufferedImage image, int size) {
+        try {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            Thumbnails.of(image)
+                    .size(size, size)
+                    .crop(Positions.CENTER)
+                    .outputFormat("jpg")
+                    .outputQuality(JPEG_QUALITY)
+                    .toOutputStream(output);
+            return output.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("JPEG encoding failed", e);
+        }
+    }
+
+    /** Detects the format from magic bytes (the client-supplied Content-Type is trivially forgeable). */
     private String detectMimeType(byte[] data) {
         if (data.length >= 3
                 && (data[0] & 0xFF) == 0xFF
@@ -150,12 +160,5 @@ public class PictureService {
             return "image/webp";
         }
         return null;
-    }
-
-    /** Strips path separators and header-injection characters from the original filename. */
-    private String sanitizeFilename(String filename) {
-        if (filename == null || filename.isBlank()) return "image";
-        String name = filename.replaceAll("[/\\\\]", "_").replaceAll("[\\r\\n\"']", "");
-        return name.length() > 255 ? name.substring(0, 255) : name;
     }
 }

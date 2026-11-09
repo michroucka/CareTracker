@@ -11,7 +11,8 @@ import { useRecordForm } from "../hooks/useRecordForm";
 import { ROLES } from "../constants/roles.js";
 import { benefitsOptions, genderTranslations, terminationReasonOptions } from "../constants/clientConstants.js";
 import { formatDate } from "../utils/formatters.js";
-import { ClientAvatar } from "@/components/clients/ClientAvatar";
+import { PersonAvatar } from "@/components/PersonAvatar";
+import { pictureUrl } from "@/lib/pictures";
 import { ClientFields } from "@/components/clients/ClientFields";
 import { ClientMapDialog } from "@/components/clients/ClientMapDialog";
 import { ClientTerminateDialog } from "@/components/clients/ClientTerminateDialog";
@@ -231,7 +232,7 @@ export function ClientDetail() {
         <div className="grid gap-6">
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
                 <div className="flex min-w-0 items-center gap-4">
-                    <ClientAvatar client={client} className="size-16 font-display text-2xl" />
+                    <PersonAvatar name={`${client.firstName} ${client.lastName}`} src={pictureUrl("clients", client.id, client.pictureId, "full")} className="size-16 font-display text-2xl" />
                     <div className="grid min-w-0 gap-1.5">
                         <h1 className="truncate text-3xl">{isEditing ? "Úprava klienta" : fullName}</h1>
                         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -284,7 +285,7 @@ export function ClientDetail() {
                                 departments={departments}
                                 caregivers={employees}
                                 tasks={tasks}
-                                hasSavedPicture={Boolean(client.pictureUrl)}
+                                hasSavedPicture={Boolean(client.pictureId)}
                                 withTermination={!client.active}
                             />
                             <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/90 px-1 py-4 backdrop-blur">

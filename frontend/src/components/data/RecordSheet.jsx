@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { IconDots, IconLoader2, IconPencil } from "@tabler/icons-react";
+import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -114,16 +115,12 @@ export function SheetSummaryTile({ label, value, hint, valueClassName = "text-2x
     );
 }
 
-function initials(name) {
-    return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
-
-/** Person row: initials, name, optional muted `description` and an action (`children`) on the right. */
-export function SheetPerson({ name, description, children }) {
+/** Person row: photo or initials, name, optional muted `description` and an action (`children`) on the right. */
+export function SheetPerson({ name, src, description, children }) {
     return (
         <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(name)}</span>
+                <PersonAvatar name={name} src={src} />
                 <div className="min-w-0">
                     <p className="truncate font-medium">{name}</p>
                     {description && <p className="truncate text-sm text-muted-foreground">{description}</p>}

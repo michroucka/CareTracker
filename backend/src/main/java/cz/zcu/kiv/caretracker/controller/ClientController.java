@@ -17,14 +17,10 @@ import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.ClientMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.service.ClientService;
-import cz.zcu.kiv.caretracker.service.PictureService;
 import cz.zcu.kiv.caretracker.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,8 +42,6 @@ public class ClientController {
     private ClientMapper clientMapper;
     @Autowired
     private ClientService clientService;
-    @Autowired
-    private PictureService pictureService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -204,41 +198,23 @@ public class ClientController {
     // ========== Picture endpoints ==========
 
     @PostMapping("/{id}/picture")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
     public ResponseEntity<PictureDTO> uploadPicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException {
         log.info("Uploading picture for client: {}", id);
-        Picture savedPicture = pictureService.savePicture(id, file);
-
-        PictureDTO dto = new PictureDTO(
-                savedPicture.getId(),
-                savedPicture.getContentType(),
-                savedPicture.getFilename(),
-                savedPicture.getUploadedAt(),
-                savedPicture.getSize()
-        );
-
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(clientService.setPicture(id, file));
     }
 
     @GetMapping("/{id}/picture")
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
-    public ResponseEntity<byte[]> getPicture(@PathVariable Long id) {
-        log.info("Fetching picture for client: {}", id);
-        Picture picture = pictureService.getPicture(id);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(picture.getContentType()));
-        headers.setContentLength(picture.getSize());
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + picture.getFilename() + "\"");
-
-        return new ResponseEntity<>(picture.getData(), headers, HttpStatus.OK);
+    public ResponseEntity<byte[]> getPicture(@PathVariable Long id, @RequestParam(required = false) String size) {
+        return PictureResponses.image(clientService.getPictureContent(id, PictureResponses.size(size)));
     }
 
     @DeleteMapping("/{id}/picture")
-    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
     public ResponseEntity<Void> deletePicture(@PathVariable Long id) {
         log.info("Deleting picture for client: {}", id);
-        pictureService.deletePicture(id);
+        clientService.deletePicture(id);
         return ResponseEntity.noContent().build();
     }
 }

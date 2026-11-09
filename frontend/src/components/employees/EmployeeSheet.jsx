@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { IconArrowRight, IconBan, IconCircleCheck, IconMailForward } from "@tabler/icons-react";
+import { PersonAvatar } from "@/components/PersonAvatar";
 import { RecordSheet, SheetPerson, SheetSection, SheetSummaryTile } from "@/components/data/RecordSheet";
 import { formatCount, formatDuration, pluralize } from "@/components/dashboard/dashboardFormat";
 import { Badge } from "@/components/ui/badge";
@@ -11,14 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getRoleLabel } from "@/constants/roles";
 import { useEmployeeOverview } from "@/hooks/useEmployeeOverview";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { pictureUrl } from "@/lib/pictures";
 import { EmployeeFields } from "./EmployeeFields";
 import { accountState, roleOptions, toFormValues, toRequest, validateEmployee } from "./employeeForm";
 
 const MAX_LISTED_CLIENTS = 5;
-
-function initials(employee) {
-    return `${employee.firstName?.[0] ?? ""}${employee.lastName?.[0] ?? ""}`.toUpperCase();
-}
 
 function DetailItem({ label, children }) {
     return (
@@ -45,7 +43,7 @@ function KeyClients({ employee, clients }) {
             {sorted.slice(0, MAX_LISTED_CLIENTS).map((client) => {
                 const name = `${client.firstName} ${client.lastName}`;
                 return (
-                    <SheetPerson key={client.id} name={name} description={client.city}>
+                    <SheetPerson key={client.id} name={name} src={pictureUrl("clients", client.id, client.pictureId)} description={client.city}>
                         <Button asChild variant="ghost" size="icon-sm" aria-label={`Otevřít detail klienta ${name}`}>
                             <Link to={`/clients/${client.id}`}><IconArrowRight /></Link>
                         </Button>
@@ -171,7 +169,7 @@ export function EmployeeSheet({ open, onOpenChange, employee, isLoading, canEdit
                 </span>
             )}
             avatar={employee && !isEditing && (
-                <span className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-secondary-foreground">{initials(employee)}</span>
+                <PersonAvatar name={`${employee.firstName} ${employee.lastName}`} src={pictureUrl("employees", employee.id, employee.pictureId, "full")} className="size-14 font-display text-xl" />
             )}
             description={employee ? `Detail zaměstnance ${fullName}` : "Detail zaměstnance"}
             isLoading={isLoading || !employee}
@@ -192,6 +190,7 @@ export function EmployeeSheet({ open, onOpenChange, employee, isLoading, canEdit
                         roles={roleOptions(canManageAdmins, employee.role)}
                         departments={departments}
                         hasAccount={Boolean(employee.email)}
+                        hasSavedPicture={Boolean(employee.pictureId)}
                         canManageAdmins={canManageAdmins}
                     />
                 </form>

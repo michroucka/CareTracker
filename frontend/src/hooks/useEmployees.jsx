@@ -3,6 +3,7 @@ import {getJSON, postJSON, putJSON} from "../api/api.js";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { sortByKey } from "../utils/sorting.js";
 import { toast } from "@/components/ui/sonner";
+import { savePicture } from "@/lib/pictures";
 
 export function useEmployees() {
     const [employees, setEmployees] = useState([]);
@@ -86,7 +87,9 @@ export function useEmployees() {
 
     const createEmployee = async (employeeData) => {
         try {
-            const newEmployee = await postJSON("/employees", employeeData);
+            const { picture, ...employeeDataWithoutPicture } = employeeData;
+            const newEmployee = await postJSON("/employees", employeeDataWithoutPicture);
+            newEmployee.pictureId = await savePicture("employees", newEmployee.id, picture, null);
             const mappedEmployee = mapEmployee(newEmployee);
 
             setEmployees(prev =>
@@ -105,7 +108,9 @@ export function useEmployees() {
 
     const updateEmployee = async (id, updatedData) => {
         try {
-            const updated = await putJSON(`/employees/${id}`, updatedData);
+            const { picture, ...updatedDataWithoutPicture } = updatedData;
+            const updated = await putJSON(`/employees/${id}`, updatedDataWithoutPicture);
+            updated.pictureId = await savePicture("employees", id, picture, updated.pictureId);
 
             fetchEmployees(filtersRef.current, { silent: true });
 

@@ -9,6 +9,7 @@ import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanContentRequestDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanDTO;
 import cz.zcu.kiv.caretracker.dto.individualPlan.IndividualPlanVersionSummaryDTO;
+import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.TerminationReason;
 import cz.zcu.kiv.caretracker.enums.UserRole;
@@ -21,6 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.*;
 
@@ -46,6 +50,10 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private DailyRecordRepository dailyRecordRepository;
     @Autowired
     private GeocodingService geocodingService;
+    @Autowired
+    private PictureService pictureService;
+    @Autowired
+    private PictureRepository pictureRepository;
 
     /**
      * Returns clients filtered by the current user's role and the supplied optional criteria.
@@ -158,7 +166,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @throws ResourceNotFoundException if the client does not exist
      * @throws SecurityException if the user does not have access to this client's department
      */
-    private void validateClientAccess(Long clientId) {
+    private Client validateClientAccess(Long clientId) {
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
@@ -167,6 +175,49 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getOrganization().getId(),
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
+        return client;
+    }
+
+    /**
+     * Returns the client's profile picture in the requested size.
+     *
+     * @throws ResourceNotFoundException if the client or its picture does not exist
+     * @throws SecurityException if the user does not have access to this client
+     */
+    @Transactional
+    public byte[] getPictureContent(Long clientId, PictureService.Size size) {
+        Picture picture = validateClientAccess(clientId).getPicture();
+        if (picture == null) {
+            throw new ResourceNotFoundException("Obrázek nenalezen");
+        }
+        return pictureService.getContent(picture, size);
+    }
+
+    /**
+     * Replaces the client's profile picture with a resized copy of the upload. The new picture gets
+     * a new id, which the frontend uses to refresh cached images.
+     */
+    @Transactional
+    public PictureDTO setPicture(Long clientId, MultipartFile file) throws IOException {
+        Client client = validateClientAccess(clientId);
+        Picture picture = pictureRepository.save(pictureService.createPicture(file));
+        // the previous picture is an orphan now and gets deleted with the client update
+        client.setPicture(picture);
+        return PictureDTO.of(picture);
+    }
+
+    /**
+     * Removes the client's profile picture.
+     *
+     * @throws ResourceNotFoundException if the client has no picture
+     */
+    @Transactional
+    public void deletePicture(Long clientId) {
+        Client client = validateClientAccess(clientId);
+        if (client.getPicture() == null) {
+            throw new ResourceNotFoundException("Obrázek nenalezen");
+        }
+        client.setPicture(null);
     }
 
     /**

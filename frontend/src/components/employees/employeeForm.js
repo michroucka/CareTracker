@@ -1,4 +1,5 @@
 import { ROLE_LABELS } from "@/constants/roles";
+import { pictureUrl } from "@/lib/pictures";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ADMIN_ONLY_ROLES = ["COORDINATOR", "MANAGER"];
@@ -11,11 +12,12 @@ export function roleOptions(canManageAdmins, currentRole) {
 }
 
 export function emptyEmployee(defaultDepartmentId) {
-    return { firstName: "", lastName: "", role: "CAREGIVER", departmentId: defaultDepartmentId ?? null, createAccount: true, email: "", isAdmin: false };
+    return { picture: null, firstName: "", lastName: "", role: "CAREGIVER", departmentId: defaultDepartmentId ?? null, createAccount: true, email: "", isAdmin: false };
 }
 
 export function toFormValues(employee) {
     return {
+        picture: employee?.id ? pictureUrl("employees", employee.id, employee.pictureId, "full") : null,
         firstName: employee?.firstName ?? "",
         lastName: employee?.lastName ?? "",
         role: employee?.role ?? "CAREGIVER",
@@ -40,6 +42,7 @@ export function validateEmployee(values) {
 
 export function toRequest(values) {
     const request = {
+        picture: values.picture,
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
         role: values.role,

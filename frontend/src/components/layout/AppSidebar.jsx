@@ -28,14 +28,12 @@ import { getRoleLabel, hasRole, ROLES } from "@/constants/roles";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useOrganizations } from "@/hooks/useOrganizations";
+import { pictureUrl } from "@/lib/pictures";
+import { PersonAvatar } from "@/components/PersonAvatar";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { isNavItemActive, NAV_ITEMS } from "./navigation";
 
 const ActiveIndicator = motion.span;
-
-function initials(name) {
-    return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
 
 function NavItems() {
     const { user } = useAuth();
@@ -140,9 +138,7 @@ function UserPanel() {
             <SidebarMenuItem>
                 <SidebarMenuButton asChild size="lg" tooltip={`${displayName} · Můj účet`}>
                     <NavLink to="/account" onClick={() => setOpenMobile(false)}>
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
-                            {initials(displayName)}
-                        </span>
+                        <PersonAvatar name={displayName} src={user.employeeId ? pictureUrl("employees", user.employeeId, user.pictureId) : null} className="size-8" />
                         <span className="grid min-w-0 flex-1 leading-tight transition-opacity duration-base ease-out group-data-[collapsible=icon]:opacity-0">
                             <span className="truncate font-semibold text-foreground">{displayName}</span>
                             <span className="truncate text-xs text-muted-foreground">{getRoleLabel(user.role)}</span>

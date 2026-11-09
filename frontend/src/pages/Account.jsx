@@ -5,6 +5,8 @@ import { useAccount } from "../hooks/useAccount.jsx";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { getRoleLabel } from "../constants/roles.js";
 import { FormField } from "@/components/FormField";
+import { PersonAvatar } from "@/components/PersonAvatar";
+import { PhotoInput } from "@/components/PhotoInput";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,14 +14,11 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
+import { pictureUrl } from "@/lib/pictures";
 
 const AnimatedPanel = motion.div;
 
 const MIN_USERNAME_LENGTH = 4;
-
-function initials(name) {
-    return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
 
 function validate({ username, email }) {
     const errors = {};
@@ -29,16 +28,44 @@ function validate({ username, email }) {
     return errors;
 }
 
-function ProfileCard({ fullName, role }) {
+function ProfileCard({ fullName, role, pictureSrc, onPictureChange }) {
+    const [picture, setPicture] = React.useState(pictureSrc);
+    const [isSaving, setIsSaving] = React.useState(false);
+
+    React.useEffect(() => setPicture(pictureSrc), [pictureSrc]);
+
+    const heading = (
+        <div className="mb-1 grid min-w-0 gap-1.5">
+            <p className="truncate font-display text-2xl font-semibold tracking-tight">{fullName}</p>
+            <Badge variant="secondary">{getRoleLabel(role)}</Badge>
+        </div>
+    );
+
+    // clients have no own photo upload; their card stays a plain avatar
+    if (!onPictureChange) {
+        return (
+            <Card className="flex-row items-center gap-5 px-6">
+                <PersonAvatar name={fullName} src={pictureSrc} className="size-16 font-display text-2xl" />
+                {heading}
+            </Card>
+        );
+    }
+
+    const changePicture = async (next) => {
+        setPicture(next);
+        setIsSaving(true);
+        try {
+            await onPictureChange(next);
+        } catch {
+            setPicture(pictureSrc);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <Card className="flex-row items-center gap-5 px-6">
-            <span className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-2xl font-semibold text-secondary-foreground">
-                {initials(fullName)}
-            </span>
-            <div className="grid min-w-0 gap-1.5">
-                <p className="truncate font-display text-2xl font-semibold tracking-tight">{fullName}</p>
-                <Badge variant="secondary">{getRoleLabel(role)}</Badge>
-            </div>
+        <Card className="px-6">
+            <PhotoInput id="account-picture" value={picture} onChange={changePicture} name={fullName} hasSavedPicture={Boolean(pictureSrc)} heading={heading} disabled={isSaving} />
         </Card>
     );
 }
@@ -181,8 +208,14 @@ function AccountSkeleton() {
 
 function Account() {
     const [account, setAccount] = React.useState(null);
-    const { fetchAccountDetails, updateAccountDetails, requestResetPasswordEmail, isSendingReset } = useAccount();
-    const { checkAuth } = useAuth();
+    const { fetchAccountDetails, updateAccountDetails, changeOwnPicture, requestResetPasswordEmail, isSendingReset } = useAccount();
+    const { user, checkAuth } = useAuth();
+    const pictureSrc = user.employeeId ? pictureUrl("employees", user.employeeId, user.pictureId, "full") : null;
+
+    const savePicture = async (picture) => {
+        await changeOwnPicture(picture);
+        await checkAuth();
+    };
 
     React.useEffect(() => {
         fetchAccountDetails().then(setAccount).catch(() => {});
@@ -202,7 +235,7 @@ function Account() {
 
             {account ? (
                 <>
-                    <ProfileCard fullName={account.fullName || account.username} role={account.role} />
+                    <ProfileCard fullName={account.fullName || account.username} role={account.role} pictureSrc={pictureSrc} onPictureChange={user.employeeId ? savePicture : undefined} />
                     <CredentialsCard account={{ username: account.username, email: account.email }} onSave={saveCredentials} />
                     <PasswordCard email={account.email} isSending={isSendingReset} onRequestReset={() => requestResetPasswordEmail().catch(() => {})} />
                 </>

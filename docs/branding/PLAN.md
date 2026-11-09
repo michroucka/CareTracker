@@ -520,13 +520,15 @@ Poznámky a otázky z procházení aplikace po migraci. Každá jako jeden bod, 
 ### Fáze 6c – Profilové fotky (klienti i zaměstnanci)
 Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a s cache.
 
-- [ ] Bezpečnost: endpointy fotek kontrolují přístup ke klientovi (dnes jen role – pečovatel jiné organizace mohl fotku stáhnout, přepsat i smazat podle ID).
-- [ ] Schéma: obecná tabulka `picture` (`data` 512 px, `thumbnail` 128 px, `content_type`, `uploaded_at`, `size`), cizí klíč `client.picture_id` a `employee.picture_id` (vlastnící strana, `LAZY` – seznam klientů nenačítá bloby). Nová fotka = nový řádek, `picture_id` slouží jako verze do URL.
-- [ ] Server: dekódovat, srovnat otočení podle EXIF, oříznout na čtverec, uložit 512 px + 128 px jako JPEG q85 bez metadat. Limit 5 MB a 30 Mpx (kontrola rozměrů před dekódováním kvůli paměti). Čtení WebP přes TwelveMonkeys. Starší fotky se převedou při prvním načtení.
-- [ ] Prohlížeč: fotku před nahráním zmenší přes `canvas` na max 1600 px JPEG, takže jde vybrat i velká fotka z mobilu. Neznámý formát (HEIC v Chrome) = srozumitelná hláška.
-- [ ] Zobrazení: `<img src="/api/clients/{id}/picture?size=thumb&v={pictureId}">` s `Cache-Control: private, max-age=31536000, immutable`, bez `fetchImage` a blob URL. Fotky v tabulce klientů.
-- [ ] Zaměstnanci: fotka v tabulce, detailu a formuláři; vlastní fotka v Můj účet a v sidebaru.
+- [x] Bezpečnost: endpointy fotek kontrolují přístup ke klientovi (dnes jen role – pečovatel jiné organizace mohl fotku stáhnout, přepsat i smazat podle ID).
+- [x] Schéma: obecná tabulka `picture` (`data` 512 px, `thumbnail` 128 px, `content_type`, `uploaded_at`, `size`), cizí klíč `client.picture_id` a `employee.picture_id` (vlastnící strana, `LAZY` – seznam klientů nenačítá bloby). Nová fotka = nový řádek, `picture_id` slouží jako verze do URL.
+- [x] Server: dekódovat, srovnat otočení podle EXIF, oříznout na čtverec, uložit 512 px + 128 px jako JPEG q85 bez metadat. Limit 5 MB a 30 Mpx (kontrola rozměrů před dekódováním kvůli paměti). Čtení WebP přes TwelveMonkeys. Starší fotky se převedou při prvním načtení.
+- [x] Prohlížeč: fotku před nahráním zmenší přes `canvas` na max 1600 px JPEG, takže jde vybrat i velká fotka z mobilu. Neznámý formát (HEIC v Chrome) = srozumitelná hláška.
+- [x] Zobrazení: `<img src="/api/clients/{id}/picture?size=thumb&v={pictureId}">` s `Cache-Control: private, max-age=31536000, immutable`, bez `fetchImage` a blob URL. Fotky v tabulce klientů.
+- [x] Zaměstnanci: fotka v tabulce, detailu a formuláři; vlastní fotka v Můj účet a v sidebaru.
 - WebP jako výstup zamítnut: Java ho neumí zapsat bez nativních knihoven, úspora u avatarů ~1 kB.
+- Ověřeno přes API (curl): náhled 128 px / 3 kB, detail 512 px / 28 kB (původní 35 kB), cache hlavička, převod staré fotky, 403 pro pečovatele z jiného střediska i pro mazání pečovatelem, 400 pro neplatný soubor, nové `pictureId` po nahrání, stará fotka smazána. Frontend (nahrání v prohlížeči, fotky v tabulkách) ověřit ručně.
+- Sdílené: `lib/pictures.js` (`pictureUrl`, `shrinkPhoto`, `savePicture`, `DELETE_PICTURE`), `PersonAvatar` (fotka nebo iniciály, i v `SheetPerson`), `PhotoInput` (dřív `ClientPhotoInput`). Endpointy `/api/clients/{id}/picture`, `/api/employees/{id}/picture` (čtení všichni zaměstnanci, zápis od koordinátora výš), `/api/user/me/picture` (vlastní fotka). `auth-status` vrací `pictureId`.
 
 ### Fáze 7 – Doladění
 - [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.

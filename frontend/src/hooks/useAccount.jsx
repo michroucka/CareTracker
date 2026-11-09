@@ -1,5 +1,6 @@
 import React from "react";
-import { getJSON, postJSON, putJSON } from "../api/api.js";
+import { deleteImage, getJSON, postJSON, putJSON, uploadFile } from "../api/api.js";
+import { DELETE_PICTURE } from "@/lib/pictures";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { toast } from "@/components/ui/sonner";
 
@@ -46,8 +47,26 @@ export function useAccount() {
         }
     };
 
+    /** Uploads a new own profile photo (a File) or removes it (DELETE_PICTURE); employees only. */
+    const changeOwnPicture = async (picture) => {
+        try {
+            if (picture === DELETE_PICTURE) {
+                await deleteImage("/user/me/picture");
+                toast.success("Fotka odebrána");
+            } else {
+                await uploadFile("/user/me/picture", picture);
+                toast.success("Fotka uložena");
+            }
+        } catch (err) {
+            console.error("Error saving own picture:", err);
+            showErrorToast(err, "Fotku se nepodařilo uložit");
+            throw err;
+        }
+    };
+
     return {
         fetchAccountDetails,
+        changeOwnPicture,
         updateAccountDetails,
         requestResetPasswordEmail,
         isSendingReset,

@@ -36,6 +36,7 @@ public class EmployeeMapper {
         dto.setLastName(employee.getLastName());
         dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
         dto.setActive(employee.getActive());
+        dto.setPictureId(employee.getPictureId());
 
         if (employee.getUser() != null) {
             User user = employee.getUser();

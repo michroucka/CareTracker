@@ -12,6 +12,7 @@ interface User {
     departmentId?: number;
     organizationId?: number;
     clientId?: number;
+    pictureId?: number | null;
 }
 
 interface SuperadminOrg {
@@ -75,7 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     employeeRole: data.employeeRole,
                     departmentId: data.departmentId,
                     organizationId: data.organizationId,
-                    clientId: data.clientId
+                    clientId: data.clientId,
+                    pictureId: data.pictureId
                 });
 
                 if (data.role === "SUPERADMIN") {

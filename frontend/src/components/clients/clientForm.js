@@ -1,4 +1,5 @@
 import { todayIsoDate } from "@/lib/dates";
+import { pictureUrl } from "@/lib/pictures";
 import { formatPhoneNumber, formatPostalCode } from "@/utils/formatters";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,7 +14,7 @@ export function emptyClient(defaultDepartmentId) {
 
 export function toFormValues(client) {
     return {
-        picture: client?.pictureUrl ?? null,
+        picture: client?.id ? pictureUrl("clients", client.id, client.pictureId, "full") : null,
         firstName: client?.firstName ?? "",
         lastName: client?.lastName ?? "",
         gender: client?.gender ?? "",

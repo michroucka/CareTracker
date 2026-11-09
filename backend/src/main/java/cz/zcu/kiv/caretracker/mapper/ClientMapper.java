@@ -58,7 +58,7 @@ public class ClientMapper {
         dto.setNotes(client.getNotes());
         dto.setCreated(client.getCreated());
         dto.setActive(client.getActive());
-        dto.setHasPicture(client.getPicture() != null);
+        dto.setPictureId(client.getPictureId());
 
         dto.setDepartment(departmentMapper.toSummaryDTO(client.getDepartment()));
         dto.setCaregiver(employeeMapper.toSummaryDTO(client.getCaregiver()));
@@ -84,6 +84,7 @@ public class ClientMapper {
         dto.setStreet(client.getStreet());
         dto.setCity(client.getCity());
         dto.setActive(client.getActive());
+        dto.setPictureId(client.getPictureId());
         User user = client.getUser();
         dto.setUserAccountActive(user != null ? user.getActive() : null);
 

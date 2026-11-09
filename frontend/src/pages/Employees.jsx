@@ -18,19 +18,17 @@ import { EmployeeCreateDialog } from "@/components/employees/EmployeeCreateDialo
 import { EmployeeSheet } from "@/components/employees/EmployeeSheet";
 import { accountState } from "@/components/employees/employeeForm";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { pictureUrl } from "@/lib/pictures";
 import { cn } from "@/lib/utils";
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR];
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function initials(employee) {
-    return `${employee.firstName?.[0] ?? ""}${employee.lastName?.[0] ?? ""}`.toUpperCase();
-}
 
 function LoadingRows({ columnCount }) {
     return Array.from({ length: 6 }, (_, index) => (
@@ -203,7 +201,7 @@ function Employees() {
                             >
                                 <TableCell>
                                     <div className="flex items-center gap-3">
-                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(employee)}</span>
+                                        <PersonAvatar name={`${employee.firstName} ${employee.lastName}`} src={pictureUrl("employees", employee.id, employee.pictureId)} />
                                         <div className="min-w-0">
                                             <p className="truncate font-medium text-foreground">{fullName(employee)}{isSelf && <span className="font-normal text-muted-foreground"> (vy)</span>}</p>
                                             {employee.email && <p className="truncate text-xs text-muted-foreground">{employee.email}</p>}

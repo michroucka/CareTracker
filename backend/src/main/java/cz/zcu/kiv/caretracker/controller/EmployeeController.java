@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.controller;
 import cz.zcu.kiv.caretracker.dto.MessageResponseDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeRequestDTO;
+import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
 import cz.zcu.kiv.caretracker.service.EmployeeService;
@@ -12,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.List;
 
@@ -87,5 +91,26 @@ public class EmployeeController {
         log.info("Resending activation email to employee with id : {}", id);
         employeeService.resendActivationEmail(id);
         return ResponseEntity.ok(new MessageResponseDTO(true, "Aktivační email byl úspěšně odeslán"));
+    }
+
+    @GetMapping("/{id}/picture")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR', 'CAREGIVER')")
+    public ResponseEntity<byte[]> getPicture(@PathVariable Long id, @RequestParam(required = false) String size) {
+        return PictureResponses.image(employeeService.getPictureContent(id, PictureResponses.size(size)));
+    }
+
+    @PostMapping("/{id}/picture")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<PictureDTO> uploadPicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException {
+        log.info("Uploading picture for employee: {}", id);
+        return ResponseEntity.ok(employeeService.setPicture(id, file));
+    }
+
+    @DeleteMapping("/{id}/picture")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'COORDINATOR')")
+    public ResponseEntity<Void> deletePicture(@PathVariable Long id) {
+        log.info("Deleting picture for employee: {}", id);
+        employeeService.deletePicture(id);
+        return ResponseEntity.noContent().build();
     }
 }

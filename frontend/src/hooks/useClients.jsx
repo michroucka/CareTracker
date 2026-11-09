@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import {getJSON, postJSON, putJSON, uploadFile, fetchImage, deleteImage} from "../api/api.js";
+import {getJSON, postJSON, putJSON} from "../api/api.js";
+import { savePicture } from "@/lib/pictures";
 import { toast } from "@/components/ui/sonner";
 import { showErrorToast } from "../utils/errorHandler.jsx";
 import { sortByKey } from "../utils/sorting.js";
@@ -83,19 +84,7 @@ export function useClients() {
 
     const fetchClient = async (id) => {
         try {
-            const client = await getJSON(`/clients/${id}`);
-
-            if (client.hasPicture) {
-                try {
-                    const imageUrl = await fetchImage(`/clients/${id}/picture`);
-                    client.pictureUrl = imageUrl;
-                } catch (imgErr) {
-                    console.error("Error fetching client picture:", imgErr);
-                    client.pictureUrl = null;
-                }
-            }
-
-            return mapClient(client);
+            return mapClient(await getJSON(`/clients/${id}`));
         } catch (err) {
             console.error("Error fetching client:", err);
             showErrorToast(err, "Klient nenalezen");
@@ -105,26 +94,11 @@ export function useClients() {
 
     const createClient = async (clientData) => {
         try {
-            // Separate picture from the rest of the data — picture is uploaded separately after creation
             const { picture, ...clientDataWithoutPicture } = clientData;
-
             const newClient = await postJSON("/clients", clientDataWithoutPicture);
+            newClient.pictureId = await savePicture("clients", newClient.id, picture, null);
 
-            if (picture && picture instanceof File) {
-                try {
-                    await uploadFile(`/clients/${newClient.id}/picture`, picture);
-                } catch (uploadErr) {
-                    console.error("Error uploading picture:", uploadErr);
-                    toast.warning("Klient vytvořen, ale obrázek se nenahrál", { description: "Můžete ho nahrát později při editaci" });
-                }
-            }
-
-            const mappedClient = mapClient(newClient);
-
-            setClients(prev =>
-                sortByKey([...prev, mappedClient], 'lastName', 'ascending')
-            );
-
+            setClients(prev => sortByKey([...prev, mapClient(newClient)], 'lastName', 'ascending'));
             toast.success("Klient úspěšně vytvořen");
 
             return newClient;
@@ -137,46 +111,14 @@ export function useClients() {
 
     const updateClient = async (id, updatedData) => {
         try {
-            // Separate picture — it is handled via a dedicated upload/delete endpoint
             const { picture, ...updatedDataWithoutPicture } = updatedData;
-
             const updated = await putJSON(`/clients/${id}`, updatedDataWithoutPicture);
-
-            // "DELETE" is a sentinel value set by the UI to request picture removal
-            if (picture === "DELETE") {
-                try {
-                    await deleteImage(`/clients/${id}/picture`);
-                    updated.hasPicture = false;
-                    updated.pictureUrl = null;
-                } catch (deleteErr) {
-                    console.error("Error deleting picture:", deleteErr);
-                    toast.warning("Klient aktualizován, ale obrázek se nesmazal", { description: "Zkuste to prosím znovu" });
-                }
-            } else if (picture && picture instanceof File) {
-                try {
-                    await uploadFile(`/clients/${id}/picture`, picture);
-                    updated.hasPicture = true;
-                } catch (uploadErr) {
-                    console.error("Error uploading picture:", uploadErr);
-                    toast.warning("Klient aktualizován, ale obrázek se nenahrál", { description: "Zkuste to prosím znovu" });
-                }
-            }
-
-            if (updated.hasPicture) {
-                try {
-                    const imageUrl = await fetchImage(`/clients/${id}/picture`);
-                    updated.pictureUrl = imageUrl;
-                } catch (imgErr) {
-                    console.error("Error fetching updated client picture:", imgErr);
-                    updated.pictureUrl = null;
-                }
-            }
+            updated.pictureId = await savePicture("clients", id, picture, updated.pictureId);
 
             fetchClients(filtersRef.current, { silent: true });
-
             toast.success("Klient úspěšně aktualizován");
 
-            return updated;
+            return mapClient(updated);
         } catch (err) {
             console.error("Error updating client:", err);
             showErrorToast(err, "Chyba při aktualizaci klienta");

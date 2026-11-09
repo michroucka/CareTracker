@@ -14,6 +14,7 @@ public class EmployeeDTO {
     private String lastName;
     private String role;
     private Boolean active;
+    private Long pictureId;
     private String email;
     private Boolean isAdmin;
     private Boolean isActivated;

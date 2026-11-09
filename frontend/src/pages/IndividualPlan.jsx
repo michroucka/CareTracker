@@ -12,7 +12,8 @@ import { formatDate } from "../utils/formatters.js";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { DatePicker } from "@/components/DatePicker";
 import { FormField } from "@/components/FormField";
-import { ClientAvatar } from "@/components/clients/ClientAvatar";
+import { PersonAvatar } from "@/components/PersonAvatar";
+import { pictureUrl } from "@/lib/pictures";
 import { ConfirmDialog } from "@/components/data/ConfirmDialog";
 import { DailyRecordDialog } from "@/components/individualPlan/DailyRecordDialog";
 import { PLAN_SECTIONS, planStatus, toFormValues, toRequest, validatePlan } from "@/components/individualPlan/planForm";
@@ -253,7 +254,7 @@ function IndividualPlan() {
         <div className="grid gap-6">
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
                 <div className="flex min-w-0 items-center gap-4">
-                    <ClientAvatar client={client} className="size-14 font-display text-xl" />
+                    <PersonAvatar name={`${client.firstName} ${client.lastName}`} src={pictureUrl("clients", client.id, client.pictureId, "full")} className="size-14 font-display text-xl" />
                     <div className="grid min-w-0 gap-1">
                         <h1 className="text-3xl">{isEditing ? (individualPlan ? "Nová verze plánu" : "Nový individuální plán") : "Individuální plán"}</h1>
                         <p className="flex flex-wrap items-center gap-x-2 text-muted-foreground">

@@ -19,19 +19,17 @@ import { MultiSelectFilter } from "@/components/data/MultiSelectFilter";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { pluralize } from "@/components/dashboard/dashboardFormat";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { pictureUrl } from "@/lib/pictures";
 import { cn } from "@/lib/utils";
 
 const EDITOR_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.COORDINATOR];
 const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN];
-
-function initials(client) {
-    return `${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`.toUpperCase();
-}
 
 function LoadingRows({ columnCount }) {
     return Array.from({ length: 8 }, (_, index) => (
@@ -184,7 +182,7 @@ function Clients() {
                             >
                                 <TableCell>
                                     <div className="flex items-center gap-3">
-                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(client)}</span>
+                                        <PersonAvatar name={`${client.firstName} ${client.lastName}`} src={pictureUrl("clients", client.id, client.pictureId)} />
                                         <div className="min-w-0">
                                             <p className="truncate font-medium text-foreground">{client.firstName} {client.lastName}</p>
                                             <p className="truncate text-xs text-muted-foreground">{[client.street, client.city].filter(Boolean).join(", ")}</p>
