@@ -13,7 +13,6 @@ import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -140,8 +139,6 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: dnešní úkony v pohledu MINE se načítají přes findByCaregivers_IdAndDateBetween; BETWEEN zahrnuje "
-            + "i horní mez, takže úkon o půlnoci následujícího dne se počítá do dneška (todayTasksCount, todayMinutes).")
     void todayEndsBeforeMidnightOfTheNextDay() throws Exception {
         testData.performedTask(client, hourly, TODAY.plusDays(1).atStartOfDay(), 30);
 
@@ -152,9 +149,6 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: minuty za měsíc v pohledu MINE se načítají přes findByCaregivers_IdAndDateBetween; BETWEEN zahrnuje "
-            + "i horní mez, takže úkon o půlnoci 1. dne dalšího měsíce se započítá do totalMonthMinutes, "
-            + "ačkoli tasksPerformedCount (součet v DB přes [začátek, konec)) ho správně nepočítá.")
     void monthMinutesEndBeforeMidnightOfTheNextMonth() throws Exception {
         testData.performedTask(client, hourly, LocalDateTime.of(2027, 1, 31, 23, 59, 59), 30);
         testData.performedTask(client, hourly, LocalDateTime.of(2027, 2, 1, 0, 0), 60);

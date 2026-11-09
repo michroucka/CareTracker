@@ -119,10 +119,10 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     private DashboardDTO buildCaregiverDashboard(User user) {
         Long caregiverId = user.getEmployee().getId();
         List<MonthTotals> history = monthlyTotals(null, null, caregiverId);
-        List<PerformedTask> todayTasks = performedTaskRepository.findByCaregivers_IdAndDateBetween(
+        List<PerformedTask> todayTasks = performedTaskRepository.findByCaregivers_IdAndDateGreaterThanEqualAndDateLessThan(
                 caregiverId, LocalDate.now(clock).atStartOfDay(), LocalDate.now(clock).plusDays(1).atStartOfDay());
         List<PerformedTask> monthTasks = performedTaskRepository
-                .findByCaregivers_IdAndDateBetween(caregiverId, monthStart(), monthEnd());
+                .findByCaregivers_IdAndDateGreaterThanEqualAndDateLessThan(caregiverId, monthStart(), monthEnd());
 
         DashboardDTO dto = new DashboardDTO();
         dto.setTodayTasksCount(todayTasks.size());

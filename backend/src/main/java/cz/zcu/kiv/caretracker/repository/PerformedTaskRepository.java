@@ -15,9 +15,8 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
     List<PerformedTask> findByOrganizationId(Long organizationId);
     List<PerformedTask> findByDepartmentId(Long departmentId);
 
-    List<PerformedTask> findByOrganizationIdAndDateBetween(Long organizationId, LocalDateTime start, LocalDateTime end);
-    List<PerformedTask> findByDepartmentIdAndDateBetween(Long departmentId, LocalDateTime start, LocalDateTime end);
-    List<PerformedTask> findByCaregivers_IdAndDateBetween(Long caregiverId, LocalDateTime start, LocalDateTime end);
+    /** Records from {@code start} up to, but not including, {@code end}. */
+    List<PerformedTask> findByCaregivers_IdAndDateGreaterThanEqualAndDateLessThan(Long caregiverId, LocalDateTime start, LocalDateTime end);
 
     List<PerformedTask> findTop5ByOrganizationIdOrderByDateDesc(Long organizationId);
     List<PerformedTask> findTop5ByDepartmentIdOrderByDateDesc(Long departmentId);
