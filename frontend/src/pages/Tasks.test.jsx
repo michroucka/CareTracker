@@ -296,9 +296,7 @@ describe('Tasks', () => {
             expect(screen.getByRole('dialog', { name: 'Nový úkon' })).toBeInTheDocument();
         });
 
-        // Nález: useTasks.createTask appends the new (active) task to whatever list is shown, so with
-        // "Stav: Neaktivní" it appears among inactive tasks until the next reload.
-        it.skip('does not add a new active task to the list of inactive tasks', async () => {
+        it('does not add a new active task to the list of inactive tasks', async () => {
             serveTasks([task({ id: 14, name: 'Žehlení', active: false })]);
             serveAndRecord('post', '/tasks', () => HttpResponse.json(task({ id: 20, name: 'Úklid' })));
             const { user } = renderTasks(admin(), '/tasks?status=false');

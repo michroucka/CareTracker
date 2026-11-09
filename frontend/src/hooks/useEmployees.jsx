@@ -92,9 +92,12 @@ export function useEmployees() {
             newEmployee.pictureId = await savePicture("employees", newEmployee.id, picture, null);
             const mappedEmployee = mapEmployee(newEmployee);
 
-            setEmployees(prev =>
-                sortByKey([...prev, mappedEmployee], 'lastName', 'ascending')
-            );
+            // a new record is active, so it does not belong to a list filtered to inactive ones
+            if (filtersRef.current.status !== false) {
+                setEmployees(prev =>
+                    sortByKey([...prev, mappedEmployee], 'lastName', 'ascending')
+                );
+            }
 
             toast.success("Zaměstnanec úspěšně vytvořen");
 

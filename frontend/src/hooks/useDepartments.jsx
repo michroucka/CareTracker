@@ -63,7 +63,10 @@ export function useDepartments() {
         try {
             const created = await postJSON("/departments", data);
 
-            setDepartments(prev => sortByKey([...prev, created], 'city', 'ascending'));
+            // a new record is active, so it does not belong to a list filtered to inactive ones
+            if (filtersRef.current.status !== false) {
+                setDepartments(prev => sortByKey([...prev, created], 'city', 'ascending'));
+            }
 
             toast.success("Středisko úspěšně vytvořeno");
 
