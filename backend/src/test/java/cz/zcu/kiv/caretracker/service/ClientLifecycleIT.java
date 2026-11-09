@@ -94,8 +94,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme ukončení bez důvodu; TerminationReason.valueOf(null) hodí NullPointerException "
-            + "a API vrátí 400 se zprávou \"Name is null\". Frontend důvod vyžaduje.")
     void terminationWithoutReasonIsRejected() {
         assertThatThrownBy(() -> clientService.terminateClient(client.getId(), new ClientTerminateDTO(TODAY, null)))
                 .isInstanceOf(ValidationException.class);
@@ -104,8 +102,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: neznámý důvod ukončení skončí IllegalArgumentException a API vrátí 400 se zprávou "
-            + "\"No enum constant cz.zcu.kiv.caretracker.enums.TerminationReason...\" (prozrazuje název třídy).")
     void terminationWithUnknownReasonIsRejectedWithReadableMessage() {
         assertThatThrownBy(() -> clientService.terminateClient(client.getId(), new ClientTerminateDTO(TODAY, "MOVED_AWAY")))
                 .isInstanceOf(ValidationException.class);
@@ -114,7 +110,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend ukončí klienta bez data ukončení (uloží null). Frontend datum vyžaduje.")
     void terminationWithoutDateIsRejected() {
         assertThatThrownBy(() -> clientService.terminateClient(client.getId(), new ClientTerminateDTO(null, "EXITUS")))
                 .isInstanceOf(ValidationException.class);
@@ -123,7 +118,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: backend přijme datum ukončení v budoucnosti. Frontend ho zakazuje (maxDate = dnes).")
     void terminationDateInFutureIsRejected() {
         ClientTerminateDTO tomorrow = new ClientTerminateDTO(TODAY.plusDays(1), "EXITUS");
 
@@ -134,8 +128,6 @@ class ClientLifecycleIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: ukončený klient má dál aktivní přihlašovací účet a může se přihlásit. "
-            + "U zaměstnance ukončení účet deaktivuje a aktivace ho obnoví (EmployeeService#setEmployeeStatus).")
     void terminationDeactivatesClientAccountAndActivationRestoresIt() {
         User account = testData.clientAccount(client);
 
