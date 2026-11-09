@@ -8,6 +8,7 @@ import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.mapper.OrganizationMapper;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
@@ -194,6 +195,10 @@ public class OrganizationService extends BaseRoleFilteringService<Organization, 
                 ? employeeRepository.findById(dto.getManagerId())
                         .orElseThrow(() -> new ResourceNotFoundException("Manažer nebyl nalezen"))
                 : null;
+        // the manager gets the ADMIN role, so they must work in this organization
+        if (newManager != null && !newManager.getOrganization().getId().equals(organization.getId())) {
+            throw new ValidationException("Vedoucí musí patřit do organizace");
+        }
 
         organizationMapper.requestToOrganization(organization, dto, newManager);
         Organization saved = organizationRepository.save(organization);

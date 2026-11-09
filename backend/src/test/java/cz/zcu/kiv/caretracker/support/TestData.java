@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.BenefitLevel;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.Gender;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.repository.*;
 import org.springframework.boot.test.context.TestComponent;
@@ -34,6 +35,8 @@ public class TestData {
     private final ClientRepository clientRepository;
     private final IndividualPlanRepository individualPlanRepository;
     private final DailyRecordRepository dailyRecordRepository;
+    private final TaskRepository taskRepository;
+    private final PerformedTaskRepository performedTaskRepository;
     private final PasswordEncoder passwordEncoder;
 
     // BCrypt is deliberately slow; hashing once keeps tests that create many accounts fast
@@ -46,6 +49,8 @@ public class TestData {
                     ClientRepository clientRepository,
                     IndividualPlanRepository individualPlanRepository,
                     DailyRecordRepository dailyRecordRepository,
+                    TaskRepository taskRepository,
+                    PerformedTaskRepository performedTaskRepository,
                     PasswordEncoder passwordEncoder) {
         this.organizationRepository = organizationRepository;
         this.departmentRepository = departmentRepository;
@@ -54,6 +59,8 @@ public class TestData {
         this.clientRepository = clientRepository;
         this.individualPlanRepository = individualPlanRepository;
         this.dailyRecordRepository = dailyRecordRepository;
+        this.taskRepository = taskRepository;
+        this.performedTaskRepository = performedTaskRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -115,15 +122,24 @@ public class TestData {
 
     /** Sets a small JPEG profile picture (both sizes already generated). */
     public Client withPicture(Client client) {
-        byte[] image = TestImages.jpeg(16, 16);
-        Picture picture = new Picture();
-        picture.setData(image);
-        picture.setThumbnail(image);
-        picture.setContentType("image/jpeg");
-        picture.setSize((long) image.length);
-        picture.setUploadedAt(LocalDateTime.now());
-        client.setPicture(picture);
+        client.setPicture(picture());
         return clientRepository.save(client);
+    }
+
+    /** Sets a small JPEG profile picture (both sizes already generated). */
+    public Employee withPicture(Employee employee) {
+        employee.setPicture(picture());
+        return employeeRepository.save(employee);
+    }
+
+    /** Turns the employee's account back into one waiting for activation (no username yet). */
+    public Employee withPendingAccount(Employee employee) {
+        User user = employee.getUser();
+        user.setUsername(null);
+        user.setActivationToken("token-" + next());
+        user.setTokenExpiry(LocalDateTime.now().plusDays(7));
+        employee.setUser(userRepository.save(user));
+        return employee;
     }
 
     /** Individual plan with one content version (version 1). */
@@ -153,8 +169,57 @@ public class TestData {
         return dailyRecordRepository.save(dailyRecord);
     }
 
+    /** Active catalog entry of the organization, priced per hour. */
+    public Task task(Organization organization) {
+        Task task = new Task();
+        task.setName("Úkon " + next());
+        task.setUnitPrice(150);
+        task.setUnitType(UnitType.HOUR);
+        task.setDoubleMeeting(false);
+        task.setActive(true);
+        task.setOrganization(organization);
+        return taskRepository.save(task);
+    }
+
     public User superadmin() {
         return userRepository.save(account(UserRole.SUPERADMIN));
+    }
+
+    /** One hour of the task for the client on 2 November 2026, performed by the caregiver. */
+    public PerformedTask performedTask(Client client, Task task, Employee caregiver) {
+        return performedTask(client, task, caregiver, LocalDateTime.of(2026, 11, 2, 9, 0));
+    }
+
+    /** One hour of the task for the client on the given date, performed by the client's caregiver. */
+    public PerformedTask performedTask(Client client, Task task, LocalDateTime date) {
+        return performedTask(client, task, client.getCaregiver(), date);
+    }
+
+    private PerformedTask performedTask(Client client, Task task, Employee caregiver, LocalDateTime date) {
+        PerformedTask performedTask = new PerformedTask();
+        performedTask.setClient(client);
+        performedTask.setTask(task);
+        performedTask.setDepartment(client.getDepartment());
+        performedTask.setOrganization(client.getOrganization());
+        performedTask.setDate(date);
+        performedTask.setUnitCount(60.0);
+        performedTask.setCaregivers(new ArrayList<>());
+        performedTask = performedTaskRepository.save(performedTask);
+
+        // caregivers cascade PERSIST, which rejects the detached employee; the second save merges instead
+        performedTask.getCaregivers().add(caregiver);
+        return performedTaskRepository.save(performedTask);
+    }
+
+    private Picture picture() {
+        byte[] image = TestImages.jpeg(16, 16);
+        Picture picture = new Picture();
+        picture.setData(image);
+        picture.setThumbnail(image);
+        picture.setContentType("image/jpeg");
+        picture.setSize((long) image.length);
+        picture.setUploadedAt(LocalDateTime.now());
+        return picture;
     }
 
     private User account(UserRole role) {

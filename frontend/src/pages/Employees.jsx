@@ -35,6 +35,7 @@ function Employees() {
     const { user, superadminOrg } = useAuth();
     const canEdit = EDITOR_ROLES.includes(user.role);
     const canManageAdmins = ADMIN_ROLES.includes(user.role);
+    const canChange = (employee) => canEdit && (canManageAdmins || !employee?.isAdmin);
     // only admins choose departments; coordinators and caregivers see their own department
     const canFilterDepartments = ADMIN_ROLES.includes(user.role);
 
@@ -201,14 +202,14 @@ function Employees() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onSelect={() => openDetail(employee.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
-                                                {employee.email && !employee.isActivated && (
+                                                {canChange(employee) && employee.email && !employee.isActivated && (
                                                     <DropdownMenuItem onSelect={() => resendActivationEmail(employee.id)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
                                                 )}
-                                                {employee.active ? (
+                                                {canChange(employee) && (employee.active ? (
                                                     <DropdownMenuItem variant="destructive" disabled={isSelf} onSelect={() => setConfirmAction({ type: "terminate", employee })}><IconBan /> Deaktivovat</DropdownMenuItem>
                                                 ) : (
                                                     <DropdownMenuItem onSelect={() => setConfirmAction({ type: "activate", employee })}><IconCircleCheck /> Aktivovat</DropdownMenuItem>
-                                                )}
+                                                ))}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -225,7 +226,7 @@ function Employees() {
                 onOpenChange={(open) => !open && closeDetail()}
                 employee={detail}
                 isLoading={detailId != null && !detail}
-                canEdit={canEdit}
+                canEdit={canChange(detail)}
                 canManageAdmins={canManageAdmins}
                 isSelf={detail?.id === user.employeeId}
                 organizationId={organizationId}

@@ -106,8 +106,25 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 - [x] Nález z UI, opraveno: u ukončeného klienta šel vytvořit individuální plán. Plán i denní záznamy ukončeného klienta jsou teď jen ke čtení (API vrací 400, stránka nenabízí úpravy) – `InactiveClientPlanIT`, `IndividualPlan.test.jsx`.
 - [x] Mazání denního záznamu sjednoceno podle frontendu: API ho dovolí jen autorovi a adminovi (SUPERADMIN, ADMIN), neexistující záznam vrací 404.
 - Pozorováno, beze změny: individuální plán smí upravit jen pečovatel klienta a admin, koordinátor střediska ne (`validateIndividualPlanUpdateAccess`, odpovídá Javadocu). Superadmin nemůže přidat denní záznam (nemá zaměstnance).
-- [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka.
-- [ ] **[claude]** Nepřihlášený na každý chráněný endpoint → 401 (jeden parametrizovaný test přes všechny URL).
+- [x] **[claude]** Zaměstnanci, střediska, organizace, úkony (katalog), provedené úkony (včetně `receipt`, `receipts`, `payment-qr` – klient jen svoje), nástěnka (`view` nepovolený pro roli spadne na výchozí), `/api/user/me` a vlastní fotka. Třídy `EmployeeAccessIT`, `DepartmentAccessIT`, `OrganizationAccessIT`, `TaskAccessIT`, `PerformedTaskAccessIT` (matice) a k nim `*ListAccessIT` (rozsah seznamu), `DashboardAccessIT`, `DashboardScopeIT`, `OwnAccountIT`.
+- [x] **[claude]** Nepřihlášený na každý chráněný endpoint → 401: `UnauthenticatedAccessIT`. Druhý test čte všechny endpointy ze Springu a selže, když nový endpoint v seznamu chybí.
+- [x] Nálezy (opraveno, testy je hlídají):
+  - Vysoká: koordinátor smí přes API přidělit roli koordinátora/vedoucího a příznak administrátora, i sám sobě. Teď jen admin (`EmployeeService.validateRoleAssignment`), koordinátor může zaměstnanci ponechat jeho současnou roli.
+  - Vysoká: koordinátor smí upravit administrátora ve svém středisku (např. změnit e-mail a převzít účet přes reset hesla). Administrátora teď mění jen admin, ve frontendu koordinátor u admina nevidí úpravy ani akce.
+  - Vysoká: admin smí jmenovat koordinátorem střediska zaměstnance jiné organizace (a tím mu zvýšit roli). Koordinátor musí patřit do organizace střediska (`DepartmentService.saveDepartment`).
+  - Vysoká: klient získá QR platbu (částku a variabilní symbol z rodného čísla) jiného klienta přes `clientId`. QR teď jen pro vlastního klienta, neplatný měsíc → 400.
+  - Střední: opětovné odeslání aktivace zaměstnance nekontrolovalo středisko ani organizaci.
+  - Střední: vytvoření i úprava organizace z frontendu končila 400 (formulář neposílá `active`, mapper uložil null). Chybějící `active` teď ponechá současnou hodnotu.
+  - Nízká: `PUT /api/user/me` dovolil e-mail jiného účtu (reset hesla podle e-mailu pak selže) a prázdné uživatelské jméno (zamkne účet). Teď 400.
+  - Nízká: koordinátor a pečovatel viděli v katalogu i neaktivní úkony. Teď jen aktivní.
+  - Nízká: neznámé `?view=` na nástěnce vracelo 400. Teď spadne na výchozí pohled jako nepovolený pohled.
+  - E-mail bez `isAdmin` při vytvoření/úpravě zaměstnance spadl na 500 (`NullPointerException`).
+- [x] Pozorování z T2a, rozhodnuto 2026-11-09:
+  - Provedený úkon: nově přidaný pečovatel musí být ze střediska klienta (pečovatel, který mezitím přešel jinam, na starém záznamu zůstává). Pečovatel musí být mezi pečovateli svého záznamu, koordinátor a admin ne. Formulář to hlídá taky.
+  - `PUT /api/departments/{id}` stav `active` nemění, deaktivace jen přes `/terminate` (s kontrolou aktivních klientů a zaměstnanců).
+  - Vedoucí organizace musí patřit do té organizace (i u superadmina).
+  - E-mail účtu se kontroluje na duplicitu (bez ohledu na velikost písmen) při vytvoření a úpravě účtu zaměstnance, klienta i v `PUT /api/user/me`. Unikátní index v DB odložen do kontroly dat.
+  - Necháno beze změny: superadmin bez `organizationId` dostane prázdný seznam úkonů a středisek (frontend organizaci vždy posílá). Koordinátor a pečovatel vidí všechna střediska organizace včetně neaktivních (potřebují je filtry).
 
 #### T2b – Doménová logika (unit)
 - [ ] **[claude]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.
@@ -201,6 +218,7 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ## Log změn
 
+- 2026-11-09: T2a hotová: zaměstnanci, střediska, organizace, úkony, provedené úkony, nástěnka, vlastní účet, 401 pro nepřihlášeného (865 testů). Testy psali paralelně subagenti po doménách, nálezy rovnou opraveny (viz T2a).
 - 2026-11-09: opraveny nálezy z T2a (účet klienta bez kontroly přístupu, pečovatel a ukončení klienti, plán ukončeného klienta). První test stránky s MSW (`IndividualPlan.test.jsx`), `renderWithProviders` čeká na načtení přihlášení.
 - 2026-11-09: T2a klienti hotoví (`ClientAccessIT`, `ClientListAccessIT`, nahrazují `ClientAuthorizationIT`), dva nálezy v T2a.
 - 2026-11-09: testy přebírá Claude, uživatel dělá review a opravy aplikace. `ClientAuthorizationIT` hotový (detail klienta pro pečovatele: vlastní středisko, jiné středisko, jiná organizace).

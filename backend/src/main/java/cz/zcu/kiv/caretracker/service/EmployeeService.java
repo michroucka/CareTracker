@@ -6,6 +6,8 @@ import cz.zcu.kiv.caretracker.dto.picture.PictureDTO;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.Department;
 import cz.zcu.kiv.caretracker.entity.Picture;
+import cz.zcu.kiv.caretracker.entity.User;
+import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
@@ -109,6 +111,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
                 dept -> dept.getOrganization().getId(),
                 Department::getId
         );
+        validateRoleAssignment(employee, dto);
 
         employeeMapper.requestToEmployee(employee, dto, department);
         employee = employeeRepository.save(employee);
@@ -126,11 +129,58 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     }
 
     /**
+     * Only admins may hand out the COORDINATOR or MANAGER role and the administrator flag.
+     * A coordinator may keep an employee's current role, mirroring the employee form.
+     *
+     * @throws SecurityException if a coordinator tries to raise the role or change the administrator flag
+     */
+    private void validateRoleAssignment(Employee employee, EmployeeRequestDTO dto) {
+        if (isCurrentUserAdmin()) {
+            return;
+        }
+
+        EmployeeRole requestedRole = EmployeeRole.valueOf(dto.getRole());
+        if (requestedRole != EmployeeRole.CAREGIVER && requestedRole != employee.getRole()) {
+            throw new SecurityException("Tuto roli může přidělit jen administrátor");
+        }
+
+        if (hasEmail(dto) && Boolean.TRUE.equals(dto.getIsAdmin())) {
+            throw new SecurityException("Administrátora může přidělit jen administrátor");
+        }
+    }
+
+    /**
+     * Administrators may be changed only by administrators, otherwise a coordinator could e.g. change
+     * the administrator's e-mail and take over the account through a password reset.
+     *
+     * @throws SecurityException if a non-admin user tries to change an administrator
+     */
+    private void validateAdminChangedOnlyByAdmin(Employee employee) {
+        if (hasAdminAccount(employee) && !isCurrentUserAdmin()) {
+            throw new SecurityException("Administrátora může upravit jen administrátor");
+        }
+    }
+
+    private boolean isCurrentUserAdmin() {
+        UserRole role = getCurrentUser().getRole();
+        return role == UserRole.ADMIN || role == UserRole.SUPERADMIN;
+    }
+
+    private static boolean hasAdminAccount(Employee employee) {
+        User account = employee.getUser();
+        return account != null && account.getRole() == UserRole.ADMIN;
+    }
+
+    private static boolean hasEmail(EmployeeRequestDTO dto) {
+        return dto.getEmail() != null && !dto.getEmail().trim().isEmpty();
+    }
+
+    /**
      * Creates, updates, or skips the {@link cz.zcu.kiv.caretracker.entity.User} account for an employee
      * based on whether an email is provided in the DTO.
      */
     private void handleUserAccount(Employee employee, EmployeeRequestDTO dto) {
-        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
+        if (hasEmail(dto)) {
             if (employee.getUser() == null) {
                 userService.createUserForEmployee(employee, dto.getEmail(), dto.getIsAdmin());
             } else {
@@ -162,29 +212,14 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      */
     @Transactional
     public Employee updateEmployee(Long id, EmployeeRequestDTO dto) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
-        validateUpdateAccess(
-                employee,
-                emp -> emp.getOrganization().getId(),
-                emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
-        );
-        return saveEmployee(employee, dto);
+        return saveEmployee(findManageableEmployee(id), dto);
     }
 
     /**
      * Sets the active status of an employee and mirrors the change to their user account if one exists.
      */
     private Employee setEmployeeStatus(Long id, boolean status) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
-
-        validateUpdateAccess(
-                employee,
-                emp -> emp.getOrganization().getId(),
-                emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
-        );
-
+        Employee employee = findManageableEmployee(id);
         employee.setActive(status);
 
         if (employee.getUser() != null) {
@@ -225,9 +260,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      * @throws ResourceNotFoundException if the employee does not exist
      */
     public void resendActivationEmail(Long id) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
-
+        Employee employee = findManageableEmployee(id);
         userService.resendActivationEmail(employee.getUser());
     }
 
@@ -249,13 +282,13 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     /** Replaces the employee's profile picture with a resized copy of the upload. */
     @Transactional
     public PictureDTO setPicture(Long employeeId, MultipartFile file) throws IOException {
-        return replacePicture(findAccessibleEmployee(employeeId), file);
+        return replacePicture(findManageableEmployee(employeeId), file);
     }
 
     /** Removes the employee's profile picture. */
     @Transactional
     public void deletePicture(Long employeeId) {
-        removePicture(findAccessibleEmployee(employeeId));
+        removePicture(findManageableEmployee(employeeId));
     }
 
     /** Replaces the profile picture of the signed-in employee (Můj účet). */
@@ -292,6 +325,13 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
                 emp -> emp.getOrganization().getId(),
                 emp -> emp.getDepartment() != null ? emp.getDepartment().getId() : null
         );
+        return employee;
+    }
+
+    /** Employee the current user may change: within their scope and not an administrator unless they are one. */
+    private Employee findManageableEmployee(Long employeeId) {
+        Employee employee = findAccessibleEmployee(employeeId);
+        validateAdminChangedOnlyByAdmin(employee);
         return employee;
     }
 

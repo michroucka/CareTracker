@@ -3,6 +3,7 @@ import { MIN_YEAR } from "@/constants/globalConstants";
 import { todayIsoDate } from "@/lib/dates";
 import { formatDuration } from "@/components/dashboard/dashboardFormat";
 import { formatNumber } from "@/utils/formatters";
+import { ROLES } from "@/constants/roles";
 
 export const MIN_DATE = `${MIN_YEAR}-01-01`;
 
@@ -77,7 +78,11 @@ export function previewPrice(task, unitCount) {
     return task && amount > 0 ? calculatePrice(task, amount) : null;
 }
 
-export function validatePerformedTask(values, task) {
+/**
+ * `ownCaregiverId` is the signed-in caregiver, who must stay among the caregivers of their record
+ * (the server rejects it otherwise, and the caregiver could not edit the record afterwards).
+ */
+export function validatePerformedTask(values, task, ownCaregiverId) {
     const errors = {};
     if (!values.clientId) errors.clientId = "Prosím vyberte klienta";
     if (!values.taskId) errors.taskId = "Prosím vyberte úkon";
@@ -91,7 +96,13 @@ export function validatePerformedTask(values, task) {
     else if (task && !allowsDecimals(task.unitType) && !Number.isInteger(amount)) errors.unitCount = "Zadejte celé číslo";
 
     if (values.caregiverIds.length === 0) errors.caregiverIds = "Prosím vyberte pečovatele";
+    else if (ownCaregiverId && !values.caregiverIds.includes(ownCaregiverId)) errors.caregiverIds = "Mezi pečovateli musíte být i vy";
     return errors;
+}
+
+/** Employee id the signed-in user must keep among the caregivers: only caregivers record just their own work. */
+export function requiredCaregiverId(user) {
+    return user.role === ROLES.CAREGIVER ? user.employeeId : null;
 }
 
 export function toRequest(values) {

@@ -245,8 +245,15 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
      * @param month the billing month (1–12)
      * @param year the billing year
      * @return PNG bytes, or {@code null} if no bank account is configured
+     * @throws SecurityException if the signed-in client asks for another client's payment
      */
     public byte[] generatePaymentQrCode(Long clientId, Integer month, Integer year) {
+        validateMonth(month);
+        Client ownClient = getCurrentUser().getClient();
+        if (ownClient == null || !ownClient.getId().equals(clientId)) {
+            throw new SecurityException("Přístup odepřen: platba patří jinému klientovi");
+        }
+
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 

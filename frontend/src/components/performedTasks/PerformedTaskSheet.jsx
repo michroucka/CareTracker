@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { calculatePrice } from "@/constants/performedTaskConstants";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRecordForm } from "@/hooks/useRecordForm";
 import { formatDateTime } from "@/utils/formatters";
 import { PerformedTaskFields } from "./PerformedTaskFields";
-import { formatAmount, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
+import { formatAmount, requiredCaregiverId, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
 
 function PerformedTaskView({ performedTask, linkClient }) {
     const { task, client, caregivers, notes } = performedTask;
@@ -52,6 +53,7 @@ function PerformedTaskView({ performedTask, linkClient }) {
  * (caregivers looking at a record they did not take part in, clients). `linkClient` links the client's detail page.
  */
 export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoading, canEdit, linkClient = true, clients = [], tasks = [], caregivers = [], onSave, onDelete }) {
+    const { user } = useAuth();
     const [isEditing, setIsEditing] = React.useState(false);
     const form = useRecordForm(toFormValues(performedTask));
 
@@ -70,7 +72,7 @@ export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoadin
 
     const save = async (event) => {
         event.preventDefault();
-        const validate = (values) => validatePerformedTask(values, tasksWithCurrent.find((task) => task.id === values.taskId));
+        const validate = (values) => validatePerformedTask(values, tasksWithCurrent.find((task) => task.id === values.taskId), requiredCaregiverId(user));
         const saved = await form.submit(validate, (values) => onSave(performedTask.id, toRequest(values)));
         if (saved) setIsEditing(false);
     };

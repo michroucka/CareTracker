@@ -52,12 +52,35 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      *
      * @param dto updated user data
      * @return the updated user entity
+     * @throws ValidationException if the username is empty or the e-mail belongs to another account
      */
     @Transactional
     public User updateCurrentUser(UserRequestDTO dto) {
         User user = getCurrentUser();
+        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
+            throw new ValidationException("Uživatelské jméno nesmí být prázdné");
+        }
+        validateEmailAvailable(dto.getEmail(), user.getId());
         userMapper.requestToUser(user, dto);
         return userRepository.save(user);
+    }
+
+    /**
+     * Password reset looks the account up by e-mail, so two accounts must not share one.
+     *
+     * @param ownUserId the account being changed (its own e-mail is fine), {@code null} for a new account
+     * @throws ValidationException if another account already uses the e-mail
+     */
+    private void validateEmailAvailable(String email, Long ownUserId) {
+        if (email == null) {
+            return;
+        }
+        boolean taken = ownUserId == null
+                ? userRepository.existsByEmailIgnoreCase(email)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(email, ownUserId);
+        if (taken) {
+            throw new ValidationException("Tento e-mail už používá jiný účet");
+        }
     }
 
     /**
@@ -95,10 +118,11 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional
     public void createUserForEmployee(Employee employee, String email, Boolean isAdmin) {
+        validateEmailAvailable(email, null);
         User user = new User();
         user.setEmployee(employee);
         user.setEmail(email);
-        user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
+        user.setRole(Boolean.TRUE.equals(isAdmin) ? UserRole.ADMIN : employee.getRole().toUserRole());
         user.setActive(true);
 
         String activationToken = UUID.randomUUID().toString();
@@ -124,8 +148,9 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
             throw new ResourceNotFoundException("Zaměstnanec nemá uživatelský účet");
         }
 
+        validateEmailAvailable(email, user.getId());
         user.setEmail(email);
-        user.setRole(isAdmin ? UserRole.ADMIN : employee.getRole().toUserRole());
+        user.setRole(Boolean.TRUE.equals(isAdmin) ? UserRole.ADMIN : employee.getRole().toUserRole());
 
         userRepository.save(user);
     }
@@ -173,6 +198,7 @@ public class UserService extends BaseRoleFilteringService<User, UserDTO>{
      */
     @Transactional
     public void createUserForClient(Client client, String email) {
+        validateEmailAvailable(email, null);
         User user = new User();
         user.setClient(client);
         user.setEmail(email);
