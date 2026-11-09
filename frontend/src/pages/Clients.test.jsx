@@ -105,9 +105,7 @@ describe('Clients list – filters', () => {
         expect(searchParams.getAll('departmentIds')).toEqual(['3']);
     });
 
-    // Nález: caregiverIds are kept only when they are among the loaded caregiver options, so before /employees
-    // answers the page asks for clients of all caregivers and briefly shows them if /clients answers first.
-    it.skip('applies a caregiver filter from the URL already in the first request', async () => {
+    it('applies a caregiver filter from the URL already in the first request', async () => {
         const requests = serveClients([KAREL]);
 
         renderClients({ route: '/clients?departments=3&caregivers=11' });

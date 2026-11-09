@@ -500,9 +500,7 @@ describe('Employees', () => {
             expect(await screen.findByText('Odkaz lze poslat nejdřív za 5 minut')).toBeInTheDocument();
         });
 
-        // Nález: useEmployees.resendActivationEmail shows the toast and then rethrows, but the row menu and the sheet
-        // call it without a catch, so a failed resend ends in an unhandled promise rejection (Vitest fails the run on it).
-        it.skip('shows the server message when the activation e-mail cannot be sent', async () => {
+        it('shows the server message when the activation e-mail cannot be sent', async () => {
             serveEmployees();
             serveAndRecord('post', '/employees/:id/resend', serverError('Odeslání e-mailu selhalo'));
             const { user } = renderEmployees(admin());

@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { errorAlreadyShown } from "@/utils/errorHandler";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { pictureUrl } from "@/lib/pictures";
@@ -203,7 +204,7 @@ function Employees() {
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onSelect={() => openDetail(employee.id)}><IconLayoutSidebarRightExpand /> Otevřít detail</DropdownMenuItem>
                                                 {canChange(employee) && employee.email && !employee.isActivated && (
-                                                    <DropdownMenuItem onSelect={() => resendActivationEmail(employee.id)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
+                                                    <DropdownMenuItem onSelect={() => resendActivationEmail(employee.id).catch(errorAlreadyShown)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
                                                 )}
                                                 {canChange(employee) && (employee.active ? (
                                                     <DropdownMenuItem variant="destructive" disabled={isSelf} onSelect={() => setConfirmAction({ type: "terminate", employee })}><IconBan /> Deaktivovat</DropdownMenuItem>
@@ -234,7 +235,7 @@ function Employees() {
                 onSave={saveEmployee}
                 onTerminate={() => setConfirmAction({ type: "terminate", employee: detail })}
                 onActivate={() => setConfirmAction({ type: "activate", employee: detail })}
-                onResendActivation={() => resendActivationEmail(detail.id)}
+                onResendActivation={() => resendActivationEmail(detail.id).catch(errorAlreadyShown)}
             />
 
             {canEdit && (
