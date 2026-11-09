@@ -252,7 +252,6 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Nález: úkon z katalogu, který byl deaktivován, jde backendem dál zapisovat (formulář nabízí jen aktivní úkony)")
     void inactiveTaskCannotBeRecorded() throws Exception {
         task.setActive(false);
         taskRepository.save(task);
@@ -261,6 +260,26 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         assertThat(performedTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void recordWithDeactivatedTaskStaysEditableButCannotSwitchToOne() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, caregiver);
+        Task otherTask = testData.task(organization);
+        task.setActive(false);
+        taskRepository.save(task);
+        otherTask.setActive(false);
+        taskRepository.save(otherTask);
+        Map<String, Object> request = request(client, task, caregiver);
+        request.put("unitCount", 45.0);
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request).andExpect(status().isOk());
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request(client, otherTask, caregiver))
+                .andExpect(status().isBadRequest());
+
+        PerformedTask saved = performedTaskRepository.findById(record.getId()).orElseThrow();
+        assertThat(saved.getUnitCount()).isEqualTo(45.0);
+        assertThat(saved.getTask().getId()).isEqualTo(task.getId());
     }
 
     @Test

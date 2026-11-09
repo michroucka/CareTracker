@@ -149,6 +149,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
             validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
         }
         validateCaregivers(performedTask, client, caregivers);
+        validateTask(performedTask, task);
         validateAmount(dto.getUnitCount(), task);
         validateDate(dto.getDate());
 
@@ -229,6 +230,14 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         if (currentUser.getRole() == UserRole.CAREGIVER
                 && caregivers.stream().noneMatch(c -> c.getId().equals(currentUser.getEmployee().getId()))) {
             throw new ValidationException("Mezi pečovateli musíte být i vy");
+        }
+    }
+
+    /** A deactivated task stays on the records it already has, so they remain editable. */
+    private void validateTask(PerformedTask performedTask, Task task) {
+        boolean keepsCurrentTask = performedTask.getTask() != null && performedTask.getTask().getId().equals(task.getId());
+        if (!task.getActive() && !keepsCurrentTask) {
+            throw new ValidationException("Deaktivovaný úkon nelze zapsat");
         }
     }
 
