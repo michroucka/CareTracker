@@ -11,6 +11,8 @@ import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.mapper.EmployeeMapper;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
+import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
 import cz.zcu.kiv.caretracker.repository.PictureRepository;
@@ -43,6 +45,10 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     private PictureRepository pictureRepository;
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private ClientRepository clientRepository;
+    @Autowired
+    private DepartmentService departmentService;
 
     /**
      * Returns employees filtered by the current user's role and the supplied optional criteria.
@@ -112,6 +118,7 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
                 Department::getId
         );
         validateRoleAssignment(employee, dto);
+        validateDepartmentActive(employee, department);
 
         employeeMapper.requestToEmployee(employee, dto, department);
         employee = employeeRepository.save(employee);
@@ -126,6 +133,20 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
                 .orElseThrow(() -> new ResourceNotFoundException("Zaměstnanec nebyl nalezen"));
 
         return employee;
+    }
+
+    /**
+     * A terminated department takes no new employees. A former employee of a terminated department
+     * may still be edited while staying there.
+     *
+     * @throws ValidationException if the employee would join a terminated department
+     */
+    private static void validateDepartmentActive(Employee employee, Department department) {
+        boolean joinsDepartment = employee.getDepartment() == null
+                || !employee.getDepartment().getId().equals(department.getId());
+        if (joinsDepartment && !Boolean.TRUE.equals(department.getActive())) {
+            throw new ValidationException("Středisko je ukončené, vyberte aktivní středisko");
+        }
     }
 
     /**
@@ -234,13 +255,27 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
     }
 
     /**
-     * Deactivates an employee and their associated user account.
+     * Deactivates an employee and their associated user account and removes them as coordinator.
+     * Performed tasks they recorded keep them as caregiver.
      *
      * @param id the employee ID
      * @return the updated employee entity
+     * @throws ValidationException if the employee is still the caregiver of active clients
      */
+    @Transactional
     public Employee terminateEmployee(Long id) {
-        return setEmployeeStatus(id, false);
+        findManageableEmployee(id);
+        long activeClients = clientRepository.countByActiveTrueAndCaregiverId(id);
+        if (activeClients == 1) {
+            throw new ValidationException("Zaměstnanec je pečovatelem 1 aktivního klienta, nejdřív klientovi přidělte jiného pečovatele");
+        }
+        if (activeClients > 1) {
+            throw new ValidationException("Zaměstnanec je pečovatelem " + activeClients
+                    + " aktivních klientů, nejdřív jim přidělte jiného pečovatele");
+        }
+        Employee terminated = setEmployeeStatus(id, false);
+        departmentService.removeCoordinatorFromAllDepartments(terminated);
+        return terminated;
     }
 
     /**

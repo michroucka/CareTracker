@@ -238,6 +238,23 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     }
 
     /**
+     * Leaves every department the employee coordinates without a coordinator and lowers their role,
+     * used when the employee is terminated.
+     *
+     * @param employee the employee who stops coordinating
+     */
+    @Transactional
+    public void removeCoordinatorFromAllDepartments(Employee employee) {
+        List<Department> coordinatedDepartments = departmentRepository.findByCoordinatorId(employee.getId());
+        if (coordinatedDepartments.isEmpty()) {
+            return;
+        }
+        coordinatedDepartments.forEach(department -> department.setCoordinator(null));
+        departmentRepository.saveAll(coordinatedDepartments);
+        updateCoordinatorRoles(employee, null);
+    }
+
+    /**
      * Re-activates a previously deactivated department.
      *
      * @param id the department ID
