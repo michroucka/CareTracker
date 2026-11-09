@@ -11,7 +11,14 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Deploy demo stack
-        run: docker compose -f docker-compose.demo.yml --env-file "$HOME/caretracker-secrets/.env.demo" up --build -d
+        env:
+          COMPOSE_FILE: docker-compose.demo.yml
+        run: |
+          set -e
+          compose() { docker compose --env-file "$HOME/caretracker-secrets/.env.demo" "$@"; }
+          compose pull cloudflared
+          compose build --pull
+          compose up -d
 
       - name: Clean up dangling images
         run: docker image prune -f
