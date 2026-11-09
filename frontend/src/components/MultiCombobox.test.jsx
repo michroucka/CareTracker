@@ -98,10 +98,7 @@ describe('MultiCombobox', () => {
         expect(onChange).toHaveBeenLastCalledWith([2]);
     });
 
-    // Nález: with 6 or fewer options there is no search input, so the popover itself gets the focus.
-    // It sits outside the cmdk root, which listens for the arrow keys and Enter, so a keyboard user
-    // cannot move to or pick any option (the same happens in a real browser, Radix focuses the content).
-    it.skip('selects with the keyboard in a short list', async () => {
+    it('selects with the keyboard in a short list', async () => {
         const { user, onChange, trigger } = renderMultiCombobox();
 
         trigger.focus();

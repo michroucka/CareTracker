@@ -26,8 +26,8 @@ function renderPhotoInput(props) {
     return { user, onChange, fileInput: document.getElementById('photo') };
 }
 
-// the avatar and the text button next to it share the label; the avatar comes first
-const avatarButton = (label) => screen.getAllByRole('button', { name: label })[0];
+// the avatar is a mouse and drop target hidden from assistive technology; the labelled button does the same
+const avatarButton = () => document.querySelector('button[aria-hidden="true"]');
 
 function fileOfSize(name, type, sizeInBytes) {
     const file = new File(['x'], name, { type });
@@ -50,7 +50,9 @@ describe('PhotoInput', () => {
     it('shows the initials and an upload button without a photo', () => {
         renderPhotoInput();
 
-        expect(avatarButton('Nahrát fotografii')).toHaveTextContent('MN');
+        expect(avatarButton()).toHaveTextContent('MN');
+        expect(avatarButton()).toHaveAttribute('tabindex', '-1');
+        expect(screen.getAllByRole('button', { name: 'Nahrát fotografii' })).toHaveLength(1);
         expect(screen.queryByRole('button', { name: /Odebrat/ })).not.toBeInTheDocument();
     });
 
@@ -101,7 +103,7 @@ describe('PhotoInput', () => {
         const { onChange } = renderPhotoInput();
         const dropped = new File(['png'], 'portret.png', { type: 'image/png' });
 
-        fireEvent.drop(avatarButton('Nahrát fotografii'), { dataTransfer: { files: [dropped] } });
+        fireEvent.drop(avatarButton(), { dataTransfer: { files: [dropped] } });
 
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith(shrunk));
     });
@@ -109,7 +111,7 @@ describe('PhotoInput', () => {
     it('ignores a dropped photo when disabled', () => {
         const { onChange } = renderPhotoInput({ disabled: true });
 
-        fireEvent.drop(avatarButton('Nahrát fotografii'), { dataTransfer: { files: [new File(['png'], 'a.png', { type: 'image/png' })] } });
+        fireEvent.drop(avatarButton(), { dataTransfer: { files: [new File(['png'], 'a.png', { type: 'image/png' })] } });
 
         expect(shrinkPhoto).not.toHaveBeenCalled();
         expect(onChange).not.toHaveBeenCalled();
@@ -118,7 +120,7 @@ describe('PhotoInput', () => {
     it('shows the saved photo and asks the server to delete it on removal', async () => {
         const { user, onChange } = renderPhotoInput({ value: SAVED_PHOTO_URL, hasSavedPicture: true });
 
-        expect(avatarButton('Změnit fotografii').querySelector('img')).toHaveAttribute('src', SAVED_PHOTO_URL);
+        expect(avatarButton().querySelector('img')).toHaveAttribute('src', SAVED_PHOTO_URL);
 
         await user.click(screen.getByRole('button', { name: 'Odebrat' }));
 

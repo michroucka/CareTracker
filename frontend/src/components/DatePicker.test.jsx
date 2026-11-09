@@ -37,14 +37,8 @@ describe('DatePicker', () => {
 
         screen.getByRole('button', { name: 'Datum narození' }).focus();
         await user.keyboard('{Enter}');
-        expect(screen.getByRole('dialog')).toContainElement(document.activeElement);
 
-        // the month navigation and dropdowns come first, the selected day is the next tab stop after them
-        const selectedDay = calendarDay('neděle, 8. listopadu 2026');
-        for (let tabs = 0; tabs < 5 && document.activeElement !== selectedDay; tabs++) {
-            await user.tab();
-        }
-        expect(selectedDay).toHaveFocus();
+        expect(calendarDay('neděle, 8. listopadu 2026')).toHaveFocus();
 
         await user.keyboard('{ArrowRight}{Enter}');
 
