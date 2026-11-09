@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.service.GeocodingService;
+import cz.zcu.kiv.caretracker.service.PaymentQrClient;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestcontainersConfiguration.class, DatabaseCleaner.class, TestData.class})
+@Import({TestcontainersConfiguration.class, TestClockConfiguration.class, DatabaseCleaner.class, TestData.class})
 public abstract class AbstractIntegrationTest {
 
     @Autowired
@@ -43,11 +44,18 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected ObjectMapper objectMapper;
 
+    /** Application clock; fix it with {@code clock.fixAt(...)}, it returns to system time before each test. */
+    @Autowired
+    protected TestClock clock;
+
     @MockitoBean
     protected JavaMailSender mailSender;
 
     @MockitoBean
     protected GeocodingService geocodingService;
+
+    @MockitoBean
+    protected PaymentQrClient paymentQrClient;
 
     @Autowired
     private DatabaseCleaner databaseCleaner;
@@ -58,6 +66,11 @@ public abstract class AbstractIntegrationTest {
     @BeforeEach
     void cleanDatabase() {
         databaseCleaner.clean();
+    }
+
+    @BeforeEach
+    void resetClock() {
+        clock.reset();
     }
 
     @BeforeEach

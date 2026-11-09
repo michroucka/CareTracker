@@ -83,7 +83,10 @@ public class PictureService {
     private BufferedImage readUpright(byte[] original) {
         checkPixelCount(original);
         try {
-            BufferedImage decoded = Thumbnails.of(new ByteArrayInputStream(original)).scale(1.0).asBufferedImage();
+            BufferedImage decoded = Thumbnails.of(new ByteArrayInputStream(original)).scale(1.0)
+                    // without an explicit type, palette images (GIF, PNG-8) get a default palette and lose their colours
+                    .imageType(BufferedImage.TYPE_INT_ARGB)
+                    .asBufferedImage();
             BufferedImage opaque = new BufferedImage(decoded.getWidth(), decoded.getHeight(), BufferedImage.TYPE_INT_RGB);
             Graphics2D graphics = opaque.createGraphics();
             graphics.setColor(Color.WHITE);

@@ -2,7 +2,6 @@ package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Department;
-import cz.zcu.kiv.caretracker.entity.Organization;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
@@ -10,26 +9,19 @@ import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
 import cz.zcu.kiv.caretracker.repository.PerformedTaskRepository;
 import cz.zcu.kiv.caretracker.specification.PerformedTaskSpecifications;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cz.zcu.kiv.caretracker.service.PaymentQrClient.PaymentAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.xhtmlrenderer.pdf.ITextRenderer;
-import cz.zcu.kiv.caretracker.entity.Task;
-import cz.zcu.kiv.caretracker.enums.UnitType;
 import java.io.ByteArrayOutputStream;
 import java.text.Collator;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -43,12 +35,10 @@ import java.util.stream.IntStream;
 /**
  * Generates PDF billing receipts and payment QR codes for a client's performed tasks in a given month.
  * PDF rendering uses Flying Saucer (ITextRenderer) with Thymeleaf HTML templates.
- * QR codes are fetched from the external Paylibo API and embedded in the PDF as Base64.
+ * QR codes are fetched by {@link PaymentQrClient} and embedded in the PDF as Base64.
  */
 @Service
 public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void>{
-    private static final Logger log = LoggerFactory.getLogger(ReceiptService.class);
-    private static final String PAYLIBO_URL = "https://api.paylibo.com/paylibo/generator/czech/image";
 
     @Autowired
     private PerformedTaskRepository performedTaskRepository;
@@ -58,12 +48,11 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
     private DepartmentRepository departmentRepository;
     @Autowired
     private SpringTemplateEngine templateEngine;
-
-    private final RestClient restClient = RestClient.create();
+    @Autowired
+    private PaymentQrClient paymentQrClient;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d. M. yyyy");
-    private static final Locale CZECH = Locale.forLanguageTag("cs-CZ");
-    private static final Collator CZECH_COLLATOR = Collator.getInstance(CZECH);
+    private static final Collator CZECH_COLLATOR = Collator.getInstance(Locale.forLanguageTag("cs-CZ"));
     private static final int MAX_PARALLEL_QR_REQUESTS = 8;
     private static final String[] MONTH_NAMES = {
             "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
@@ -98,7 +87,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         tasks.sort(Comparator.comparing(PerformedTask::getDate));
 
         String variableSymbol = variableSymbol(client, month, year);
-        String qrCode = encodeBase64(fetchPaymentQrPng(PaymentAccount.of(client.getOrganization()), totalPrice(tasks), variableSymbol));
+        String qrCode = encodeBase64(paymentQrClient.fetchPng(PaymentAccount.of(client.getOrganization()), ReceiptFormatting.totalPrice(tasks), variableSymbol));
         return renderPdf(List.of(buildReceiptHtml(client, tasks, month, year, qrCode)));
     }
 
@@ -140,7 +129,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         // QR codes come from an external API one request per client, so they are fetched in parallel;
         // everything read from JPA entities is resolved here first, the parallel part only uses plain values
         PaymentAccount account = PaymentAccount.of(department.getOrganization());
-        List<Integer> totals = clientGroups.stream().map(ReceiptService::totalPrice).toList();
+        List<Integer> totals = clientGroups.stream().map(ReceiptFormatting::totalPrice).toList();
         List<String> variableSymbols = clientGroups.stream()
                 .map(group -> variableSymbol(group.get(0).getClient(), month, year))
                 .toList();
@@ -149,7 +138,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         try (ExecutorService qrFetchers = Executors.newFixedThreadPool(Math.clamp(clientGroups.size(), 1, MAX_PARALLEL_QR_REQUESTS))) {
             List<CompletableFuture<String>> pendingQrCodes = IntStream.range(0, clientGroups.size())
                     .mapToObj(index -> CompletableFuture.supplyAsync(
-                            () -> encodeBase64(fetchPaymentQrPng(account, totals.get(index), variableSymbols.get(index))),
+                            () -> encodeBase64(paymentQrClient.fetchPng(account, totals.get(index), variableSymbols.get(index))),
                             qrFetchers))
                     .toList();
             qrCodes = pendingQrCodes.stream().map(CompletableFuture::join).toList();
@@ -168,12 +157,8 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         }
     }
 
-    private static int totalPrice(List<PerformedTask> tasks) {
-        return tasks.stream().mapToInt(PerformedTask::calculatePrice).sum();
-    }
-
     private static String variableSymbol(Client client, int month, int year) {
-        return String.format("%02d%02d%06d", year % 100, month, client.getPersonalNumber());
+        return ReceiptFormatting.variableSymbol(client.getPersonalNumber(), month, year);
     }
 
     /**
@@ -181,7 +166,7 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
      * `qrCode` is the Base64 payment QR image, or null when the organization has no bank account.
      */
     private String buildReceiptHtml(Client client, List<PerformedTask> tasks, int month, int year, String qrCode) {
-        int totalPrice = totalPrice(tasks);
+        int totalPrice = ReceiptFormatting.totalPrice(tasks);
         String variableSymbol = variableSymbol(client, month, year);
 
         Context context = new Context();
@@ -193,9 +178,9 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         context.setVariable("clientCity", client.getPostalCode() + " " + client.getCity());
         context.setVariable("monthYear", MONTH_NAMES[month - 1] + " " + year);
         context.setVariable("issuedDate", LocalDate.now().format(DATE_FMT));
-        context.setVariable("tasks", groupByTask(tasks));
-        context.setVariable("totalPrice", formatCurrency(totalPrice));
-        context.setVariable("accountNumber", formatAccountNumber(client.getOrganization()));
+        context.setVariable("tasks", ReceiptFormatting.groupByTask(tasks));
+        context.setVariable("totalPrice", ReceiptFormatting.formatCurrency(totalPrice));
+        context.setVariable("accountNumber", ReceiptFormatting.formatAccountNumber(client.getOrganization()));
         context.setVariable("variableSymbol", variableSymbol);
         context.setVariable("qrCode", qrCode);
         context.setVariable("logoUrl", getClass().getClassLoader().getResource("images/lockup-horizontal-color.png").toString());
@@ -257,125 +242,13 @@ public class ReceiptService extends BaseRoleFilteringService<PerformedTask, Void
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
 
-        int totalPrice = performedTaskRepository.findAll(
-                PerformedTaskSpecifications.withFilters(client.getOrganization().getId(), null, null, clientId, month, year)
-        ).stream().mapToInt(PerformedTask::calculatePrice).sum();
+        int totalPrice = ReceiptFormatting.totalPrice(performedTaskRepository.findAll(
+                PerformedTaskSpecifications.withFilters(client.getOrganization().getId(), null, null, clientId, month, year)));
 
-        return fetchPaymentQrPng(PaymentAccount.of(client.getOrganization()), totalPrice, variableSymbol(client, month, year));
-    }
-
-    /** Bank account of an organization as plain values, safe to use outside the JPA session (parallel QR fetching). */
-    private record PaymentAccount(String prefix, String number, String bankCode) {
-        static PaymentAccount of(Organization organization) {
-            return new PaymentAccount(organization.getAccountPrefix(), organization.getAccountNumber(), organization.getBankCode());
-        }
+        return paymentQrClient.fetchPng(PaymentAccount.of(client.getOrganization()), totalPrice, variableSymbol(client, month, year));
     }
 
     private static String encodeBase64(byte[] bytes) {
         return bytes != null ? Base64.getEncoder().encodeToString(bytes) : null;
-    }
-
-    /**
-     * Calls the Paylibo API to generate a Czech payment QR code image.
-     * Returns {@code null} if bank details are missing or the request fails.
-     */
-    private byte[] fetchPaymentQrPng(PaymentAccount account, double totalPrice, String variableSymbol) {
-        if (account.number() == null || account.bankCode() == null) {
-            return null;
-        }
-        try {
-            UriComponentsBuilder uri = UriComponentsBuilder.fromUriString(PAYLIBO_URL)
-                    .queryParam("accountNumber", account.number())
-                    .queryParam("bankCode", account.bankCode())
-                    .queryParam("amount", totalPrice)
-                    .queryParam("currency", "CZK")
-                    .queryParam("vs", variableSymbol)
-                    .queryParam("size", 150);
-            if (account.prefix() != null) {
-                uri.queryParam("accountPrefix", account.prefix());
-            }
-            return restClient.get()
-                    .uri(uri.toUriString())
-                    .retrieve()
-                    .body(byte[].class);
-        } catch (Exception e) {
-            log.warn("Nepodařilo se vygenerovat QR kód platby: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Groups performed tasks by task type and aggregates unit counts and prices per group
-     * for use as rows in the receipt template.
-     */
-    private List<Map<String, String>> groupByTask(List<PerformedTask> tasks) {
-        return tasks.stream()
-                .collect(Collectors.groupingBy(
-                        t -> t.getTask().getId(),
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                ))
-                .values().stream()
-                .map(group -> {
-                    var task = group.get(0).getTask();
-                    double totalUnitCount = group.stream()
-                            .mapToDouble(PerformedTask::getUnitCount).sum();
-                    int totalPrice = group.stream()
-                            .mapToInt(PerformedTask::calculatePrice).sum();
-
-                    Map<String, String> row = new HashMap<>();
-                    row.put("taskName", task.getName());
-                    row.put("recordCount", String.valueOf(group.size()));
-                    row.put("amount", formatAmount(totalUnitCount, task.getUnitType()));
-                    row.put("rate", formatRate(task));
-                    row.put("price", formatCurrency(totalPrice));
-                    return row;
-                })
-                .toList();
-    }
-
-    /** 105 min → "1 h 45 min", 5 occurrences → "5×", 3.5 kg → "3,5 kg" */
-    private static String formatAmount(double unitCount, UnitType unitType) {
-        if (unitType == UnitType.HOUR) {
-            long minutes = Math.round(unitCount);
-            long hours = minutes / 60;
-            long rest = minutes % 60;
-            if (hours == 0) return rest + " min";
-            return rest == 0 ? hours + " h" : hours + " h " + rest + " min";
-        }
-        if (unitType == UnitType.OCCURRENCE) {
-            return formatNumber(unitCount) + "×";
-        }
-        return formatNumber(unitCount) + " " + unitType.getLabel();
-    }
-
-    /** Price per unit; hourly tasks are recorded in minutes but priced per hour. */
-    private static String formatRate(Task task) {
-        String unit = switch (task.getUnitType()) {
-            case HOUR -> "h";
-            case OCCURRENCE -> "úkon";
-            default -> task.getUnitType().getLabel();
-        };
-        return formatCurrency(task.getUnitPrice()) + " / " + unit;
-    }
-
-    /** 3081 → "3 081 Kč" with non-breaking spaces, so the amount never wraps. */
-    private static String formatCurrency(int amount) {
-        return formatNumber(amount) + "\u00a0Kč";
-    }
-
-    private static String formatNumber(double value) {
-        NumberFormat format = NumberFormat.getNumberInstance(CZECH);
-        format.setMaximumFractionDigits(2);
-        return format.format(value).replace('\u202f', '\u00a0');
-    }
-
-    /** "19-123456789/0100" as written on Czech payment orders. */
-    private static String formatAccountNumber(Organization organization) {
-        if (organization.getAccountNumber() == null || organization.getBankCode() == null) {
-            return null;
-        }
-        String prefix = organization.getAccountPrefix() != null ? organization.getAccountPrefix() + "-" : "";
-        return prefix + organization.getAccountNumber() + "/" + organization.getBankCode();
     }
 }

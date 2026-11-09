@@ -127,10 +127,17 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Necháno beze změny: superadmin bez `organizationId` dostane prázdný seznam úkonů a středisek (frontend organizaci vždy posílá). Koordinátor a pečovatel vidí všechna střediska organizace včetně neaktivních (potřebují je filtry).
 
 #### T2b – Doménová logika (unit)
-- [ ] **[claude]** Review existujícího `PerformedTaskTest` (`calculatePrice` pro všechny `UnitType`) – doplnit hraniční případy (nula, desetinné množství, zaokrouhlení). Naučí: parametrizované unit testy, `@CsvSource`.
-- [ ] **[claude]** `ReceiptService`: součet ceny, variabilní symbol, seskupení podle úkonu, formáty částek a množství. Jsou to privátní metody – rozhodnout spolu: testovat přes `generateReceipt` (PDF → text), nebo je vytáhnout do malé čisté třídy (doporučeno, test pak nepotřebuje PDF).
-- [ ] **[claude]** `PictureService`: zmenšení na 512/128, ořez na čtverec, otočení podle EXIF, limit 5 MB a 30 Mpx, neplatný soubor → 400, WebP vstup. Testovací obrázky do `src/test/resources/pictures/`.
-- [ ] **[claude]** `DashboardService`: dostupné a výchozí pohledy podle role, součty za měsíc a 12 měsíců (s pevným `Clock`).
+- [x] **[claude]** `PerformedTaskTest` přepsaný na parametrizované testy (`@CsvSource`): nula, desetinné minuty i množství, zaokrouhlení na celé koruny.
+- [x] **[claude]** `ReceiptService`: výpočty a formátování vytažené do čisté třídy `ReceiptFormatting` (`ReceiptFormattingTest`), volání Paylibo do beanu `PaymentQrClient`, který je v IT mockovaný (`AbstractIntegrationTest`). `ReceiptIT`: stvrzenka klienta a střediska, QR s částkou za měsíc a variabilním symbolem, stvrzenka i bez QR, `payment-qr` → 204 bez QR.
+- [x] **[claude]** `PictureService` (`PictureServiceTest`): 512/128, ořez na čtverec, EXIF orientace, odstranění EXIF, průhlednost → bílá, limit 5 MB a 30 Mpx (odmítnuto před dekódováním), neplatný soubor, GIF a WebP (`src/test/resources/pictures/`).
+- [x] **[claude]** `DashboardService`: pohledy podle role a pracovní pozice (`DashboardViewsTest`), součty za měsíc a 12 měsíců přes přelom roku, dnešek, seznamy „vyžaduje pozornost“ (`DashboardTotalsIT`). Čas přes bean `Clock` (`config/TimeConfig`), v testech `support/TestClock` – běží podle systémového času, `clock.fixAt(...)` ho zastaví, před každým testem se vrátí.
+- [x] Nálezy, opraveno:
+  - Střední: záznam přesně o půlnoci 1. dne měsíce se počítal do dvou měsíců (seznam, stvrzenky, QR platba – dvojí vyúčtování). `hasDateInMonth` dávalo horní mez `23:59:59.999999999`, PostgreSQL ji zaokrouhlí na půlnoc dalšího měsíce. Teď polouzavřený interval.
+  - Nízká: nástěnka „moje práce“ počítala úkon o půlnoci dalšího dne do dneška a o půlnoci dalšího měsíce do minut za měsíc (`DateBetween` zahrnuje horní mez).
+- [x] Nálezy, opraveno na žádost 2026-11-09:
+  - Obrázky s paletou (každý GIF, PNG-8) ztrácely barvy: Thumbnailator použil výchozí paletu místo vlastní, 1-4bitové vyšly černobíle. `PictureService.readUpright` teď dekóduje do ARGB.
+  - `calculatePrice` násobil v `double`: 0,29 kg × 50 Kč = 14,4999… → 14 Kč místo 15. Teď `BigDecimal` s `HALF_UP`, stejně jako `ROUND` nad `NUMERIC` v dotazech nástěnky.
+  - Variabilní symbol (`RRMM` + osobní číslo) měl u osobního čísla od 1 000 000 výš 11 číslic. Osobní číslo je teď omezené na 1 až 999 999 (API 400, formulář). Číslo generované z ID klienta limit nekontroluje, dosáhlo by ho až milionté ID.
 
 #### T2c – Služby a byznys pravidla (integrační)
 - [ ] **[claude]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.

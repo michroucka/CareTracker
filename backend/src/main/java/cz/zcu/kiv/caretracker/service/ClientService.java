@@ -30,6 +30,9 @@ import java.util.*;
 
 @Service
 public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
+
+
+    static final long MAX_PERSONAL_NUMBER = 999_999;
     @Autowired
     private ClientRepository clientRepository;
     @Autowired
@@ -263,6 +266,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         }
 
         if (dto.getPersonalNumber() != null) {
+            validatePersonalNumber(dto.getPersonalNumber());
             client.setPersonalNumber(dto.getPersonalNumber());
         } else if (client.getPersonalNumber() == null) {
             // Save first to get the generated ID, then find the next free personal number starting from it.
@@ -363,6 +367,13 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * @param client the client whose plan is being modified
      * @throws SecurityException if the user does not have write access to this plan
      */
+    /** The payment variable symbol is year, month and the personal number in 10 digits, which leaves six for the number. */
+    private static void validatePersonalNumber(Long personalNumber) {
+        if (personalNumber < 1 || personalNumber > MAX_PERSONAL_NUMBER) {
+            throw new ValidationException("Osobní číslo musí být mezi 1 a " + MAX_PERSONAL_NUMBER);
+        }
+    }
+
     private void validateIndividualPlanUpdateAccess(Client client) {
         User user = getCurrentUser();
         UserRole role = user.getRole();

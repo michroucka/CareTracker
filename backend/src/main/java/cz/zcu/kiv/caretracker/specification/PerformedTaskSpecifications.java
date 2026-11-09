@@ -71,10 +71,11 @@ public class PerformedTaskSpecifications extends BaseSpecifications<PerformedTas
                 return criteriaBuilder.conjunction();
             }
 
-            LocalDateTime startOfMonth = LocalDateTime.of(year, month, 1, 0,0);
-            LocalDateTime endOfMonth = startOfMonth.plusMonths(1).minusNanos(1);
-
-            return criteriaBuilder.between(root.get("date"), startOfMonth, endOfMonth);
+            LocalDateTime startOfMonth = LocalDateTime.of(year, month, 1, 0, 0);
+            // half-open range: PostgreSQL rounds a last-nanosecond bound up to midnight of the next month
+            return criteriaBuilder.and(
+                    criteriaBuilder.greaterThanOrEqualTo(root.get("date"), startOfMonth),
+                    criteriaBuilder.lessThan(root.get("date"), startOfMonth.plusMonths(1)));
         };
     }
 
