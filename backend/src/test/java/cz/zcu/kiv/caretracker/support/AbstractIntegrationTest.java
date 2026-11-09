@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.service.GeocodingService;
+import cz.zcu.kiv.caretracker.service.PaymentQrClient;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ public abstract class AbstractIntegrationTest {
 
     @MockitoBean
     protected GeocodingService geocodingService;
+
+    @MockitoBean
+    protected PaymentQrClient paymentQrClient;
 
     @Autowired
     private DatabaseCleaner databaseCleaner;
