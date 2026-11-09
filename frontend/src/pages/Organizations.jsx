@@ -25,8 +25,8 @@ function LoadingRows() {
     return Array.from({ length: 4 }, (_, index) => (
         <TableRow key={index} className="hover:bg-transparent">
             <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-            <TableCell className="max-md:hidden"><Skeleton className="h-4 w-36" /></TableCell>
-            <TableCell className="max-lg:hidden"><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-36" /></TableCell>
+            <TableCell className="@max-4xl/table:hidden"><Skeleton className="h-4 w-32" /></TableCell>
             <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
             <TableCell />
         </TableRow>
@@ -117,8 +117,8 @@ function Organizations() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Název</TableHead>
-                        <TableHead className="max-md:hidden">Vedoucí</TableHead>
-                        <TableHead className="max-lg:hidden">Bankovní účet</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Vedoucí</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Bankovní účet</TableHead>
                         <TableHead>Stav</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
                     </TableRow>
@@ -138,8 +138,8 @@ function Organizations() {
                             className={cn("cursor-pointer", !organization.active && "text-muted-foreground")}
                         >
                             <TableCell className="font-medium">{organization.name}</TableCell>
-                            <TableCell className="max-md:hidden">{organization.manager?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
-                            <TableCell className="tabular-nums max-lg:hidden">{formatBankAccount(organization) ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{organization.manager?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="tabular-nums @max-4xl/table:hidden">{formatBankAccount(organization) ?? <span className="text-muted-foreground">–</span>}</TableCell>
                             <TableCell>
                                 <StatusBadge active={organization.active} />
                             </TableCell>

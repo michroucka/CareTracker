@@ -1,10 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { IconChevronRight, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconMenu2 } from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconMenu2 } from "@tabler/icons-react";
 import { CareTrackerLogo } from "@/components/CareTrackerLogo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { CommandPalette } from "./CommandPalette";
 import { getBreadcrumbs } from "./navigation";
 
@@ -28,13 +29,24 @@ function SidebarToggle() {
     );
 }
 
+/**
+ * Full trail from 640 px up. On phones the trail does not fit, so nested pages show a back link to the
+ * parent instead (the current page's name is right below as the page title); top-level pages show their name.
+ */
 function Breadcrumbs() {
     const { pathname } = useLocation();
     const crumbs = getBreadcrumbs(pathname);
+    const parent = crumbs.at(-2);
 
     return (
         <nav aria-label="Drobečková navigace" className="min-w-0">
-            <ol className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            {parent && (
+                <Link to={parent.to} className="-ml-1 flex min-w-0 items-center gap-0.5 rounded-sm px-1 text-sm font-medium text-foreground sm:hidden">
+                    <IconChevronLeft className="size-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{parent.label}</span>
+                </Link>
+            )}
+            <ol className={cn("flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground", parent && "max-sm:hidden")}>
                 {crumbs.map((crumb, index) => {
                     const isLast = index === crumbs.length - 1;
                     return (

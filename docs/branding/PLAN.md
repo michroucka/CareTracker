@@ -534,7 +534,8 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 - [ ] Prázdné stavy (žádní klienti, žádné úkony v měsíci) s motivem symbolu.
 - [ ] Skeletony pro tabulky a karty.
 - [ ] Přístupnost: klávesnice ve všech dialozích a menu, viditelný focus, kontrast v obou režimech.
-- [ ] Responzivita: 360 px, 768 px, 1280 px; tabulky na mobilu jako karty nebo horizontální scroll.
+- [x] Responzivita: změřeno na 360 / 768 / 1024 / 1280 px – stránky nepřetékají. Tabulky skrývají sloupce podle své šířky (container queries: obal tabulky je `@container/table`, sloupce `@max-xl/table:hidden` (<576 px), `@max-3xl/table:hidden` (<768 px), `@max-4xl/table:hidden` (<896 px)), ne podle okna – s rozbaleným sidebarem na 768–1024 px dřív přetékaly až o 236 px. Hlavní sloupec (jméno) se zkracuje (`w-full max-w-0`), na mobilu tak zůstane vidět stav a menu ⋯.
+- [x] Hlavička na mobilu (<640 px): vnořené stránky místo drobečků ukazují odkaz zpět na nadřazenou stránku („‹ Klienti“ na detailu klienta, „‹ Detail klienta“ v plánu); stránky první úrovně dál jen svůj název. Od 640 px celé drobečky.
 - [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.
 - [ ] Lighthouse (výkon, přístupnost) na Login a PerformedTasks.
 - [ ] Nové screenshoty do README.

@@ -177,9 +177,9 @@ function Employees() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Jméno</TableHead>
-                        <TableHead className="max-sm:hidden">Role</TableHead>
-                        <TableHead className="max-md:hidden">Středisko</TableHead>
-                        <TableHead className="max-lg:hidden">Účet</TableHead>
+                        <TableHead className="@max-xl/table:hidden">Role</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Středisko</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Účet</TableHead>
                         {canEdit && <TableHead>Stav</TableHead>}
                         {canEdit && <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>}
                     </TableRow>
@@ -199,7 +199,7 @@ function Employees() {
                                 onClick={() => openDetail(employee.id)}
                                 className={cn("cursor-pointer", !employee.active && "text-muted-foreground")}
                             >
-                                <TableCell>
+                                <TableCell className="w-full max-w-0">
                                     <div className="flex items-center gap-3">
                                         <PersonAvatar name={`${employee.firstName} ${employee.lastName}`} src={pictureUrl("employees", employee.id, employee.pictureId)} />
                                         <div className="min-w-0">
@@ -208,9 +208,9 @@ function Employees() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="max-sm:hidden">{getRoleLabel(employee.role)}{employee.isAdmin && <Badge variant="secondary" className="ml-2">Admin</Badge>}</TableCell>
-                                <TableCell className="max-md:hidden">{employee.department?.city ?? "–"}</TableCell>
-                                <TableCell className="max-lg:hidden"><Badge variant={account.variant}>{account.label}</Badge></TableCell>
+                                <TableCell className="@max-xl/table:hidden">{getRoleLabel(employee.role)}{employee.isAdmin && <Badge variant="secondary" className="ml-2">Admin</Badge>}</TableCell>
+                                <TableCell className="@max-3xl/table:hidden">{employee.department?.city ?? "–"}</TableCell>
+                                <TableCell className="@max-4xl/table:hidden"><Badge variant={account.variant}>{account.label}</Badge></TableCell>
                                 {canEdit && <TableCell><StatusBadge active={employee.active} /></TableCell>}
                                 {canEdit && (
                                     <TableCell onClick={(event) => event.stopPropagation()}>

@@ -160,9 +160,9 @@ function Clients() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Klient</TableHead>
-                        <TableHead className="max-md:hidden">Středisko</TableHead>
-                        <TableHead className="max-sm:hidden">Pečovatel</TableHead>
-                        <TableHead className="max-lg:hidden">Účet</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Středisko</TableHead>
+                        <TableHead className="@max-xl/table:hidden">Pečovatel</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Účet</TableHead>
                         <TableHead>Stav</TableHead>
                         {canEdit && <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>}
                     </TableRow>
@@ -180,7 +180,7 @@ function Clients() {
                                 onClick={() => navigate(`/clients/${client.id}`)}
                                 className={cn("cursor-pointer", !client.active && "text-muted-foreground")}
                             >
-                                <TableCell>
+                                <TableCell className="w-full max-w-0">
                                     <div className="flex items-center gap-3">
                                         <PersonAvatar name={`${client.firstName} ${client.lastName}`} src={pictureUrl("clients", client.id, client.pictureId)} />
                                         <div className="min-w-0">
@@ -189,9 +189,9 @@ function Clients() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="max-md:hidden">{client.department?.city ?? "–"}</TableCell>
-                                <TableCell className="max-sm:hidden">{client.caregiver?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
-                                <TableCell className="max-lg:hidden"><Badge variant={account.variant}>{account.label}</Badge></TableCell>
+                                <TableCell className="@max-3xl/table:hidden">{client.department?.city ?? "–"}</TableCell>
+                                <TableCell className="@max-xl/table:hidden">{client.caregiver?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                                <TableCell className="@max-4xl/table:hidden"><Badge variant={account.variant}>{account.label}</Badge></TableCell>
                                 <TableCell><StatusBadge active={client.active} /></TableCell>
                                 {canEdit && (
                                     <TableCell onClick={(event) => event.stopPropagation()}>

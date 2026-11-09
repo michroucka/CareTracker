@@ -10,7 +10,7 @@ function Table({
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto rounded-lg border bg-card shadow-xs"
+      className="@container/table relative w-full overflow-x-auto rounded-lg border bg-card shadow-xs"
     >
       <table
         data-slot="table"
@@ -87,7 +87,7 @@ function TableHead({
     <th
       data-slot="table-head"
       className={cn(
-        "h-11 px-4 text-left align-middle text-xs font-semibold tracking-wide whitespace-nowrap text-muted-foreground uppercase first:pl-5 last:pr-5 max-sm:px-2 max-sm:first:pl-4 max-sm:last:pr-3 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "h-11 px-4 text-left align-middle text-xs font-semibold tracking-wide whitespace-nowrap text-muted-foreground uppercase first:pl-5 last:pr-5 @max-xl/table:px-2 @max-xl/table:first:pl-4 @max-xl/table:last:pr-3 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}
@@ -103,7 +103,7 @@ function TableCell({
     <td
       data-slot="table-cell"
       className={cn(
-        "px-4 py-2.5 align-middle whitespace-nowrap first:pl-5 last:pr-5 max-sm:px-2 max-sm:first:pl-4 max-sm:last:pr-3 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-4 py-2.5 align-middle whitespace-nowrap first:pl-5 last:pr-5 @max-xl/table:px-2 @max-xl/table:first:pl-4 @max-xl/table:last:pr-3 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}

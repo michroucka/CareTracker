@@ -123,7 +123,7 @@ function MonthlyReport() {
                     <TableRow>
                         <TableHead className="w-14 sm:w-20">Čas</TableHead>
                         <TableHead>Úkon</TableHead>
-                        <TableHead className="max-md:hidden">Pečovatelé</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Pečovatelé</TableHead>
                         <TableHead className="text-right">Cena</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -148,7 +148,7 @@ function MonthlyReport() {
                                         <span className="font-medium">{performedTask.taskName}</span>
                                         <span className="ml-2 text-muted-foreground tabular-nums">{formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground max-md:hidden">
+                                    <TableCell className="text-muted-foreground @max-3xl/table:hidden">
                                         {performedTask.caregivers?.map((caregiver) => caregiver.fullName).join(", ") || "–"}
                                     </TableCell>
                                     <TableCell className="text-right font-medium tabular-nums">{formatCurrency(performedTask.price)}</TableCell>

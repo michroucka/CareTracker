@@ -28,9 +28,9 @@ function LoadingRows() {
     return Array.from({ length: 4 }, (_, index) => (
         <TableRow key={index} className="hover:bg-transparent">
             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell className="max-md:hidden"><Skeleton className="h-4 w-44" /></TableCell>
-            <TableCell className="max-lg:hidden"><Skeleton className="h-4 w-10" /></TableCell>
-            <TableCell className="max-md:hidden"><Skeleton className="h-4 w-36" /></TableCell>
+            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-44" /></TableCell>
+            <TableCell className="@max-4xl/table:hidden"><Skeleton className="h-4 w-10" /></TableCell>
+            <TableCell className="@max-3xl/table:hidden"><Skeleton className="h-4 w-36" /></TableCell>
             <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
             <TableCell />
         </TableRow>
@@ -141,9 +141,9 @@ function Departments() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Město</TableHead>
-                        <TableHead className="max-md:hidden">Adresa</TableHead>
-                        <TableHead className="max-lg:hidden">Číslo</TableHead>
-                        <TableHead className="max-md:hidden">Koordinátor</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Adresa</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Číslo</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Koordinátor</TableHead>
                         <TableHead>Stav</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
                     </TableRow>
@@ -161,9 +161,9 @@ function Departments() {
                             className={cn("cursor-pointer", !department.active && "text-muted-foreground")}
                         >
                             <TableCell className="font-medium">{department.city}</TableCell>
-                            <TableCell className="max-md:hidden">{department.street}{department.postalCode && <span className="text-muted-foreground">, {department.postalCode}</span>}</TableCell>
-                            <TableCell className="tabular-nums max-lg:hidden">{department.departmentNumber ?? <span className="text-muted-foreground">–</span>}</TableCell>
-                            <TableCell className="max-md:hidden">{department.coordinator?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{department.street}{department.postalCode && <span className="text-muted-foreground">, {department.postalCode}</span>}</TableCell>
+                            <TableCell className="tabular-nums @max-4xl/table:hidden">{department.departmentNumber ?? <span className="text-muted-foreground">–</span>}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">{department.coordinator?.fullName ?? <span className="text-muted-foreground">–</span>}</TableCell>
                             <TableCell><StatusBadge active={department.active} /></TableCell>
                             <TableCell onClick={(event) => event.stopPropagation()}>
                                 <DropdownMenu>

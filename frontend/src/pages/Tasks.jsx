@@ -116,8 +116,8 @@ function Tasks() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Název</TableHead>
-                        <TableHead className="max-sm:hidden">Jednotka</TableHead>
-                        <TableHead className="max-md:hidden">Setkání</TableHead>
+                        <TableHead className="@max-xl/table:hidden">Jednotka</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Setkání</TableHead>
                         {canEdit && <TableHead>Stav</TableHead>}
                         <TableHead className="text-right">Cena</TableHead>
                         {canEdit && <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>}
@@ -142,8 +142,8 @@ function Tasks() {
                             className={cn("cursor-pointer", !task.active && "text-muted-foreground")}
                         >
                             <TableCell className="font-medium">{task.name}</TableCell>
-                            <TableCell className="max-sm:hidden">{unitTypeLabel(task.unitType)}</TableCell>
-                            <TableCell className="max-md:hidden">
+                            <TableCell className="@max-xl/table:hidden">{unitTypeLabel(task.unitType)}</TableCell>
+                            <TableCell className="@max-3xl/table:hidden">
                                 {task.doubleMeeting
                                     ? <span className="inline-flex items-center gap-1.5 font-medium"><IconUsers className="size-4 text-secondary-foreground" /> Dvojité</span>
                                     : <span className="inline-flex items-center gap-1.5 text-muted-foreground"><IconUser className="size-4" /> Jedno</span>}

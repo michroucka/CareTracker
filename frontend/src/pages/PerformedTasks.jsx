@@ -55,16 +55,16 @@ function MessageRow({ columnCount, children }) {
 const PerformedTaskRow = React.memo(function PerformedTaskRow({ performedTask, isSelected, canEdit, onOpen, onDelete }) {
     return (
         <TableRow data-state={isSelected ? "selected" : undefined} onClick={() => onOpen(performedTask.id)} className="cursor-pointer">
-            <TableCell className="w-14 text-muted-foreground tabular-nums sm:w-20">{formatTime(performedTask.date)}</TableCell>
-            <TableCell>
-                <span className="font-medium text-foreground">{performedTask.clientName}</span>
-                <span className="block text-xs text-muted-foreground md:hidden">{performedTask.taskName} · {formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
+            <TableCell className="w-14 text-muted-foreground tabular-nums @xl/table:w-20">{formatTime(performedTask.date)}</TableCell>
+            <TableCell className="@max-3xl/table:w-full @max-3xl/table:max-w-0">
+                <span className="block truncate font-medium text-foreground">{performedTask.clientName}</span>
+                <span className="block truncate text-xs text-muted-foreground @3xl/table:hidden">{performedTask.taskName} · {formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
             </TableCell>
-            <TableCell className="max-md:hidden">
+            <TableCell className="@max-3xl/table:hidden">
                 {performedTask.taskName}
                 <span className="ml-2 text-muted-foreground tabular-nums">{formatAmount(performedTask.unitCount, performedTask.unitType)}</span>
             </TableCell>
-            <TableCell className="text-muted-foreground max-lg:hidden">
+            <TableCell className="text-muted-foreground @max-4xl/table:hidden">
                 {performedTask.caregivers?.map((caregiver) => caregiver.fullName).join(", ") || "–"}
             </TableCell>
             <TableCell className="text-right font-medium tabular-nums">{formatCurrency(performedTask.price)}</TableCell>
@@ -268,8 +268,8 @@ function PerformedTasks() {
                             </button>
                         </TableHead>
                         <TableHead>Klient</TableHead>
-                        <TableHead className="max-md:hidden">Úkon</TableHead>
-                        <TableHead className="max-lg:hidden">Pečovatelé</TableHead>
+                        <TableHead className="@max-3xl/table:hidden">Úkon</TableHead>
+                        <TableHead className="@max-4xl/table:hidden">Pečovatelé</TableHead>
                         <TableHead className="text-right">Cena</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Akce</span></TableHead>
                     </TableRow>
