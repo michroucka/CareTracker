@@ -1,139 +1,190 @@
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg" />
-    <img src=".github/assets/logo-light.svg" alt="CareTracker logo" width="400" />
+    <img src=".github/assets/logo-light.svg" alt="CareTracker" width="380" />
   </picture>
+
+  <p><strong>Evidence péče, výkazy a vyúčtování pro pečovatelské služby – na jednom místě, bez papírů.</strong></p>
+
+  <p>
+    <a href="https://demo.caretracker.cz"><img alt="Živé demo" src="https://img.shields.io/badge/%C5%BEiv%C3%A9_demo-demo.caretracker.cz-E26A35?style=for-the-badge" /></a>
+  </p>
+
+  <p>
+    <a href="https://github.com/michroucka/CareTracker/actions/workflows/deploy-demo.yml"><img alt="Nasazení dema" src="https://img.shields.io/github/actions/workflow/status/michroucka/CareTracker/deploy-demo.yml?branch=main&label=deploy%20demo&style=flat-square" /></a>
+    <img alt="Java 21" src="https://img.shields.io/badge/Java-21-4A2B5E?style=flat-square&logo=openjdk&logoColor=white" />
+    <img alt="Spring Boot 3.5" src="https://img.shields.io/badge/Spring_Boot-3.5-4A2B5E?style=flat-square&logo=springboot&logoColor=white" />
+    <img alt="React 19" src="https://img.shields.io/badge/React-19-4A2B5E?style=flat-square&logo=react&logoColor=white" />
+    <img alt="Vite 7" src="https://img.shields.io/badge/Vite-7-4A2B5E?style=flat-square&logo=vite&logoColor=white" />
+    <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-4A2B5E?style=flat-square&logo=tailwindcss&logoColor=white" />
+    <img alt="PostgreSQL 15" src="https://img.shields.io/badge/PostgreSQL-15-4A2B5E?style=flat-square&logo=postgresql&logoColor=white" />
+    <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-4A2B5E?style=flat-square&logo=docker&logoColor=white" />
+  </p>
+
+  <p>
+    <a href="#funkce">Funkce</a> ·
+    <a href="#ukázky">Ukázky</a> ·
+    <a href="#rychlý-start">Rychlý start</a> ·
+    <a href="#technologie">Technologie</a> ·
+    <a href="#dokumentace">Dokumentace</a> ·
+    <a href="README.en.md">English</a>
+  </p>
 </div>
 
-<div align="center">
-
-**Webová aplikace pro pečovatelské služby, která nahrazuje papírovou administrativu moderním digitálním řešením.**
-
-[🌐 Živé demo](https://demo.caretracker.cz) · [English version](README.en.md)
-
-</div>
-
 ---
 
-## 🚀 Hlavní funkce
+CareTracker nahrazuje papírové výkazy a tabulky v terénních pečovatelských službách. Pečovatelé zapisují úkony přímo z mobilu, koordinátoři mají přehled o klientech a vytížení středisek a klienti si sami prohlédnou svůj měsíční výkaz a zaplatí ho přes QR kód. Aplikace vznikla jako bakalářská práce a dál se rozvíjí.
 
-- **Správa uživatelů** – registrace, přihlášení a správa účtů pro role (administrátor, koordinátor, pečovatel, klient).
-- **Evidence klientů** – vedení osobních údajů, individuálních plánů a historie poskytnutých služeb.
-- **Záznam péče** – pečovatelé zapisují provedené úkony a čas, možnost úpravy existujících záznamů.
-- **Reporty a přehledy** – generování měsíčních výkazů, export do PDF, filtrování podle klienta a období.
-- **Role a oprávnění** – různé přístupy pro administrátora, koordinátora, pečovatele a klienta.
-- **Platby klientů** – zobrazení měsíčního vyúčtování a úhrada pomocí QR kódu.
-- **Vícenájemná organizační struktura** – organizace → střediska → zaměstnanci, s odpovídajícím omezením přístupu.
+## Funkce
 
----
+| | |
+|---|---|
+| **Záznam péče** | Provedené úkony po dnech, s časem, množstvím a cenou. Rychlé zadání, úpravy i hromadný přehled za měsíc. |
+| **Klienti** | Osobní údaje, profilová fotka, stupeň příspěvku, přiřazení pečovatelé, ukončení péče a poloha na mapě. |
+| **Individuální plány** | Verzované plány péče s denními záznamy pro každého klienta. |
+| **Nástěnka** | Měsíční přehled podle role – tržby, vytížení pečovatelů, klienti bez nedávného záznamu a plány k aktualizaci. |
+| **Výkazy a stvrzenky** | Měsíční výkazy a stvrzenky v PDF, export dat podle klienta a období. |
+| **Vyúčtování pro klienty** | Klient vidí svůj výkaz a platí přes QR kód. |
+| **Organizace a střediska** | Více organizací v jedné instalaci (organizace → střediska → zaměstnanci) s odpovídajícím omezením přístupu. |
+| **Role a oprávnění** | Superadmin, admin, koordinátor, pečovatel a klient – vynucené na backendu i ve frontendu. |
+| **Pro práci v terénu** | Responzivní rozhraní pro mobil, světlý i tmavý režim, rychlé hledání (<kbd>⌘</kbd> <kbd>K</kbd>). |
 
-## 🛠 Použité technologie
+## Ukázky
 
-### Frontend
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/screenshots/dashboard-dark.png" />
+  <img src=".github/assets/screenshots/dashboard-light.png" alt="Nástěnka s měsíčním přehledem tržeb a vytížení pečovatelů" />
+</picture>
 
-- [React](https://react.dev/) 19 + [Vite](https://vitejs.dev/) – rychlý a moderní vývoj uživatelského rozhraní
-- [TailwindCSS](https://tailwindcss.com/) v4 – utilitární CSS framework
-- [HeroUI](https://heroui.com/) – komponentová knihovna pro konzistentní a moderní UI
-- [React Router](https://reactrouter.com/) – směrování na straně klienta
-- [Recharts](https://recharts.org/) – grafy a vizualizace v přehledech
-- [Lucide](https://lucide.dev/) – open-source knihovna SVG ikon pro moderní a konzistentní ikonografii
+<table>
+  <tr>
+    <td width="50%"><img src=".github/assets/screenshots/performed-tasks.png" alt="Provedené úkony seskupené po dnech" /></td>
+    <td width="50%"><img src=".github/assets/screenshots/client-detail.png" alt="Detail klienta s osobními údaji, kontakty a péčí" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Provedené úkony po dnech</sub></td>
+    <td align="center"><sub>Detail klienta</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src=".github/assets/screenshots/individual-plan.png" alt="Individuální plán péče" /></td>
+    <td width="50%" align="center"><img src=".github/assets/screenshots/mobile.png" alt="Záznam péče na mobilu" width="45%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Individuální plán</sub></td>
+    <td align="center"><sub>Na mobilu</sub></td>
+  </tr>
+</table>
 
-### Backend
+> Nejrychleji si to vyzkoušíš na [živém demu](https://demo.caretracker.cz).
 
-- [Spring Boot](https://spring.io/projects/spring-boot) 3 (Java 21) – REST API a aplikační logika
-- [Spring Security](https://spring.io/projects/spring-security) – autentizace a autorizace uživatelů (session-based)
-- [Spring Data JPA](https://spring.io/projects/spring-data-jpa) – práce s databází
-- [Flying Saucer](https://github.com/flyingsaucerproject/flyingsaucer) – generování PDF dokumentů z HTML šablon
-- [Spring Mail](https://docs.spring.io/spring-framework/reference/integration/email.html) + [Thymeleaf](https://www.thymeleaf.org/) – e-mailové notifikace
+## Rychlý start
 
-### Databáze
-
-- [PostgreSQL](https://www.postgresql.org/) – relační databáze
-- [Flyway](https://flywaydb.org/) – správa a verzování databázových migrací
-
-### Testování
-
-- [JUnit 5](https://junit.org/junit5/) – unit testy pro backend (entity, service vrstva)
-- [Mockito](https://site.mockito.org/) – mockování závislostí v service testech
-- [Spring Boot Test](https://docs.spring.io/spring-boot/docs/current/reference/html/test-auto-configuration.html) – integrační testy controlleru (`@WebMvcTest`)
-- [Spring Security Test](https://docs.spring.io/spring-security/reference/servlet/test/index.html) – testování autorizace (`@WithMockUser`)
-- [Vitest](https://vitest.dev/) – unit testy frontendových utility funkcí
-
-### Nasazení
-
-- [Docker](https://www.docker.com/) – kontejnerizace backendu, frontendu a databáze
-
----
-
-## 🏁 Rychlý start
-
-### Požadavky
-
-- [Docker](https://www.docker.com/) a Docker Compose
-- `make` (volitelné, ale doporučené – zjednodušuje běžné příkazy)
-
-### Spuštění
+**Potřebuješ:** [Docker](https://www.docker.com/) s Docker Compose a `make` (volitelně, ale zjednodušuje příkazy).
 
 ```bash
 git clone git@github.com:michroucka/CareTracker.git
 cd CareTracker
 
 cp .env.example .env
-# uprav .env – nastav POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
-# a doplň backend/src/main/resources/secrets.properties pro e-mailové notifikace
+# v .env nastav POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB;
+# e-mail a klíč k Mapy.com patří do backend/src/main/resources/secrets.properties
 
 make up
 ```
 
-Aplikace poběží na:
+| Služba | Adresa |
+|---|---|
+| Frontend | <http://localhost:3000> |
+| Backend API | <http://localhost:8080> |
+| PostgreSQL | `localhost:5432` |
 
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:8080](http://localhost:8080)
-- PostgreSQL: `localhost:5432`
-
-### Užitečné příkazy
+<details>
+<summary><strong>Užitečné příkazy</strong></summary>
 
 ```bash
-make down             # zastavit všechny služby
-make restart-backend  # restart backendu
-make compile          # rekompilace backendu (DevTools app automaticky restartuje)
-make rebuild s=backend  # rebuild image + restart konkrétní služby (po změně Dockerfile)
-make clean             # smazat volumes a kompletní rebuild (reset databáze)
-make logs service=backend  # sledování logů dané služby
-make test              # spustit backendové i frontendové testy
+make down                  # zastavit všechny služby
+make restart-backend       # restart backendu
+make compile               # rekompilace backendu (DevTools aplikaci sám restartuje)
+make rebuild s=backend     # rebuild image + restart služby (po změně Dockerfile)
+make clean                 # smazat volumes a vše znovu sestavit (reset databáze)
+make logs service=backend  # sledovat logy služby
+make seed-activity         # doplnit demo aktivitu až do dneška
+make test                  # backendové i frontendové testy
 ```
 
-Kompletní přehled příkazů najdeš v [`Makefile`](Makefile).
+Všechny příkazy najdeš v [`Makefile`](Makefile).
 
----
+</details>
 
-## 📁 Struktura projektu
+## Technologie
 
-```
-backend/    Spring Boot aplikace (REST API, business logika, DB migrace)
-frontend/   React + Vite aplikace (uživatelské rozhraní)
-doc/        Dokumentace (bakalářská práce, specifikace, ER a use-case diagramy)
-```
+<table>
+  <tr>
+    <th align="left">Frontend</th>
+    <td>
+      <a href="https://react.dev/">React 19</a> + <a href="https://vite.dev/">Vite</a>,
+      <a href="https://tailwindcss.com/">Tailwind CSS 4</a>,
+      <a href="https://ui.shadcn.com/">shadcn/ui</a> nad <a href="https://www.radix-ui.com/">Radix UI</a>,
+      <a href="https://reactrouter.com/">React Router</a>,
+      <a href="https://recharts.org/">Recharts</a>,
+      <a href="https://maplibre.org/">MapLibre</a> s dlaždicemi <a href="https://developer.mapy.com/">Mapy.com</a>,
+      <a href="https://motion.dev/">Motion</a>,
+      <a href="https://tabler.io/icons">Tabler Icons</a>
+    </td>
+  </tr>
+  <tr>
+    <th align="left">Backend</th>
+    <td>
+      <a href="https://spring.io/projects/spring-boot">Spring Boot 3</a> (Java 21),
+      <a href="https://spring.io/projects/spring-security">Spring Security</a> (session),
+      <a href="https://spring.io/projects/spring-data-jpa">Spring Data JPA</a>,
+      <a href="https://github.com/flyingsaucerproject/flyingsaucer">Flying Saucer</a> (PDF),
+      <a href="https://docs.spring.io/spring-framework/reference/integration/email.html">Spring Mail</a> + <a href="https://www.thymeleaf.org/">Thymeleaf</a>
+    </td>
+  </tr>
+  <tr>
+    <th align="left">Databáze</th>
+    <td><a href="https://www.postgresql.org/">PostgreSQL 15</a>, migrace přes <a href="https://flywaydb.org/">Flyway</a></td>
+  </tr>
+  <tr>
+    <th align="left">Testy</th>
+    <td>
+      <a href="https://junit.org/">JUnit 5</a>, <a href="https://site.mockito.org/">Mockito</a>,
+      Spring Boot Test (<code>@WebMvcTest</code>), Spring Security Test,
+      <a href="https://vitest.dev/">Vitest</a>
+    </td>
+  </tr>
+  <tr>
+    <th align="left">Nasazení</th>
+    <td><a href="https://www.docker.com/">Docker Compose</a>, demo se nasazuje automaticky z <code>main</code> přes GitHub Actions</td>
+  </tr>
+</table>
 
-## 📚 Dokumentace
-
-- [Bakalářská práce](doc/bachelors_thesis.pdf) – kompletní analýza, návrh a uživatelská dokumentace systému
-- [Softwarová specifikace](doc/software_specification.pdf)
-- [ER diagram](doc/ERA_Model.pdf), [Use-case diagram](doc/UC_Diagram.png)
-
----
-
-## 👥 Role v systému
+## Role
 
 ```
 SUPERADMIN > ADMIN > KOORDINÁTOR > PEČOVATEL
-KLIENT (samostatná role s náhledem pouze na vlastní data)
+KLIENT (samostatná role, vidí jen vlastní data)
 ```
 
-Oprávnění jsou vynucována jak na backendu (`@PreAuthorize`), tak na frontendu (chráněné trasy a role-based filtrování).
+Oprávnění hlídá backend (`@PreAuthorize`) i frontend (chráněné trasy a filtry podle role).
 
----
+## Struktura projektu
 
-## 📄 Licence
+```
+backend/         Spring Boot – REST API, business logika, migrace databáze
+frontend/        React + Vite – uživatelské rozhraní
+doc/             bakalářská práce, specifikace, ER a use-case diagramy
+docs/branding/   vizuální identita – logo, barvy, typografie, plán redesignu
+```
 
-Veškerá práva vyhrazena. Zdrojový kód je zveřejněn pro účely prohlížení a studijní účely; jeho kopírování, úprava nebo komerční využití bez souhlasu autora nejsou povoleny. Viz [`LICENSE`](LICENSE).
+## Dokumentace
+
+- [Bakalářská práce](doc/bachelors_thesis.pdf) – analýza, návrh a uživatelská dokumentace
+- [Softwarová specifikace](doc/software_specification.pdf)
+- [ER diagram](doc/ERA_Model.pdf) · [Use-case diagram](doc/UC_Diagram.png)
+- [Vizuální identita](docs/branding/brand-board.html) a [plán redesignu](docs/branding/PLAN.md)
+
+## Licence
+
+Veškerá práva vyhrazena. Zdrojový kód je zveřejněný k nahlédnutí a pro studijní účely; kopírování, úpravy ani komerční využití bez souhlasu autora nejsou povolené. Viz [`LICENSE`](LICENSE).

@@ -546,9 +546,10 @@ Rozhodnuto 2026-11-09. Fotka zůstává v databázi (`bytea`), ale zmenšená a 
 - [x] Responzivita: změřeno na 360 / 768 / 1024 / 1280 px – stránky nepřetékají. Tabulky skrývají sloupce podle své šířky (container queries: obal tabulky je `@container/table`, sloupce `@max-xl/table:hidden` (<576 px), `@max-3xl/table:hidden` (<768 px), `@max-4xl/table:hidden` (<896 px)), ne podle okna – s rozbaleným sidebarem na 768–1024 px dřív přetékaly až o 236 px. Hlavní sloupec (jméno) se zkracuje (`w-full max-w-0`), na mobilu tak zůstane vidět stav a menu ⋯.
 - [x] Hlavička na mobilu (<640 px): vnořené stránky místo drobečků ukazují odkaz zpět na nadřazenou stránku („‹ Klienti“ na detailu klienta, „‹ Detail klienta“ v plánu); stránky první úrovně dál jen svůj název. Od 640 px celé drobečky.
 - [x] Rozdělení bundlu: stránky za přihlášením přes `React.lazy` (vlastní chunky), mapový dialog až po kliknutí na „Na mapě“. Hlavní JS 2 252 → 610 kB; maplibre (923 kB) a recharts (nástěnka, 372 kB) mimo první načtení.
-- [ ] Lighthouse (výkon, přístupnost) na Login a PerformedTasks.
+- [x] Lighthouse (výkon, přístupnost) na Login a PerformedTasks.
   - Login, mobil (2026-11-09): výkon 99, přístupnost 98, best practices 100. Opraveno: přihlašovací stránky bez `<main>` (`AuthLayout`); mřížka na pozadí jako jeden SVG `<pattern>` místo 1 126 obdélníků (DOM 1 204 → 84 prvků, nejdelší úloha 181 ms). Bezpečnostní hlavičky zapsané v sekci 7b.
-- [ ] Nové screenshoty do README.
+  - PerformedTasks, mobil (2026-11-09): výkon 92 → 93, přístupnost 100, best practices 100, LCP 2,6 → 2,2 s. Opraveno: panely detailu a nového záznamu se načítají až při prvním otevření; tlačítko hledání má přístupné jméno shodné s viditelným textem. Kalendář (`DayFilter`) a `ReceiptDialog` zůstávají v prvním načtení záměrně – zisk by byl jen při první návštěvě. Velké odpovědi API zapsané v sekci 7b.
+- [x] Nové screenshoty do README: README přepsané (odznaky, tabulka funkcí, aktuální technologie), šest screenshotů v `.github/assets/screenshots/` (nástěnka světlá i tmavá, provedené úkony, detail klienta, individuální plán, mobil).
 
 ---
 
@@ -624,6 +625,7 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
 - [ ] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
 - [ ] Zvážit Trusted Types (`require-trusted-types-for 'script'`) – jen pokud nic nepoužívá `innerHTML` (pozor na `LogoControl` v `ClientMapDialog`).
 - [ ] Source mapy do produkčního buildu nedávat veřejně (Lighthouse je hlásí jako chybějící – to je v pořádku).
+- [ ] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
 
 ## 8. Odkazy
 
