@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { listLocation } from "@/components/layout/navigation";
 
 const AnimatedPanel = motion.div;
 
@@ -210,7 +211,7 @@ function IndividualPlan() {
         return (
             <div className="grid justify-items-center gap-4 py-16 text-center">
                 <p className="text-muted-foreground">Klient nebyl nalezen.</p>
-                <Button variant="outline" asChild><Link to="/clients">Zpět na klienty</Link></Button>
+                <Button variant="outline" asChild><Link to={listLocation("/clients")}>Zpět na klienty</Link></Button>
             </div>
         );
     }

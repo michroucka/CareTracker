@@ -25,6 +25,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/componen
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
+import { listLocation } from "@/components/layout/navigation";
 
 const AnimatedPanel = motion.div;
 // the map library is large and only needed after "Na mapě"
@@ -221,7 +222,7 @@ export function ClientDetail() {
         return (
             <div className="grid justify-items-center gap-4 py-16 text-center">
                 <p className="text-muted-foreground">Klient nebyl nalezen.</p>
-                <Button variant="outline" asChild><Link to="/clients">Zpět na klienty</Link></Button>
+                <Button variant="outline" asChild><Link to={listLocation("/clients")}>Zpět na klienty</Link></Button>
             </div>
         );
     }

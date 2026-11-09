@@ -7,7 +7,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "./CommandPalette";
-import { getBreadcrumbs } from "./navigation";
+import { getBreadcrumbs, rememberListLocation } from "./navigation";
 
 function SidebarToggle() {
     const { toggleSidebar, state, isMobile } = useSidebar();
@@ -34,7 +34,12 @@ function SidebarToggle() {
  * parent instead (the current page's name is right below as the page title); top-level pages show their name.
  */
 function Breadcrumbs() {
-    const { pathname } = useLocation();
+    const { pathname, search } = useLocation();
+
+    React.useEffect(() => {
+        rememberListLocation(pathname, search);
+    }, [pathname, search]);
+
     const crumbs = getBreadcrumbs(pathname);
     const parent = crumbs.at(-2);
 
