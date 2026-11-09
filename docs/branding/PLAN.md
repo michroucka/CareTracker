@@ -626,6 +626,11 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
 - [ ] Zvážit Trusted Types (`require-trusted-types-for 'script'`) – jen pokud nic nepoužívá `innerHTML` (pozor na `LogoControl` v `ClientMapDialog`).
 - [ ] Source mapy do produkčního buildu nedávat veřejně (Lighthouse je hlásí jako chybějící – to je v pořádku).
 - [ ] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
+- [ ] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09):
+  - `DashboardService` – nástěnka superadmina posílá tři COUNT dotazy na každou organizaci (N+1); počty středisek, zaměstnanců a klientů jde načíst jedním `GROUP BY` jako počty úkonů.
+  - `DashboardService` – widget „Klienti bez záznamu“ načte všechny aktivní klienty organizace kvůli počtu a šesti řádkům; nahradit jedním dotazem (`LEFT JOIN … GROUP BY … HAVING`).
+  - `Picture` – náhled (`?size=thumb`) načte z DB i plnou fotku 512 px; načítat jen potřebný sloupec (projekce nebo oddělená entita).
+- [ ] Drobnosti z téhož review, odložené: staré fotky (před V23) se převádějí až při prvním GET v `PictureService` (čtení zapisuje do DB, nedekódovatelná fotka vrací 400 pořád); `Clients.jsx` s `?caregivers=…` v URL načte seznam nejdřív bez filtru, protože zaměstnanci ještě nejsou načtení.
 
 ## 8. Odkazy
 
