@@ -58,7 +58,7 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         validateMonthFilter(month, year);
         User currentUser = getCurrentUser();
 
-        // CLIENT role bypasses org/dept filters — always scoped to the client's own records
+        // CLIENT role bypasses org/dept filters – always scoped to the client's own records
         if (currentUser.getRole() == UserRole.CLIENT) {
             if (currentUser.getClient() == null) {
                 return Collections.emptyList();
