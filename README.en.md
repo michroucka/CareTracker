@@ -89,10 +89,14 @@ cd CareTracker
 
 cp .env.example .env
 # set POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB in .env;
-# e-mail and the Mapy.com key go into backend/src/main/resources/secrets.properties
+# e-mail, the Mapy.com key and the "Remember me" key go into
+# backend/src/main/resources/secrets.properties (template in .env.example)
+echo "app.remember-me.key=$(openssl rand -base64 32)" >> backend/src/main/resources/secrets.properties
 
 make up
 ```
+
+The backend does not start without `app.remember-me.key`. On the demo it comes from the `REMEMBER_ME_KEY` variable (template in `.env.demo.example`).
 
 | Service | Address |
 |---|---|

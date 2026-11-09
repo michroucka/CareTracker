@@ -86,10 +86,14 @@ cd CareTracker
 
 cp .env.example .env
 # v .env nastav POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB;
-# e-mail a klíč k Mapy.com patří do backend/src/main/resources/secrets.properties
+# e-mail, klíč k Mapy.com a klíč pro „Zapamatovat si mě“ patří do
+# backend/src/main/resources/secrets.properties (vzor v .env.example)
+echo "app.remember-me.key=$(openssl rand -base64 32)" >> backend/src/main/resources/secrets.properties
 
 make up
 ```
+
+Bez `app.remember-me.key` backend nenastartuje. Na demu ho nastavuje proměnná `REMEMBER_ME_KEY` (vzor v `.env.demo.example`).
 
 | Služba | Adresa |
 |---|---|
