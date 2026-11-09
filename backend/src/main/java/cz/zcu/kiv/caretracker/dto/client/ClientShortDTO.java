@@ -20,6 +20,7 @@ public class ClientShortDTO {
     private Long pictureId;
 
     private Boolean userAccountActive;
+    private Boolean userAccountActivated;
 
     private DepartmentSummaryDTO department;
     private EmployeeSummaryDTO caregiver;

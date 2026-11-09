@@ -181,6 +181,16 @@ class ClientAccessIT extends AbstractIntegrationTest {
 
     @ParameterizedTest
     @EnumSource(Actor.class)
+    void resendAccountActivation(Actor actor) throws Exception {
+        Client clientWithPendingAccount = testData.client(scenario.employee(CAREGIVER_OF_CLIENT));
+        testData.pendingClientAccount(clientWithPendingAccount);
+
+        perform(actor, post("/api/clients/{id}/account/resend", clientWithPendingAccount.getId()))
+                .andExpect(allowedOnlyFor(CLIENT_MANAGERS, actor));
+    }
+
+    @ParameterizedTest
+    @EnumSource(Actor.class)
     void deactivateAccount(Actor actor) throws Exception {
         perform(actor, put("/api/clients/{id}/account/deactivate", client.getId()))
                 .andExpect(allowedOnlyFor(CLIENT_MANAGERS, actor));

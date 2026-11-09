@@ -75,6 +75,7 @@ class UnauthenticatedAccessIT extends AbstractIntegrationTest {
             "PUT /api/clients/{id}/terminate",
             "PUT /api/clients/{id}/activate",
             "POST /api/clients/{id}/account/create",
+            "POST /api/clients/{id}/account/resend",
             "PUT /api/clients/{id}/account/deactivate",
             "PUT /api/clients/{id}/account/activate",
             "GET /api/clients/{id}/picture",

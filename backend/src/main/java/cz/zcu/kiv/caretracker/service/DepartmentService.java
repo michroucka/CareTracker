@@ -6,6 +6,7 @@ import cz.zcu.kiv.caretracker.entity.*;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
+import cz.zcu.kiv.caretracker.exception.ValidationException;
 import cz.zcu.kiv.caretracker.mapper.DepartmentMapper;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
 import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
@@ -85,7 +86,8 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
     }
 
     /**
-     * Promotes the new coordinator to the COORDINATOR employee role and demotes the old one back to CAREGIVER.
+     * Promotes the new coordinator to the COORDINATOR employee role and demotes the old one back to CAREGIVER,
+     * unless they still coordinate another department.
      * MANAGER-level employees and ADMIN/SUPERADMIN user accounts are not downgraded.
      * No-ops when old and new coordinator are the same person.
      */
@@ -94,7 +96,7 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         Long newId = newCoordinator != null ? newCoordinator.getId() : null;
         if (oldId != null && oldId.equals(newId)) return;
 
-        if (oldCoordinator != null) {
+        if (oldCoordinator != null && !departmentRepository.existsByCoordinatorId(oldCoordinator.getId())) {
             if (oldCoordinator.getRole() != EmployeeRole.MANAGER) {
                 oldCoordinator.setRole(EmployeeRole.CAREGIVER);
                 employeeRepository.save(oldCoordinator);
@@ -153,6 +155,11 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         // assigning a coordinator raises their role, so they must come from the department's organization
         if (coordinator != null && !coordinator.getOrganization().getId().equals(organization.getId())) {
             throw new SecurityException("Koordinátor musí patřit do organizace střediska");
+        }
+        boolean coordinatorChanged = coordinator != null
+                && (oldCoordinator == null || !oldCoordinator.getId().equals(coordinator.getId()));
+        if (coordinatorChanged && departmentRepository.existsByCoordinatorId(coordinator.getId())) {
+            throw new ValidationException("Zaměstnanec už koordinuje jiné středisko");
         }
 
         departmentMapper.requestToDepartment(department, dto, coordinator, organization);
@@ -228,6 +235,23 @@ public class DepartmentService extends BaseRoleFilteringService<Department, Depa
         Department saved = departmentRepository.save(department);
         updateCoordinatorRoles(oldCoordinator, null);
         return saved;
+    }
+
+    /**
+     * Leaves every department the employee coordinates without a coordinator and lowers their role,
+     * used when the employee is terminated.
+     *
+     * @param employee the employee who stops coordinating
+     */
+    @Transactional
+    public void removeCoordinatorFromAllDepartments(Employee employee) {
+        List<Department> coordinatedDepartments = departmentRepository.findByCoordinatorId(employee.getId());
+        if (coordinatedDepartments.isEmpty()) {
+            return;
+        }
+        coordinatedDepartments.forEach(department -> department.setCoordinator(null));
+        departmentRepository.saveAll(coordinatedDepartments);
+        updateCoordinatorRoles(employee, null);
     }
 
     /**

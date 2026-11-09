@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.LocalDate;
 
 import java.util.*;
 
@@ -57,6 +59,8 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     private PictureService pictureService;
     @Autowired
     private PictureRepository pictureRepository;
+    @Autowired
+    private Clock clock;
 
     /**
      * Returns clients filtered by the current user's role and the supplied optional criteria.
@@ -328,33 +332,64 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
     }
 
     /**
-     * Deactivates a client and records the termination reason and date.
+     * Deactivates a client, records the termination reason and date and blocks the client's login account.
      *
      * @param id the client ID
      * @param dto termination details
      * @return the updated client entity
+     * @throws ValidationException if the date is missing or in the future, or the reason is missing or unknown
      */
+    @Transactional
     public Client terminateClient(Long id, ClientTerminateDTO dto) {
         Client client = getClientForUpdate(id);
+        TerminationReason reason = parseTerminationReason(dto.getTerminationReason());
+        validateTerminationDate(dto.getTerminationDate());
+
         client.setActive(false);
         client.setTerminationDate(dto.getTerminationDate());
-        client.setTerminationReason(TerminationReason.valueOf(dto.getTerminationReason()));
+        client.setTerminationReason(reason);
+        setClientAccountActive(client, false);
 
         return clientRepository.save(client);
     }
 
+    private static TerminationReason parseTerminationReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new ValidationException("Důvod ukončení je povinný");
+        }
+        return Arrays.stream(TerminationReason.values())
+                .filter(known -> known.name().equals(reason))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Neznámý důvod ukončení"));
+    }
+
+    private void validateTerminationDate(LocalDate terminationDate) {
+        if (terminationDate == null) {
+            throw new ValidationException("Datum ukončení je povinné");
+        }
+        if (terminationDate.isAfter(LocalDate.now(clock))) {
+            throw new ValidationException("Datum ukončení nesmí být v budoucnosti");
+        }
+    }
+
+    private void setClientAccountActive(Client client, boolean active) {
+        userRepository.findByClientId(client.getId()).ifPresent(account -> account.setActive(active));
+    }
+
     /**
-     * Re-activates a previously terminated client, clearing the termination fields.
+     * Re-activates a previously terminated client, clearing the termination fields and unblocking the login account.
      *
      * @param id the client ID
      * @return the updated client entity
      */
+    @Transactional
     public Client activateClient(Long id) {
         Client client = getClientForUpdate(id);
 
         client.setActive(true);
         client.setTerminationDate(null);
         client.setTerminationReason(null);
+        setClientAccountActive(client, true);
 
         return clientRepository.save(client);
     }
@@ -442,6 +477,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      * Used for both initial creation and subsequent version updates.
      */
     private void mapContentFields(IndividualPlanContent content, IndividualPlanContentRequestDTO dto) {
+        validatePlanDates(dto);
         content.setProcessedDate(dto.getProcessedDate());
         content.setPlannedUpdateDate(dto.getPlannedUpdateDate());
         content.setLikes(dto.getLikes());
@@ -459,6 +495,29 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
         content.setActivities(dto.getActivities());
         content.setHealth(dto.getHealth());
         content.setExercisingRights(dto.getExercisingRights());
+    }
+
+    /** Mirrors the plan form: the next review must come after the plan was processed. */
+    private static void validatePlanDates(IndividualPlanContentRequestDTO dto) {
+        if (dto.getPlannedUpdateDate() == null) {
+            throw new ValidationException("Datum plánované aktualizace je povinné");
+        }
+        if (dto.getProcessedDate() != null && !dto.getPlannedUpdateDate().isAfter(dto.getProcessedDate())) {
+            throw new ValidationException("Aktualizace musí být až po datu zpracování");
+        }
+    }
+
+    /** Mirrors the daily record form: the record has a text and does not describe a future day. */
+    private void validateDailyRecord(DailyRecordRequestDTO dto) {
+        if (dto.getDate() == null) {
+            throw new ValidationException("Datum denního záznamu je povinné");
+        }
+        if (dto.getDate().isAfter(LocalDate.now(clock))) {
+            throw new ValidationException("Datum denního záznamu nemůže být v budoucnosti");
+        }
+        if (dto.getContent() == null || dto.getContent().isBlank()) {
+            throw new ValidationException("Denní záznam musí obsahovat popis průběhu dne");
+        }
     }
 
     /**
@@ -497,6 +556,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
 
         plan.setCurrentContent(firstVersion);
         plan.setContentVersions(new ArrayList<>(List.of(firstVersion)));
+        plan.setDailyRecords(new ArrayList<>());
 
         IndividualPlan savedPlan = individualPlanRepository.save(plan);
         return individualPlanMapper.toDTO(savedPlan);
@@ -562,6 +622,7 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
                 c -> c.getDepartment() != null ? c.getDepartment().getId() : null
         );
         requireActiveClient(plan.getClient());
+        validateDailyRecord(dailyRecordDTO);
 
         Employee currentEmployee = getCurrentUser().getEmployee();
         if (currentEmployee == null) {

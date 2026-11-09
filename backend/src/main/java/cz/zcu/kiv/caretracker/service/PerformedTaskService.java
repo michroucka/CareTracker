@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskRequestDTO;
 import cz.zcu.kiv.caretracker.dto.performedTask.PerformedTaskSummaryDTO;
 import cz.zcu.kiv.caretracker.entity.*;
+import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.enums.UserRole;
 import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
@@ -14,6 +15,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,8 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     private TaskRepository taskRepository;
     @Autowired
     private EmployeeRepository employeeRepository;
+    @Autowired
+    private Clock clock;
 
     /**
      * Returns performed tasks filtered by the current user's role and the supplied optional criteria.
@@ -43,15 +49,16 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
      * @param departmentIds optional department filter
      * @param caregiverIds optional caregiver filter
      * @param clientId optional client filter (ignored for CLIENT role)
-     * @param month optional month filter (1–12)
-     * @param year optional year filter
+     * @param month optional month filter (1–12), given together with {@code year}
+     * @param year optional year filter, given together with {@code month}
      * @return role-filtered list of performed task summary DTOs
      */
     @Transactional(readOnly = true)
     public List<PerformedTaskSummaryDTO> getPerformedTasks(Long organizationId, List<Long> departmentIds, List<Long> caregiverIds, Long clientId, Integer month, Integer year) {
+        validateMonthFilter(month, year);
         User currentUser = getCurrentUser();
 
-        // CLIENT role bypasses org/dept filters — always scoped to the client's own records
+        // CLIENT role bypasses org/dept filters – always scoped to the client's own records
         if (currentUser.getRole() == UserRole.CLIENT) {
             if (currentUser.getClient() == null) {
                 return Collections.emptyList();
@@ -80,6 +87,15 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
 
         List<PerformedTask> performedTasks = performedTaskRepository.findAll(spec);
         return performedTaskMapper.toSummaryDTOList(performedTasks);
+    }
+
+    private void validateMonthFilter(Integer month, Integer year) {
+        if ((month == null) != (year == null)) {
+            throw new ValidationException("Měsíc a rok je nutné zadat společně");
+        }
+        if (month != null && (month < 1 || month > 12)) {
+            throw new ValidationException("Měsíc musí být v rozsahu 1 až 12");
+        }
     }
 
     /**
@@ -124,6 +140,9 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
                 .orElseThrow(() -> new ResourceNotFoundException("Klient nebyl nalezen"));
         Task task = taskRepository.findById(dto.getTaskId())
                 .orElseThrow(() -> new ResourceNotFoundException("Úkol nebyl nalezen"));
+        if (dto.getCaregiverIds() == null || dto.getCaregiverIds().isEmpty()) {
+            throw new ValidationException("Úkon musí mít alespoň jednoho pečovatele");
+        }
         List<Employee> caregivers = new ArrayList<>();
         for (Long employeeId : dto.getCaregiverIds()) {
             Employee caregiver = employeeRepository.findById(employeeId)
@@ -141,6 +160,10 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
             validateOrganizationAccess(caregiver, emp -> emp.getOrganization().getId());
         }
         validateCaregivers(performedTask, client, caregivers);
+        validateTask(performedTask, client, task);
+        validateAmount(dto.getUnitCount(), task);
+        validateDate(dto.getDate());
+        validateClientServiceEnd(performedTask, client, dto.getDate());
 
         performedTaskMapper.requestToPerformedTask(performedTask, dto, client, task, caregivers);
         return performedTaskRepository.save(performedTask);
@@ -200,16 +223,21 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
     }
 
     /**
-     * Newly added caregivers must work in the client's department (caregivers already on the record may have
-     * moved since). A CAREGIVER must list themselves, otherwise they could not edit the record afterwards.
+     * Newly added caregivers must be active and work in the client's department (caregivers already on the record
+     * may have been terminated or moved since). A CAREGIVER must list themselves, otherwise they could not edit
+     * the record afterwards.
      *
-     * @throws ValidationException if a caregiver is from another department or a CAREGIVER left themselves out
+     * @throws ValidationException if a new caregiver is terminated or from another department, or a CAREGIVER left
+     *                             themselves out
      */
     private void validateCaregivers(PerformedTask performedTask, Client client, List<Employee> caregivers) {
         Set<Long> currentCaregiverIds = performedTask.getCaregivers() == null ? Set.of()
                 : performedTask.getCaregivers().stream().map(Employee::getId).collect(Collectors.toSet());
         for (Employee caregiver : caregivers) {
             boolean newlyAdded = !currentCaregiverIds.contains(caregiver.getId());
+            if (newlyAdded && !caregiver.getActive()) {
+                throw new ValidationException("Ukončeného zaměstnance nelze přidat mezi pečovatele");
+            }
             if (newlyAdded && !caregiver.getDepartment().getId().equals(client.getDepartment().getId())) {
                 throw new ValidationException("Pečovatel musí patřit do střediska klienta");
             }
@@ -219,6 +247,55 @@ public class PerformedTaskService extends BaseRoleFilteringService<PerformedTask
         if (currentUser.getRole() == UserRole.CAREGIVER
                 && caregivers.stream().noneMatch(c -> c.getId().equals(currentUser.getEmployee().getId()))) {
             throw new ValidationException("Mezi pečovateli musíte být i vy");
+        }
+    }
+
+    /** A deactivated task stays on the records it already has, so they remain editable. */
+    private void validateTask(PerformedTask performedTask, Client client, Task task) {
+        // also for SUPERADMIN, whose organization access check passes for any task
+        if (!task.getOrganization().getId().equals(client.getOrganization().getId())) {
+            throw new ValidationException("Úkon musí patřit do organizace klienta");
+        }
+        boolean keepsCurrentTask = performedTask.getTask() != null && performedTask.getTask().getId().equals(task.getId());
+        if (!task.getActive() && !keepsCurrentTask) {
+            throw new ValidationException("Deaktivovaný úkon nelze zapsat");
+        }
+    }
+
+    private void validateDate(LocalDateTime date) {
+        if (date == null) {
+            throw new ValidationException("Datum úkonu je povinné");
+        }
+        if (date.isAfter(LocalDateTime.now(clock))) {
+            throw new ValidationException("Úkon nemůže být v budoucnosti");
+        }
+    }
+
+    /**
+     * Work for a terminated client may still be recorded up to the termination date. Records that keep
+     * their client and date are left alone, so older records stay editable.
+     */
+    private void validateClientServiceEnd(PerformedTask performedTask, Client client, LocalDateTime date) {
+        if (client.getActive()) return;
+        boolean keepsClientAndDate = performedTask.getClient() != null
+                && performedTask.getClient().getId().equals(client.getId())
+                && date.equals(performedTask.getDate());
+        if (keepsClientAndDate) return;
+        LocalDate terminationDate = client.getTerminationDate();
+        if (terminationDate == null || date.toLocalDate().isAfter(terminationDate)) {
+            throw new ValidationException("Klientovi nelze zapsat úkon po datu ukončení služby");
+        }
+    }
+
+    private void validateAmount(Double unitCount, Task task) {
+        if (unitCount == null) {
+            throw new ValidationException("Množství je povinné");
+        }
+        if (unitCount <= 0) {
+            throw new ValidationException("Množství musí být větší než 0");
+        }
+        if (task.getUnitType() == UnitType.OCCURRENCE && unitCount % 1 != 0) {
+            throw new ValidationException("Počet úkonů musí být celé číslo");
         }
     }
 

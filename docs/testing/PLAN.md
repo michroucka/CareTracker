@@ -140,12 +140,31 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Variabilní symbol (`RRMM` + osobní číslo) měl u osobního čísla od 1 000 000 výš 11 číslic. Osobní číslo je teď omezené na 1 až 999 999 (API 400, formulář). Číslo generované z ID klienta limit nekontroluje, dosáhlo by ho až milionté ID.
 
 #### T2c – Služby a byznys pravidla (integrační)
-- [ ] **[claude]** Vzor: životní cyklus klienta – ukončení (důvod, datum), aktivace, co se stane s jeho účtem. Naučí: `@SpringBootTest` bez HTTP, ověření stavu v DB.
-- [ ] **[claude]** Individuální plán: vytvoření, úprava = nová verze, historie verzí, přidání a smazání denního záznamu, pečovatel jen u svého klienta.
-- [ ] **[claude]** Provedené úkony: vytvoření a úprava (`validateCaregiverAssignment`), mazání, filtry měsíc/den.
-- [ ] **[claude]** Zaměstnanci, střediska, organizace, úkony: vytvoření, úprava, ukončení, aktivace a jejich vedlejší efekty (uživatelský účet zaměstnance).
-- [ ] **[claude]** Vzor: aktivační token – platný, prošlý, použitý podruhé. Naučí: testy s časem (`Clock`).
-- [ ] **[claude]** Zbytek `UserService`: reset hesla (stejná odpověď pro existující i neexistující e-mail – žádné zjišťování účtů), dokončení aktivace, úprava vlastního účtu, opětovné odeslání aktivace.
+- [x] **[claude]** Životní cyklus klienta (`ClientLifecycleIT`): ukončení a aktivace včetně účtu, vytvoření a blokace účtu. Pomocník `signInAs(...)` v `AbstractIntegrationTest` pro volání služeb bez HTTP.
+- [x] **[claude]** Individuální plán (`IndividualPlanIT`): vytvoření, verze, historie, denní záznamy a jejich mazání.
+- [x] **[claude]** Provedené úkony (`PerformedTaskRulesIT`): pečovatelé, přesun klienta, mazání, validace, filtr měsíce.
+- [x] **[claude]** Zaměstnanci, střediska, organizace, úkony (`EmployeeLifecycleIT`, `DepartmentLifecycleIT`, `OrganizationLifecycleIT`, `TaskCatalogIT`): vytvoření, úprava, ukončení, aktivace a jejich vedlejší efekty na účty a role.
+- [x] **[claude]** Aktivační token a reset hesla s pevným časem (`ActivationTokenIT`, `PasswordResetIT`): platnost do posledního okamžiku, prošlý, použitý podruhé. `UserService` bere čas z `Clock`.
+- [x] **[claude]** Zbytek `UserService` (`UserAccountIT`): opětovné odeslání aktivace, reset vlastního hesla, úprava vlastního účtu. Mail přes `sentMails()`, `mailText(...)` v `AbstractIntegrationTest`; asynchronní odesílání běží v testech synchronně (`support/SynchronousTaskExecutorConfiguration`).
+- [x] Nálezy, opraveno 2026-11-09:
+  - Vysoká: reset hesla prošel s prošlým tokenem.
+  - Vysoká: klient mohl dostat druhý účet, jeden duplikát rozbil seznam klientů střediska. Kontrola ve službě a unikátní indexy `app_user.client_id` a `employee_id` (V24).
+  - Střední: zapomenuté heslo prozrazovalo existenci účtu (404 vs. 200, rozdílná doba odpovědi). Teď vždy stejná odpověď a mail na pozadí.
+  - Střední: aktivace a reset sdílely jeden token, účet mohl skončit bez jména a bez možnosti přihlášení. Reset má vlastní token (V25).
+  - Střední: reset bez tokenu hledal účet bez tokenu (`IS NULL`). Teď 400 před hledáním.
+  - Střední: ukončený klient se dál přihlásil. Ukončení blokuje účet, aktivace ho odblokuje.
+  - Střední: `PUT /api/organizations/{id}` uměl deaktivovat organizaci bez blokace účtů. `active` se teď mění jen přes ukončení/aktivaci.
+  - Střední: provedený úkon s nulovým či záporným množstvím, s neaktivním úkonem, bez pečovatele (NPE).
+  - Střední: koordinátor jednoho střediska šel přiřadit k dalšímu a po odebrání z jednoho přišel o roli.
+  - Nízká: backend nehlídal pravidla, která hlídá jen frontend: heslo a jméno, ukončení klienta (důvod, datum), denní záznam, data plánu, desetinný počet kusů, datum v budoucnosti, úkon jiné organizace, ukončený zaměstnanec jako pečovatel, zaměstnanec v ukončeném středisku, cena úkonu ≤ 0, filtr měsíc bez roku.
+  - Nízká: e-mail pro reset podle velikosti písmen, historie plánu bez `plannedUpdateDate`, nový plán s `dailyRecords: null`.
+- [x] Rozhodnuto 2026-11-09:
+  - Ukončenému klientovi jde zapsat úkon nejpozději v den ukončení.
+  - Deaktivovaný účet nedostane mail s resetem, odpověď je stejná.
+  - Ukončení zaměstnance, který je hlavním pečovatelem aktivních klientů, se odmítne (400 s počtem). Koordinátora ukončení odebere ze střediska a sníží na pečovatele, staré záznamy zůstávají.
+  - Klientovi jde znovu poslat aktivační e-mail (`POST /api/clients/{id}/account/resend`, menu v seznamu klientů).
+  - Cena uložená k záznamu odložena (sekce 6).
+- [ ] **[ty]** Před nasazením V24 ověřit, že produkční DB nemá v `app_user` dva účty se stejným `client_id` nebo `employee_id` (migrace by selhala).
 
 #### T2d – Specifikace a dotazy (JPA na Postgresu)
 - [ ] **[claude]** Vzor: `PerformedTaskSpecifications.hasDateInMonth` – první a poslední den měsíce, přelom roku (prosinec/leden), záznam o půlnoci. Naučí: `@DataJpaTest` s Testcontainers.
@@ -207,7 +226,15 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ---
 
-## 6. Odkazy
+## 6. Odložené změny aplikace
+
+Nálezy z testů, které jsou větší změnou aplikace než oprava a do testovacích fází nepatří.
+
+- [ ] **[claude]** Cena za jednotku uložená k provedenému úkonu (nález z T2c, rozhodnuto 2026-11-09). Teď se cena počítá z aktuální ceny v katalogu, takže změna ceny přepíše i minulé měsíce a už vystavené stvrzenky. Flyway migrace (`unit_price` v `performed_task`, naplnit z katalogu), `calculatePrice` a agregace nástěnky z uložené ceny, úprava záznamu cenu nemění. Samostatný PR.
+
+---
+
+## 7. Odkazy
 
 - Spring Boot – Testing: https://docs.spring.io/spring-boot/reference/testing/index.html (sekce „Testing Spring Boot Applications“ a „Testcontainers“)
 - Spring Security – Testing: https://docs.spring.io/spring-security/reference/servlet/test/index.html (sekce „Testing Method Security“ a „MockMvc Support“)
@@ -225,6 +252,8 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 ## Log změn
 
+- 2026-11-09: T2c hotová (1047 IT). Testy a opravy nálezů psali paralelně subagenti po doménách, rozhodnutí B1-B5 viz T2c.
+- 2026-11-09: T2b hotová: cena, stvrzenky, obrázky, nástěnka s pevným `Clock`.
 - 2026-11-09: T2a hotová: zaměstnanci, střediska, organizace, úkony, provedené úkony, nástěnka, vlastní účet, 401 pro nepřihlášeného (865 testů). Testy psali paralelně subagenti po doménách, nálezy rovnou opraveny (viz T2a).
 - 2026-11-09: opraveny nálezy z T2a (účet klienta bez kontroly přístupu, pečovatel a ukončení klienti, plán ukončeného klienta). První test stránky s MSW (`IndividualPlan.test.jsx`), `renderWithProviders` čeká na načtení přihlášení.
 - 2026-11-09: T2a klienti hotoví (`ClientAccessIT`, `ClientListAccessIT`, nahrazují `ClientAuthorizationIT`), dva nálezy v T2a.

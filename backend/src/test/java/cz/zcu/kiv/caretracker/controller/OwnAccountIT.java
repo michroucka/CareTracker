@@ -143,10 +143,10 @@ class OwnAccountIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(userRepository.findById(account.getId())).get()
-                .extracting(User::getActivationToken)
+                .extracting(User::getResetToken)
                 .isNotNull();
         assertThat(userRepository.findById(colleague.getId())).get()
-                .extracting(User::getActivationToken)
+                .extracting(User::getResetToken)
                 .isNull();
     }
 

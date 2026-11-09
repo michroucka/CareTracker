@@ -6,20 +6,31 @@ import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.service.GeocodingService;
 import cz.zcu.kiv.caretracker.service.PaymentQrClient;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.util.List;
+
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -32,7 +43,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestcontainersConfiguration.class, TestClockConfiguration.class, DatabaseCleaner.class, TestData.class})
+@Import({TestcontainersConfiguration.class, TestClockConfiguration.class, SynchronousTaskExecutorConfiguration.class,
+        DatabaseCleaner.class, TestData.class})
 public abstract class AbstractIntegrationTest {
 
     @Autowired
@@ -85,6 +97,57 @@ public abstract class AbstractIntegrationTest {
 
     protected RequestPostProcessor loggedInAs(Employee employee) {
         return loggedInAs(employee.getUser());
+    }
+
+    /**
+     * Signs the user in for direct service calls (no HTTP), the same way as {@link #loggedInAs}.
+     * Services read the user from the {@link SecurityContextHolder}; it is cleared after each test.
+     */
+    protected void signInAs(User account) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(account.getUsername());
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(userDetails, null, userDetails.getAuthorities()));
+    }
+
+    protected void signInAs(Employee employee) {
+        signInAs(employee.getUser());
+    }
+
+    @AfterEach
+    void signOut() {
+        SecurityContextHolder.clearContext();
+    }
+
+    /** HTML e-mails handed to the mocked mail sender during the current test, in the order sent. */
+    protected List<MimeMessage> sentMails() {
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender, atLeast(0)).send(captor.capture());
+        return captor.getAllValues();
+    }
+
+    /** Text of all parts of the e-mail joined together (the HTML body sits inside nested multiparts). */
+    protected static String mailText(Part mail) {
+        try {
+            Object content = mail.getContent();
+            if (content instanceof Multipart multipart) {
+                StringBuilder text = new StringBuilder();
+                for (int i = 0; i < multipart.getCount(); i++) {
+                    text.append(mailText(multipart.getBodyPart(i)));
+                }
+                return text.toString();
+            }
+            return content instanceof String string ? string : "";
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    protected static String recipientOf(MimeMessage mail) {
+        try {
+            return mail.getAllRecipients()[0].toString();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     protected String json(Object body) {
