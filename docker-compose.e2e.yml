@@ -1,0 +1,44 @@
+name: caretracker-e2e
+
+# Stack for the Playwright tests: built frontend behind nginx and packaged backend, like the demo,
+# with the demo profile (seed data, no emails). The database lives in tmpfs, so every `up` starts from the seed.
+services:
+  backend:
+    image: caretracker-backend:e2e
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.demo
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/caretracker
+      - SPRING_DATASOURCE_USERNAME=caretracker
+      - SPRING_DATASOURCE_PASSWORD=caretracker
+      - APP_MAPY_API_KEY=e2e
+      - APP_REMEMBER_ME_KEY=e2e-remember-me-key
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: caretracker-frontend:e2e
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.demo
+    ports:
+      - "3040:80"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: caretracker
+      POSTGRES_PASSWORD: caretracker
+      POSTGRES_DB: caretracker
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U caretracker -d caretracker"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

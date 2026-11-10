@@ -1,4 +1,4 @@
-.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend test-backend-it demo-up demo-down demo-build demo-reset demo-logs seed-activity clear-activity demo-seed-activity
+.PHONY: up down start stop restart build rebuild clean logs compile test test-frontend test-backend test-backend-it e2e-up e2e-down e2e-logs e2e demo-up demo-down demo-build demo-reset demo-logs seed-activity clear-activity demo-seed-activity
 
 # Start všech služeb + doplnění demo aktivity (provedené úkony až do teď)
 up:
@@ -65,6 +65,23 @@ test-backend-it:
 
 test-frontend:
 	docker exec caretracker-frontend npm test -- --run
+
+# E2E: produkční build s demo seedem na http://localhost:3040, databáze se při každém e2e-up začne od seedu
+e2e-up:
+	docker compose -f docker-compose.e2e.yml up --build -d
+	@echo "Čekám na backend…"
+	@for i in $$(seq 1 90); do curl -sf -o /dev/null http://localhost:3040/api/auth-status && exit 0; sleep 2; done; \
+		echo "Backend nenaběhl: make e2e-logs" && exit 1
+
+e2e-down:
+	docker compose -f docker-compose.e2e.yml down -v
+
+e2e-logs:
+	docker compose -f docker-compose.e2e.yml logs -f $(service)
+
+# Spustí Playwright testy proti běžícímu e2e stacku (make e2e-up)
+e2e:
+	cd e2e && npm ci && npx playwright install chromium && npx playwright test
 
 # Demo commands
 demo-up:

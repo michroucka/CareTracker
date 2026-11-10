@@ -58,11 +58,13 @@ cd backend && ./mvnw test     # unit tests (*Test)
 cd backend && ./mvnw verify   # + integration tests (*IT, PostgreSQL via Testcontainers, needs Docker) + JaCoCo report
 cd frontend && npm run test:run   # Vitest once (npm test = watch mode)
 cd frontend && npm run coverage
+make e2e-up && make e2e      # Playwright E2E against the demo build on :3040 (fresh seed DB), make e2e-down afterwards
 ```
 
 - Backend integration tests extend `support/AbstractIntegrationTest` (shared Spring context, DB emptied before each test, `loggedInAs(...)`, data via `TestData`). Don't add `@MockitoBean` in subclasses, it creates a new context.
 - Authorization tests use `support/AccessScenario` (two organizations, one user per `Actor` named by relation to a client) and run each endpoint for every actor: allowed set → 2xx, others → 403. Known security gaps are skipped with `assumeFalse(...)` / `@Disabled` and listed in the plan.
 - Frontend: `renderWithProviders` from `src/test/render.jsx`, API mocked with MSW (`src/test/server.js`), sample users in `src/test/users.js`. Unhandled requests fail the test.
+- E2E (`e2e/`): tests start signed in via `test.use({ storageState: storageStateOf("<demo account>") })`, data comes from the demo seed, tests that create records clean up after themselves. Don't log out with a shared storage state, log in inside the test instead.
 - CI (`.github/workflows/ci.yml`) runs on every PR; demo deploy runs only after CI passes on `main`.
 
 ## Architecture

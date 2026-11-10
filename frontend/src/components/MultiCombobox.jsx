@@ -45,7 +45,7 @@ export function MultiCombobox({ options, value, onChange, formatCount = (count) 
                         <IconSelector className="text-muted-foreground" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start" onOpenAutoFocus={(event) => {
+                <PopoverContent className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) flex-col p-0" align="start" onOpenAutoFocus={(event) => {
                     // a short list has no search field; Radix would focus the popover, which is outside
                     // the command root that handles the arrow keys and Enter
                     if (hasSearch) return;

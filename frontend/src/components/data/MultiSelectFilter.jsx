@@ -37,7 +37,7 @@ export function MultiSelectFilter({ label, allLabel, options, selected, onChange
                     <IconChevronDown className="text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="end">
+            <PopoverContent className="flex max-h-(--radix-popover-content-available-height) w-64 flex-col p-0" align="end">
                 <Command filter={filterOptions}>
                     {options.length > 6 && <CommandInput placeholder={searchPlaceholder} />}
                     <CommandList>

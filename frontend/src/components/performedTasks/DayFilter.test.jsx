@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DayFilter } from './DayFilter';
 
 const NOVEMBER_2026 = { year: 2026, month: 10 };
@@ -27,6 +27,10 @@ const dayTrigger = () => screen.getByRole('button', { name: /^Den:/ });
 const calendarDay = (date) => screen.getByRole('button', { name: new RegExp(`^${date}`) });
 
 describe('DayFilter', () => {
+    // outside the tested month, otherwise the calendar renames and focuses today
+    beforeEach(() => vi.useFakeTimers({ toFake: ['Date'] }).setSystemTime(new Date(2026, 11, 15)));
+    afterEach(() => vi.useRealTimers());
+
     it('shows the whole month until a day is picked', () => {
         renderDayFilter();
 
