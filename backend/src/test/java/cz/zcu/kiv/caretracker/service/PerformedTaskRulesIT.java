@@ -278,6 +278,34 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void recordKeepsItsUnitPriceWhenTheCatalogPriceChanges() throws Exception {
+        Task lunch = testData.task(organization, UnitType.OCCURRENCE, 80);
+        Map<String, Object> request = request(client, lunch, caregiver);
+        request.put("unitCount", 2.0);
+        long id = createdId(perform(coordinator, post("/api/performed-tasks"), request).andExpect(status().isOk()));
+
+        lunch.setUnitPrice(100);
+        taskRepository.save(lunch);
+        perform(coordinator, put("/api/performed-tasks/{id}", id), request).andExpect(status().isOk());
+
+        perform(coordinator, get("/api/performed-tasks/{id}", id))
+                .andExpect(jsonPath("$.unitPrice").value(80))
+                .andExpect(jsonPath("$.task.unitPrice").value(100));
+        assertThat(performedTaskRepository.findById(id).orElseThrow().getUnitPrice()).isEqualTo(80);
+    }
+
+    @Test
+    void recordSwitchedToAnotherTaskTakesItsCurrentPrice() throws Exception {
+        PerformedTask record = testData.performedTask(client, task, caregiver);
+        Task shopping = testData.task(organization, UnitType.OCCURRENCE, 50);
+
+        perform(coordinator, put("/api/performed-tasks/{id}", record.getId()), request(client, shopping, caregiver))
+                .andExpect(status().isOk());
+
+        assertThat(performedTaskRepository.findById(record.getId()).orElseThrow().getUnitPrice()).isEqualTo(50);
+    }
+
+    @Test
     void recordWithDeactivatedTaskStaysEditableButCannotSwitchToOne() throws Exception {
         PerformedTask record = testData.performedTask(client, task, caregiver);
         Task otherTask = testData.task(organization);

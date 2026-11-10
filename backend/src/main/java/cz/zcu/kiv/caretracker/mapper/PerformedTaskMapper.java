@@ -34,6 +34,7 @@ public class PerformedTaskMapper {
         dto.setId(pt.getId());
         dto.setDate(pt.getDate());
         dto.setUnitCount(pt.getUnitCount());
+        dto.setUnitPrice(pt.getUnitPrice());
         dto.setNotes(pt.getNotes());
 
         dto.setClient(clientMapper.toSummaryDTOWithTasks(pt.getClient()));
@@ -71,7 +72,7 @@ public class PerformedTaskMapper {
                                        List<Employee> caregivers
     ) {
         performedTask.setClient(client);
-        performedTask.setTask(task);
+        performedTask.assignTask(task);
         performedTask.setDepartment(client.getDepartment());
         performedTask.setOrganization(client.getOrganization());
         performedTask.setDate(dto.getDate());

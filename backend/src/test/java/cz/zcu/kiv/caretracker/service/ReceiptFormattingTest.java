@@ -29,7 +29,7 @@ class ReceiptFormattingTest {
 
     private static PerformedTask record(Task task, double unitCount) {
         PerformedTask performedTask = new PerformedTask();
-        performedTask.setTask(task);
+        performedTask.assignTask(task);
         performedTask.setUnitCount(unitCount);
         return performedTask;
     }
@@ -80,6 +80,21 @@ class ReceiptFormattingTest {
     }
 
     @Test
+    void priceChangeWithinTheMonthGivesTheTaskASecondRow() {
+        Task lunch = task(1, "Oběd", UnitType.OCCURRENCE, 80);
+        PerformedTask before = record(lunch, 1);
+        lunch.setUnitPrice(100);
+        PerformedTask after = record(lunch, 2);
+
+        List<Map<String, String>> rows = ReceiptFormatting.groupByTask(List.of(before, after));
+
+        assertEquals(List.of("80" + NBSP + "Kč / úkon", "100" + NBSP + "Kč / úkon"),
+                rows.stream().map(row -> row.get("rate")).toList());
+        assertEquals(List.of("80" + NBSP + "Kč", "200" + NBSP + "Kč"),
+                rows.stream().map(row -> row.get("price")).toList());
+    }
+
+    @Test
     void groupedPriceIsSumOfRecordPrices() {
         Task hourly = task(1, "Doprovod", UnitType.HOUR, 100);
 
@@ -121,7 +136,7 @@ class ReceiptFormattingTest {
             "KM,         km",
     })
     void formatRateShowsPricePerUnit(UnitType unitType, String unit) {
-        assertEquals("80" + NBSP + "Kč / " + unit, ReceiptFormatting.formatRate(task(1, "Úkon", unitType, 80)));
+        assertEquals("80" + NBSP + "Kč / " + unit, ReceiptFormatting.formatRate(unitType, 80));
     }
 
     @ParameterizedTest(name = "{0} → \"{1}\"")

@@ -3,6 +3,7 @@ package cz.zcu.kiv.caretracker.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
@@ -31,6 +32,7 @@ public class PerformedTask {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
+    @Setter(AccessLevel.NONE)
     private Task task;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -51,6 +53,11 @@ public class PerformedTask {
     @Column(name="unit_count", nullable = false)
     private Double unitCount;
 
+    /** Catalog price per unit when the task was assigned; set through {@link #assignTask(Task)}. */
+    @Column(name = "unit_price", nullable = false)
+    @Setter(AccessLevel.NONE)
+    private Integer unitPrice;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -62,9 +69,20 @@ public class PerformedTask {
     )
     private List<Employee> caregivers;
 
+    /**
+     * Sets the task and takes over its current catalog price. Editing a record with the same task keeps
+     * the price it was recorded with; only a different task brings in that task's current price.
+     */
+    public void assignTask(Task newTask) {
+        if (task == null || !task.getId().equals(newTask.getId())) {
+            unitPrice = newTask.getUnitPrice();
+        }
+        task = newTask;
+    }
+
     public int calculatePrice() {
         // decimal arithmetic: in double 0.29 * 50 is 14.4999... and would round down; matches ROUND on NUMERIC in the dashboard queries
-        BigDecimal amount = BigDecimal.valueOf(getUnitCount()).multiply(BigDecimal.valueOf(getTask().getUnitPrice()));
+        BigDecimal amount = BigDecimal.valueOf(getUnitCount()).multiply(BigDecimal.valueOf(getUnitPrice()));
         BigDecimal price = getTask().getUnitType() == UnitType.HOUR
                 ? amount.divide(MINUTES_PER_HOUR, 0, RoundingMode.HALF_UP)
                 : amount.setScale(0, RoundingMode.HALF_UP);

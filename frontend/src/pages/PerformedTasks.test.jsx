@@ -51,6 +51,7 @@ const shoppingDetail = {
     id: 100,
     date: '2026-11-03T09:30:00',
     unitCount: 2,
+    unitPrice: SHOPPING.unitPrice,
     notes: 'Mléko a chleba',
     task: SHOPPING,
     client: { id: MARIE.id, fullName: 'Marie Nová' },
@@ -62,6 +63,7 @@ const escortDetail = {
     id: 101,
     date: '2026-11-05T14:00:00',
     unitCount: 90,
+    unitPrice: ESCORT.unitPrice,
     notes: null,
     task: ESCORT,
     client: { id: KAREL.id, fullName: 'Karel Starý' },
@@ -652,5 +654,30 @@ describe('Performed task form', () => {
             notes: 'Mléko a chleba',
         });
         expect(await screen.findByRole('dialog', { name: 'Nákup' })).toHaveTextContent(price(300));
+    });
+
+    it('prices a record with the unit price it was recorded with, a switched task with the catalog price', async () => {
+        serveOptions();
+        servePerformedTasks();
+        serveDetails();
+        // recorded at 80 per visit, the catalog has raised it to 100 since
+        server.use(http.get(apiUrl('/performed-tasks/:id'), () => HttpResponse.json({ ...shoppingDetail, unitPrice: 80 })));
+        const { user } = renderPage({ route: '/performed-tasks?detail=100' });
+
+        const sheet = await screen.findByRole('dialog', { name: 'Nákup' });
+        expect(await within(sheet).findByText(price(160))).toBeInTheDocument();
+        expect(within(sheet).getByText(/^80 Kč/)).toBeInTheDocument();
+
+        await user.click(within(sheet).getByRole('button', { name: /Upravit/ }));
+        const editSheet = screen.getByRole('dialog', { name: 'Úprava záznamu' });
+        const taskField = await within(editSheet).findByLabelText(/^Úkon/);
+        expect(within(editSheet).getByText(price(160))).toBeInTheDocument();
+
+        await user.click(taskField);
+        await user.click(screen.getByRole('option', { name: /^Doprovod/ }));
+        const minutes = within(editSheet).getByLabelText(/^Délka/);
+        await user.clear(minutes);
+        await user.type(minutes, '60');
+        expect(within(editSheet).getByText(price(ESCORT.unitPrice))).toBeInTheDocument();
     });
 });

@@ -31,8 +31,8 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
     List<Object[]> findLastActivityByOrganization();
 
     /*
-     * Dashboard aggregates. Price per task is rounded like PerformedTask#calculatePrice
-     * (HOUR tasks are stored in minutes), then summed.
+     * Dashboard aggregates. Price per task comes from the unit price stored with it and is rounded like
+     * PerformedTask#calculatePrice (HOUR tasks are stored in minutes), then summed.
      */
 
     /**
@@ -42,7 +42,7 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
     @Query(value = """
             SELECT EXTRACT(YEAR FROM pt.date) AS year, EXTRACT(MONTH FROM pt.date) AS month,
                    COUNT(*) AS task_count,
-                   COALESCE(SUM(ROUND(CASE WHEN t.unit_type = 'HOUR' THEN pt.unit_count * t.unit_price / 60.0 ELSE pt.unit_count * t.unit_price END)), 0) AS income
+                   COALESCE(SUM(ROUND(CASE WHEN t.unit_type = 'HOUR' THEN pt.unit_count * pt.unit_price / 60.0 ELSE pt.unit_count * pt.unit_price END)), 0) AS income
             FROM performed_task pt
             JOIN task t ON t.id = pt.task_id
             WHERE pt.date >= :start AND pt.date < :end
@@ -73,7 +73,7 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
 
     /** Returns rows of [department name, task count, income] for one organization in [start, end). */
     @Query(value = """
-            SELECT d.city, COUNT(*) AS task_count, COALESCE(SUM(ROUND(CASE WHEN t.unit_type = 'HOUR' THEN pt.unit_count * t.unit_price / 60.0 ELSE pt.unit_count * t.unit_price END)), 0) AS income
+            SELECT d.city, COUNT(*) AS task_count, COALESCE(SUM(ROUND(CASE WHEN t.unit_type = 'HOUR' THEN pt.unit_count * pt.unit_price / 60.0 ELSE pt.unit_count * pt.unit_price END)), 0) AS income
             FROM performed_task pt
             JOIN task t ON t.id = pt.task_id
             JOIN department d ON d.id = pt.department_id

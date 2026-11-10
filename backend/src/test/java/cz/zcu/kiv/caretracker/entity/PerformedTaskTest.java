@@ -1,6 +1,7 @@
 package cz.zcu.kiv.caretracker.entity;
 
 import cz.zcu.kiv.caretracker.enums.UnitType;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -15,7 +16,7 @@ class PerformedTaskTest {
         task.setUnitType(unitType);
 
         PerformedTask performedTask = new PerformedTask();
-        performedTask.setTask(task);
+        performedTask.assignTask(task);
         performedTask.setUnitCount(unitCount);
         return performedTask;
     }
@@ -64,5 +65,37 @@ class PerformedTaskTest {
     })
     void amountExactlyHalfwayRoundsUp(double unitCount, int unitPrice, int expectedPrice) {
         assertEquals(expectedPrice, performedTask(unitCount, unitPrice, UnitType.KG).calculatePrice());
+    }
+
+    private static Task catalogTask(long id, int unitPrice) {
+        Task task = new Task();
+        task.setId(id);
+        task.setUnitPrice(unitPrice);
+        task.setUnitType(UnitType.OCCURRENCE);
+        return task;
+    }
+
+    @Test
+    void keepsTheRecordedPriceWhenTheCatalogPriceChanges() {
+        Task lunch = catalogTask(1, 80);
+        PerformedTask performedTask = new PerformedTask();
+        performedTask.assignTask(lunch);
+        performedTask.setUnitCount(2.0);
+
+        lunch.setUnitPrice(100);
+        performedTask.assignTask(lunch);
+
+        assertEquals(80, performedTask.getUnitPrice());
+        assertEquals(160, performedTask.calculatePrice());
+    }
+
+    @Test
+    void takesTheCurrentPriceOfANewlyAssignedTask() {
+        PerformedTask performedTask = new PerformedTask();
+        performedTask.assignTask(catalogTask(1, 80));
+
+        performedTask.assignTask(catalogTask(2, 120));
+
+        assertEquals(120, performedTask.getUnitPrice());
     }
 }

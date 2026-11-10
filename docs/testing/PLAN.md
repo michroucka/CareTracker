@@ -252,7 +252,7 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
 Nálezy z testů, které jsou větší změnou aplikace než oprava a do testovacích fází nepatří.
 
-- [ ] **[claude]** Cena za jednotku uložená k provedenému úkonu (nález z T2c, rozhodnuto 2026-11-09). Teď se cena počítá z aktuální ceny v katalogu, takže změna ceny přepíše i minulé měsíce a už vystavené stvrzenky. Flyway migrace (`unit_price` v `performed_task`, naplnit z katalogu), `calculatePrice` a agregace nástěnky z uložené ceny, úprava záznamu cenu nemění. Samostatný PR.
+- [x] **[claude]** Cena za jednotku uložená k provedenému úkonu (nález z T2c, rozhodnuto 2026-11-09). Dřív se cena počítala z aktuální ceny v katalogu, takže změna ceny přepsala i minulé měsíce a vystavené stvrzenky. Migrace V28 přidala `performed_task.unit_price` (naplněno z katalogu). Cenu nastavuje `PerformedTask.assignTask`: nový záznam nebo změna úkonu bere aktuální cenu z katalogu, úprava se stejným úkonem ji drží. Z uložené ceny počítá `calculatePrice`, nástěnka, stvrzenka (změna ceny v měsíci = další řádek se sazbou) i detail a úprava záznamu ve frontendu (`unitPrice` v `PerformedTaskDTO`).
 
 ### Migrace velkých verzí závislostí
 
@@ -283,6 +283,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: cena za jednotku uložená k provedenému úkonu (část 6), 152 unit + 1139 IT, 918 frontendových testů, E2E 17/17.
 - 2026-11-10: T5 hotová kromě branch protection: souhrn pokrytí v CI, prahy na frontendu, Dependabot, CodeQL, šablona PR.
 - 2026-11-10: T4 hotová (17 E2E testů v Playwrightu proti demo buildu), nálezy s časovou zónou a výškou popoveru opraveny. Testy `DayFilter` už nezávisí na dnešním datu.
 - 2026-11-09: T3e hotová (917 frontendových testů, i pod Node 22), fáze T3 uzavřená.

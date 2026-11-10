@@ -12,10 +12,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRecordForm } from "@/hooks/useRecordForm";
 import { formatDateTime } from "@/utils/formatters";
 import { PerformedTaskFields } from "./PerformedTaskFields";
-import { formatAmount, requiredCaregiverId, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
+import { formatAmount, recordedTask, requiredCaregiverId, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
 
 function PerformedTaskView({ performedTask, linkClient }) {
-    const { task, client, caregivers, notes } = performedTask;
+    const { client, caregivers, notes } = performedTask;
+    const task = recordedTask(performedTask);
     return (
         <div className="grid gap-6">
             <div className="grid grid-cols-2 gap-3">
@@ -62,7 +63,11 @@ export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoadin
     }, [open]);
 
     const clientsWithCurrent = withMissing(clients, [performedTask?.client]);
-    const tasksWithCurrent = withMissing(tasks, [performedTask?.task]);
+    // the record's own task keeps the price it was recorded with, a different task is priced from the catalog
+    const currentTask = performedTask && recordedTask(performedTask);
+    const tasksWithCurrent = currentTask
+        ? withMissing(tasks.map((task) => (task.id === currentTask.id ? currentTask : task)), [currentTask])
+        : tasks;
     const caregiverOptions = toPersonOptions(withMissing(caregivers, performedTask?.caregivers));
 
     const startEditing = () => {
@@ -102,7 +107,7 @@ export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoadin
             badge="Provedený úkon"
             meta={meta}
             title={isEditing ? "Úprava záznamu" : performedTask?.task.name}
-            subtitle={!isEditing && performedTask && formatTaskPrice(performedTask.task)}
+            subtitle={!isEditing && currentTask && formatTaskPrice(currentTask)}
             description={performedTask ? `Detail úkonu u klienta ${performedTask.client.fullName}` : "Detail provedeného úkonu"}
             isLoading={isLoading || !performedTask}
             onEdit={canAct ? startEditing : undefined}
