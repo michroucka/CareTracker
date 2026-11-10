@@ -14,6 +14,13 @@ export default mergeConfig(viteConfig, defineConfig({
             include: ['src/**/*.{js,jsx,ts,tsx}'],
             exclude: ['src/test/**', 'src/**/*.test.{js,jsx}', 'src/components/ui/**', 'src/pages/ComponentCatalog.jsx'],
             reporter: ['text-summary', 'html', 'json-summary'],
+            // just below the coverage reached after phase T3; only ever raised
+            thresholds: {
+                lines: 91,
+                statements: 91,
+                branches: 91,
+                functions: 84,
+            },
         },
     },
 }));

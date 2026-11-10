@@ -239,12 +239,12 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
   - Střední: seznam v Comboboxu, MultiComboboxu a filtru nebyl omezený výškou volného místa. Na obrazovce 1280×720 se seznam klientů ve stvrzence otevřel nad horní okraj a vyhledávání ani první klienti nešli vybrat. Popover má teď `max-h-(--radix-popover-content-available-height)`, stejně jako Select a DropdownMenu.
 
 ### Fáze T5 – Dotažení CI
-- [ ] **[claude]** Pokrytí do souhrnu PR (JaCoCo + Vitest coverage v `$GITHUB_STEP_SUMMARY`).
-- [ ] **[claude]** Prahy pokrytí na frontendu (stejně jako T2f: těsně pod aktuální stav, pak jen nahoru).
-- [ ] **[claude]** Dependabot pro Maven, npm a GitHub Actions (týdně, seskupené PR).
-- [ ] **[claude]** Volitelně CodeQL (Java + JS) – zdarma pro veřejné repo.
-- [ ] **[ty]** Branch protection doplnit o E2E check.
-- [ ] Do checklistu „stránka/funkce hotová“ přidat: „má testy, CI je zelené“.
+- [x] **[claude]** Pokrytí do souhrnu běhu CI: `.github/scripts/coverage_summary.py` (JaCoCo po balíčcích, Vitest celkem) do `$GITHUB_STEP_SUMMARY`.
+- [x] **[claude]** Prahy pokrytí na frontendu ve `vitest.config.js`: řádky a příkazy 91 %, větve 91 %, funkce 84 % (stav po T3: 91,4 / 92,0 / 84,5). Práh se jen zvedá.
+- [x] **[claude]** Dependabot (`.github/dependabot.yml`): Maven, npm (`frontend`, `e2e`) a GitHub Actions, týdně, minor a patch v jednom PR za ekosystém.
+- [x] **[claude]** CodeQL (`.github/workflows/codeql.yml`): Java bez buildu a JS, na PR do `main`, push na `main` a každé pondělí.
+- [ ] **[ty]** Branch protection doplnit o E2E check (a případně CodeQL). Přeskočený job (E2E na push do `main`) GitHub bere jako splněný.
+- [x] Checklist „hotovo, když“ (testy, zelené CI) v šabloně PR `.github/pull_request_template.md`.
 
 ---
 
@@ -274,6 +274,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-10: T5 hotová kromě branch protection: souhrn pokrytí v CI, prahy na frontendu, Dependabot, CodeQL, šablona PR.
 - 2026-11-10: T4 hotová (17 E2E testů v Playwrightu proti demo buildu), nálezy s časovou zónou a výškou popoveru opraveny. Testy `DayFilter` už nezávisí na dnešním datu.
 - 2026-11-09: T3e hotová (917 frontendových testů, i pod Node 22), fáze T3 uzavřená.
 - 2026-11-09: T3a–T3d hotové (664 frontendových testů), nálezy opraveny.
