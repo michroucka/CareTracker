@@ -9,6 +9,8 @@ export default mergeConfig(viteConfig, defineConfig({
             VITE_API_URL: 'http://localhost:3000/api',
         },
         include: ['src/**/*.test.{js,jsx}'],
+        // page tests take up to ~2 s locally and CI runners are several times slower at peak times
+        testTimeout: 15000,
         coverage: {
             provider: 'v8',
             include: ['src/**/*.{js,jsx,ts,tsx}'],
