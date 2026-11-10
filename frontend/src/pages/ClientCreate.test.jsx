@@ -48,17 +48,23 @@ async function pickFirstDayOfThisMonth(user) {
     await user.click(screen.getByRole('button', { name: new RegExp(`, ${dayLabel}$`) }));
 }
 
+// pasting instead of typing key by key keeps the long form fast enough for slower CI runners
+async function enterText(user, element, text) {
+    await user.click(element);
+    await user.paste(text);
+}
+
 async function fillRequiredFields(user) {
-    await user.type(field('Jméno'), ' Marie ');
-    await user.type(field('Příjmení'), 'Nová');
+    await enterText(user, field('Jméno'), ' Marie ');
+    await enterText(user, field('Příjmení'), 'Nová');
     await user.click(field('Pohlaví'));
     await user.click(screen.getByRole('option', { name: 'Žena' }));
     await pickFirstDayOfThisMonth(user);
     await user.click(field('Klíčový pracovník'));
     await user.click(screen.getByRole('option', { name: 'Jana Testová' }));
-    await user.type(field('Ulice a číslo popisné'), 'Americká 12');
-    await user.type(field('Město'), 'Plzeň');
-    await user.type(field('PSČ'), '30100');
+    await enterText(user, field('Ulice a číslo popisné'), 'Americká 12');
+    await enterText(user, field('Město'), 'Plzeň');
+    await enterText(user, field('PSČ'), '30100');
 }
 
 describe('ClientCreate', () => {
@@ -94,10 +100,10 @@ describe('ClientCreate', () => {
         await fillRequiredFields(user);
 
         await user.clear(field('PSČ'));
-        await user.type(field('PSČ'), '301');
-        await user.type(field('Telefon'), '12345');
-        await user.type(field('E-mail'), 'marie@seznam');
-        await user.type(field('Osobní číslo'), '0');
+        await enterText(user, field('PSČ'), '301');
+        await enterText(user, field('Telefon'), '12345');
+        await enterText(user, field('E-mail'), 'marie@seznam');
+        await enterText(user, field('Osobní číslo'), '0');
         await user.click(submitButton());
 
         expect(screen.getByText('PSČ ve tvaru 123 45')).toBeInTheDocument();
@@ -131,9 +137,9 @@ describe('ClientCreate', () => {
         await screen.findByRole('button', { name: 'Vytvořit klienta' });
         await fillRequiredFields(user);
 
-        await user.type(field('Telefon'), '+420777123456');
-        await user.type(field('E-mail'), 'marie@example.cz');
-        await user.type(field('Osobní číslo'), '42');
+        await enterText(user, field('Telefon'), '+420777123456');
+        await enterText(user, field('E-mail'), 'marie@example.cz');
+        await enterText(user, field('Osobní číslo'), '42');
         await user.click(field('Úkony'));
         await user.click(screen.getByRole('option', { name: 'Úklid' }));
         await user.keyboard('{Escape}');
