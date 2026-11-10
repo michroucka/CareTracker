@@ -66,7 +66,12 @@ class LoginIT extends AbstractIntegrationTest {
         MockHttpSession sessionBeforeLogin = new MockHttpSession();
         String idBeforeLogin = sessionBeforeLogin.getId();
 
-        MvcResult result = mockMvc.perform(login(account.getUsername(), TestData.PASSWORD).session(sessionBeforeLogin))
+        // the browser sends the session id with the request; without it Spring Security has no session to protect
+        MvcResult result = mockMvc.perform(login(account.getUsername(), TestData.PASSWORD).session(sessionBeforeLogin)
+                        .with(request -> {
+                            request.setRequestedSessionId(idBeforeLogin);
+                            return request;
+                        }))
                 .andExpect(status().isOk())
                 .andReturn();
 

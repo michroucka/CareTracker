@@ -69,9 +69,12 @@ test-frontend:
 # E2E: produkční build s demo seedem na http://localhost:3040, databáze se při každém e2e-up začne od seedu
 e2e-up:
 	docker compose -f docker-compose.e2e.yml up --build -d
-	@echo "Čekám na backend…"
-	@for i in $$(seq 1 90); do curl -sf -o /dev/null http://localhost:3040/api/auth-status && exit 0; sleep 2; done; \
-		echo "Backend nenaběhl: make e2e-logs" && exit 1
+	@echo "Čekám na backend a demo seed…"
+	@for i in $$(seq 1 90); do \
+		docker compose -f docker-compose.e2e.yml logs backend 2>/dev/null | grep -q "Demo activity:" \
+			&& curl -sf -o /dev/null http://localhost:3040/api/auth-status && exit 0; \
+		sleep 2; \
+	done; echo "Backend nenaběhl: make e2e-logs" && exit 1
 
 e2e-down:
 	docker compose -f docker-compose.e2e.yml down -v

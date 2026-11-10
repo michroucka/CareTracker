@@ -10,12 +10,12 @@ import cz.zcu.kiv.caretracker.service.ClientService;
 import cz.zcu.kiv.caretracker.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -61,7 +61,7 @@ class ClientRequestErrorsTest {
     private PersistentTokenRepository rememberMeTokenRepository;
 
     /** Every request carries a valid CSRF token like the frontend sends, so only the tested error shows. */
-    private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
+    private ResultActions perform(AbstractMockHttpServletRequestBuilder<?> request) throws Exception {
         return mockMvc.perform(request.with(csrf()));
     }
 
@@ -194,12 +194,12 @@ class ClientRequestErrorsTest {
 
 
     private static ResultMatcher error(int status, String message) {
-        return ResultMatcher.matchAll(
-                status().is(status),
-                jsonPath("$.status").value(status),
-                jsonPath("$.message").value(message),
-                result -> assertThat(result.getResponse().getContentAsString())
-                        .doesNotContain("java.", "cz.zcu", "springframework", "jackson", "Exception", "Cannot invoke", "\tat ")
-        );
+        return result -> {
+            status().is(status).match(result);
+            jsonPath("$.status").value(status).match(result);
+            jsonPath("$.message").value(message).match(result);
+            assertThat(result.getResponse().getContentAsString())
+                    .doesNotContain("java.", "cz.zcu", "springframework", "jackson", "Exception", "Cannot invoke", "\tat ");
+        };
     }
 }

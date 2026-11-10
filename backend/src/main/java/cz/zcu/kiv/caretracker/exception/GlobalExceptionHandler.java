@@ -1,6 +1,6 @@
 package cz.zcu.kiv.caretracker.exception;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
+import tools.jackson.core.JacksonException;
 import cz.zcu.kiv.caretracker.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -204,7 +204,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         String message = "Neplatný formát dat v požadavku";
-        if (ex.getCause() instanceof JsonMappingException mappingException && !mappingException.getPath().isEmpty()) {
+        if (ex.getCause() instanceof JacksonException mappingException && !mappingException.getPath().isEmpty()) {
             message = "Neplatná hodnota pole '" + fieldPath(mappingException) + "'";
         }
 
@@ -274,14 +274,14 @@ public class GlobalExceptionHandler {
     }
 
     /** JSON path of the invalid value in the request body, e.g. {@code taskIds[1]} or {@code address.city}. */
-    private static String fieldPath(JsonMappingException ex) {
+    private static String fieldPath(JacksonException ex) {
         StringBuilder path = new StringBuilder();
-        for (JsonMappingException.Reference reference : ex.getPath()) {
-            if (reference.getFieldName() != null) {
+        for (JacksonException.Reference reference : ex.getPath()) {
+            if (reference.getPropertyName() != null) {
                 if (!path.isEmpty()) {
                     path.append('.');
                 }
-                path.append(reference.getFieldName());
+                path.append(reference.getPropertyName());
             } else {
                 path.append('[').append(reference.getIndex()).append(']');
             }

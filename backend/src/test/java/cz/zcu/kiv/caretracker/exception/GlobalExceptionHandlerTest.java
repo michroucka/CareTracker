@@ -69,7 +69,7 @@ class GlobalExceptionHandlerTest {
                         403, "Nemáte oprávnění k této operaci"),
                 Arguments.of(new IllegalArgumentException("No enum constant cz.zcu.kiv.caretracker.enums.Gender.ALIEN"),
                         400, "Neplatná hodnota v požadavku"),
-                Arguments.of(new NoResourceFoundException(HttpMethod.GET, "api/client/1"), 404, "Požadovaná adresa neexistuje"),
+                Arguments.of(new NoResourceFoundException(HttpMethod.GET, "/api/client/1", "api/client/1"), 404, "Požadovaná adresa neexistuje"),
                 Arguments.of(new MaxUploadSizeExceededException(5 * 1024 * 1024), 413, "Soubor je příliš velký"),
                 Arguments.of(new NullPointerException("Cannot invoke \"java.util.List.iterator()\""), 500, UNEXPECTED_ERROR),
                 Arguments.of(new IllegalStateException("JPEG encoding failed"), 500, UNEXPECTED_ERROR),

@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -268,7 +268,7 @@ class ClientAccessIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
+    private ResultActions perform(Actor actor, AbstractMockHttpServletRequestBuilder<?> request) throws Exception {
         return mockMvc.perform(request.with(loggedInAs(scenario.user(actor))));
     }
 
