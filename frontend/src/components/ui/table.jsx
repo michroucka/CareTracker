@@ -42,7 +42,7 @@ function useRowNavigation(containerRef) {
     const index = rows.indexOf(row)
     const onRow = event.target === row
 
-    let next = null
+    let next
     if (onRow && event.key === "ArrowDown") next = rows[index + 1]
     else if (onRow && event.key === "ArrowUp") next = rows[index - 1]
     else if (onRow && event.key === "Home") next = rows[0]
