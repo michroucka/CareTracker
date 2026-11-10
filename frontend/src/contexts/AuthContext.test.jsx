@@ -152,7 +152,8 @@ describe('AuthContext – logout', () => {
         expect(requests).toEqual([{ csrfToken: 'token-123', contentType: 'application/x-www-form-urlencoded' }]);
         expect(shownOrganization()).toHaveTextContent('bez organizace');
         expect(localStorage.getItem(SUPERADMIN_ORG_KEY)).toBeNull();
-        expect(shownLocation()).toHaveTextContent(/^\/$/);
+        // the navigation can land a render after the user is cleared
+        await waitFor(() => expect(shownLocation()).toHaveTextContent(/^\/$/));
         expect(await screen.findByText('Odhlášení proběhlo')).toBeInTheDocument();
     });
 

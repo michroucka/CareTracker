@@ -66,8 +66,8 @@ planned AS (
       AND cd.day + p.start_time <= NOW()
 ),
 inserted AS (
-    INSERT INTO performed_task (client_id, task_id, date, unit_count, notes, department_id, organization_id)
-    SELECT pl.client_id, t.id, pl.day + pl.start_time, pl.unit_count, NULL, pl.department_id, pl.organization_id
+    INSERT INTO performed_task (client_id, task_id, date, unit_count, unit_price, notes, department_id, organization_id)
+    SELECT pl.client_id, t.id, pl.day + pl.start_time, pl.unit_count, t.unit_price, NULL, pl.department_id, pl.organization_id
     FROM planned pl
     JOIN task t ON t.organization_id = pl.organization_id AND t.name = pl.task_name AND t.active
     RETURNING id, client_id

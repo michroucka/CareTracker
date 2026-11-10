@@ -240,7 +240,7 @@ public class TestData {
                                         double unitCount) {
         PerformedTask performedTask = new PerformedTask();
         performedTask.setClient(client);
-        performedTask.setTask(task);
+        performedTask.assignTask(task);
         performedTask.setDepartment(client.getDepartment());
         performedTask.setOrganization(client.getOrganization());
         performedTask.setDate(date);

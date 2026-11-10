@@ -31,19 +31,21 @@ final class ReceiptFormatting {
     }
 
     /**
-     * Groups performed tasks by task type and aggregates unit counts and prices per group
-     * for use as rows in the receipt template, in the order the task types first appear.
+     * Groups performed tasks by task type and stored unit price and aggregates unit counts and prices per group
+     * for use as rows in the receipt template, in the order the groups first appear. A price change within
+     * the month gives the task a second row with the new rate.
      */
     static List<Map<String, String>> groupByTask(List<PerformedTask> tasks) {
         return tasks.stream()
                 .collect(Collectors.groupingBy(
-                        t -> t.getTask().getId(),
+                        t -> List.of(t.getTask().getId(), t.getUnitPrice()),
                         LinkedHashMap::new,
                         Collectors.toList()
                 ))
                 .values().stream()
                 .map(group -> {
-                    Task task = group.get(0).getTask();
+                    PerformedTask first = group.get(0);
+                    Task task = first.getTask();
                     double totalUnitCount = group.stream()
                             .mapToDouble(PerformedTask::getUnitCount).sum();
 
@@ -51,7 +53,7 @@ final class ReceiptFormatting {
                     row.put("taskName", task.getName());
                     row.put("recordCount", String.valueOf(group.size()));
                     row.put("amount", formatAmount(totalUnitCount, task.getUnitType()));
-                    row.put("rate", formatRate(task));
+                    row.put("rate", formatRate(task.getUnitType(), first.getUnitPrice()));
                     row.put("price", formatCurrency(totalPrice(group)));
                     return row;
                 })
@@ -74,13 +76,13 @@ final class ReceiptFormatting {
     }
 
     /** Price per unit; hourly tasks are recorded in minutes but priced per hour. */
-    static String formatRate(Task task) {
-        String unit = switch (task.getUnitType()) {
+    static String formatRate(UnitType unitType, int unitPrice) {
+        String unit = switch (unitType) {
             case HOUR -> "h";
             case OCCURRENCE -> "úkon";
-            default -> task.getUnitType().getLabel();
+            default -> unitType.getLabel();
         };
-        return formatCurrency(task.getUnitPrice()) + " / " + unit;
+        return formatCurrency(unitPrice) + " / " + unit;
     }
 
     /** 3081 → "3 081 Kč" with non-breaking spaces, so the amount never wraps. */

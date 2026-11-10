@@ -10,6 +10,7 @@ import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
+import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,9 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     private Organization organization;
     private Department department;
@@ -87,6 +91,19 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
             assertThat(JsonPath.<Integer>read(dashboard, "$.tasksPerformedCount")).isEqualTo(3);
             // 150 + 2 * 40 + 45 min * 150 / 60 = 112.5, rounded per task like PerformedTask#calculatePrice
             assertThat(JsonPath.<Integer>read(dashboard, "$.totalMonthlyIncome")).isEqualTo(343);
+        }
+    }
+
+    @Test
+    void incomeUsesThePriceStoredWithEachRecordNotTheCurrentCatalogPrice() throws Exception {
+        testData.performedTask(client, visit, LocalDateTime.of(2027, 1, 10, 9, 0), 2);
+        visit.setUnitPrice(100);
+        taskRepository.save(visit);
+        testData.performedTask(client, visit, LocalDateTime.of(2027, 1, 12, 9, 0), 1);
+
+        for (String dashboard : List.of(dashboard(admin.getUser(), "ORGANIZATION"), dashboard(coordinator.getUser(), "DEPARTMENT"))) {
+            // 2 * 40 recorded before the price change + 1 * 100 after it
+            assertThat(JsonPath.<Integer>read(dashboard, "$.totalMonthlyIncome")).isEqualTo(180);
         }
     }
 

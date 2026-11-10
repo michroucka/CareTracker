@@ -17,6 +17,8 @@ public class PerformedTaskDTO {
     private Long id;
     private LocalDateTime date;
     private Double unitCount;
+    /** Price per unit stored with the record; can differ from the task's current catalog price. */
+    private Integer unitPrice;
     private String notes;
 
     private ClientSummaryDTO client;

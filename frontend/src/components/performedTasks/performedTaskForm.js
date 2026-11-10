@@ -13,6 +13,9 @@ const DECIMAL_UNITS = ["KM", "KG"];
 /** Summary DTOs carry `fullName`, list DTOs first and last name. */
 export const personName = (person) => person.fullName ?? `${person.firstName} ${person.lastName}`;
 
+/** The record's task with the price per unit stored with the record, which can differ from today's catalog price. */
+export const recordedTask = (performedTask) => ({ ...performedTask.task, unitPrice: performedTask.unitPrice });
+
 export const toPersonOptions = (people) => people.map((person) => ({ value: person.id, label: personName(person) }));
 
 /** Adds the record's own client / caregivers when they are no longer in the active lists. */
