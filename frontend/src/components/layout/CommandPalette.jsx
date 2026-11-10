@@ -31,11 +31,11 @@ function matches(keywords, search) {
  */
 function useSearchRecords(isOpen, role) {
     const [records, setRecords] = React.useState({ clients: [], employees: [], organizations: [] });
-    const [isLoaded, setIsLoaded] = React.useState(false);
+    const hasLoadedRef = React.useRef(false);
 
     React.useEffect(() => {
-        if (!isOpen || isLoaded) return;
-        setIsLoaded(true);
+        if (!isOpen || hasLoadedRef.current) return;
+        hasLoadedRef.current = true;
 
         const load = async () => {
             try {
@@ -55,7 +55,7 @@ function useSearchRecords(isOpen, role) {
             }
         };
         load();
-    }, [isOpen, isLoaded, role]);
+    }, [isOpen, role]);
 
     return records;
 }

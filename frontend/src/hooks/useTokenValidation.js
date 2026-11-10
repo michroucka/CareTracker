@@ -10,31 +10,27 @@ import { get } from "../api/api.js";
  * @returns {{ isValidating: boolean, isValid: boolean }}
  */
 export function useTokenValidation(endpoint, token) {
-    const [isValidating, setIsValidating] = React.useState(true);
-    const [isValid, setIsValid] = React.useState(false);
+    // the answer is kept with the token it belongs to; a missing token is invalid without asking
+    const [validated, setValidated] = React.useState({ token: null, isValid: false });
 
     React.useEffect(() => {
-        if (!token) {
-            setIsValid(false);
-            setIsValidating(false);
-            return;
-        }
+        if (!token) return;
 
         const validateToken = async () => {
+            let isValid = false;
             try {
                 const response = await get(`${endpoint}?token=${encodeURIComponent(token)}`);
                 const result = await response.json();
-                setIsValid(response.ok && result.success);
+                isValid = response.ok && result.success;
             } catch (error) {
                 console.error("Token validation error:", error);
-                setIsValid(false);
-            } finally {
-                setIsValidating(false);
             }
+            setValidated({ token, isValid });
         };
 
         validateToken();
     }, [endpoint, token]);
 
-    return { isValidating, isValid };
+    if (!token) return { isValidating: false, isValid: false };
+    return { isValidating: validated.token !== token, isValid: validated.token === token && validated.isValid };
 }

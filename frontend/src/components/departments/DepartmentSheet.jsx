@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { useEditingWhileOpen } from "@/hooks/useEditingWhileOpen";
 import { DepartmentFields } from "./DepartmentFields";
 import { coordinatorOptions, formatAddress, toFormValues, toRequest, validateDepartment } from "./departmentForm";
 
@@ -39,12 +40,8 @@ function DepartmentView({ department }) {
 }
 
 export function DepartmentSheet({ open, onOpenChange, department, isLoading, employees, organizationId, onSave, onTerminate, onActivate }) {
-    const [isEditing, setIsEditing] = React.useState(false);
+    const [isEditing, setIsEditing] = useEditingWhileOpen(open);
     const form = useRecordForm(toFormValues(department));
-
-    React.useEffect(() => {
-        if (!open) setIsEditing(false);
-    }, [open]);
 
     const startEditing = () => {
         form.reset(toFormValues(department));

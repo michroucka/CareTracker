@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { pictureUrl } from "@/lib/pictures";
+import { useValueChange } from "@/hooks/useValueChange";
 
 const AnimatedPanel = motion.div;
 
@@ -32,7 +33,7 @@ function ProfileCard({ fullName, role, pictureSrc, onPictureChange }) {
     const [picture, setPicture] = React.useState(pictureSrc);
     const [isSaving, setIsSaving] = React.useState(false);
 
-    React.useEffect(() => setPicture(pictureSrc), [pictureSrc]);
+    useValueChange(pictureSrc, setPicture);
 
     const heading = (
         <div className="mb-1 grid min-w-0 gap-1.5">

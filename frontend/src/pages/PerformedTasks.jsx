@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext.tsx";
 import { useClients } from "../hooks/useClients.jsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
+import { useRecordDetail } from "../hooks/useRecordDetail";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useMonthParam, useMultiSelectParam, useTextParam } from "../hooks/useListFilters";
 import { usePagedList } from "../hooks/usePagedList";
@@ -95,7 +96,6 @@ function PerformedTasks() {
     const [sortDirection, setSortDirection] = React.useState("descending");
     const [isSorting, startSorting] = React.useTransition();
     const { detailId, openDetail, closeDetail } = useDetailParam();
-    const [detail, setDetail] = React.useState(null);
     const [isCreateOpen, setIsCreateOpen] = React.useState(() => searchParams.get("openCreate") === "true");
     // once mounted, a sheet stays mounted so its close animation can play
     const [hasOpenedDetail, setHasOpenedDetail] = React.useState(false);
@@ -106,6 +106,7 @@ function PerformedTasks() {
     const [deleteTarget, setDeleteTarget] = React.useState(null);
 
     const { performedTasks, setPerformedTasks, loading, fetchPerformedTasks, fetchPerformedTask, createPerformedTask, updatePerformedTask, deletePerformedTask } = usePerformedTasks();
+    const [detail, setDetail] = useRecordDetail(detailId, fetchPerformedTask, closeDetail);
     const { clients, fetchClients } = useClients();
     const { departments, fetchDepartments } = useDepartments();
     const { employees, fetchEmployees } = useEmployees();
@@ -173,13 +174,6 @@ function PerformedTasks() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [organizationId, filterKey, needsOrganization]);
 
-    React.useEffect(() => {
-        setDetail(null);
-        if (!detailId) return;
-        fetchPerformedTask(detailId).then(setDetail).catch(closeDetail);
-        // load whenever another record is opened
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailId]);
 
     const matchingTasks = React.useMemo(() => {
         const query = removeDiacritics(search.trim());

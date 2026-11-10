@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { listLocation } from "@/components/layout/navigation";
+import { useValueChange } from "@/hooks/useValueChange";
 
 const AnimatedPanel = motion.div;
 // the map library is large and only needed after "Na mapě"
@@ -169,21 +170,21 @@ export function ClientDetail() {
     const { employees, fetchEmployees } = useEmployees();
     const { tasks, fetchTasks } = useTasks();
 
-    const loadClient = React.useCallback(async () => {
-        try {
-            setClient(await fetchClient(Number(clientId)));
-        } catch {
-            setClient(null);
-        } finally {
-            setIsLoading(false);
-        }
+    const loadClient = React.useCallback(
+        () => fetchClient(Number(clientId))
+            .then(setClient, () => setClient(null))
+            .finally(() => setIsLoading(false)),
         // fetchClient is recreated on every render of the hook
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clientId]);
+        [clientId],
+    );
 
-    React.useEffect(() => {
+    useValueChange(clientId, () => {
         setIsLoading(true);
         setIsEditing(false);
+    });
+
+    React.useEffect(() => {
         loadClient();
     }, [loadClient]);
 
