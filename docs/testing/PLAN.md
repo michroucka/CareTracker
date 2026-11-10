@@ -164,7 +164,7 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Ukončení zaměstnance, který je hlavním pečovatelem aktivních klientů, se odmítne (400 s počtem). Koordinátora ukončení odebere ze střediska a sníží na pečovatele, staré záznamy zůstávají.
   - Klientovi jde znovu poslat aktivační e-mail (`POST /api/clients/{id}/account/resend`, menu v seznamu klientů).
   - Cena uložená k záznamu odložena (sekce 6).
-- [ ] **[ty]** Před nasazením V24 ověřit, že produkční DB nemá v `app_user` dva účty se stejným `client_id` nebo `employee_id` (migrace by selhala).
+- [x] **[ty]** Před nasazením V24 ověřit, že produkční DB nemá v `app_user` dva účty se stejným `client_id` nebo `employee_id` (migrace by selhala).
 
 #### T2d – Specifikace a dotazy (JPA na Postgresu)
 - [x] **[claude]** `PerformedTaskSpecificationsIT`: `hasDateInMonth` (první a poslední okamžik, půlnoc, přelom roku, přestupný rok) a `withFilters`. Nový druh testu `@DataJpaTest` nad Postgresem, základ `support/AbstractRepositoryTest` (transakce se po testu vrátí, `flushAndClear()` před nativním dotazem).
@@ -186,7 +186,7 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Uživatelská jména bez ohledu na velikost písmen (přihlášení, duplicita, unikátní index V27).
   - CSRF zapnuté: token z cookie `XSRF-TOKEN` v hlavičce `X-XSRF-TOKEN` (frontend `api.js`), bez tokenu jen přihlášení, aktivace a reset hesla (`CsrfIT`). V testech `support/CsrfTokens`, ne `csrf()` ze Spring Security Test – ten natrvalo podvrhne úložiště tokenů ve sdíleném filtru.
   - Maily mají i textovou verzi.
-- [ ] **[ty]** Před nasazením: do `~/caretracker-secrets/.env.demo` přidat `REMEMBER_ME_KEY` (`openssl rand -base64 32`), jinak backend nenastartuje. Ověřit, že v produkční DB nejsou uživatelská jména lišící se jen velikostí písmen (V27 by selhala). Po nasazení se všichni jednou znovu přihlásí (staré remember-me cookies přestanou platit).
+- [x] **[ty]** Před nasazením: do `~/caretracker-secrets/.env.demo` přidat `REMEMBER_ME_KEY` (`openssl rand -base64 32`), jinak backend nenastartuje. Ověřit, že v produkční DB nejsou uživatelská jména lišící se jen velikostí písmen (V27 by selhala). Po nasazení se všichni jednou znovu přihlásí (staré remember-me cookies přestanou platit).
 
 #### T2f – Prahy pokrytí
 - [x] **[claude]** JaCoCo `check` ve `verify` (build spadne pod prahem). Po T2: `service` 90,0 % řádků / 77,7 % větví, `controller` 93,5 / 79,5, `specification` 78,1 / 76,5. Prahy těsně pod: 0,89/0,77, 0,93/0,79, 0,77/0,76. Celkem 88 % řádků, 75 % větví. Práh se jen zvedá.
@@ -243,7 +243,7 @@ Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 - [x] **[claude]** Prahy pokrytí na frontendu ve `vitest.config.js`: řádky a příkazy 91 %, větve 91 %, funkce 84 % (stav po T3: 91,4 / 92,0 / 84,5). Práh se jen zvedá.
 - [x] **[claude]** Dependabot (`.github/dependabot.yml`): Maven, npm (`frontend`, `e2e`) a GitHub Actions, týdně, minor a patch v jednom PR za ekosystém.
 - [x] **[claude]** CodeQL (`.github/workflows/codeql.yml`): Java bez buildu a JS, na PR do `main`, push na `main` a každé pondělí.
-- [ ] **[ty]** Branch protection doplnit o E2E check (a případně CodeQL). Přeskočený job (E2E na push do `main`) GitHub bere jako splněný.
+- [x] **[ty]** Branch protection doplnit o E2E check (a případně CodeQL). Přeskočený job (E2E na push do `main`) GitHub bere jako splněný.
 - [x] Checklist „hotovo, když“ (testy, zelené CI) v šabloně PR `.github/pull_request_template.md`.
 
 ---
@@ -261,7 +261,8 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 - [ ] **[claude]** Spring Boot 3.5 → 4.x (zavřený #41). Největší: Spring Framework 7, Spring Security 7, Jackson 3, Hibernate 7, změny v testovací podpoře (`@MockitoBean`, Testcontainers). Nejdřív projít oficiální migration guide a deprecace na 3.5.
 - [ ] **[claude]** Vitest 3 → 5 (zavřený #44). Spolu s `@vitest/coverage-v8` stejné verze; ověřit konfiguraci coverage a prahy.
 - [ ] **[claude]** `@vitejs/plugin-react` 5 → 6 (zavřený #43). Zjistit, jakou verzi Vite vyžaduje; případně spolu s přechodem na novější Vite.
-- [ ] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). Spolu, plus kompatibilita `eslint-plugin-react-hooks` a `eslint-plugin-react-refresh`.
+- [x] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). ESLint 10 potřebuje `eslint-plugin-react-hooks` 7, ten má flat config pod `configs.flat`. Hooks pravidla zůstala stejná jako dřív (`rules-of-hooks`, `exhaustive-deps`), nový nález `no-useless-assignment` opraven.
+- [ ] **[ty]** Pravidla React Compileru z `eslint-plugin-react-hooks` 7 (`configs.flat['recommended-latest']`): 29 nálezů ve 26 souborech, hlavně `set-state-in-effect` (21×, stav odvozený nebo resetovaný v efektu), dále `refs` (5×, čtení `ref.current` při renderu), `use-memo`, `purity`, `globals`. Zapnout je a opravit po souborech; dobrý úkol na pochopení, kdy efekt není potřeba (https://react.dev/learn/you-might-not-need-an-effect).
 
 ---
 
@@ -283,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: ESLint 10 (+ `eslint-plugin-react-hooks` 7 se stejnými pravidly), pravidla React Compileru zapsaná jako úkol.
 - 2026-11-10: cena za jednotku uložená k provedenému úkonu (část 6), 152 unit + 1139 IT, 918 frontendových testů, E2E 17/17.
 - 2026-11-10: T5 hotová kromě branch protection: souhrn pokrytí v CI, prahy na frontendu, Dependabot, CodeQL, šablona PR.
 - 2026-11-10: T4 hotová (17 E2E testů v Playwrightu proti demo buildu), nálezy s časovou zónou a výškou popoveru opraveny. Testy `DayFilter` už nezávisí na dnešním datu.
