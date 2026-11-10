@@ -1,6 +1,6 @@
 package cz.zcu.kiv.caretracker.security.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import jakarta.servlet.ServletException;

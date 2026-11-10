@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 
 import java.util.Map;
 
@@ -209,7 +209,7 @@ class OwnAccountIT extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    private ResultActions perform(Actor actor, MockHttpServletRequestBuilder request) throws Exception {
+    private ResultActions perform(Actor actor, AbstractMockHttpServletRequestBuilder<?> request) throws Exception {
         return mockMvc.perform(request.with(loggedInAs(scenario.user(actor))));
     }
 

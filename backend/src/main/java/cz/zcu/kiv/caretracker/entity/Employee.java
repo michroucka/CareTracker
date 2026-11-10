@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcType;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import java.util.List;
 
 @Getter

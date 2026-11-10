@@ -258,7 +258,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), jejich PR z 2026-11-10 jsou zavřené. Každá migrace je samostatná větev a PR, CI (včetně E2E) musí projít beze změny prahů pokrytí.
 
-- [ ] **[claude]** Spring Boot 3.5 → 4.x (zavřený #41). Největší: Spring Framework 7, Spring Security 7, Jackson 3, Hibernate 7, změny v testovací podpoře (`@MockitoBean`, Testcontainers). Nejdřív projít oficiální migration guide a deprecace na 3.5.
+- [x] **[claude]** Spring Boot 3.5 → 4.1 (zavřený #41). Startery: `webmvc` místo `web`, `flyway` místo `flyway-core`, `restclient` (pro `RestTemplateBuilder`), testovací `webmvc-test`, `data-jpa-test`, `security-test`; Testcontainers 2 (`testcontainers-postgresql`, `org.testcontainers.postgresql.PostgreSQLContainer`), vlastní verze Testcontainers už není potřeba; nepoužívaný `thymeleaf-extras-springsecurity6` odebrán. Kód: Jackson 3 (`tools.jackson`, `JacksonException.Reference#getPropertyName`), Hibernate 7 (`org.hibernate.dialect.type.PostgreSQLEnumJdbcType`), nové balíčky testovacích anotací, `@MockitoBean` místo `@MockBean`, demo profil vylučuje `org.springframework.boot.mail.autoconfigure.MailSenderAutoConfiguration`. Spring 7 mock: `MockMultipartHttpServletRequestBuilder` už nedědí z `MockHttpServletRequestBuilder` (helpery berou `AbstractMockHttpServletRequestBuilder<?>`), `ResultMatcher.matchAll` odstraněn, `isRequestedSessionIdValid()` je bez poslaného ID session `false` (test session fixation posílá ID jako prohlížeč; ochrana v aplikaci funguje, ověřeno trace logem Spring Security).
 - [x] **[claude]** Vitest 3 → 5 (zavřený #44), spolu s `@vitest/coverage-v8`. Vitest 5 měří v8 pokrytí přes AST, takže na stejných 117 souborech vychází jiná čísla (řádky / větve / funkce / příkazy 90,1 / 85,7 / 81,9 / 88,8 % místo 91,4 / 92,0 / 84,5 / 91,4 %). Prahy posunuté těsně pod nové měření. Vyžaduje Node ≥ 22.12, proto frontendové Dockerfily na `node:22`.
 - [x] **[claude]** `@vitejs/plugin-react` 5 → 6 (zavřený #43) spolu s Vite 7 → 8 (plugin ho vyžaduje). Konfigurace beze změn; build na Rolldownu trvá ~1 s místo ~8 s a hlavní chunk je menší (560 kB místo 671 kB).
 - [x] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). ESLint 10 potřebuje `eslint-plugin-react-hooks` 7, ten má flat config pod `configs.flat`. Hooks pravidla zůstala stejná jako dřív (`rules-of-hooks`, `exhaustive-deps`), nový nález `no-useless-assignment` opraven.
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: Spring Boot 4.1 (Spring Framework 7, Security 7, Jackson 3, Hibernate 7, Testcontainers 2). `make e2e-up` čeká i na demo seed (první běh hned po startu byl pomalý).
 - 2026-11-10: Vite 8 a `@vitejs/plugin-react` 6.
 - 2026-11-10: Vitest 5 (nové měření pokrytí, prahy posunuté), frontend Dockerfily na Node 22.
 - 2026-11-10: ESLint 10 (+ `eslint-plugin-react-hooks` 7 se stejnými pravidly), pravidla React Compileru zapsaná jako úkol.
