@@ -6,8 +6,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -50,7 +52,9 @@ public class PerformedTask {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    /** Exact decimal in the database (numeric), so prices are calculated from the amount as entered. */
     @Column(name="unit_count", nullable = false)
+    @JdbcTypeCode(SqlTypes.NUMERIC)
     private Double unitCount;
 
     /** Catalog price per unit when the task was assigned; set through {@link #assignTask(Task)}. */

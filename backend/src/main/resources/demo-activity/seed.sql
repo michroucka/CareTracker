@@ -15,7 +15,7 @@ SET client_min_messages = warning;
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS demo_generated_performed_task (
-    performed_task_id int PRIMARY KEY REFERENCES performed_task (id) ON DELETE CASCADE
+    performed_task_id bigint PRIMARY KEY REFERENCES performed_task (id) ON DELETE CASCADE
 );
 
 -- Earlier migrations inserted explicit ids, make sure the identity continues after them
@@ -85,8 +85,8 @@ JOIN client c ON c.id = i.client_id;
 -- 10 days ago and 45 days ahead (spread evenly by plan id), and its processed date half a year before it.
 -- Plans then drift towards "overdue" naturally and are renewed two weeks later.
 UPDATE individual_plan_content c
-SET planned_update_date = CURRENT_DATE + (ip.id * 7 % 56 - 10),
-    processed_date = CURRENT_DATE + (ip.id * 7 % 56 - 10) - INTERVAL '6 months'
+SET planned_update_date = CURRENT_DATE + (ip.id * 7 % 56 - 10)::int,
+    processed_date = CURRENT_DATE + (ip.id * 7 % 56 - 10)::int - INTERVAL '6 months'
 FROM individual_plan ip
 WHERE ip.current_content_id = c.id
   AND c.planned_update_date < CURRENT_DATE - 14;

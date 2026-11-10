@@ -76,7 +76,7 @@ Celé **[claude]**, ty review. Po této fázi jde napsat jakýkoli druh testu be
 Backend:
 - [x] Závislosti: `spring-boot-testcontainers`, `testcontainers:postgresql`, `testcontainers:junit-jupiter`. Failsafe plugin pro `*IT`. JaCoCo plugin (report z unit i IT testů dohromady, `target/site/jacoco/index.html`). Testcontainers přepnutý na 1.21.4 – verze ze Spring Boot 3.5.6 nefunguje s Docker Engine 29+.
 - [x] `src/test/resources/application-test.properties`: profil `test`, Flyway zapnutý (migrace se tím testují), hodnoty ze `secrets.properties` nahrazené testovacími. `ApplicationContextIT` ověřuje, že kontext nastartuje.
-- [ ] **[ty]** `ddl-auto=validate` v testech (kontrola, že entity sedí na schéma) zatím nejde: všechny sloupce `id` a `*_id` jsou v migracích `integer`, entity mají `Long` (Hibernate čeká `bigint`). Za běhu to nevadí, JDBC hodnoty převede. Rozhodnout: migrace na `bigint` (doporučeno, jedna Flyway migrace `ALTER COLUMN ... TYPE bigint` pro ID i cizí klíče), nebo `Integer` v entitách. Pak přepnout na `validate` – může odhalit další rozdíly.
+- [x] **[ty → claude]** `ddl-auto=validate` v testech. Migrace V29: ID, cizí klíče a `client.personal_number` na `bigint` (entity mají `Long`), sekvence identity na `bigint`, `postal_code` z `char(6)` na `varchar(6)`. `performed_task.unit_count` zůstává přesný `numeric(10,2)`, entita ho mapuje `@JdbcTypeCode(SqlTypes.NUMERIC)`. Demo seed přetypovává posun data na `int` (`date + bigint` neexistuje); `make e2e-up` skončí chybou, když demo seed selže.
 - [x] Sdílený kontejner Postgresu pro všechny IT (`@ServiceConnection`), aby se nestartoval pro každou třídu zvlášť.
 - [x] Základní třída `support/AbstractIntegrationTest` (Spring kontext, MockMvc, profil `test`, `DatabaseCleaner` před každým testem). Kontext je sdílený pro všechny IT – v podtřídách nepřidávat `@MockitoBean`, jinak vznikne nový kontext.
 - [x] Hranice systému v testech: `JavaMailSender` a `GeocodingService` jako `@MockitoBean` v základní třídě. QR platba v `ReceiptService` volá externí API přímo přes `RestClient.create()` – vyřešit v T2b (vytáhnout klienta do beanu, který jde mockovat).
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: schéma odpovídá entitám (V29, `bigint` ID), testy validují schéma (`ddl-auto=validate`).
 - 2026-11-10: pravidla React Compileru zapnutá a opravená (29 nálezů), 926 frontendových testů, E2E 17/17.
 - 2026-11-10: Spring Boot 4.1 (Spring Framework 7, Security 7, Jackson 3, Hibernate 7, Testcontainers 2). `make e2e-up` čeká i na demo seed (první běh hned po startu byl pomalý).
 - 2026-11-10: Vite 8 a `@vitejs/plugin-react` 6.

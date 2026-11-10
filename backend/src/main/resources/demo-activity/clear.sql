@@ -5,7 +5,7 @@ SET client_min_messages = warning;
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS demo_generated_performed_task (
-    performed_task_id int PRIMARY KEY REFERENCES performed_task (id) ON DELETE CASCADE
+    performed_task_id bigint PRIMARY KEY REFERENCES performed_task (id) ON DELETE CASCADE
 );
 
 DELETE FROM caregiver_performed_task
