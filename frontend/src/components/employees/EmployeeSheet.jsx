@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getRoleLabel } from "@/constants/roles";
 import { useEmployeeOverview } from "@/hooks/useEmployeeOverview";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { useEditingWhileOpen } from "@/hooks/useEditingWhileOpen";
 import { pictureUrl } from "@/lib/pictures";
 import { EmployeeFields } from "./EmployeeFields";
 import { accountState, roleOptions, toFormValues, toRequest, validateEmployee } from "./employeeForm";
@@ -105,13 +106,9 @@ function EmployeeView({ employee, overview }) {
  * Employee detail with in-place editing. Without `canEdit` it is read-only (caregivers).
  */
 export function EmployeeSheet({ open, onOpenChange, employee, isLoading, canEdit, canManageAdmins, isSelf, organizationId, departments, onSave, onTerminate, onActivate, onResendActivation }) {
-    const [isEditing, setIsEditing] = React.useState(false);
+    const [isEditing, setIsEditing] = useEditingWhileOpen(open);
     const overview = useEmployeeOverview(open ? employee?.id : null, organizationId);
     const form = useRecordForm(toFormValues(employee));
-
-    React.useEffect(() => {
-        if (!open) setIsEditing(false);
-    }, [open]);
 
     const startEditing = () => {
         form.reset(toFormValues(employee));

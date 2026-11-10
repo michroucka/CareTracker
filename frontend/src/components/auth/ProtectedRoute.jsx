@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole } from "../../constants/roles";
@@ -16,27 +16,25 @@ export function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading } = useAuth();
     const location = useLocation();
     const toastShownRef = useRef(false);
-    const wasAuthenticatedRef = useRef(false);
-
-    useEffect(() => {
-        if (user) wasAuthenticatedRef.current = true;
-    }, [user]);
+    // tells an intentional logout (go home) from a visitor who never logged in (go to login)
+    const [wasAuthenticated, setWasAuthenticated] = useState(false);
+    if (user && !wasAuthenticated) setWasAuthenticated(true);
 
     const isNotAuthenticated = !loading && !user;
     const hasInsufficientPermissions = !loading && user && allowedRoles && !hasRole(user.role, allowedRoles);
 
     useEffect(() => {
         if (!toastShownRef.current) {
-            if (isNotAuthenticated && !wasAuthenticatedRef.current) {
+            if (isNotAuthenticated && !wasAuthenticated) {
                 toast.warning("Přístup odepřen", { description: "Pro zobrazení této stránky se musíte přihlásit" });
                 toastShownRef.current = true;
             } else if (hasInsufficientPermissions) {
-                console.warn("User tried to access page with insufficient permissions:", user.role, " - ", location.pathname);
+                console.warn("User tried to access page with insufficient permissions:", user?.role, " - ", location.pathname);
                 toast.error("Nedostatečná oprávnění", { description: "Nemáte oprávnění pro zobrazení této stránky" });
                 toastShownRef.current = true;
             }
         }
-    }, [isNotAuthenticated, hasInsufficientPermissions]);
+    }, [isNotAuthenticated, hasInsufficientPermissions, wasAuthenticated, user?.role, location.pathname]);
 
     if (loading) {
         return <PageLoader />;
@@ -44,7 +42,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
 
     if (isNotAuthenticated) {
         // User was previously logged in – intentional logout, go home instead of login
-        if (wasAuthenticatedRef.current) {
+        if (wasAuthenticated) {
             return <Navigate to="/" replace />;
         }
         return <Navigate to="/login" state={{ from: location }} replace />;

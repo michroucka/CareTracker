@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext.tsx";
 import { useDepartments } from "../hooks/useDepartments.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
+import { useRecordDetail } from "../hooks/useRecordDetail";
 import { useListFilters, useMultiSelectParam } from "../hooks/useListFilters";
 import { usePagedList } from "../hooks/usePagedList";
 import { getRoleLabel, ROLES } from "../constants/roles.js";
@@ -45,9 +46,9 @@ function Employees() {
     const { detailId, openDetail, closeDetail } = useDetailParam();
     const [isCreateOpen, setIsCreateOpen] = React.useState(false);
     const [confirmAction, setConfirmAction] = React.useState(null);
-    const [detail, setDetail] = React.useState(null);
 
     const { employees, setEmployees, loading, fetchEmployees, fetchEmployee, createEmployee, updateEmployee, terminateEmployee, activateEmployee, resendActivationEmail } = useEmployees();
+    const [detail, setDetail] = useRecordDetail(detailId, fetchEmployee, closeDetail);
     const { departments, fetchDepartments } = useDepartments();
 
     const needsOrganization = user.role === ROLES.SUPERADMIN && !superadminOrg;
@@ -84,13 +85,6 @@ function Employees() {
         loadEmployees();
     }, [loadEmployees, needsOrganization, setEmployees]);
 
-    React.useEffect(() => {
-        setDetail(null);
-        if (!detailId) return;
-        fetchEmployee(detailId).then(setDetail).catch(closeDetail);
-        // load whenever another employee is opened
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailId]);
 
     const visibleEmployees = React.useMemo(() => {
         const query = removeDiacritics(search.trim());

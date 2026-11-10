@@ -10,6 +10,7 @@ export default defineConfig([
     files: ['**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
+      reactHooks.configs.flat['recommended-latest'],
       reactRefresh.configs.vite,
     ],
     languageOptions: {
@@ -21,14 +22,8 @@ export default defineConfig([
         sourceType: 'module',
       },
     },
-    plugins: {
-      'react-hooks': reactHooks,
-    },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
-      // the same hook rules as before plugin version 7; its React Compiler rules are a separate task in docs/testing/PLAN.md
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
     },
   },
   {
@@ -36,6 +31,8 @@ export default defineConfig([
     files: ['src/test/**/*.{js,jsx}', 'src/**/*.test.{js,jsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
+      // tests capture what a hook returned into a variable outside the component on purpose
+      'react-hooks/globals': 'off',
     },
   },
   {
@@ -43,6 +40,10 @@ export default defineConfig([
     files: ['src/components/ui/**/*.{js,jsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
+      // vendored code kept close to its source (shadcn, the time-picker repo): refs read while rendering
+      // and the random skeleton width are theirs, not ours to rewrite
+      'react-hooks/refs': 'off',
+      'react-hooks/purity': 'off',
     },
   },
 ])

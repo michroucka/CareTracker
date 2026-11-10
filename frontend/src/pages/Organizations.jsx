@@ -3,6 +3,7 @@ import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconP
 import { useOrganizations } from "../hooks/useOrganizations.jsx";
 import { useEmployees } from "../hooks/useEmployees.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
+import { useRecordDetail } from "../hooks/useRecordDetail";
 import { useListFilters } from "../hooks/useListFilters";
 import { usePagedList } from "../hooks/usePagedList";
 import { removeDiacritics } from "../utils/formatters.js";
@@ -26,7 +27,6 @@ function Organizations() {
     const { search, setSearch, statusFilter, setStatusFilter, apiStatus } = useListFilters();
     const [isCreateOpen, setIsCreateOpen] = React.useState(false);
     const [confirmAction, setConfirmAction] = React.useState(null);
-    const [detail, setDetail] = React.useState(null);
     const { detailId, openDetail, closeDetail } = useDetailParam();
 
     const {
@@ -39,6 +39,7 @@ function Organizations() {
         terminateOrganization,
         activateOrganization,
     } = useOrganizations();
+    const [detail, setDetail] = useRecordDetail(detailId, fetchOrganization, closeDetail);
     const { employees, fetchEmployees } = useEmployees();
 
     React.useEffect(() => {
@@ -48,14 +49,8 @@ function Organizations() {
     }, [apiStatus]);
 
     React.useEffect(() => {
-        if (!detailId) {
-            setDetail(null);
-            return;
-        }
-        setDetail(null);
-        fetchOrganization(detailId).then(setDetail).catch(closeDetail);
-        fetchEmployees({ organizationId: detailId, status: true });
-        // load whenever another organization is opened
+        if (detailId) fetchEmployees({ organizationId: detailId, status: true });
+        // candidates for the manager of whichever organization is opened
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [detailId]);
 

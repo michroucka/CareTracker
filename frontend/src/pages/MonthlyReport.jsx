@@ -3,6 +3,7 @@ import { IconLoader2, IconQrcode } from "@tabler/icons-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { usePerformedTasks } from "../hooks/usePerformedTasks.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
+import { useRecordDetail } from "../hooks/useRecordDetail";
 import { useMonthParam } from "../hooks/useListFilters";
 import { fetchImage } from "../api/api.js";
 import { formatTime } from "../utils/formatters.js";
@@ -35,32 +36,45 @@ function SummaryTile({ label, value, children }) {
     );
 }
 
-function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
-    const [qrUrl, setQrUrl] = React.useState(null);
-    const [isQrUnavailable, setIsQrUnavailable] = React.useState(false);
+/** QR code of one month; mounted with the open dialog and keyed by the month, so each opening loads afresh. */
+function PaymentQrCode({ clientId, period, total, onLoadFailed }) {
+    const [qr, setQr] = React.useState(null);
 
     React.useEffect(() => {
-        if (!open) return undefined;
         let objectUrl = null;
         let isCurrent = true;
-        setQrUrl(null);
-        setIsQrUnavailable(false);
         fetchImage(`/performed-tasks/payment-qr?clientId=${clientId}&month=${period.month + 1}&year=${period.year}`)
             .then((url) => {
                 objectUrl = url;
-                if (!isCurrent) return;
-                if (url) setQrUrl(url);
-                else setIsQrUnavailable(true);
+                if (isCurrent) setQr({ url });
             })
-            .catch(() => isCurrent && onOpenChange(false));
+            .catch(() => isCurrent && onLoadFailed());
         return () => {
             isCurrent = false;
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-        // reload only when the dialog opens for another month
+        // the key remounts the component for another month
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, clientId, period.month, period.year]);
+    }, []);
 
+    if (qr && !qr.url) {
+        return (
+            <p className="text-center text-sm text-muted-foreground">
+                QR platbu nelze vytvořit, organizace nemá nastavený bankovní účet.
+            </p>
+        );
+    }
+
+    return (
+        <div className="mx-auto grid size-64 place-items-center rounded-lg bg-white p-2">
+            {qr
+                ? <img src={qr.url} alt={`QR kód pro platbu ${formatCurrency(total)}`} className="size-full" />
+                : <IconLoader2 className="size-6 animate-spin text-muted-foreground" aria-label="Načítání QR kódu" />}
+        </div>
+    );
+}
+
+function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-sm">
@@ -70,17 +84,13 @@ function PaymentQrDialog({ open, onOpenChange, clientId, period, total }) {
                         {MONTHS[period.month]} {period.year}: <span className="font-medium text-foreground tabular-nums">{formatCurrency(total)}</span>. Naskenujte kód v aplikaci své banky.
                     </DialogDescription>
                 </DialogHeader>
-                {isQrUnavailable ? (
-                    <p className="text-center text-sm text-muted-foreground">
-                        QR platbu nelze vytvořit, organizace nemá nastavený bankovní účet.
-                    </p>
-                ) : (
-                    <div className="mx-auto grid size-64 place-items-center rounded-lg bg-white p-2">
-                        {qrUrl
-                            ? <img src={qrUrl} alt={`QR kód pro platbu ${formatCurrency(total)}`} className="size-full" />
-                            : <IconLoader2 className="size-6 animate-spin text-muted-foreground" aria-label="Načítání QR kódu" />}
-                    </div>
-                )}
+                <PaymentQrCode
+                    key={`${clientId}-${period.year}-${period.month}`}
+                    clientId={clientId}
+                    period={period}
+                    total={total}
+                    onLoadFailed={() => onOpenChange(false)}
+                />
             </DialogContent>
         </Dialog>
     );
@@ -90,9 +100,9 @@ function MonthlyReport() {
     const { user } = useAuth();
     const [period, setPeriod] = useMonthParam();
     const { detailId, openDetail, closeDetail } = useDetailParam();
-    const [detail, setDetail] = React.useState(null);
     const [isQrOpen, setIsQrOpen] = React.useState(false);
     const { performedTasks, loading, fetchPerformedTasks, fetchPerformedTask } = usePerformedTasks();
+    const [detail] = useRecordDetail(detailId, fetchPerformedTask, closeDetail);
 
     React.useEffect(() => {
         if (!user.clientId) return;
@@ -101,13 +111,6 @@ function MonthlyReport() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user.clientId, period.month, period.year]);
 
-    React.useEffect(() => {
-        setDetail(null);
-        if (!detailId) return;
-        fetchPerformedTask(detailId).then(setDetail).catch(closeDetail);
-        // fetchPerformedTask is recreated on every render
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailId]);
 
     const sortedTasks = React.useMemo(() => [...performedTasks].sort((a, b) => b.date.localeCompare(a.date)), [performedTasks]);
     const daySummaries = React.useMemo(() => summarizeByDay(sortedTasks), [sortedTasks]);

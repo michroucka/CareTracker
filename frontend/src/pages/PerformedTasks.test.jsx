@@ -440,6 +440,21 @@ describe('PerformedTasks list', () => {
             expect(Object.fromEntries(receipts[0].searchParams)).toEqual({ departmentId: '2', month: '11', year: '2026' });
         });
 
+        it('starts again from one client when reopened', async () => {
+            const { user, dialog } = await openReceiptDialog();
+            await user.click(within(dialog).getByRole('combobox', { name: /Klient/ }));
+            await user.click(screen.getByRole('option', { name: /Marie Nová/ }));
+            await user.click(within(dialog).getByRole('radio', { name: 'Celé středisko' }));
+
+            await user.keyboard('{Escape}');
+            await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Stvrzenka za měsíc' })).not.toBeInTheDocument());
+            await user.click(screen.getByRole('button', { name: /Stvrzenka/ }));
+
+            const reopened = screen.getByRole('dialog', { name: 'Stvrzenka za měsíc' });
+            expect(within(reopened).getByRole('radio', { name: 'Jeden klient' })).toBeChecked();
+            expect(within(reopened).getByRole('combobox', { name: /Klient/ })).toHaveTextContent('Vyberte klienta');
+        });
+
         it('shows the server message when the receipt cannot be generated', async () => {
             serveAndRecord('get', '/performed-tasks/receipts', serverError('Ve středisku nejsou žádné úkony'));
             const { user, dialog } = await openReceiptDialog();

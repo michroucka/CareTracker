@@ -3,6 +3,7 @@ import { IconBan, IconCircleCheck, IconDots, IconLayoutSidebarRightExpand, IconP
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { useTasks } from "../hooks/useTasks.jsx";
 import { useDetailParam } from "../hooks/useDetailParam";
+import { useRecordDetail } from "../hooks/useRecordDetail";
 import { useListFilters } from "../hooks/useListFilters";
 import { usePagedList } from "../hooks/usePagedList";
 import { ROLES } from "../constants/roles.js";
@@ -32,9 +33,9 @@ function Tasks() {
     const { detailId, openDetail, closeDetail } = useDetailParam();
     const [isCreateOpen, setIsCreateOpen] = React.useState(false);
     const [confirmAction, setConfirmAction] = React.useState(null);
-    const [detail, setDetail] = React.useState(null);
 
     const { tasks, setTasks, loading, fetchTasks, fetchTask, createTask, updateTask, terminateTask, activateTask } = useTasks();
+    const [detail, setDetail] = useRecordDetail(detailId, fetchTask, closeDetail);
 
     const needsOrganization = user.role === ROLES.SUPERADMIN && !superadminOrg;
     const organizationId = superadminOrg?.id;
@@ -51,13 +52,6 @@ function Tasks() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [organizationId, status, needsOrganization]);
 
-    React.useEffect(() => {
-        setDetail(null);
-        if (!detailId) return;
-        fetchTask(detailId).then(setDetail).catch(closeDetail);
-        // load whenever another task is opened
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [detailId]);
 
     const visibleTasks = React.useMemo(() => {
         const query = removeDiacritics(search.trim());

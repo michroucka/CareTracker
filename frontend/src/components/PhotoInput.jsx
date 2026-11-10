@@ -16,17 +16,10 @@ export function PhotoInput({ id, value, onChange, name, hasSavedPicture, heading
     const inputRef = React.useRef(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [isProcessing, setIsProcessing] = React.useState(false);
-    const [preview, setPreview] = React.useState(null);
-
-    React.useEffect(() => {
-        if (!(value instanceof File)) {
-            setPreview(value === DELETE_PICTURE ? null : value);
-            return undefined;
-        }
-        const objectUrl = URL.createObjectURL(value);
-        setPreview(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [value]);
+    // a picked file is shown through an object URL, released when the file changes
+    const fileUrl = React.useMemo(() => (value instanceof File ? URL.createObjectURL(value) : null), [value]);
+    React.useEffect(() => (fileUrl ? () => URL.revokeObjectURL(fileUrl) : undefined), [fileUrl]);
+    const preview = value instanceof File ? fileUrl : value === DELETE_PICTURE ? null : value;
 
     const pick = async (file) => {
         if (!file) return;

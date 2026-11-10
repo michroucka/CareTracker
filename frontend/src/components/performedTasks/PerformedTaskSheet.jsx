@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { calculatePrice } from "@/constants/performedTaskConstants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { useEditingWhileOpen } from "@/hooks/useEditingWhileOpen";
 import { formatDateTime } from "@/utils/formatters";
 import { PerformedTaskFields } from "./PerformedTaskFields";
 import { formatAmount, recordedTask, requiredCaregiverId, toFormValues, toPersonOptions, toRequest, validatePerformedTask, withMissing } from "./performedTaskForm";
@@ -55,12 +56,8 @@ function PerformedTaskView({ performedTask, linkClient }) {
  */
 export function PerformedTaskSheet({ open, onOpenChange, performedTask, isLoading, canEdit, linkClient = true, clients = [], tasks = [], caregivers = [], onSave, onDelete }) {
     const { user } = useAuth();
-    const [isEditing, setIsEditing] = React.useState(false);
+    const [isEditing, setIsEditing] = useEditingWhileOpen(open);
     const form = useRecordForm(toFormValues(performedTask));
-
-    React.useEffect(() => {
-        if (!open) setIsEditing(false);
-    }, [open]);
 
     const clientsWithCurrent = withMissing(clients, [performedTask?.client]);
     // the record's own task keeps the price it was recorded with, a different task is priced from the catalog

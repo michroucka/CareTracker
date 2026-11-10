@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { IconHome, IconMap, IconPlaneTilt } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useValueChange } from "@/hooks/useValueChange";
 
 const tilesUrl = (layer) => `https://api.mapy.com/v1/maptiles/${layer}/tiles.json?apikey=${import.meta.env.VITE_MAPY_API_KEY}`;
 
@@ -33,6 +34,10 @@ export function ClientMapDialog({ open, onOpenChange, latitude, longitude, addre
     const [container, setContainer] = useState(null);
     const mapRef = useRef(null);
     const [mapView, setMapView] = useState("basic");
+    // every opening starts on the basic map
+    useValueChange(open, (isOpen) => {
+        if (isOpen) setMapView("basic");
+    });
 
     // the dialog mounts its content after opening, so the map waits for the container callback ref
     useEffect(() => {
@@ -57,7 +62,6 @@ export function ClientMapDialog({ open, onOpenChange, latitude, longitude, addre
         map.addControl(new LogoControl(), "bottom-left");
         new maplibregl.Marker({ element: createHouseMarkerElement() }).setLngLat([longitude, latitude]).addTo(map);
         mapRef.current = map;
-        setMapView("basic");
 
         return () => {
             map.remove();

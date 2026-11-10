@@ -59,7 +59,7 @@ function buildCircles() {
  */
 function BrandGrid() {
     const patternId = React.useId();
-    const { circles, step, width, height } = React.useMemo(buildCircles, []);
+    const { circles, step, width, height } = React.useMemo(() => buildCircles(), []);
 
     return (
         <svg

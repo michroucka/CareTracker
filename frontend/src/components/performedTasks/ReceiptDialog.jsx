@@ -10,6 +10,7 @@ import { usePerformedTasks } from "@/hooks/usePerformedTasks";
 import { removeDiacritics } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { personName } from "./performedTaskForm";
+import { useValueChange } from "@/hooks/useValueChange";
 
 const MODES = [
     { value: "client", label: "Jeden klient" },
@@ -81,16 +82,15 @@ export function ReceiptDialog({ open, onOpenChange, clients, departments, defaul
     const [submitCount, setSubmitCount] = React.useState(0);
     const [pendingAction, setPendingAction] = React.useState(null);
 
-    React.useEffect(() => {
-        if (!open) return;
+    // reset only when the dialog opens, not when the list filters change behind it
+    useValueChange(open, (isOpen) => {
+        if (!isOpen) return;
         setMode("client");
         setClientId(null);
         setDepartmentId(defaultDepartmentId ?? departments[0]?.id ?? null);
         setPeriod(initialMonth);
         setError(null);
-        // reset only when the dialog opens, not when the list filters change behind it
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
+    });
 
     const isDepartmentMode = mode === "department";
     const department = departments.find((candidate) => candidate.id === departmentId);

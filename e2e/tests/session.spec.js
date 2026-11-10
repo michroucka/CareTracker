@@ -17,6 +17,8 @@ test("logging out leads to the login page and closes the app", async ({ page }) 
 test("an expired session sends the user to the login page", async ({ page, context }) => {
     await logIn(page, "coordinator");
     await expect(page.getByRole("link", { name: "Klienti" })).toBeVisible();
+    // the dashboard must have loaded, otherwise its request is the one that meets the expired session
+    await page.waitForLoadState("networkidle");
 
     // the server forgets the session the same way when it expires; the next request gets 401
     await context.clearCookies();

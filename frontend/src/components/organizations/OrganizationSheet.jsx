@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useRecordForm } from "@/hooks/useRecordForm";
+import { useEditingWhileOpen } from "@/hooks/useEditingWhileOpen";
 import { OrganizationFields } from "./OrganizationFields";
 import { formatBankAccount, toFormValues, toRequest, validateOrganization } from "./organizationForm";
 
@@ -47,12 +48,8 @@ function OrganizationView({ organization }) {
  * Organization detail with in-place editing. `employees` are the organization's employees for the manager field.
  */
 export function OrganizationSheet({ open, onOpenChange, organization, isLoading, employees, onSave, onTerminate, onActivate }) {
-    const [isEditing, setIsEditing] = React.useState(false);
+    const [isEditing, setIsEditing] = useEditingWhileOpen(open);
     const form = useRecordForm(toFormValues(organization));
-
-    React.useEffect(() => {
-        if (!open) setIsEditing(false);
-    }, [open]);
 
     const startEditing = () => {
         form.reset(toFormValues(organization));
