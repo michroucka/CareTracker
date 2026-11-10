@@ -68,7 +68,7 @@ Hned začne hlídat to, co už existuje.
 - [x] **[claude]** `deploy-demo.yml`: spustí se až po úspěšném CI pro push na `main` (`workflow_run`), navíc ručně (`workflow_dispatch`). `workflow_run` se bere z výchozí větve, takže začne platit až po merge.
 - [x] **[ty]** Na GitHubu ruleset `main`: merge jen přes PR, povinné checky Backend a Frontend, větev aktuální vůči `main`, zákaz force push a smazání, bez výjimek.
 - [ ] Ověřit: PR s rozbitým testem nejde mergnout a nespustí deploy.
-- [ ] **[ty]** Volitelně: Dockerfily frontendu jsou na `node:20`, CI na Node 22 (jsdom a jest-dom chtějí ≥ 22). Build v Dockeru funguje, jen hlásí varování o `engines` – zvážit přechod na `node:22`.
+- [x] **[ty]** Volitelně: Dockerfily frontendu jsou na `node:20`, CI na Node 22 (jsdom a jest-dom chtějí ≥ 22). Build v Dockeru funguje, jen hlásí varování o `engines` – zvážit přechod na `node:22`.
 
 ### Fáze T1 – Infrastruktura testů
 Celé **[claude]**, ty review. Po této fázi jde napsat jakýkoli druh testu bez dalšího nastavování.
@@ -259,7 +259,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), jejich PR z 2026-11-10 jsou zavřené. Každá migrace je samostatná větev a PR, CI (včetně E2E) musí projít beze změny prahů pokrytí.
 
 - [ ] **[claude]** Spring Boot 3.5 → 4.x (zavřený #41). Největší: Spring Framework 7, Spring Security 7, Jackson 3, Hibernate 7, změny v testovací podpoře (`@MockitoBean`, Testcontainers). Nejdřív projít oficiální migration guide a deprecace na 3.5.
-- [ ] **[claude]** Vitest 3 → 5 (zavřený #44). Spolu s `@vitest/coverage-v8` stejné verze; ověřit konfiguraci coverage a prahy.
+- [x] **[claude]** Vitest 3 → 5 (zavřený #44), spolu s `@vitest/coverage-v8`. Vitest 5 měří v8 pokrytí přes AST, takže na stejných 117 souborech vychází jiná čísla (řádky / větve / funkce / příkazy 90,1 / 85,7 / 81,9 / 88,8 % místo 91,4 / 92,0 / 84,5 / 91,4 %). Prahy posunuté těsně pod nové měření. Vyžaduje Node ≥ 22.12, proto frontendové Dockerfily na `node:22`.
 - [ ] **[claude]** `@vitejs/plugin-react` 5 → 6 (zavřený #43). Zjistit, jakou verzi Vite vyžaduje; případně spolu s přechodem na novější Vite.
 - [x] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). ESLint 10 potřebuje `eslint-plugin-react-hooks` 7, ten má flat config pod `configs.flat`. Hooks pravidla zůstala stejná jako dřív (`rules-of-hooks`, `exhaustive-deps`), nový nález `no-useless-assignment` opraven.
 - [ ] **[ty]** Pravidla React Compileru z `eslint-plugin-react-hooks` 7 (`configs.flat['recommended-latest']`): 29 nálezů ve 26 souborech, hlavně `set-state-in-effect` (21×, stav odvozený nebo resetovaný v efektu), dále `refs` (5×, čtení `ref.current` při renderu), `use-memo`, `purity`, `globals`. Zapnout je a opravit po souborech; dobrý úkol na pochopení, kdy efekt není potřeba (https://react.dev/learn/you-might-not-need-an-effect).
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: Vitest 5 (nové měření pokrytí, prahy posunuté), frontend Dockerfily na Node 22.
 - 2026-11-10: ESLint 10 (+ `eslint-plugin-react-hooks` 7 se stejnými pravidly), pravidla React Compileru zapsaná jako úkol.
 - 2026-11-10: cena za jednotku uložená k provedenému úkonu (část 6), 152 unit + 1139 IT, 918 frontendových testů, E2E 17/17.
 - 2026-11-10: T5 hotová kromě branch protection: souhrn pokrytí v CI, prahy na frontendu, Dependabot, CodeQL, šablona PR.

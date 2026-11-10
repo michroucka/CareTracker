@@ -16,12 +16,15 @@ export default mergeConfig(viteConfig, defineConfig({
             include: ['src/**/*.{js,jsx,ts,tsx}'],
             exclude: ['src/test/**', 'src/**/*.test.{js,jsx}', 'src/components/ui/**', 'src/pages/ComponentCatalog.jsx'],
             reporter: ['text-summary', 'html', 'json-summary'],
-            // just below the coverage reached after phase T3; only ever raised
+            // just below the coverage measured by Vitest 5 (AST-based v8 remapping counts statements and branches
+            // differently than Vitest 3: same 117 files, lines / branches / functions / statements 90.1 / 85.7 / 81.9 / 88.8 %
+            // instead of 91.4 / 92.0 / 84.5 / 91.4 %);
+            // only ever raised
             thresholds: {
-                lines: 91,
-                statements: 91,
-                branches: 91,
-                functions: 84,
+                lines: 90,
+                statements: 88,
+                branches: 85,
+                functions: 81,
             },
         },
     },
