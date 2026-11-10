@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { apiUrl, server } from "@/test/server";
-import { deleteImage, deleteJSON, fetchImage, get, getJSON, post, postJSON, putJSON, uploadFile } from "./api";
+import { deleteImage, deleteJSON, fetchImage, get, getJSON, post, postJSON, putJSON, uploadFile, userMessageOf } from "./api";
 
 function setCsrfCookie(value) {
     document.cookie = `XSRF-TOKEN=${value}; path=/`;
@@ -200,6 +200,12 @@ describe("api – successful responses", () => {
         expect(body).toEqual({ firstName: "Eva" });
     });
 
+    it("fetchImage returns null for 204 No Content, there is no image", async () => {
+        respondWith("get", () => new HttpResponse(null, { status: 204 }));
+
+        await expect(fetchImage("/clients")).resolves.toBeNull();
+    });
+
     it("putJSON returns null for 204 No Content", async () => {
         respondWith("put", () => new HttpResponse(null, { status: 204 }));
 
@@ -276,5 +282,19 @@ describe("api – fetchImage", () => {
 
         await expect(fetchImage("/clients")).rejects.toThrow(new Error("HTTP error! status: 404"));
         expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+});
+
+describe("userMessageOf", () => {
+    it("says in Czech that the server is unreachable when fetch fails without an answer", () => {
+        expect(userMessageOf(new TypeError("Failed to fetch"))).toBe("Server není dostupný");
+    });
+
+    it("keeps the server's own message", () => {
+        expect(userMessageOf(new Error("Neplatné přihlašovací údaje"))).toBe("Neplatné přihlašovací údaje");
+    });
+
+    it.each([new Error(""), undefined])("falls back without a message (%j)", (error) => {
+        expect(userMessageOf(error)).toBe("Server není dostupný");
     });
 });

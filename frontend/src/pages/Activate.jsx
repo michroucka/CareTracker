@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
-import { postJSON } from "../api/api.js";
+import { postJSON, userMessageOf } from "../api/api.js";
 import { useTokenValidation } from "../hooks/useTokenValidation";
 import { FormField } from "@/components/FormField";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -58,7 +58,7 @@ function ActivationForm({ token }) {
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Activation error:", error);
-            toast.error(error.message || "Server není dostupný");
+            toast.error(userMessageOf(error));
         } finally {
             setIsSubmitting(false);
         }

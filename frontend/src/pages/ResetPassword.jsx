@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
-import { putJSON } from "../api/api.js";
+import { putJSON, userMessageOf } from "../api/api.js";
 import { useAuth } from "../contexts/AuthContext";
 import { useTokenValidation } from "../hooks/useTokenValidation";
 import { FormField } from "@/components/FormField";
@@ -53,7 +53,7 @@ function ResetPasswordForm({ token }) {
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Password reset error:", error);
-            toast.error(error.message || "Server není dostupný");
+            toast.error(userMessageOf(error));
         } finally {
             setIsSubmitting(false);
         }

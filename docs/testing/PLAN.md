@@ -215,10 +215,18 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Smazán nepoužívaný `useUrlFilters` (měl chybu, nikde se nepoužíval).
 
 #### T3e – Stránky (integrační s MSW)
-- [ ] **[claude]** Vzor: `Login` – úspěšné přihlášení přesměruje, špatné heslo ukáže chybu. Naučí: celá stránka proti MSW, ověření navigace.
-- [ ] **[claude]** Pro každou seznamovou stránku (Klienti, Zaměstnanci, Provedené úkony, Úkony, Střediska, Organizace, Měsíční přehled): filtry → správné parametry v requestu, prázdný stav, chyba → toast, viditelnost akcí podle role (pečovatel nevidí „Nový klient“ atd.).
-- [ ] **[claude]** Formuláře: vytvoření klienta, provedeného úkonu, zaměstnance – validace, odeslání, chyba ze serveru.
-- [ ] **[claude]** Detail klienta, individuální plán, účet, aktivace a reset hesla, nástěnka (přepínač pohledů podle role).
+- [x] **[claude]** `Login` (vzor, přes celou `App` včetně směrování – pomůcka `src/test/pages.jsx`: `renderApp`, `lazyPageLoad`), `Activate`, `ResetPassword`, `Account`, `Home` (pohledy podle role, `?view=`).
+- [x] **[claude]** Seznamy `Clients`, `Employees`, `PerformedTasks`, `Tasks`, `Departments`, `Organizations`, `MonthlyReport`: filtry → parametry požadavku i URL, obnova z URL, prázdný stav, chyba → toast, akce podle role, detail přes `?detail=`, superadmin a výběr organizace.
+- [x] **[claude]** Formuláře: `ClientCreate`, provedený úkon (budoucí datum, celé kusy, cena), zaměstnanec, úkon, středisko, organizace – validace, odeslaný JSON, chyba ze serveru. `ClientDetail` (úprava, ukončení, aktivace).
+- [x] Nálezy, opraveno 2026-11-09:
+  - Nízká až střední: QR platba bez bankovního účtu (204) ukazovala rozbitý obrázek. `fetchImage` vrací pro 204 `null`, okno napíše, že organizace nemá účet.
+  - Nízká: výpadek sítě na přihlášení, aktivaci a resetu hesla ukázal anglické „Failed to fetch“ (`userMessageOf` v `api.js`).
+  - Nízká: filtr pečovatele z URL se použil až ve druhém požadavku (krátce nefiltrovaný seznam).
+  - Nízká: neúspěšné opětovné odeslání aktivace a odblokování účtu z menu nechaly neodchycenou chybu (`errorAlreadyShown`).
+  - Nízká: nový (aktivní) záznam se přidal do seznamu filtrovaného na neaktivní.
+  - Nízká: detail klienta po změně načítal celý seznam klientů.
+  - Nízká (přístupnost): `FormField` – mizející nápověda a nová chyba měly stejné `id`, čtečka chvíli četla starou nápovědu.
+- [ ] **[ty]** Volitelně: seznam provedených úkonů nemá filtr podle klienta (jen hledání). Nová funkce, ne oprava.
 
 ### Fáze T4 – E2E (Playwright)
 Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
@@ -263,6 +271,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-09: T3e hotová (917 frontendových testů, i pod Node 22), fáze T3 uzavřená.
 - 2026-11-09: T3a–T3d hotové (664 frontendových testů), nálezy opraveny.
 - 2026-11-09: bezpečnost přihlášení a CSRF (nálezy z T2e) opraveny, ověřeno i v prohlížeči proti běžící aplikaci.
 - 2026-11-09: T2d, T2e a T2f hotové (149 unit + 1123 IT), fáze T2 uzavřená kromě nálezů k přihlášení a CSRF.

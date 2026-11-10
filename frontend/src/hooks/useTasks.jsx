@@ -69,9 +69,12 @@ export function useTasks() {
         try {
             const newTask = await postJSON("/tasks", taskData);
 
-            setTasks(prev =>
-                sortByKey([...prev, newTask], 'name', 'ascending')
-            );
+            // a new record is active, so it does not belong to a list filtered to inactive ones
+            if (filtersRef.current.status !== false) {
+                setTasks(prev =>
+                    sortByKey([...prev, newTask], 'name', 'ascending')
+                );
+            }
 
             toast.success("Úkon úspěšně vytvořen");
 

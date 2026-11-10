@@ -34,7 +34,7 @@ describe('FormField', () => {
 
         const input = screen.getByRole('textbox', { name: 'Jméno' });
         expect(input).toHaveAccessibleDescription('Tak, jak je v občanském průkazu.');
-        expect(input).toHaveAttribute('aria-describedby', 'firstName-message');
+        expect(input).toHaveAttribute('aria-describedby', 'firstName-hint');
     });
 
     it('marks the control invalid and describes it with the error instead of the hint', () => {
@@ -44,6 +44,18 @@ describe('FormField', () => {
         expect(input).toBeInvalid();
         expect(input).toHaveAccessibleDescription('Vyplňte jméno.');
         expect(screen.queryByText('Tak, jak je v občanském průkazu.')).not.toBeInTheDocument();
+    });
+
+    it('is described by the new error at once, while the hint is still fading out', () => {
+        const { rerender } = renderField({ hint: 'Tak, jak je v občanském průkazu.' });
+
+        rerender(
+            <FormField id="firstName" label="Jméno" hint="Tak, jak je v občanském průkazu." error="Vyplňte jméno.">
+                {(controlProps) => <input {...controlProps} />}
+            </FormField>,
+        );
+
+        expect(screen.getByRole('textbox', { name: 'Jméno' })).toHaveAccessibleDescription('Vyplňte jméno.');
     });
 
     it('clears the invalid state when the error is gone', () => {

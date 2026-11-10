@@ -59,7 +59,10 @@ export function useOrganizations() {
         try {
             const created = await postJSON("/organizations", data);
 
-            setOrganizations(prev => sortByKey([...prev, created], 'name', 'ascending'));
+            // a new record is active, so it does not belong to a list filtered to inactive ones
+            if (filtersRef.current.status !== false) {
+                setOrganizations(prev => sortByKey([...prev, created], 'name', 'ascending'));
+            }
 
             toast.success("Organizace úspěšně vytvořena");
 

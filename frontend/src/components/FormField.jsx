@@ -16,7 +16,9 @@ const AnimatedMessage = motion.p;
  */
 export function FormField({ id, label, required = false, hint, error, shakeSignal, className, children }) {
     const [scope, animate] = useAnimate();
-    const messageId = `${id}-message`;
+    // hint and error have their own ids: while the old message fades out both are in the page, and one shared
+    // id would leave the control described by the outgoing text
+    const messageId = error ? `${id}-error` : `${id}-hint`;
     const message = error || hint;
 
     React.useEffect(() => {

@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PersonAvatar } from "@/components/PersonAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { errorAlreadyShown } from "@/utils/errorHandler";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { pictureUrl } from "@/lib/pictures";
@@ -61,7 +62,12 @@ function Clients() {
     // departmentIds is derived from departmentFilter
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [employees, departmentFilter, user.departmentId]);
-    const caregiverIds = [...caregiverFilter].map(Number).filter((id) => caregiverOptions.some((option) => option.value === id));
+    // a caregiver outside the chosen departments no longer applies; before the employees load, the ids from
+    // the URL are used as they are, so the first request is already filtered and no unfiltered list flashes
+    const caregiverIdsFromUrl = [...caregiverFilter].map(Number);
+    const caregiverIds = employees.length
+        ? caregiverIdsFromUrl.filter((id) => caregiverOptions.some((option) => option.value === id))
+        : caregiverIdsFromUrl;
     const filterKey = `${departmentIds.join(",")}|${caregiverIds.join(",")}`;
 
     const previousOrganizationId = React.useRef(organizationId);
@@ -191,10 +197,10 @@ function Clients() {
                                                 ) : client.userAccountActive ? (
                                                     <DropdownMenuItem onSelect={() => openDialog("blockAccount", client)}><IconLock /> Zablokovat účet</DropdownMenuItem>
                                                 ) : (
-                                                    <DropdownMenuItem onSelect={() => activateClientAccount(client.id)}><IconLockOpen /> Odblokovat účet</DropdownMenuItem>
+                                                    <DropdownMenuItem onSelect={() => activateClientAccount(client.id).catch(errorAlreadyShown)}><IconLockOpen /> Odblokovat účet</DropdownMenuItem>
                                                 )}
                                                 {canResendClientActivation(client) && (
-                                                    <DropdownMenuItem onSelect={() => resendClientActivation(client.id)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
+                                                    <DropdownMenuItem onSelect={() => resendClientActivation(client.id).catch(errorAlreadyShown)}><IconMailForward /> Znovu poslat aktivační e-mail</DropdownMenuItem>
                                                 )}
                                                 {client.active ? (
                                                     <DropdownMenuItem variant="destructive" onSelect={() => openDialog("terminate", client)}><IconBan /> Ukončit smlouvu</DropdownMenuItem>
