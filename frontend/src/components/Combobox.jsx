@@ -42,7 +42,7 @@ export function Combobox({ options, value, onChange, placeholder = "Vyberte…",
                     <IconSelector className="text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+            <PopoverContent className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) flex-col p-0" align="start">
                 <Command filter={filterOptions}>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>
