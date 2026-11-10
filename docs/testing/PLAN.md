@@ -262,7 +262,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 - [x] **[claude]** Vitest 3 → 5 (zavřený #44), spolu s `@vitest/coverage-v8`. Vitest 5 měří v8 pokrytí přes AST, takže na stejných 117 souborech vychází jiná čísla (řádky / větve / funkce / příkazy 90,1 / 85,7 / 81,9 / 88,8 % místo 91,4 / 92,0 / 84,5 / 91,4 %). Prahy posunuté těsně pod nové měření. Vyžaduje Node ≥ 22.12, proto frontendové Dockerfily na `node:22`.
 - [x] **[claude]** `@vitejs/plugin-react` 5 → 6 (zavřený #43) spolu s Vite 7 → 8 (plugin ho vyžaduje). Konfigurace beze změn; build na Rolldownu trvá ~1 s místo ~8 s a hlavní chunk je menší (560 kB místo 671 kB).
 - [x] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). ESLint 10 potřebuje `eslint-plugin-react-hooks` 7, ten má flat config pod `configs.flat`. Hooks pravidla zůstala stejná jako dřív (`rules-of-hooks`, `exhaustive-deps`), nový nález `no-useless-assignment` opraven.
-- [ ] **[ty]** Pravidla React Compileru z `eslint-plugin-react-hooks` 7 (`configs.flat['recommended-latest']`): 29 nálezů ve 26 souborech, hlavně `set-state-in-effect` (21×, stav odvozený nebo resetovaný v efektu), dále `refs` (5×, čtení `ref.current` při renderu), `use-memo`, `purity`, `globals`. Zapnout je a opravit po souborech; dobrý úkol na pochopení, kdy efekt není potřeba (https://react.dev/learn/you-might-not-need-an-effect).
+- [x] **[ty + claude]** Pravidla React Compileru z `eslint-plugin-react-hooks` 7 zapnutá (`configs.flat['recommended-latest']`), 29 nálezů opraveno. Vzory: stav upravovaný při změně propu během renderu místo v efektu (`useValueChange`, `useEditingWhileOpen`; `TaskSheet` ručně), detail záznamu svázaný s `detailId` a bez zastaralých odpovědí (`useRecordDetail`), hodnota z prohlížeče přes `useSyncExternalStore` (`useMediaQuery`), výsledek požadavku držený s klíčem požadavku (`useEmployeeOverview`, `useTokenValidation`), reset přes `key` (QR platba). V `components/ui/**` (převzatý kód) vypnuté jen `refs` a `purity`, v testech `globals`.
 
 ---
 
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-10: pravidla React Compileru zapnutá a opravená (29 nálezů), 926 frontendových testů, E2E 17/17.
 - 2026-11-10: Spring Boot 4.1 (Spring Framework 7, Security 7, Jackson 3, Hibernate 7, Testcontainers 2). `make e2e-up` čeká i na demo seed (první běh hned po startu byl pomalý).
 - 2026-11-10: Vite 8 a `@vitejs/plugin-react` 6.
 - 2026-11-10: Vitest 5 (nové měření pokrytí, prahy posunuté), frontend Dockerfily na Node 22.

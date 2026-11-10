@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useCallback, useSyncExternalStore} from 'react';
 
 /**
  * Returns true when the given CSS media query matches.
@@ -6,28 +6,13 @@ import { useState, useEffect } from 'react';
  * @returns {boolean}
  */
 export function useMediaQuery(query) {
-    const [matches, setMatches] = useState(false);
-
-    useEffect(() => {
+    const subscribe = useCallback((onChange) => {
         const media = window.matchMedia(query);
+        media.addEventListener("change", onChange);
+        return () => media.removeEventListener("change", onChange);
+    }, [query]);
 
-        if (media.matches !== matches) {
-            setMatches(media.matches);
-        }
-
-        const listener = () => setMatches(media.matches);
-
-        if (media.addEventListener) {
-            media.addEventListener('change', listener);
-            return () => media.removeEventListener('change', listener);
-        } else {
-            // Fallback for older browsers that only support addListener
-            media.addListener(listener);
-            return () => media.removeListener(listener);
-        }
-    }, [matches, query]);
-
-    return matches;
+    return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches);
 }
 
 export const useIsMobile = () => useMediaQuery('(max-width: 767px)');

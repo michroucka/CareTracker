@@ -37,11 +37,12 @@ function TaskView({ task }) {
  */
 export function TaskSheet({ open, onOpenChange, task, isLoading, canEdit, organizationId, onSave, onTerminate, onActivate }) {
     const [isEditing, setIsEditing] = React.useState(false);
-    const form = useRecordForm(toFormValues(task));
-
-    React.useEffect(() => {
+    const [wasOpen, setWasOpen] = React.useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
         if (!open) setIsEditing(false);
-    }, [open]);
+    }
+    const form = useRecordForm(toFormValues(task));
 
     const startEditing = () => {
         form.reset(toFormValues(task));
