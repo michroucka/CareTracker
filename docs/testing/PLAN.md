@@ -231,9 +231,12 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
 ### Fáze T4 – E2E (Playwright)
 Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
 
-- [ ] **[claude]** Setup: Playwright ve `frontend/e2e/` (nebo samostatně `e2e/`), spuštění proti `docker-compose.yml` s demo seedem, job v CI (jen na PR do `main`, je pomalejší), screenshoty a trace při selhání jako artefakt.
-- [ ] **[claude]** Vzor: přihlášení koordinátora a vytvoření provedeného úkonu, který se pak objeví v seznamu. Naučí: Playwright lokátory, `expect` s čekáním, page objects jen pokud se opakují.
-- [ ] **[claude]** Přihlášení za každou roli a co vidí v sidebaru; stažení stvrzenky (PDF se stáhne a není prázdné); úprava individuálního plánu; nahrání fotky; odhlášení po vypršení session.
+- [x] **[claude]** Setup: Playwright v samostatném `e2e/` (vlastní `package.json`), stack `docker-compose.e2e.yml` (demo build: nginx + jar, demo profil, databáze v tmpfs, port 3040), `make e2e-up` / `make e2e` / `make e2e-down`. Přihlášení všech demo účtů jednou v setup projektu (`storageState`). Job E2E v CI jen na PR do `main`, report a trace jako artefakt.
+- [x] **[claude]** Vzor: koordinátor zapíše úkon a po reloadu ho najde v seznamu (`performed-task.spec.js`). Záznam je jednoznačný díky náhodné vzdálenosti, po testu se smaže přes API.
+- [x] **[claude]** Sidebar podle role a přesměrování z cizí stránky; stažení stvrzenky (PDF začíná `%PDF-`); nová verze individuálního plánu a denní záznam (admin, koordinátor plán upravovat nesmí); nahrání a odebrání fotky na účtu; odhlášení a vypršelá session (17 testů).
+- [x] Nálezy z E2E, opraveny:
+  - Vysoká: backend bral „teď“ v časové zóně serveru. V Dockeru je to UTC, takže úkon zapsaný na aktuální český čas byl „v budoucnosti“ a na demu nešel zapsat. `TimeConfig` má teď pevně `Europe/Prague`. Zbývá `LocalDate.now()` bez `Clock` v `Client.created` a v datu vystavení stvrzenky (špatný den jen hodinu až dvě po půlnoci).
+  - Střední: seznam v Comboboxu, MultiComboboxu a filtru nebyl omezený výškou volného místa. Na obrazovce 1280×720 se seznam klientů ve stvrzence otevřel nad horní okraj a vyhledávání ani první klienti nešli vybrat. Popover má teď `max-h-(--radix-popover-content-available-height)`, stejně jako Select a DropdownMenu.
 
 ### Fáze T5 – Dotažení CI
 - [ ] **[claude]** Pokrytí do souhrnu PR (JaCoCo + Vitest coverage v `$GITHUB_STEP_SUMMARY`).
@@ -271,6 +274,7 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 ## Log změn
 
+- 2026-11-10: T4 hotová (17 E2E testů v Playwrightu proti demo buildu), nálezy s časovou zónou a výškou popoveru opraveny. Testy `DayFilter` už nezávisí na dnešním datu.
 - 2026-11-09: T3e hotová (917 frontendových testů, i pod Node 22), fáze T3 uzavřená.
 - 2026-11-09: T3a–T3d hotové (664 frontendových testů), nálezy opraveny.
 - 2026-11-09: bezpečnost přihlášení a CSRF (nálezy z T2e) opraveny, ověřeno i v prohlížeči proti běžící aplikaci.
