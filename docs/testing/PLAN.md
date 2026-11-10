@@ -254,6 +254,15 @@ Nálezy z testů, které jsou větší změnou aplikace než oprava a do testova
 
 - [ ] **[claude]** Cena za jednotku uložená k provedenému úkonu (nález z T2c, rozhodnuto 2026-11-09). Teď se cena počítá z aktuální ceny v katalogu, takže změna ceny přepíše i minulé měsíce a už vystavené stvrzenky. Flyway migrace (`unit_price` v `performed_task`, naplnit z katalogu), `calculatePrice` a agregace nástěnky z uložené ceny, úprava záznamu cenu nemění. Samostatný PR.
 
+### Migrace velkých verzí závislostí
+
+Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), jejich PR z 2026-11-10 jsou zavřené. Každá migrace je samostatná větev a PR, CI (včetně E2E) musí projít beze změny prahů pokrytí.
+
+- [ ] **[claude]** Spring Boot 3.5 → 4.x (zavřený #41). Největší: Spring Framework 7, Spring Security 7, Jackson 3, Hibernate 7, změny v testovací podpoře (`@MockitoBean`, Testcontainers). Nejdřív projít oficiální migration guide a deprecace na 3.5.
+- [ ] **[claude]** Vitest 3 → 5 (zavřený #44). Spolu s `@vitest/coverage-v8` stejné verze; ověřit konfiguraci coverage a prahy.
+- [ ] **[claude]** `@vitejs/plugin-react` 5 → 6 (zavřený #43). Zjistit, jakou verzi Vite vyžaduje; případně spolu s přechodem na novější Vite.
+- [ ] **[claude]** ESLint 9 → 10 a `@eslint/js` 10 (zavřené #45, #46). Spolu, plus kompatibilita `eslint-plugin-react-hooks` a `eslint-plugin-react-refresh`.
+
 ---
 
 ## 7. Odkazy
