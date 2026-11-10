@@ -71,7 +71,9 @@ e2e-up:
 	docker compose -f docker-compose.e2e.yml up --build -d
 	@echo "Čekám na backend a demo seed…"
 	@for i in $$(seq 1 90); do \
-		docker compose -f docker-compose.e2e.yml logs backend 2>/dev/null | grep -q "Demo activity:" \
+		logs=$$(docker compose -f docker-compose.e2e.yml logs backend 2>/dev/null); \
+		if echo "$$logs" | grep -q "Demo activity: seeding failed"; then echo "Demo seed selhal: make e2e-logs"; exit 1; fi; \
+		echo "$$logs" | grep -q "Demo activity: performed tasks filled" \
 			&& curl -sf -o /dev/null http://localhost:3040/api/auth-status && exit 0; \
 		sleep 2; \
 	done; echo "Backend nenaběhl: make e2e-logs" && exit 1
