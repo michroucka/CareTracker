@@ -252,6 +252,12 @@ class ClientAccessIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void unknownClientReturnsNotFound() throws Exception {
+        perform(ADMIN, get("/api/clients/{id}", 999_999))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void removingUnknownDailyRecordReturnsNotFound() throws Exception {
         testData.individualPlan(client);
 

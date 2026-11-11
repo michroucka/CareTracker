@@ -4,6 +4,7 @@ import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.Task;
+import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
 import cz.zcu.kiv.caretracker.support.AccessScenario;
 import cz.zcu.kiv.caretracker.support.AccessScenario.Actor;
@@ -125,6 +126,14 @@ class PerformedTaskListAccessIT extends AbstractIntegrationTest {
     void clientAccountCannotListOtherClientByParameter() throws Exception {
         perform(CLIENT_ACCOUNT, get("/api/performed-tasks").param("clientId", clientOf(Owner.OTHER_CLIENT_IN_DEPARTMENT).toString()))
                 .andExpect(jsonPath("$[*].id", containsInAnyOrder(recordIds(List.of(Owner.CLIENT)))));
+    }
+
+    @Test
+    void clientAccountWithoutLinkedClientSeesNoRecords() throws Exception {
+        User account = testData.unlinkedClientAccount();
+
+        mockMvc.perform(get("/api/performed-tasks").with(loggedInAs(account)))
+                .andExpect(jsonPath("$", empty()));
     }
 
     @Test
