@@ -93,6 +93,7 @@ function PerformedTasks() {
     const [period, setPeriod] = useMonthParam();
     const [departmentFilter, setDepartmentFilter] = useMultiSelectParam("departments", user.role !== ROLES.SUPERADMIN && user.departmentId ? [user.departmentId] : []);
     const [caregiverFilter, setCaregiverFilter] = useMultiSelectParam("caregivers");
+    const [clientFilter, setClientFilter] = useMultiSelectParam("clients");
     const [sortDirection, setSortDirection] = React.useState("descending");
     const [isSorting, startSorting] = React.useTransition();
     const { detailId, openDetail, closeDetail } = useDetailParam();
@@ -144,9 +145,10 @@ function PerformedTasks() {
         if (previousOrganizationId.current !== organizationId) {
             setDepartmentFilter(new Set());
             setCaregiverFilter(new Set());
+            setClientFilter(new Set());
         }
         previousOrganizationId.current = organizationId;
-    }, [organizationId, setDepartmentFilter, setCaregiverFilter]);
+    }, [organizationId, setDepartmentFilter, setCaregiverFilter, setClientFilter]);
 
     React.useEffect(() => {
         if (needsOrganization) return;
@@ -175,14 +177,23 @@ function PerformedTasks() {
     }, [organizationId, filterKey, needsOrganization]);
 
 
+    // a record created for another month is added to the list by the hook; keep it out of this one
+    const periodTasks = React.useMemo(() => performedTasks.filter((performedTask) => performedTask.date.startsWith(monthPrefix(period))), [performedTasks, period]);
+
+    // clients with records in the month, terminated ones included, so the filter never leads to an empty list
+    const clientOptions = React.useMemo(() => {
+        const names = new Map(periodTasks.map((performedTask) => [performedTask.clientId, performedTask.clientName]));
+        return [...names]
+            .map(([value, label]) => ({ value, label }))
+            .sort((a, b) => a.label.localeCompare(b.label, "cs"));
+    }, [periodTasks]);
+
     const matchingTasks = React.useMemo(() => {
         const query = removeDiacritics(search.trim());
-        // a record created for another month is added to the list by the hook; keep it out of this one
-        const inPeriod = performedTasks.filter((performedTask) => performedTask.date.startsWith(monthPrefix(period)));
-        return query
-            ? inPeriod.filter((performedTask) => removeDiacritics(`${performedTask.clientName} ${performedTask.taskName}`).includes(query))
-            : inPeriod;
-    }, [performedTasks, search, period]);
+        return periodTasks.filter((performedTask) =>
+            (clientFilter.size === 0 || clientFilter.has(String(performedTask.clientId)))
+            && (!query || removeDiacritics(`${performedTask.clientName} ${performedTask.taskName}`).includes(query)));
+    }, [periodTasks, search, clientFilter]);
 
     const daysWithRecords = React.useMemo(() => [...new Set(matchingTasks.map((performedTask) => dayKey(performedTask.date)))].sort(), [matchingTasks]);
     // a day from the URL that is not in the month (or has no matching records) shows the whole month
@@ -241,6 +252,7 @@ function PerformedTasks() {
                             <MultiSelectFilter label="Středisko" allLabel="Všechna" options={departments.map((department) => ({ value: department.id, label: department.city }))} selected={departmentFilter} onChange={withPageReset(setDepartmentFilter)} searchPlaceholder="Hledat středisko…" />
                         )}
                         <MultiSelectFilter label="Pečovatel" allLabel="Všichni" options={caregiverOptions} selected={caregiverFilter} onChange={withPageReset(setCaregiverFilter)} searchPlaceholder="Hledat pečovatele…" />
+                        <MultiSelectFilter label="Klient" allLabel="Všichni" options={clientOptions} selected={clientFilter} onChange={withPageReset(setClientFilter)} searchPlaceholder="Hledat klienta…" />
                     </>
                 )}
             </ListToolbar>

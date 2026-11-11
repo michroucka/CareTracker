@@ -26,6 +26,7 @@ const KAREL = { id: 8, firstName: 'Karel', lastName: 'Starý', street: 'Husova 3
 const shoppingForMarie = {
     id: 100,
     date: '2026-11-03T09:30:00',
+    clientId: MARIE.id,
     clientName: 'Marie Nová',
     taskName: 'Nákup',
     unitCount: 2,
@@ -38,6 +39,7 @@ const shoppingForMarie = {
 const escortForKarel = {
     id: 101,
     date: '2026-11-05T14:00:00',
+    clientId: KAREL.id,
     clientName: 'Karel Starý',
     taskName: 'Doprovod',
     unitCount: 90,
@@ -223,6 +225,38 @@ describe('PerformedTasks list', () => {
 
         await waitFor(() => expect(allParams(lastRequest(requests), 'departmentIds')).toEqual(['2', '3']));
         expect(currentSearchParams().get('departments')).toBe('2,3');
+    });
+
+    it('filters by client in the loaded month, terminated clients included, and keeps it in the URL', async () => {
+        serveOptions();
+        // Jan has records this month but is no longer an active client
+        const terminatedClientRecord = { ...escortForKarel, id: 102, clientId: 9, clientName: 'Jan Ukončený' };
+        const requests = servePerformedTasks([shoppingForMarie, escortForKarel, terminatedClientRecord]);
+        const { user } = renderPage();
+        await findRecordRow('Marie Nová');
+
+        await user.click(screen.getByRole('button', { name: /Klient:/ }));
+        expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Všichni', 'Jan Ukončený', 'Karel Starý', 'Marie Nová']);
+        await user.click(screen.getByRole('option', { name: 'Jan Ukončený' }));
+        await user.click(screen.getByRole('option', { name: 'Marie Nová' }));
+        await user.keyboard('{Escape}');
+
+        expect(screen.getByRole('row', { name: /Jan Ukončený/ })).toBeInTheDocument();
+        expect(screen.getByRole('row', { name: /Marie Nová/ })).toBeInTheDocument();
+        expect(screen.queryByRole('row', { name: /Karel Starý/ })).not.toBeInTheDocument();
+        expect(currentSearchParams().get('clients')).toBe('9,7');
+        // the month is already loaded, the filter does not ask the server again
+        expect(requests).toHaveLength(1);
+    });
+
+    it('restores the client filter from the URL', async () => {
+        serveOptions();
+        servePerformedTasks();
+        renderPage({ route: `/performed-tasks?clients=${KAREL.id}` });
+
+        expect(await findRecordRow('Karel Starý')).toBeInTheDocument();
+        expect(screen.queryByRole('row', { name: /Marie Nová/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Klient:/ })).toHaveTextContent('Karel Starý');
     });
 
     it("does not let a coordinator choose departments and loads the coordinator's own", async () => {

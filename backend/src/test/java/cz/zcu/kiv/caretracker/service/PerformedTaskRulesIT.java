@@ -239,6 +239,15 @@ class PerformedTaskRulesIT extends AbstractIntegrationTest {
         assertThat(listedIds(coordinator)).hasSize(5);
     }
 
+    @Test
+    void listCarriesTheClientOfEachRecord() throws Exception {
+        testData.performedTask(client, task, caregiver);
+
+        perform(coordinator, get("/api/performed-tasks"))
+                .andExpect(jsonPath("$[0].clientId").value(client.getId()))
+                .andExpect(jsonPath("$[0].clientName").value(client.getFullName()));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"month=11", "year=2026", "month=13&year=2026"})
     void incompleteOrInvalidMonthFilterIsRejected(String query) throws Exception {

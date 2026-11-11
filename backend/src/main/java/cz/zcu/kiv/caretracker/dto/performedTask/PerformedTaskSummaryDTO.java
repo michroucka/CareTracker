@@ -15,6 +15,7 @@ public class PerformedTaskSummaryDTO {
     private Long id;
     private LocalDateTime date;
     private Double unitCount;
+    private Long clientId;
     private String clientName;
     private String taskName;
     private String unitType;
