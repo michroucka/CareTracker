@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test.js";
 import { storageStateOf } from "./support/accounts.js";
 
 const STAFF_ITEMS = ["Nástěnka", "Klienti", "Provedené úkony", "Zaměstnanci", "Úkony"];

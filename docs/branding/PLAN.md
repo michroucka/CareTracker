@@ -618,13 +618,13 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 
 Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, který servíruje frontend (`frontend/nginx.demo.conf`, případně produkční nginx), a pro API v Spring Security (`SecurityConfig` → `http.headers(...)`).
 
-- [ ] `Content-Security-Policy`: `default-src 'self'`; `connect-src` s adresou API; `font-src` a `style-src` pro Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`); `img-src 'self' data: blob:` + dlaždice Mapy.com (`api.mapy.com`); `frame-ancestors 'none'`. Otestovat přihlášení, mapu, fotky a PDF stvrzenky.
-- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains` (až běží HTTPS; začít s nižším `max-age`).
-- [ ] `X-Frame-Options: DENY` (pro starší prohlížeče vedle `frame-ancestors`).
-- [ ] `Cross-Origin-Opener-Policy: same-origin`.
-- [ ] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
-- [ ] Zvážit Trusted Types (`require-trusted-types-for 'script'`) – jen pokud nic nepoužívá `innerHTML` (pozor na `LogoControl` v `ClientMapDialog`).
-- [ ] Source mapy do produkčního buildu nedávat veřejně (Lighthouse je hlásí jako chybějící – to je v pořádku).
+- [x] `Content-Security-Policy` v `frontend/nginx.demo.conf`: `script-src 'self'`; `style-src` s `'unsafe-inline'` (knihovny vkládají `<style>` za běhu, hashe by se měnily s každou aktualizací) a Google Fonts; `img-src`/`connect-src` s Mapy.com; `worker-src blob:` (maplibre); `frame-src blob:` (tisk stvrzenky); `object-src 'none'`, `base-uri`, `form-action`, `frame-ancestors 'none'`. Každý E2E test selže při porušení CSP (`e2e/tests/support/test.js`); mapa ověřená ručně (seed nemá souřadnice).
+- [x] `Strict-Transport-Security: max-age=86400; includeSubDomains` (demo běží za HTTPS přes Cloudflare). Až se nic nerozbije, zvednout na `max-age=31536000`.
+- [x] `X-Frame-Options: DENY` (pro starší prohlížeče vedle `frame-ancestors`).
+- [x] `Cross-Origin-Opener-Policy: same-origin`.
+- [x] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. API má vlastní hlavičky ze Spring Security (`nosniff`, `X-Frame-Options`, `Cache-Control`), nginx je přidává jen stránkám aplikace.
+- [x] Trusted Types zvážené, nezapnuté: kromě `innerHTML` v `LogoControl` by potřebovaly politiky pro knihovny (maplibre), riziko rozbití je větší než přínos při přísném `script-src 'self'`.
+- [x] Source mapy produkční build negeneruje (`dist/assets` bez `.map`), nic se nezveřejňuje.
 - [ ] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
 - [ ] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09):
   - `DashboardService` – nástěnka superadmina posílá tři COUNT dotazy na každou organizaci (N+1); počty středisek, zaměstnanců a klientů jde načíst jedním `GROUP BY` jako počty úkonů.

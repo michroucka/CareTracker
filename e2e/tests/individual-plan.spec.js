@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test.js";
 import { storageStateOf } from "./support/accounts.js";
 
 // only an admin or the client's key worker may change the plan
