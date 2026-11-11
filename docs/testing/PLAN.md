@@ -67,7 +67,7 @@ Hned začne hlídat to, co už existuje.
 - [x] **[claude]** Frontend skripty `test:run` (`vitest run` – bez watch módu, jinak by CI viselo) a `coverage`.
 - [x] **[claude]** `deploy-demo.yml`: spustí se až po úspěšném CI pro push na `main` (`workflow_run`), navíc ručně (`workflow_dispatch`). `workflow_run` se bere z výchozí větve, takže začne platit až po merge.
 - [x] **[ty]** Na GitHubu ruleset `main`: merge jen přes PR, povinné checky Backend a Frontend, větev aktuální vůči `main`, zákaz force push a smazání, bez výjimek.
-- [ ] Ověřit: PR s rozbitým testem nejde mergnout a nespustí deploy.
+- [x] Ověřeno 2026-11-11 (pokusný PR #58 s padajícím testem): merge `BLOCKED`, deploy se nespustil. Ruleset `main` bez výjimek, povinné checky Backend, Frontend, E2E a oba CodeQL.
 - [x] **[ty]** Volitelně: Dockerfily frontendu jsou na `node:20`, CI na Node 22 (jsdom a jest-dom chtějí ≥ 22). Build v Dockeru funguje, jen hlásí varování o `engines` – zvážit přechod na `node:22`.
 
 ### Fáze T1 – Infrastruktura testů
@@ -82,7 +82,7 @@ Backend:
 - [x] Hranice systému v testech: `JavaMailSender` a `GeocodingService` jako `@MockitoBean` v základní třídě. QR platba v `ReceiptService` volá externí API přímo přes `RestClient.create()` – vyřešit v T2b (vytáhnout klienta do beanu, který jde mockovat).
 - [x] Pomocník na přihlášení: `.with(loggedInAs(employee))` – načte uživatele z DB stejně jako skutečný login (`MyUserDetails` s `userId`, `organizationId`), ne jen `@WithMockUser`, protože služby čtou organizaci a středisko z přihlášeného uživatele.
 - [x] `support/TestData`: `organization()`, `department(org)`, `employee(dept, role)` (včetně přihlašovacího účtu, heslo `TestData.PASSWORD`), `superadmin()`. Klient, úkon, provedený úkon atd. se doplní, jak je testy budou potřebovat.
-- [ ] Rozhodnout s tebou: přejmenovat/přesunout existující 4 testy podle konvencí (sekce 3), nebo je nechat.
+- [x] Existující 4 testy: `PerformedTaskTest` přepsaný už v T2b. `ClientControllerTest`, `ClientServiceTest` a `PerformedTaskServiceTest` mockovaly vlastní služby a repozitáře a jejich případy už ověřovaly IT, takže jsou smazané; dva případy, které v IT chyběly, přesunuté jako IT (`ClientAccessIT.unknownClientReturnsNotFound`, `PerformedTaskListAccessIT.clientAccountWithoutLinkedClientSeesNoRecords`).
 
 Frontend:
 - [x] Závislosti: `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`, `msw`, `@vitest/coverage-v8`.
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-11: ověřená branch protection; staré mockové testy nahrazené IT.
 - 2026-11-10: schéma odpovídá entitám (V29, `bigint` ID), testy validují schéma (`ddl-auto=validate`).
 - 2026-11-10: pravidla React Compileru zapnutá a opravená (29 nálezů), 926 frontendových testů, E2E 17/17.
 - 2026-11-10: Spring Boot 4.1 (Spring Framework 7, Security 7, Jackson 3, Hibernate 7, Testcontainers 2). `make e2e-up` čeká i na demo seed (první běh hned po startu byl pomalý).
