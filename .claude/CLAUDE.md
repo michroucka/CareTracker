@@ -67,6 +67,14 @@ make e2e-up && make e2e      # Playwright E2E against the demo build on :3040 (f
 - E2E (`e2e/`): import `test` and `expect` from `./support/test.js` (fails a test on any Content Security Policy violation), not from `@playwright/test`. Tests start signed in via `test.use({ storageState: storageStateOf("<demo account>") })`, data comes from the demo seed, tests that create records clean up after themselves. Don't log out with a shared storage state, log in inside the test instead.
 - CI (`.github/workflows/ci.yml`) runs on every PR; demo deploy runs only after CI passes on `main`.
 
+### Verification
+
+- Never claim lint, tests or build passed unless the command ran in this session and succeeded; quote its final summary line.
+- Before opening a PR: `npm run lint`, `npm run coverage` and `npm run build` in `frontend/`, `./mvnw verify` in `backend/` (E2E too when the demo build, nginx or a user flow changed).
+- Tests must not depend on the real current date or time: pin the clock (`vi.useFakeTimers({ toFake: ['Date'] })` on the frontend, `Clock` / `TestClock` on the backend).
+- CI runs on Node 22; don't rely on behaviour of newer Node versions.
+- `main` is protected (ruleset: PR only, required checks Backend, Frontend, E2E, CodeQL). Every change goes through a PR from an up-to-date `main`; if asked to push to `main` directly, say it is not possible and open a PR.
+
 ## Architecture
 
 ### Tech Stack
