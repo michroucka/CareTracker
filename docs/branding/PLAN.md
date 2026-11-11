@@ -632,6 +632,21 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
   - `Picture` – náhled (`?size=thumb`) načte z DB i plnou fotku 512 px; načítat jen potřebný sloupec (projekce nebo oddělená entita).
 - [ ] Drobnosti z téhož review, odložené: staré fotky (před V23) se převádějí až při prvním GET v `PictureService` (čtení zapisuje do DB, nedekódovatelná fotka vrací 400 pořád); `Clients.jsx` s `?caregivers=…` v URL načte seznam nejdřív bez filtru, protože zaměstnanci ještě nejsou načtení.
 
+### Další postup (stav 2026-11-11)
+
+Zbývají tři otevřené body výše. Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
+
+1. **Výkon nástěnky a fotek** (odhad 1–1,5 h). Dva dotazy v `DashboardService` přepsat na jeden `GROUP BY` / `LEFT JOIN … HAVING`; výsledky hlídají `DashboardTotalsIT` a `DashboardScopeIT`, čísla se nesmí změnit. Náhled fotky: buď projekce jen na `thumbnail`, nebo oddělená entita (pak migrace) – nejdřív zjistit, která varianta je jednodušší v `PictureService` / `PictureRepository`.
+2. **Štíhlé odpovědi API pro seznamy** (odhad 2–3 h, největší nejistota). Nejdřív projít, která pole frontend ze seznamů opravdu čte: `PerformedTasks.jsx` (řádek, filtry, `clientId`), formulář zápisu úkonu bere z `GET /api/clients` i úkony z plánu klienta (`client.tasks`), stvrzenka a filtry jména a města. Pak zúžené DTO (detail dál přes `/{id}`), upravit MSW fixtures ve frontendových testech a ověřit velikost odpovědi.
+3. **Drobnosti** (odhad 45 min–1 h). Převod starých fotek přesunout ze čtení do jednorázové migrace nebo úlohy (pozor na data v produkci, nedekódovatelné fotky). `Clients.jsx`: s `?caregivers=` v URL počkat na zaměstnance, než se pošle první požadavek (stejně jako u `PerformedTasks`).
+
+Poznámky k prostředí:
+- E2E: `make e2e-up && make e2e` (stack na :3040, databáze z demo seedu), po skončení `make e2e-down`. Každý E2E test selže při porušení CSP (`e2e/tests/support/test.js`).
+- Mapa v E2E testovat nejde – demo seed nemá u klientů souřadnice a geokódování v E2E běží s falešným klíčem. Ručně: `update client set latitude=49.7475, longitude=13.3776 where id=24` v E2E databázi.
+- Na živém demu Cloudflare vkládá inline skript JavaScript Detections (bot management), který `script-src 'self'` blokuje. Aplikaci to nerozbije; když to bude vadit, vypnout v Cloudflare dashboardu (Security → Bots), ne povolovat v CSP.
+- Dev kontejner backendu zapisuje do `backend/target` jako root. Maven na hostu pak selže; buď `sudo chown -R $USER backend/target`, nebo pustit testy v samostatném `git worktree`.
+- HSTS má zatím `max-age=86400`; až se nic nerozbije, zvednout na `31536000` v `frontend/nginx.demo.conf`.
+
 ## 8. Odkazy
 
 - shadcn/ui: https://ui.shadcn.com (Vite: https://ui.shadcn.com/docs/installation/vite, theming: https://ui.shadcn.com/docs/theming)
