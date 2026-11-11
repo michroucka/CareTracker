@@ -29,12 +29,15 @@ public class GeocodingService {
     public Optional<GeocodeResult> geocode(String street, String city, String postalCode) {
         String query = "%s, %s, %s".formatted(street, city, postalCode);
 
+        // values go in as URI variables, which encode() escapes completely, so "&", "=" or "#" typed
+        // in an address cannot add, change or cut off query parameters
         URI uri = UriComponentsBuilder.fromUriString(GEOCODE_URL)
-                .queryParam("query", query)
+                .queryParam("query", "{query}")
                 .queryParam("lang", "cs")
                 .queryParam("limit", 1)
-                .queryParam("apikey", apiKey)
-                .build()
+                .queryParam("apikey", "{apiKey}")
+                .encode()
+                .buildAndExpand(query, apiKey)
                 .toUri();
 
         try {
