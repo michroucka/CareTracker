@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test.js";
 import { logIn } from "./support/accounts.js";
 
 // Each test logs in on its own: logging out ends the session, which the shared storage states must keep

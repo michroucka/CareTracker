@@ -1,4 +1,4 @@
-import { expect, test as setup } from "@playwright/test";
+import { expect, test as setup } from "./support/test.js";
 import { ACCOUNTS, logIn, storageStateOf } from "./support/accounts.js";
 
 // Logs every demo account in once; tests start already signed in through `test.use({ storageState })`
