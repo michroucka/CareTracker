@@ -7,15 +7,15 @@ import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class GeocodingService {
     private static final Logger log = LoggerFactory.getLogger(GeocodingService.class);
-    private static final String GEOCODE_URL = "https://api.mapy.com/v1/geocode";
+    // fixed host; the address and the key go in as URI variables, which RestTemplate encodes completely,
+    // so "&", "=" or "#" typed in an address cannot add, change or cut off query parameters (GeocodingServiceTest)
+    private static final String GEOCODE_URL = "https://api.mapy.com/v1/geocode?query={query}&lang=cs&limit=1&apikey={apiKey}";
 
     private final RestTemplate restTemplate;
 
@@ -29,19 +29,8 @@ public class GeocodingService {
     public Optional<GeocodeResult> geocode(String street, String city, String postalCode) {
         String query = "%s, %s, %s".formatted(street, city, postalCode);
 
-        // values go in as URI variables, which encode() escapes completely, so "&", "=" or "#" typed
-        // in an address cannot add, change or cut off query parameters
-        URI uri = UriComponentsBuilder.fromUriString(GEOCODE_URL)
-                .queryParam("query", "{query}")
-                .queryParam("lang", "cs")
-                .queryParam("limit", 1)
-                .queryParam("apikey", "{apiKey}")
-                .encode()
-                .buildAndExpand(query, apiKey)
-                .toUri();
-
         try {
-            GeocodeResponseDTO response = restTemplate.getForObject(uri, GeocodeResponseDTO.class);
+            GeocodeResponseDTO response = restTemplate.getForObject(GEOCODE_URL, GeocodeResponseDTO.class, query, apiKey);
 
             if (response == null || response.items().isEmpty()) {
                 log.warn("No geocoding result found for query: {}", query);
