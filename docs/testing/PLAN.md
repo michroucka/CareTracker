@@ -226,7 +226,7 @@ Matice: role (SUPERADMIN, ADMIN, COORDINATOR, CAREGIVER, CLIENT, nepřihlášen�
   - Nízká: nový (aktivní) záznam se přidal do seznamu filtrovaného na neaktivní.
   - Nízká: detail klienta po změně načítal celý seznam klientů.
   - Nízká (přístupnost): `FormField` – mizející nápověda a nová chyba měly stejné `id`, čtečka chvíli četla starou nápovědu.
-- [ ] **[ty]** Volitelně: seznam provedených úkonů nemá filtr podle klienta (jen hledání). Nová funkce, ne oprava.
+- [x] **[ty → claude]** Filtr podle klienta v seznamu provedených úkonů: filtruje načtený měsíc na klientovi (jako hledání a den), nabízí klienty se záznamem v měsíci včetně ukončených, drží se v URL (`clients`). Souhrn záznamu nese `clientId`.
 
 ### Fáze T4 – E2E (Playwright)
 Jen toky přes celou aplikaci, které unit a integrační testy nepokryjí.
@@ -284,6 +284,7 @@ Dependabot velké verze neposílá (Maven a npm, viz `.github/dependabot.yml`), 
 
 ## Log změn
 
+- 2026-11-11: filtr podle klienta v seznamu provedených úkonů; plán testování bez otevřených položek.
 - 2026-11-11: ověřená branch protection; staré mockové testy nahrazené IT.
 - 2026-11-10: schéma odpovídá entitám (V29, `bigint` ID), testy validují schéma (`ddl-auto=validate`).
 - 2026-11-10: pravidla React Compileru zapnutá a opravená (29 nálezů), 926 frontendových testů, E2E 17/17.
