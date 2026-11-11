@@ -211,6 +211,11 @@ public class TestData {
         return userRepository.save(account(UserRole.SUPERADMIN));
     }
 
+    /** CLIENT account that is not linked to any client record. */
+    public User unlinkedClientAccount() {
+        return userRepository.save(account(UserRole.CLIENT));
+    }
+
     /** One hour of the task for the client on 2 November 2026, performed by the caregiver. */
     public PerformedTask performedTask(Client client, Task task, Employee caregiver) {
         return performedTask(client, task, caregiver, LocalDateTime.of(2026, 11, 2, 9, 0));
