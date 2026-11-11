@@ -54,6 +54,7 @@ public class PerformedTaskMapper {
         dto.setId(performedTask.getId());
         dto.setDate(performedTask.getDate());
         dto.setUnitCount(performedTask.getUnitCount());
+        dto.setClientId(performedTask.getClient().getId());
         dto.setClientName(performedTask.getClient().getFullName());
         dto.setTaskName(performedTask.getTask().getName());
         dto.setUnitType(performedTask.getTask().getUnitType().toString());
