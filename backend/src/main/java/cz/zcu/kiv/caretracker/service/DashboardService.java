@@ -7,7 +7,6 @@ import cz.zcu.kiv.caretracker.dto.dashboard.DashboardView;
 import cz.zcu.kiv.caretracker.dto.dashboard.DepartmentPerformedTasksDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.OrganizationOverviewDTO;
 import cz.zcu.kiv.caretracker.dto.dashboard.PlatformOverviewDTO;
-import cz.zcu.kiv.caretracker.entity.Client;
 import cz.zcu.kiv.caretracker.entity.Employee;
 import cz.zcu.kiv.caretracker.entity.PerformedTask;
 import cz.zcu.kiv.caretracker.entity.User;
@@ -135,7 +134,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 performedTaskRepository.findTop5ByCaregivers_IdOrderByDateDesc(caregiverId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByCaregiver(caregiverId, planUpdateHorizon())));
-        fillClientsWithoutRecentRecords(dto, clientRepository.findByActiveTrueAndCaregiverId(caregiverId));
+        fillClientsWithoutRecentRecords(dto, null, null, caregiverId);
         return dto;
     }
 
@@ -155,7 +154,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
                 performedTaskRepository.findTop5ByDepartmentIdOrderByDateDesc(deptId)));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByDepartment(deptId, planUpdateHorizon())));
-        fillClientsWithoutRecentRecords(dto, clientRepository.findByActiveTrueAndDepartmentId(deptId));
+        fillClientsWithoutRecentRecords(dto, null, deptId, null);
         return dto;
     }
 
@@ -177,7 +176,7 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         dto.setTasksPerformedByDepartment(buildDepartmentTotals(orgId));
         dto.setClientIPUpdates(dashboardMapper.toClientIPUpdateDTOList(
                 individualPlanRepository.findUpcomingUpdatesByOrganization(orgId, planUpdateHorizon())));
-        fillClientsWithoutRecentRecords(dto, clientRepository.findByActiveTrueAndOrganizationId(orgId));
+        fillClientsWithoutRecentRecords(dto, orgId, null, null);
         return dto;
     }
 
@@ -190,15 +189,18 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
         }
         Map<Long, LocalDateTime> lastActivityByOrganization = toDateMap(performedTaskRepository.findLastActivityByOrganization());
 
-        List<OrganizationOverviewDTO> organizations = organizationRepository.findByActive(true).stream()
-                .map(org -> new OrganizationOverviewDTO(
-                        org.getId(),
-                        org.getName(),
-                        (int) departmentRepository.countByActiveTrueAndOrganizationId(org.getId()),
-                        (int) employeeRepository.countByActiveTrueAndOrganizationId(org.getId()),
-                        (int) clientRepository.countByActiveTrueAndOrganizationId(org.getId()),
-                        tasksThisMonthByOrganization.getOrDefault(org.getId(), 0),
-                        lastActivityByOrganization.get(org.getId())))
+        List<OrganizationOverviewDTO> organizations = organizationRepository.countActiveMembersByOrganization().stream()
+                .map(row -> {
+                    Long organizationId = (Long) row[0];
+                    return new OrganizationOverviewDTO(
+                            organizationId,
+                            (String) row[1],
+                            ((Number) row[2]).intValue(),
+                            ((Number) row[3]).intValue(),
+                            ((Number) row[4]).intValue(),
+                            tasksThisMonthByOrganization.getOrDefault(organizationId, 0),
+                            lastActivityByOrganization.get(organizationId));
+                })
                 .sorted(Comparator.comparing(OrganizationOverviewDTO::getTasksThisMonth).reversed())
                 .toList();
 
@@ -225,27 +227,18 @@ public class DashboardService extends BaseRoleFilteringService<PerformedTask, Da
     }
 
     /**
-     * Fills the clients that have had no performed task for {@link #RECENT_RECORD_DAYS} days,
+     * Fills the active clients in scope that have had no performed task for {@link #RECENT_RECORD_DAYS} days,
      * longest without a record first. Clients created within that period are skipped.
      */
-    private void fillClientsWithoutRecentRecords(DashboardDTO dto, List<Client> clients) {
-        LocalDate threshold = LocalDate.now(clock).minusDays(RECENT_RECORD_DAYS);
-        List<Client> establishedClients = clients.stream()
-                .filter(c -> c.getCreated() == null || c.getCreated().isBefore(threshold))
-                .toList();
-        Map<Long, LocalDateTime> lastRecords = establishedClients.isEmpty()
-                ? Map.of()
-                : toDateMap(performedTaskRepository.findLastRecordDatesByClientIds(
-                        establishedClients.stream().map(Client::getId).toList()));
+    private void fillClientsWithoutRecentRecords(DashboardDTO dto, Long organizationId, Long departmentId, Long caregiverId) {
+        List<Object[]> rows = clientRepository.findWithoutRecordsSince(
+                LocalDate.now(clock).minusDays(RECENT_RECORD_DAYS), ATTENTION_LIST_LIMIT,
+                organizationId, departmentId, caregiverId);
 
-        List<ClientAttentionDTO> withoutRecentRecords = establishedClients.stream()
-                .map(c -> new ClientAttentionDTO(c.getId(), c.getFullName(), lastRecords.get(c.getId())))
-                .filter(a -> a.getLastRecordDate() == null || a.getLastRecordDate().toLocalDate().isBefore(threshold))
-                .sorted(Comparator.comparing(ClientAttentionDTO::getLastRecordDate, Comparator.nullsFirst(Comparator.naturalOrder())))
-                .toList();
-
-        dto.setClientsWithoutRecentRecordsCount(withoutRecentRecords.size());
-        dto.setClientsWithoutRecentRecords(withoutRecentRecords.stream().limit(ATTENTION_LIST_LIMIT).toList());
+        dto.setClientsWithoutRecentRecordsCount(rows.isEmpty() ? 0 : ((Number) rows.get(0)[3]).intValue());
+        dto.setClientsWithoutRecentRecords(rows.stream()
+                .map(row -> new ClientAttentionDTO(((Number) row[0]).longValue(), (String) row[1], (LocalDateTime) row[2]))
+                .toList());
     }
 
     /** Tasks and minutes per active caregiver of the department this month, busiest first. */

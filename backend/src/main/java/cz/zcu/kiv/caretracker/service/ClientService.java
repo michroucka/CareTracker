@@ -195,11 +195,11 @@ public class ClientService extends BaseRoleFilteringService<Client, ClientDTO> {
      */
     @Transactional
     public byte[] getPictureContent(Long clientId, PictureService.Size size) {
-        Picture picture = validateClientAccess(clientId).getPicture();
-        if (picture == null) {
+        Long pictureId = validateClientAccess(clientId).getPictureId();
+        if (pictureId == null) {
             throw new ResourceNotFoundException("Obrázek nenalezen");
         }
-        return pictureService.getContent(picture, size);
+        return pictureService.getContent(pictureId, size);
     }
 
     /**

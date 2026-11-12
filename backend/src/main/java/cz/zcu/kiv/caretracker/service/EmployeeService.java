@@ -307,11 +307,11 @@ public class EmployeeService extends BaseRoleFilteringService<Employee, Employee
      */
     @Transactional
     public byte[] getPictureContent(Long employeeId, PictureService.Size size) {
-        Picture picture = findAccessibleEmployee(employeeId).getPicture();
-        if (picture == null) {
+        Long pictureId = findAccessibleEmployee(employeeId).getPictureId();
+        if (pictureId == null) {
             throw new ResourceNotFoundException("Obrázek nenalezen");
         }
-        return pictureService.getContent(picture, size);
+        return pictureService.getContent(pictureId, size);
     }
 
     /** Replaces the employee's profile picture with a resized copy of the upload. */
