@@ -1,10 +1,14 @@
 package cz.zcu.kiv.caretracker.service;
 
 import cz.zcu.kiv.caretracker.entity.Picture;
+import cz.zcu.kiv.caretracker.exception.ResourceNotFoundException;
 import cz.zcu.kiv.caretracker.exception.ValidationException;
+import cz.zcu.kiv.caretracker.repository.PictureRepository;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -17,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.Optional;
 
 /**
  * Turns uploaded images into profile pictures: square JPEGs in two sizes (detail and thumbnail),
@@ -34,6 +39,9 @@ public class PictureService {
     private static final int FULL_SIZE = 512;
     private static final int THUMB_SIZE = 128;
     private static final double JPEG_QUALITY = 0.85;
+
+    @Autowired
+    private PictureRepository pictureRepository;
 
     /**
      * Validates an upload and resizes it into a new, not yet saved picture.
@@ -58,11 +66,26 @@ public class PictureService {
     }
 
     /**
+     * Returns the stored picture in the requested size, loading only that size from the database.
+     * A picture saved before resizing was introduced is converted and saved first.
+     *
+     * @throws ResourceNotFoundException if the picture does not exist (e.g. replaced by a concurrent upload)
+     */
+    @Transactional
+    public byte[] getContent(Long pictureId, Size size) {
+        Optional<byte[]> stored = size == Size.THUMB
+                ? pictureRepository.findThumbnailById(pictureId)
+                : pictureRepository.findResizedDataById(pictureId);
+        return stored.orElseGet(() -> getContent(pictureRepository.findById(pictureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Obrázek nenalezen")), size));
+    }
+
+    /**
      * Returns the image in the requested size. Pictures saved before resizing was introduced
      * (no thumbnail, original upload in {@code data}) are converted in place, so the caller
      * must pass a managed entity inside a read-write transaction.
      */
-    public byte[] getContent(Picture picture, Size size) {
+    byte[] getContent(Picture picture, Size size) {
         if (picture.getThumbnail() == null) {
             fillResized(picture, picture.getData());
         }

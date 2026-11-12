@@ -626,17 +626,18 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
 - [x] Trusted Types zvážené, nezapnuté: kromě `innerHTML` v `LogoControl` by potřebovaly politiky pro knihovny (maplibre), riziko rozbití je větší než přínos při přísném `script-src 'self'`.
 - [x] Source mapy produkční build negeneruje (`dist/assets` bez `.map`), nic se nezveřejňuje.
 - [ ] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
-- [ ] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09):
+- [x] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09), hotovo 2026-11-12:
   - `DashboardService` – nástěnka superadmina posílá tři COUNT dotazy na každou organizaci (N+1); počty středisek, zaměstnanců a klientů jde načíst jedním `GROUP BY` jako počty úkonů.
   - `DashboardService` – widget „Klienti bez záznamu“ načte všechny aktivní klienty organizace kvůli počtu a šesti řádkům; nahradit jedním dotazem (`LEFT JOIN … GROUP BY … HAVING`).
   - `Picture` – náhled (`?size=thumb`) načte z DB i plnou fotku 512 px; načítat jen potřebný sloupec (projekce nebo oddělená entita).
+  - Řešení: počty superadmina jedním dotazem s poddotazy pro každý druh počtu (`OrganizationRepository.countActiveMembersByOrganization`), klienti bez záznamu jedním dotazem s limitem a celkovým počtem (`ClientRepository.findWithoutRecordsSince`), fotka po sloupcích (`PictureRepository.findThumbnailById` / `findResizedDataById`, starou fotku dál převede `PictureService`). Testy `ClientRepositoryIT`, `PictureContentIT`, počty organizací v `DashboardTotalsIT`.
 - [ ] Drobnosti z téhož review, odložené: staré fotky (před V23) se převádějí až při prvním GET v `PictureService` (čtení zapisuje do DB, nedekódovatelná fotka vrací 400 pořád); `Clients.jsx` s `?caregivers=…` v URL načte seznam nejdřív bez filtru, protože zaměstnanci ještě nejsou načtení.
 
 ### Další postup (stav 2026-11-11)
 
-Zbývají tři otevřené body výše. Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
+Zbývají dva otevřené body výše (výkon nástěnky a fotek hotový 2026-11-12). Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
 
-1. **Výkon nástěnky a fotek** (odhad 1–1,5 h). Dva dotazy v `DashboardService` přepsat na jeden `GROUP BY` / `LEFT JOIN … HAVING`; výsledky hlídají `DashboardTotalsIT` a `DashboardScopeIT`, čísla se nesmí změnit. Náhled fotky: buď projekce jen na `thumbnail`, nebo oddělená entita (pak migrace) – nejdřív zjistit, která varianta je jednodušší v `PictureService` / `PictureRepository`.
+1. ~~**Výkon nástěnky a fotek**~~ hotovo 2026-11-12, viz bod výše.
 2. **Štíhlé odpovědi API pro seznamy** (odhad 2–3 h, největší nejistota). Nejdřív projít, která pole frontend ze seznamů opravdu čte: `PerformedTasks.jsx` (řádek, filtry, `clientId`), formulář zápisu úkonu bere z `GET /api/clients` i úkony z plánu klienta (`client.tasks`), stvrzenka a filtry jména a města. Pak zúžené DTO (detail dál přes `/{id}`), upravit MSW fixtures ve frontendových testech a ověřit velikost odpovědi.
 3. **Drobnosti** (odhad 45 min–1 h). Převod starých fotek přesunout ze čtení do jednorázové migrace nebo úlohy (pozor na data v produkci, nedekódovatelné fotky). `Clients.jsx`: s `?caregivers=` v URL počkat na zaměstnance, než se pošle první požadavek (stejně jako u `PerformedTasks`).
 

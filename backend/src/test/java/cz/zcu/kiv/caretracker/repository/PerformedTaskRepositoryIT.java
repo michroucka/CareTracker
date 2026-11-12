@@ -190,22 +190,6 @@ class PerformedTaskRepositoryIT extends AbstractRepositoryTest {
     }
 
     @Test
-    void lastRecordDatesAreReturnedOnlyForRequestedClientsWithRecords() {
-        Client withoutRecords = testData.client(caregiver);
-        LocalDateTime latest = LocalDateTime.of(2026, 11, 20, 23, 59, 59, LAST_MICROSECOND);
-        testData.performedTask(client, visit, NOVEMBER, 1);
-        testData.performedTask(client, visit, latest, 1);
-        testData.performedTask(client, visit, NOVEMBER.plusDays(3), 1);
-        testData.performedTask(otherDepartmentClient, visit, DECEMBER, 1);
-        flushAndClear();
-
-        List<Object[]> rows = performedTaskRepository.findLastRecordDatesByClientIds(List.of(client.getId(), withoutRecords.getId()));
-
-        assertThat(rows).extracting(row -> List.of(((Number) row[0]).longValue(), row[1]))
-                .containsExactly(List.of(client.getId(), latest));
-    }
-
-    @Test
     void lastActivityIsTheLatestRecordOfEachOrganization() {
         LocalDateTime latest = LocalDateTime.of(2027, 1, 1, 0, 0);
         LocalDateTime otherOrganizationLatest = LocalDateTime.of(2026, 6, 1, 12, 0);

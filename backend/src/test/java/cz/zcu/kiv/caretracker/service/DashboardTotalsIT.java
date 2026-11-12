@@ -10,6 +10,9 @@ import cz.zcu.kiv.caretracker.entity.User;
 import cz.zcu.kiv.caretracker.enums.EmployeeRole;
 import cz.zcu.kiv.caretracker.enums.UnitType;
 import cz.zcu.kiv.caretracker.repository.ClientRepository;
+import cz.zcu.kiv.caretracker.repository.DepartmentRepository;
+import cz.zcu.kiv.caretracker.repository.EmployeeRepository;
+import cz.zcu.kiv.caretracker.repository.OrganizationRepository;
 import cz.zcu.kiv.caretracker.repository.TaskRepository;
 import cz.zcu.kiv.caretracker.repository.UserRepository;
 import cz.zcu.kiv.caretracker.support.AbstractIntegrationTest;
@@ -43,6 +46,15 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     private Organization organization;
     private Department department;
@@ -242,6 +254,36 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void platformOverviewCountsOnlyActiveDepartmentsEmployeesAndClientsOfEachActiveOrganization() throws Exception {
+        Department closedDepartment = testData.department(organization);
+        closedDepartment.setActive(false);
+        departmentRepository.save(closedDepartment);
+        Employee formerEmployee = testData.employee(department, EmployeeRole.CAREGIVER);
+        formerEmployee.setActive(false);
+        employeeRepository.save(formerEmployee);
+        Client formerClient = testData.client(caregiver);
+        formerClient.setActive(false);
+        clientRepository.save(formerClient);
+        Organization otherOrganization = testData.organization();
+        testData.client(testData.employee(testData.department(otherOrganization), EmployeeRole.CAREGIVER));
+        Organization closedOrganization = testData.organization();
+        closedOrganization.setActive(false);
+        organizationRepository.save(closedOrganization);
+
+        String dashboard = dashboard(testData.superadmin(), null);
+
+        String own = "$.platform.organizations[?(@.id == " + organization.getId() + ")]";
+        assertThat(JsonPath.<List<Integer>>read(dashboard, own + ".departmentCount")).containsExactly(2);
+        assertThat(JsonPath.<List<Integer>>read(dashboard, own + ".employeeCount")).containsExactly(4);
+        assertThat(JsonPath.<List<Integer>>read(dashboard, own + ".clientCount")).containsExactly(1);
+        String other = "$.platform.organizations[?(@.id == " + otherOrganization.getId() + ")]";
+        assertThat(JsonPath.<List<Integer>>read(dashboard, other + ".departmentCount")).containsExactly(1);
+        assertThat(JsonPath.<List<Integer>>read(dashboard, other + ".employeeCount")).containsExactly(1);
+        assertThat(JsonPath.<List<Integer>>read(dashboard, other + ".clientCount")).containsExactly(1);
+        assertThat(ids(dashboard, "$.platform.organizations[*].id")).doesNotContain(closedOrganization.getId());
+    }
+
+    @Test
     void activationIsExpiredOnlyAfterItsDeadline() throws Exception {
         withActivationDeadline(testData.employee(department, EmployeeRole.CAREGIVER), NOW.minusMinutes(1));
         withActivationDeadline(testData.employee(department, EmployeeRole.CAREGIVER), NOW.plusMinutes(1));
@@ -264,6 +306,9 @@ class DashboardTotalsIT extends AbstractIntegrationTest {
         testData.performedTask(recordYesterday, visit, TODAY.minusDays(1).atTime(8, 0), 1);
         Client neverRecorded = clientCreatedOn(TODAY.minusDays(15));
         clientCreatedOn(TODAY.minusDays(14));
+        Client formerClient = establishedClient();
+        formerClient.setActive(false);
+        clientRepository.save(formerClient);
 
         for (String dashboard : List.of(
                 dashboard(caregiver.getUser(), "MINE"),

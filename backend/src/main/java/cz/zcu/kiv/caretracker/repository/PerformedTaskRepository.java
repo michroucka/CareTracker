@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -21,10 +20,6 @@ public interface PerformedTaskRepository extends JpaRepository<PerformedTask, Lo
     List<PerformedTask> findTop5ByOrganizationIdOrderByDateDesc(Long organizationId);
     List<PerformedTask> findTop5ByDepartmentIdOrderByDateDesc(Long departmentId);
     List<PerformedTask> findTop5ByCaregivers_IdOrderByDateDesc(Long caregiverId);
-
-    /** Returns rows of [clientId, latest task date] for the given clients. */
-    @Query("SELECT pt.client.id, MAX(pt.date) FROM PerformedTask pt WHERE pt.client.id IN :clientIds GROUP BY pt.client.id")
-    List<Object[]> findLastRecordDatesByClientIds(@Param("clientIds") Collection<Long> clientIds);
 
     /** Returns rows of [organizationId, latest task date] for all organizations. */
     @Query("SELECT pt.organization.id, MAX(pt.date) FROM PerformedTask pt GROUP BY pt.organization.id")
