@@ -1,6 +1,8 @@
 package cz.zcu.kiv.caretracker.repository;
 
 import cz.zcu.kiv.caretracker.entity.Client;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +13,12 @@ import java.util.List;
 
 @Repository
 public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecificationExecutor<Client> {
+    // the accounts (user side of a one-to-one) of clients and caregivers are loaded eagerly one row at a time,
+    // batch fetching does not cover them
+    @Override
+    @EntityGraph(attributePaths = {"user", "department", "caregiver", "caregiver.user"})
+    List<Client> findAll(Specification<Client> spec);
+
     List<Client> findByActiveTrue();
 
     List<Client> findByDepartmentId(Long departmentId);

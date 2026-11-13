@@ -630,7 +630,7 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
   - Komprese: `gzip` v `frontend/nginx.demo.conf` (demo komprimuje i Cloudflare, server bez něj ne). Měřeno na E2E stacku: úkony za měsíc 660 kB → 51 kB, klienti 97 kB → 15 kB.
   - N+1: `hibernate.default_batch_fetch_size=50`. Seznam úkonů za měsíc 2785 → 68 dotazů, 1,18 s → 0,48 s.
   - `ClientShortDTO`: místo celých `tasks` jen `taskIds`, bez `gender`.
-- [ ] `Client.user` (`@OneToOne(mappedBy)`) se načítá hned a po jednom, dávkování na něj nezabírá: seznam 316 klientů pořád ~630 dotazů na `app_user`. Varianty: `@EntityGraph`/fetch join v dotazu seznamu, nebo stav účtu načíst jedním dotazem podle id klientů.
+- [x] `Client.user` a `Employee.user` (`@OneToOne(mappedBy)`) se načítaly hned a po jednom, dávkování na ně nezabírá. Hotovo 2026-11-13: `@EntityGraph` na `findAll(Specification)` v `ClientRepository` (včetně `caregiver.user`) a `EmployeeRepository`. Seznam 316 klientů 330 → 12 dotazů, 24 zaměstnanců 29 → 5. Hlídá `ListQueryCountIT` (počet dotazů nesmí růst s počtem řádků).
 - [x] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09), hotovo 2026-11-12:
   - `DashboardService` – nástěnka superadmina posílá tři COUNT dotazy na každou organizaci (N+1); počty středisek, zaměstnanců a klientů jde načíst jedním `GROUP BY` jako počty úkonů.
   - `DashboardService` – widget „Klienti bez záznamu“ načte všechny aktivní klienty organizace kvůli počtu a šesti řádkům; nahradit jedním dotazem (`LEFT JOIN … GROUP BY … HAVING`).
