@@ -729,4 +729,19 @@ describe('Performed task form', () => {
         await user.type(minutes, '60');
         expect(within(editSheet).getByText(price(ESCORT.unitPrice))).toBeInTheDocument();
     });
+
+    it("offers the plan tasks of a terminated client who is not in the client list", async () => {
+        serveOptions();
+        servePerformedTasks();
+        const terminatedClient = { id: 9, fullName: 'Jan Ukončený', tasks: [{ id: ESCORT.id, name: ESCORT.name }] };
+        server.use(http.get(apiUrl('/performed-tasks/102'), () => HttpResponse.json({ ...escortDetail, id: 102, client: terminatedClient })));
+        const { user } = renderPage({ route: '/performed-tasks?detail=102' });
+
+        const sheet = await screen.findByRole('dialog', { name: 'Doprovod' });
+        await user.click(await within(sheet).findByRole('button', { name: /Upravit/ }));
+        const editSheet = screen.getByRole('dialog', { name: 'Úprava záznamu' });
+        await user.click(await within(editSheet).findByLabelText(/^Úkon/));
+
+        expect(offeredTaskNames()).toEqual(['Doprovod']);
+    });
 });
