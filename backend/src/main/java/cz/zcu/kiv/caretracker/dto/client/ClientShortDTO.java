@@ -2,7 +2,6 @@ package cz.zcu.kiv.caretracker.dto.client;
 
 import cz.zcu.kiv.caretracker.dto.department.DepartmentSummaryDTO;
 import cz.zcu.kiv.caretracker.dto.employee.EmployeeSummaryDTO;
-import cz.zcu.kiv.caretracker.dto.task.TaskDTO;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.List;
@@ -13,7 +12,6 @@ public class ClientShortDTO {
     private Long id;
     private String firstName;
     private String lastName;
-    private String gender;
     private String street;
     private String city;
     private Boolean active;
@@ -24,5 +22,5 @@ public class ClientShortDTO {
 
     private DepartmentSummaryDTO department;
     private EmployeeSummaryDTO caregiver;
-    private List<TaskDTO> tasks;
+    private List<Long> taskIds;
 }

@@ -20,8 +20,8 @@ const SHOPPING = { id: 1, name: 'Nákup', unitType: 'OCCURRENCE', unitPrice: 100
 const ESCORT = { id: 2, name: 'Doprovod', unitType: 'HOUR', unitPrice: 130 };
 const TRANSPORT = { id: 3, name: 'Doprava', unitType: 'KM', unitPrice: 8 };
 
-const MARIE = { id: 7, firstName: 'Marie', lastName: 'Nová', street: 'Americká 12', city: 'Plzeň', department: PLZEN, tasks: [{ id: SHOPPING.id }, { id: ESCORT.id }] };
-const KAREL = { id: 8, firstName: 'Karel', lastName: 'Starý', street: 'Husova 3', city: 'Plzeň', department: PLZEN, tasks: [] };
+const MARIE = { id: 7, firstName: 'Marie', lastName: 'Nová', street: 'Americká 12', city: 'Plzeň', department: PLZEN, taskIds: [SHOPPING.id, ESCORT.id] };
+const KAREL = { id: 8, firstName: 'Karel', lastName: 'Starý', street: 'Husova 3', city: 'Plzeň', department: PLZEN, taskIds: [] };
 
 const shoppingForMarie = {
     id: 100,
@@ -728,5 +728,20 @@ describe('Performed task form', () => {
         await user.clear(minutes);
         await user.type(minutes, '60');
         expect(within(editSheet).getByText(price(ESCORT.unitPrice))).toBeInTheDocument();
+    });
+
+    it("offers the plan tasks of a terminated client who is not in the client list", async () => {
+        serveOptions();
+        servePerformedTasks();
+        const terminatedClient = { id: 9, fullName: 'Jan Ukončený', tasks: [{ id: ESCORT.id, name: ESCORT.name }] };
+        server.use(http.get(apiUrl('/performed-tasks/102'), () => HttpResponse.json({ ...escortDetail, id: 102, client: terminatedClient })));
+        const { user } = renderPage({ route: '/performed-tasks?detail=102' });
+
+        const sheet = await screen.findByRole('dialog', { name: 'Doprovod' });
+        await user.click(await within(sheet).findByRole('button', { name: /Upravit/ }));
+        const editSheet = screen.getByRole('dialog', { name: 'Úprava záznamu' });
+        await user.click(await within(editSheet).findByLabelText(/^Úkon/));
+
+        expect(offeredTaskNames()).toEqual(['Doprovod']);
     });
 });

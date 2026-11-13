@@ -625,7 +625,12 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
 - [x] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. API má vlastní hlavičky ze Spring Security (`nosniff`, `X-Frame-Options`, `Cache-Control`), nginx je přidává jen stránkám aplikace.
 - [x] Trusted Types zvážené, nezapnuté: kromě `innerHTML` v `LogoControl` by potřebovaly politiky pro knihovny (maplibre), riziko rozbití je větší než přínos při přísném `script-src 'self'`.
 - [x] Source mapy produkční build negeneruje (`dist/assets` bez `.map`), nic se nezveřejňuje.
-- [ ] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
+- [x] Štíhlé odpovědi API pro seznamy: `GET /api/performed-tasks` vrací za měsíc a středisko ~337 kB, `GET /api/clients?status=true` ~94 kB – víc než všechen JS stránky. Seznam a filtry potřebují jen část polí (jméno, čas, úkon, cena; u klientů id + jméno pro výběr). Varianty: zúžené DTO pro seznam (detail dál přes `/{id}`), případně stránkování na serveru. Zlepší LCP (data dorazí dřív) i blokování vlákna (méně dat k rozparsování a vykreslení).
+  - Hotovo 2026-11-13. Seznamová DTO už zúžená byla (`PerformedTaskSummaryDTO`, `ClientShortDTO`), frontend z nich čte skoro všechno. Skutečné příčiny byly jinde:
+  - Komprese: `gzip` v `frontend/nginx.demo.conf` (demo komprimuje i Cloudflare, server bez něj ne). Měřeno na E2E stacku: úkony za měsíc 660 kB → 51 kB, klienti 97 kB → 15 kB.
+  - N+1: `hibernate.default_batch_fetch_size=50`. Seznam úkonů za měsíc 2785 → 68 dotazů, 1,18 s → 0,48 s.
+  - `ClientShortDTO`: místo celých `tasks` jen `taskIds`, bez `gender`.
+- [ ] `Client.user` (`@OneToOne(mappedBy)`) se načítá hned a po jednom, dávkování na něj nezabírá: seznam 316 klientů pořád ~630 dotazů na `app_user`. Varianty: `@EntityGraph`/fetch join v dotazu seznamu, nebo stav účtu načíst jedním dotazem podle id klientů.
 - [x] Výkon nástěnky a fotek (z code review větve `feature/rebranding`, 2026-11-09), hotovo 2026-11-12:
   - `DashboardService` – nástěnka superadmina posílá tři COUNT dotazy na každou organizaci (N+1); počty středisek, zaměstnanců a klientů jde načíst jedním `GROUP BY` jako počty úkonů.
   - `DashboardService` – widget „Klienti bez záznamu“ načte všechny aktivní klienty organizace kvůli počtu a šesti řádkům; nahradit jedním dotazem (`LEFT JOIN … GROUP BY … HAVING`).
@@ -638,7 +643,7 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
 Zbývají dva otevřené body výše (výkon nástěnky a fotek hotový 2026-11-12). Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
 
 1. ~~**Výkon nástěnky a fotek**~~ hotovo 2026-11-12, viz bod výše.
-2. **Štíhlé odpovědi API pro seznamy** (odhad 2–3 h, největší nejistota). Nejdřív projít, která pole frontend ze seznamů opravdu čte: `PerformedTasks.jsx` (řádek, filtry, `clientId`), formulář zápisu úkonu bere z `GET /api/clients` i úkony z plánu klienta (`client.tasks`), stvrzenka a filtry jména a města. Pak zúžené DTO (detail dál přes `/{id}`), upravit MSW fixtures ve frontendových testech a ověřit velikost odpovědi.
+2. ~~**Štíhlé odpovědi API pro seznamy**~~ hotovo 2026-11-13, viz bod výše. Původní postup: Nejdřív projít, která pole frontend ze seznamů opravdu čte: `PerformedTasks.jsx` (řádek, filtry, `clientId`), formulář zápisu úkonu bere z `GET /api/clients` i úkony z plánu klienta (`client.tasks`), stvrzenka a filtry jména a města. Pak zúžené DTO (detail dál přes `/{id}`), upravit MSW fixtures ve frontendových testech a ověřit velikost odpovědi.
 3. **Drobnosti** (odhad 45 min–1 h). Převod starých fotek přesunout ze čtení do jednorázové migrace nebo úlohy (pozor na data v produkci, nedekódovatelné fotky). `Clients.jsx`: s `?caregivers=` v URL počkat na zaměstnance, než se pošle první požadavek (stejně jako u `PerformedTasks`).
 
 Poznámky k prostředí:
