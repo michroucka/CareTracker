@@ -20,8 +20,8 @@ const SHOPPING = { id: 1, name: 'Nákup', unitType: 'OCCURRENCE', unitPrice: 100
 const ESCORT = { id: 2, name: 'Doprovod', unitType: 'HOUR', unitPrice: 130 };
 const TRANSPORT = { id: 3, name: 'Doprava', unitType: 'KM', unitPrice: 8 };
 
-const MARIE = { id: 7, firstName: 'Marie', lastName: 'Nová', street: 'Americká 12', city: 'Plzeň', department: PLZEN, tasks: [{ id: SHOPPING.id }, { id: ESCORT.id }] };
-const KAREL = { id: 8, firstName: 'Karel', lastName: 'Starý', street: 'Husova 3', city: 'Plzeň', department: PLZEN, tasks: [] };
+const MARIE = { id: 7, firstName: 'Marie', lastName: 'Nová', street: 'Americká 12', city: 'Plzeň', department: PLZEN, taskIds: [SHOPPING.id, ESCORT.id] };
+const KAREL = { id: 8, firstName: 'Karel', lastName: 'Starý', street: 'Husova 3', city: 'Plzeň', department: PLZEN, taskIds: [] };
 
 const shoppingForMarie = {
     id: 100,

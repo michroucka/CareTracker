@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { todayIsoDate } from "@/lib/dates";
 import { allowsDecimals, amountLabel, MIN_DATE, personName, previewPrice, TIME_STEP } from "./performedTaskForm";
 
-const clientTaskIds = (client) => client?.tasks?.map((task) => task.id) ?? [];
+// the client list sends taskIds, a performed task's own client (possibly terminated, not in the list) sends tasks
+const clientTaskIds = (client) => client?.taskIds ?? client?.tasks?.map((task) => task.id) ?? [];
 
 /**
  * Performed task form fields. The task list follows the selected client's care plan;

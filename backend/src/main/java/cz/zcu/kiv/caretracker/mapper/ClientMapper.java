@@ -80,7 +80,6 @@ public class ClientMapper {
         dto.setId(client.getId());
         dto.setFirstName(client.getFirstName());
         dto.setLastName(client.getLastName());
-        dto.setGender(client.getGender() != null ? client.getGender().name() : null);
         dto.setStreet(client.getStreet());
         dto.setCity(client.getCity());
         dto.setActive(client.getActive());
@@ -98,7 +97,7 @@ public class ClientMapper {
         }
 
         if (client.getTasks() != null) {
-            dto.setTasks(taskMapper.toDTOList(client.getTasks()));
+            dto.setTaskIds(client.getTasks().stream().map(Task::getId).toList());
         }
 
          return dto;
