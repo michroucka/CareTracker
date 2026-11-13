@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Picture endpoints serve the stored size the request asks for; pictures saved before resizing are converted once. */
+/** Picture endpoints serve the stored size the request asks for; pictures saved before resizing are converted at startup. */
 class PictureContentIT extends AbstractIntegrationTest {
 
     private static final byte[] FULL = TestImages.jpeg(32, 32);
@@ -38,6 +38,9 @@ class PictureContentIT extends AbstractIntegrationTest {
 
     @Autowired
     private PictureService pictureService;
+
+    @Autowired
+    private LegacyPictureResizer legacyPictureResizer;
 
     private Employee caregiver;
     private Client client;
@@ -67,17 +70,34 @@ class PictureContentIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void pictureSavedBeforeResizingIsConvertedOnFirstRequestAndStored() throws Exception {
+    void pictureSavedBeforeResizingIsConvertedAtStartupAndServed() throws Exception {
         client.setPicture(picture(TestImages.jpeg(1000, 600), null));
         Long pictureId = clientRepository.save(client).getPictureId();
 
-        byte[] full = picture("/api/clients/" + client.getId() + "/picture");
+        legacyPictureResizer.resizeAll();
 
-        assertSquare(full, 512);
         Picture stored = pictureRepository.findById(pictureId).orElseThrow();
-        assertThat(stored.getData()).isEqualTo(full);
+        assertSquare(stored.getData(), 512);
         assertSquare(stored.getThumbnail(), 128);
+        assertThat(picture("/api/clients/" + client.getId() + "/picture")).isEqualTo(stored.getData());
         assertThat(picture("/api/clients/" + client.getId() + "/picture?size=thumb")).isEqualTo(stored.getThumbnail());
+    }
+
+    @Test
+    void unreadablePictureSavedBeforeResizingStaysAsItIsAndIsNotServed() throws Exception {
+        byte[] unreadable = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 1, 2};
+        client.setPicture(picture(unreadable, null));
+        Long pictureId = clientRepository.save(client).getPictureId();
+        Client readable = testData.client(caregiver);
+        readable.setPicture(picture(TestImages.jpeg(300, 300), null));
+        Long readablePictureId = clientRepository.save(readable).getPictureId();
+
+        legacyPictureResizer.resizeAll();
+
+        assertThat(pictureRepository.findById(pictureId).orElseThrow().getData()).isEqualTo(unreadable);
+        assertThat(pictureRepository.findById(readablePictureId).orElseThrow().getThumbnail()).isNotNull();
+        mockMvc.perform(get("/api/clients/" + client.getId() + "/picture").with(loggedInAs(caregiver.getUser())))
+                .andExpect(status().isNotFound());
     }
 
     @Test

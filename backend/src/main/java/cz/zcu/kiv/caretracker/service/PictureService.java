@@ -67,29 +67,30 @@ public class PictureService {
 
     /**
      * Returns the stored picture in the requested size, loading only that size from the database.
-     * A picture saved before resizing was introduced is converted and saved first.
      *
      * @throws ResourceNotFoundException if the picture does not exist (e.g. replaced by a concurrent upload)
+     *         or was saved before resizing and could not be converted ({@link LegacyPictureResizer})
      */
-    @Transactional
     public byte[] getContent(Long pictureId, Size size) {
         Optional<byte[]> stored = size == Size.THUMB
                 ? pictureRepository.findThumbnailById(pictureId)
                 : pictureRepository.findResizedDataById(pictureId);
-        return stored.orElseGet(() -> getContent(pictureRepository.findById(pictureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Obrázek nenalezen")), size));
+        return stored.orElseThrow(() -> new ResourceNotFoundException("Obrázek nenalezen"));
     }
 
     /**
-     * Returns the image in the requested size. Pictures saved before resizing was introduced
-     * (no thumbnail, original upload in {@code data}) are converted in place, so the caller
-     * must pass a managed entity inside a read-write transaction.
+     * Resizes a picture saved before resizing was introduced (no thumbnail, original upload in {@code data}).
+     *
+     * @throws ValidationException if the original cannot be read; nothing is changed then
      */
-    byte[] getContent(Picture picture, Size size) {
-        if (picture.getThumbnail() == null) {
-            fillResized(picture, picture.getData());
-        }
-        return size == Size.THUMB ? picture.getThumbnail() : picture.getData();
+    @Transactional
+    public void resizeLegacyPicture(Long pictureId) {
+        pictureRepository.findById(pictureId).ifPresent(this::resizeLegacy);
+    }
+
+    /** Replaces the original upload in {@code data} with both resized sizes. */
+    void resizeLegacy(Picture picture) {
+        fillResized(picture, picture.getData());
     }
 
     private void fillResized(Picture picture, byte[] original) {

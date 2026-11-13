@@ -619,7 +619,7 @@ Počty = výskyty importů v `src` (stav říjen 2026, 55 souborů).
 Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, který servíruje frontend (`frontend/nginx.demo.conf`, případně produkční nginx), a pro API v Spring Security (`SecurityConfig` → `http.headers(...)`).
 
 - [x] `Content-Security-Policy` v `frontend/nginx.demo.conf`: `script-src 'self'`; `style-src` s `'unsafe-inline'` (knihovny vkládají `<style>` za běhu, hashe by se měnily s každou aktualizací) a Google Fonts; `img-src`/`connect-src` s Mapy.com; `worker-src blob:` (maplibre); `frame-src blob:` (tisk stvrzenky); `object-src 'none'`, `base-uri`, `form-action`, `frame-ancestors 'none'`. Každý E2E test selže při porušení CSP (`e2e/tests/support/test.js`); mapa ověřená ručně (seed nemá souřadnice).
-- [x] `Strict-Transport-Security: max-age=86400; includeSubDomains` (demo běží za HTTPS přes Cloudflare). Až se nic nerozbije, zvednout na `max-age=31536000`.
+- [x] `Strict-Transport-Security: max-age=31536000; includeSubDomains` (demo běží za HTTPS přes Cloudflare). Nejdřív `86400`, zvednuto 2026-11-13.
 - [x] `X-Frame-Options: DENY` (pro starší prohlížeče vedle `frame-ancestors`).
 - [x] `Cross-Origin-Opener-Policy: same-origin`.
 - [x] `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. API má vlastní hlavičky ze Spring Security (`nosniff`, `X-Frame-Options`, `Cache-Control`), nginx je přidává jen stránkám aplikace.
@@ -636,22 +636,23 @@ Mimo rebranding, ale vyplynulo z Lighthouse (2026-11-09). Nastavit na serveru, k
   - `DashboardService` – widget „Klienti bez záznamu“ načte všechny aktivní klienty organizace kvůli počtu a šesti řádkům; nahradit jedním dotazem (`LEFT JOIN … GROUP BY … HAVING`).
   - `Picture` – náhled (`?size=thumb`) načte z DB i plnou fotku 512 px; načítat jen potřebný sloupec (projekce nebo oddělená entita).
   - Řešení: počty superadmina jedním dotazem s poddotazy pro každý druh počtu (`OrganizationRepository.countActiveMembersByOrganization`), klienti bez záznamu jedním dotazem s limitem a celkovým počtem (`ClientRepository.findWithoutRecordsSince`), fotka po sloupcích (`PictureRepository.findThumbnailById` / `findResizedDataById`, starou fotku dál převede `PictureService`). Testy `ClientRepositoryIT`, `PictureContentIT`, počty organizací v `DashboardTotalsIT`.
-- [ ] Drobnosti z téhož review, odložené: staré fotky (před V23) se převádějí až při prvním GET v `PictureService` (čtení zapisuje do DB, nedekódovatelná fotka vrací 400 pořád); `Clients.jsx` s `?caregivers=…` v URL načte seznam nejdřív bez filtru, protože zaměstnanci ještě nejsou načtení.
+- [x] Drobnosti z téhož review: staré fotky (před V23) se převádějí až při prvním GET v `PictureService` (čtení zapisuje do DB, nedekódovatelná fotka vrací 400 pořád); `Clients.jsx` s `?caregivers=…` v URL načte seznam nejdřív bez filtru, protože zaměstnanci ještě nejsou načtení.
+  - Hotovo 2026-11-13. Staré fotky převádí jednou při startu `LegacyPictureResizer`; nečitelná fotka zůstane v DB beze změny, vrací 404 (avatar s iniciálami) a zkusí se znovu při dalším startu. `Clients.jsx` už posílá první požadavek s id pečovatelek z URL (aba0f53).
 
 ### Další postup (stav 2026-11-11)
 
-Zbývají dva otevřené body výše (výkon nástěnky a fotek hotový 2026-11-12). Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
+Všechny body výše hotové (2026-11-13). Doporučené pořadí, každý jako samostatný PR (CI včetně E2E, merge po zelené):
 
 1. ~~**Výkon nástěnky a fotek**~~ hotovo 2026-11-12, viz bod výše.
 2. ~~**Štíhlé odpovědi API pro seznamy**~~ hotovo 2026-11-13, viz bod výše. Původní postup: Nejdřív projít, která pole frontend ze seznamů opravdu čte: `PerformedTasks.jsx` (řádek, filtry, `clientId`), formulář zápisu úkonu bere z `GET /api/clients` i úkony z plánu klienta (`client.tasks`), stvrzenka a filtry jména a města. Pak zúžené DTO (detail dál přes `/{id}`), upravit MSW fixtures ve frontendových testech a ověřit velikost odpovědi.
-3. **Drobnosti** (odhad 45 min–1 h). Převod starých fotek přesunout ze čtení do jednorázové migrace nebo úlohy (pozor na data v produkci, nedekódovatelné fotky). `Clients.jsx`: s `?caregivers=` v URL počkat na zaměstnance, než se pošle první požadavek (stejně jako u `PerformedTasks`).
+3. ~~**Drobnosti**~~ hotovo 2026-11-13, viz bod výše. Původně (odhad 45 min–1 h): Převod starých fotek přesunout ze čtení do jednorázové migrace nebo úlohy (pozor na data v produkci, nedekódovatelné fotky). `Clients.jsx`: s `?caregivers=` v URL počkat na zaměstnance, než se pošle první požadavek (stejně jako u `PerformedTasks`).
 
 Poznámky k prostředí:
 - E2E: `make e2e-up && make e2e` (stack na :3040, databáze z demo seedu), po skončení `make e2e-down`. Každý E2E test selže při porušení CSP (`e2e/tests/support/test.js`).
 - Mapa v E2E testovat nejde – demo seed nemá u klientů souřadnice a geokódování v E2E běží s falešným klíčem. Ručně: `update client set latitude=49.7475, longitude=13.3776 where id=24` v E2E databázi.
 - Na živém demu Cloudflare vkládá inline skript JavaScript Detections (bot management), který `script-src 'self'` blokuje. Aplikaci to nerozbije; když to bude vadit, vypnout v Cloudflare dashboardu (Security → Bots), ne povolovat v CSP.
 - Dev kontejner backendu zapisuje do `backend/target` jako root. Maven na hostu pak selže; buď `sudo chown -R $USER backend/target`, nebo pustit testy v samostatném `git worktree`.
-- HSTS má zatím `max-age=86400`; až se nic nerozbije, zvednout na `31536000` v `frontend/nginx.demo.conf`.
+- HSTS má `max-age=31536000` (rok) s `includeSubDomains`: prohlížeč, který demo navštívil, se na rok odmítne připojit k `demo.caretracker.cz` a jeho subdoménám přes HTTP.
 
 ## 8. Odkazy
 

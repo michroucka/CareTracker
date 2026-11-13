@@ -199,31 +199,19 @@ class PictureServiceTest {
     }
 
     @Test
-    void getContentConvertsLegacyPictureInPlace() {
+    void legacyPictureIsResizedInPlace() {
         Picture legacy = new Picture();
         legacy.setData(TestImages.encode(threeStripes(400, 100, true), "png"));
         legacy.setContentType("image/png");
 
-        byte[] thumbnail = pictureService.getContent(legacy, PictureService.Size.THUMB);
+        pictureService.resizeLegacy(legacy);
 
-        assertSquareJpeg(thumbnail, THUMB_SIZE);
-        assertThat(legacy.getThumbnail()).isSameAs(thumbnail);
+        assertSquareJpeg(legacy.getThumbnail(), THUMB_SIZE);
         assertSquareJpeg(legacy.getData(), FULL_SIZE);
         assertWholeImageIs(TestImages.decode(legacy.getData()), GREEN);
         assertThat(legacy.getContentType()).isEqualTo("image/jpeg");
         assertThat(legacy.getSize()).isEqualTo(legacy.getData().length);
         assertThat(legacy.getUploadedAt()).isNotNull();
-    }
-
-    @Test
-    void getContentReturnsStoredSizesOfConvertedPicture() throws Exception {
-        Picture picture = pictureService.createPicture(upload(TestImages.jpeg(64, 64)));
-        byte[] data = picture.getData();
-        byte[] thumbnail = picture.getThumbnail();
-
-        assertThat(pictureService.getContent(picture, PictureService.Size.FULL)).isSameAs(data);
-        assertThat(pictureService.getContent(picture, PictureService.Size.THUMB)).isSameAs(thumbnail);
-        assertThat(picture.getData()).isSameAs(data);
     }
 
     private static MockMultipartFile upload(byte[] content) {
